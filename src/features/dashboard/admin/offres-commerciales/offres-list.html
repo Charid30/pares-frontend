@@ -1,0 +1,661 @@
+<!-- offres-list.html — Admin : Gestion des offres commerciales candidats -->
+<div class="space-y-6">
+
+  <!-- ── En-tête ─────────────────────────────────────────────────────────── -->
+  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl lg:text-3xl font-bold text-gray-900">Offres Commerciales</h1>
+      <p class="text-gray-500 mt-1">
+        Traitement des demandes soumises par les candidats
+        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium" style="background:#fde8e8; color:#c0392b;">
+          {{ offres.length }} demande{{ offres.length > 1 ? 's' : '' }}
+        </span>
+      </p>
+    </div>
+  </div>
+
+  <!-- ── Message succès ──────────────────────────────────────────────────── -->
+  @if (successMessage) {
+    <div class="flex items-center gap-3 px-4 py-3 rounded-xl" style="background:#e8f5e9; border:1px solid #27ae60; color:#1e8449;">
+      <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <span class="text-sm font-medium">{{ successMessage }}</span>
+    </div>
+  }
+
+  <!-- ── Compteurs statuts ────────────────────────────────────────────────── -->
+  <div class="grid grid-cols-3 gap-2 sm:gap-3">
+    @for (s of [
+      { statut: 'EN_ATTENTE', label: 'En attente', iconBg: 'bg-red-50',   iconDot: 'bg-red-500',   border: 'border-red-100',   ring: 'ring-red-400'   },
+      { statut: 'VALIDEE',    label: 'Validées',   iconBg: 'bg-green-50', iconDot: 'bg-green-500', border: 'border-green-100', ring: 'ring-green-400' },
+      { statut: 'REJETEE',    label: 'Rejetées',   iconBg: 'bg-rose-50',  iconDot: 'bg-rose-500',  border: 'border-rose-100',  ring: 'ring-rose-400'  }
+    ]; track s.statut) {
+      <button
+        type="button"
+        class="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow w-full text-left flex items-center gap-2 p-3 sm:p-4 border"
+        [ngClass]="[s.border, filtreStatut === s.statut ? 'ring-2 ' + s.ring : '']"
+        (click)="filtreStatut = filtreStatut === s.statut ? '' : s.statut; appliquerFiltres()">
+        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center flex-shrink-0" [ngClass]="s.iconBg">
+          <span class="w-2.5 h-2.5 rounded-full" [ngClass]="s.iconDot"></span>
+        </div>
+        <div class="min-w-0">
+          <p class="text-lg sm:text-2xl font-bold text-gray-900 leading-none">{{ getCountByStatut(s.statut) }}</p>
+          <p class="text-xs text-gray-400 mt-0.5 truncate">{{ s.label }}</p>
+        </div>
+      </button>
+    }
+  </div>
+
+  <!-- ── Filtres ──────────────────────────────────────────────────────────── -->
+  <div class="bg-white rounded-2xl border border-gray-100 px-3 py-3 sm:px-4 shadow-sm">
+    <div class="flex flex-col gap-2">
+      <!-- Ligne 1 : Recherche + bouton Filtrer -->
+      <div class="flex gap-2">
+        <div class="relative flex-1">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (input)="appliquerFiltres()"
+            placeholder="Titre, type, candidat…"
+            class="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:bg-white focus:border-transparent transition-all"
+          />
+        </div>
+        @if (searchTerm || filtreStatut || filtreType) {
+          <button
+            (click)="effacerFiltres()"
+            class="px-3 sm:px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 active:scale-95 transition-all flex-shrink-0">
+            <svg class="w-4 h-4 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            <span class="hidden sm:inline">Effacer</span>
+          </button>
+        } @else {
+          <button
+            (click)="appliquerFiltres()"
+            class="px-3 sm:px-4 py-2.5 rounded-xl text-sm font-medium active:scale-95 transition-all flex-shrink-0"
+            style="background:#fde8e8; color:#c0392b;">
+            <svg class="w-4 h-4 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <span class="hidden sm:inline">Filtrer</span>
+          </button>
+        }
+      </div>
+      <!-- Ligne 2 : Selects côte à côte -->
+      <div class="grid grid-cols-2 gap-2">
+        <select
+          [(ngModel)]="filtreStatut"
+          (change)="appliquerFiltres()"
+          class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:bg-white transition-all">
+          <option value="">Tous les statuts</option>
+          <option value="EN_ATTENTE">En attente</option>
+          <option value="EN_TRAITEMENT">En traitement</option>
+          <option value="VALIDEE">Validée</option>
+          <option value="REJETEE">Rejetée</option>
+          <option value="CLOTUREE">Clôturée</option>
+        </select>
+        <select
+          [(ngModel)]="filtreType"
+          (change)="appliquerFiltres()"
+          class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:bg-white transition-all">
+          <option value="">Tous les types</option>
+          <option value="VENTE">Vente</option>
+          <option value="PARTENARIAT">Partenariat</option>
+          <option value="DISTRIBUTION">Distribution</option>
+          <option value="SERVICE">Service</option>
+          <option value="AUTRE">Autre</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Loader ────────────────────────────────────────────────────────────── -->
+  @if (isLoading) {
+    <div class="flex justify-center py-16">
+      <app-loader />
+    </div>
+  }
+
+  <!-- ── Erreur ─────────────────────────────────────────────────────────────── -->
+  @if (!isLoading && errorMessage) {
+    <div class="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl">
+      <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <span class="text-sm">{{ errorMessage }}</span>
+    </div>
+  }
+
+  <!-- ── État vide ──────────────────────────────────────────────────────────── -->
+  @if (!isLoading && !errorMessage && offresFiltrees.length === 0) {
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
+      <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+        </svg>
+      </div>
+      <h3 class="text-lg font-semibold text-gray-800 mb-1">Aucune offre trouvée</h3>
+      <p class="text-sm text-gray-500">
+        {{ searchTerm || filtreStatut || filtreType ? 'Aucun résultat pour ces filtres.' : 'Aucune demande d\'offre n\'a encore été soumise.' }}
+      </p>
+    </div>
+  }
+
+  <!-- ── Grille des offres ──────────────────────────────────────────────────── -->
+  @if (!isLoading && offresFiltrees.length > 0) {
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      @for (offre of offresFiltrees; track offre.idoffres) {
+        <div
+          class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden cursor-pointer group"
+          (click)="voirDetail(offre)">
+
+          <!-- Barre statut -->
+          <div class="h-1 w-full" [ngClass]="getStatutBarClass(offre.statusOffre)"></div>
+
+          <div class="p-5">
+            <!-- En-tête carte -->
+            <div class="flex items-start justify-between gap-3 mb-3">
+              <!-- Avatar + Nom candidat -->
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0" style="background:#fde8e8; color:#c0392b;">
+                  {{ getInitiales(offre) }}
+                </div>
+                <div class="min-w-0">
+                  <p class="text-sm font-semibold text-gray-900 truncate">{{ getNomCandidat(offre) }}</p>
+                  @if (offre.candidatCreateur?.email) {
+                    <p class="text-xs text-gray-500 truncate">{{ offre.candidatCreateur!.email }}</p>
+                  }
+                </div>
+              </div>
+              <!-- Badge statut -->
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium shrink-0"
+                [ngClass]="getStatutClass(offre.statusOffre)">
+                {{ getStatutLabel(offre.statusOffre) }}
+              </span>
+            </div>
+
+            <!-- Titre & Type -->
+            <div class="mb-3">
+              <p class="text-sm font-semibold text-gray-800 truncate mb-1.5">{{ offre.titre }}</p>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                [ngClass]="getTypeClass(offre.typeOffre)">
+                {{ offre.typeOffre }}
+              </span>
+            </div>
+
+            <!-- Description -->
+            @if (offre.description) {
+              <p class="text-xs text-gray-500 line-clamp-2 mb-3">{{ offre.description }}</p>
+            }
+
+            <!-- Motif refus -->
+            @if (offre.statusOffre === 'REJETEE' && offre.motifRefus) {
+              <div class="flex items-start gap-2 bg-red-50 border border-red-100 rounded-lg p-2.5 mb-3">
+                <svg class="w-3.5 h-3.5 text-red-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p class="text-xs text-red-600 line-clamp-2">{{ offre.motifRefus }}</p>
+              </div>
+            }
+
+            <!-- Date + Fichiers -->
+            <div class="flex items-center justify-between text-xs text-gray-400 mb-4">
+              <span>{{ offre.createdDate | date:'dd/MM/yyyy' }}</span>
+              <div class="flex items-center gap-2">
+                @if (offre.cnib_filename) {
+                  <span class="flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    CNIB
+                  </span>
+                }
+                @if (offre.demandeOffre_filename) {
+                  <span class="flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Offre
+                  </span>
+                }
+              </div>
+            </div>
+
+            <!-- Boutons actions -->
+            <div class="flex items-center gap-2 pt-3 border-t border-gray-50">
+              <!-- Voir détail -->
+              <button
+                (click)="voirDetail(offre, $event)"
+                class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+                Voir
+              </button>
+
+              @if (peutEvaluer(offre)) {
+                <!-- Valider -->
+                <button
+                  (click)="validerRapide(offre, $event)"
+                  class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg transition-colors"
+                  style="background:#e8f5e9; color:#1e8449;">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                  </svg>
+                  Valider
+                </button>
+                <!-- Rejeter -->
+                <button
+                  (click)="rejeterRapide(offre, $event)"
+                  class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-colors">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                  Rejeter
+                </button>
+              } @else {
+                <!-- Traiter (pour ouvrir modal décision complète) -->
+                <button
+                  (click)="ouvrirTraitement(offre, $event)"
+                  class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg transition-colors"
+                  style="background:#fde8e8; color:#c0392b;">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                  </svg>
+                  Traiter
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+  }
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- MODAL TRAITEMENT                                                        -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+@if (showTraitementModal && selectedOffre) {
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+    (click)="fermerTraitement()">
+    <div
+      class="bg-white rounded-2xl shadow-2xl w-full max-w-lg"
+      (click)="$event.stopPropagation()">
+
+      <!-- Header modal -->
+      <div class="flex items-center justify-between px-6 py-4" style="background:linear-gradient(135deg,#c0392b,#96281b); border-bottom:2px solid #27ae60;">
+        <div>
+          <h2 class="text-lg font-bold" style="color:#ffffff;">Traitement de l'offre</h2>
+          <p class="text-sm truncate max-w-xs" style="color:#ffffff;">{{ selectedOffre.titre }}</p>
+        </div>
+        <button
+          (click)="fermerTraitement()"
+          class="w-8 h-8 flex items-center justify-center rounded-full transition-colors"
+          style="background:rgba(255,255,255,0.15); color:#ffffff;"
+          onmouseover="this.style.background='rgba(255,255,255,0.30)'"
+          onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Corps modal -->
+      <div class="px-6 py-5 space-y-5">
+
+        <!-- Info candidat -->
+        <div class="bg-gray-50 rounded-xl p-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0" style="background:#fde8e8; color:#c0392b;">
+              {{ getInitiales(selectedOffre) }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-gray-900">{{ getNomCandidat(selectedOffre) }}</p>
+              @if (selectedOffre.candidatCreateur?.email) {
+                <p class="text-xs text-gray-500 truncate">{{ selectedOffre.candidatCreateur!.email }}</p>
+              }
+            </div>
+            <div class="ml-auto shrink-0">
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium"
+                [ngClass]="getStatutClass(selectedOffre.statusOffre)">
+                {{ getStatutLabel(selectedOffre.statusOffre) }}
+              </span>
+            </div>
+          </div>
+          <!-- IFU -->
+          @if (selectedOffre.candidatCreateur?.ifu) {
+            <div class="mt-2 pt-2 border-t border-gray-200 flex items-center gap-2">
+              <span class="text-xs text-gray-400 font-semibold">IFU :</span>
+              <span class="font-mono text-xs font-bold text-gray-800 bg-white border border-gray-200 px-2 py-0.5 rounded-lg">
+                {{ selectedOffre.candidatCreateur!.ifu }}
+              </span>
+            </div>
+          } @else {
+            <div class="mt-2 pt-2 border-t border-gray-200 flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+              <span class="text-xs text-amber-600">IFU non renseigné par le candidat</span>
+            </div>
+          }
+        </div>
+
+        <!-- Décision -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            Décision <span class="text-red-500">*</span>
+          </label>
+          <div class="grid grid-cols-3 gap-2">
+            @for (d of [
+              { value: 'EN_TRAITEMENT', label: 'En traitement', color: 'amber' },
+              { value: 'VALIDEE',       label: 'Valider',        color: 'green' },
+              { value: 'REJETEE',       label: 'Rejeter',        color: 'red'   }
+            ]; track d.value) {
+              <button
+                type="button"
+                (click)="evaluation.statusOffre = d.value"
+                class="px-3 py-2.5 rounded-xl text-sm font-medium border-2 transition-all"
+                [class.border-amber-400]="evaluation.statusOffre === d.value && d.color === 'amber'"
+                [class.bg-amber-50]="evaluation.statusOffre === d.value && d.color === 'amber'"
+                [class.text-amber-700]="d.color === 'amber'"
+                [class.border-green-400]="evaluation.statusOffre === d.value && d.color === 'green'"
+                [class.bg-green-50]="evaluation.statusOffre === d.value && d.color === 'green'"
+                [class.text-green-700]="d.color === 'green'"
+                [class.border-red-400]="evaluation.statusOffre === d.value && d.color === 'red'"
+                [class.bg-red-50]="evaluation.statusOffre === d.value && d.color === 'red'"
+                [class.text-red-700]="d.color === 'red'"
+                [class.border-gray-200]="evaluation.statusOffre !== d.value"
+                [class.text-gray-500]="evaluation.statusOffre !== d.value && d.color !== 'amber' && d.color !== 'green'"
+                >
+                {{ d.label }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Motif refus -->
+        @if (evaluation.statusOffre === 'REJETEE') {
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              Motif du refus <span class="text-red-500">*</span>
+            </label>
+            <textarea
+              [(ngModel)]="evaluation.motifRefus"
+              rows="3"
+              placeholder="Expliquer le motif du refus au candidat…"
+              class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-red-400">
+            </textarea>
+          </div>
+        }
+
+        <!-- Erreur -->
+        @if (errorEval) {
+          <div class="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 px-3 py-2.5 rounded-xl text-sm">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            {{ errorEval }}
+          </div>
+        }
+      </div>
+
+      <!-- Footer modal -->
+      <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100">
+        <button
+          (click)="fermerTraitement()"
+          class="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
+          Annuler
+        </button>
+        <button
+          (click)="enregistrerDecision()"
+          [disabled]="isSubmitting || !evaluation.statusOffre"
+          class="px-5 py-2 text-sm font-semibold text-white rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          style="background:#c0392b;">
+          @if (isSubmitting) {
+            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+          }
+          Enregistrer la décision
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- MODAL DÉTAIL (lecture seule)                                            -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+@if (showDetailModal && detailOffre) {
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+    (click)="fermerDetail()">
+    <div
+      class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+      (click)="$event.stopPropagation()">
+
+      <!-- Header -->
+      <div class="flex items-center justify-between px-6 py-4 sticky top-0 z-10" style="background:linear-gradient(135deg,#c0392b,#96281b); border-bottom:2px solid #27ae60;">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm" style="background:#fde8e8; color:#c0392b;">
+            {{ getInitiales(detailOffre) }}
+          </div>
+          <div>
+            <h2 class="text-base font-bold" style="color:#ffffff;">Détail de l'offre</h2>
+            <p class="text-xs" style="color:#ffffff;">{{ detailOffre.createdDate | date:'dd MMMM yyyy' }}</p>
+          </div>
+        </div>
+        <button
+          (click)="fermerDetail()"
+          class="w-8 h-8 flex items-center justify-center rounded-full transition-colors"
+          style="background:rgba(255,255,255,0.15); color:#ffffff;"
+          onmouseover="this.style.background='rgba(255,255,255,0.30)'"
+          onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Corps détail -->
+      <div class="px-6 py-5 space-y-4">
+
+        <!-- Statut + Type -->
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+            [ngClass]="getStatutClass(detailOffre.statusOffre)">
+            {{ getStatutLabel(detailOffre.statusOffre) }}
+          </span>
+          <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+            [ngClass]="getTypeClass(detailOffre.typeOffre)">
+            {{ detailOffre.typeOffre }}
+          </span>
+        </div>
+
+        <!-- Candidat -->
+        <div class="bg-gray-50 rounded-xl p-4">
+          <p class="text-xs text-gray-400 uppercase font-semibold mb-2">Candidat</p>
+          <p class="text-sm font-semibold text-gray-900">{{ getNomCandidat(detailOffre) }}</p>
+          @if (detailOffre.candidatCreateur?.email) {
+            <p class="text-sm text-gray-600">{{ detailOffre.candidatCreateur!.email }}</p>
+          }
+          @if (detailOffre.candidatCreateur?.telephone) {
+            <p class="text-sm text-gray-600">{{ detailOffre.candidatCreateur!.telephone }}</p>
+          }
+          @if (detailOffre.candidatCreateur?.ifu) {
+            <div class="mt-2 flex items-center gap-2">
+              <span class="text-xs text-gray-400 uppercase font-semibold">IFU</span>
+              <span class="font-mono text-sm font-semibold text-gray-800 bg-white border border-gray-200 px-2 py-0.5 rounded-lg">
+                {{ detailOffre.candidatCreateur!.ifu }}
+              </span>
+            </div>
+          } @else {
+            <div class="mt-2 flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0"></span>
+              <span class="text-xs text-amber-600">IFU non renseigné</span>
+            </div>
+          }
+        </div>
+
+        <!-- Objet -->
+        <div>
+          <p class="text-xs text-gray-400 uppercase font-semibold mb-1">Objet de l'offre</p>
+          <p class="text-sm text-gray-800 font-medium">{{ detailOffre.titre }}</p>
+        </div>
+
+        <!-- Description -->
+        @if (detailOffre.description) {
+          <div>
+            <p class="text-xs text-gray-400 uppercase font-semibold mb-1">Description</p>
+            <p class="text-sm text-gray-700 whitespace-pre-line">{{ detailOffre.description }}</p>
+          </div>
+        }
+
+        <!-- Fichiers joints -->
+        <div>
+          <p class="text-xs text-gray-400 uppercase font-semibold mb-2">Fichiers joints</p>
+          <div class="grid grid-cols-2 gap-3">
+
+            <!-- CNIB -->
+            @if (detailOffre.cnib_filename) {
+              <div class="bg-gray-50 border border-gray-200 rounded-xl p-3">
+                <div class="flex items-center gap-2 mb-2">
+                  <svg class="w-5 h-5 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  </svg>
+                  <div class="min-w-0">
+                    <p class="text-xs font-semibold text-gray-700">CNIB</p>
+                    <p class="text-xs text-gray-400 truncate">{{ detailOffre.cnib_filename }}</p>
+                  </div>
+                </div>
+                <div class="flex gap-1.5">
+                  <button type="button"
+                    (click)="ouvrirFichier(detailOffre.idoffres, 'cnib', detailOffre.cnib_filename!, 'view')"
+                    class="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                    style="background:#fde8e8; color:#c0392b;">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                    <span>Voir</span>
+                  </button>
+                  <button type="button"
+                    (click)="ouvrirFichier(detailOffre.idoffres, 'cnib', detailOffre.cnib_filename!, 'download')"
+                    class="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    <span>DL</span>
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <div class="bg-gray-50 rounded-xl p-3 flex items-center gap-2 opacity-60">
+                <svg class="w-5 h-5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <div>
+                  <p class="text-xs font-semibold text-gray-500">CNIB</p>
+                  <p class="text-xs text-gray-400">Non fourni</p>
+                </div>
+              </div>
+            }
+
+            <!-- Offre PDF -->
+            @if (detailOffre.demandeOffre_filename) {
+              <div class="bg-gray-50 border border-gray-200 rounded-xl p-3">
+                <div class="flex items-center gap-2 mb-2">
+                  <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:#c0392b;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  </svg>
+                  <div class="min-w-0">
+                    <p class="text-xs font-semibold text-gray-700">Offre PDF</p>
+                    <p class="text-xs text-gray-400 truncate">{{ detailOffre.demandeOffre_filename }}</p>
+                  </div>
+                </div>
+                <div class="flex gap-1.5">
+                  <button type="button"
+                    (click)="ouvrirFichier(detailOffre.idoffres, 'demandeOffre', detailOffre.demandeOffre_filename!, 'view')"
+                    class="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                    style="background:#fde8e8; color:#c0392b;">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                    <span>Voir</span>
+                  </button>
+                  <button type="button"
+                    (click)="ouvrirFichier(detailOffre.idoffres, 'demandeOffre', detailOffre.demandeOffre_filename!, 'download')"
+                    class="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    <span>DL</span>
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <div class="bg-gray-50 rounded-xl p-3 flex items-center gap-2 opacity-60">
+                <svg class="w-5 h-5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <div>
+                  <p class="text-xs font-semibold text-gray-500">Offre PDF</p>
+                  <p class="text-xs text-gray-400">Non fourni</p>
+                </div>
+              </div>
+            }
+
+          </div>
+        </div>
+
+        <!-- Motif refus -->
+        @if (detailOffre.statusOffre === 'REJETEE' && detailOffre.motifRefus) {
+          <div class="bg-red-50 border border-red-100 rounded-xl p-4">
+            <p class="text-xs text-red-400 uppercase font-semibold mb-1">Motif du refus</p>
+            <p class="text-sm text-red-700">{{ detailOffre.motifRefus }}</p>
+          </div>
+        }
+
+        <!-- Dates -->
+        <div class="grid grid-cols-2 gap-3 text-xs text-gray-500">
+          <div>
+            <p class="font-semibold">Soumise le</p>
+            <p>{{ detailOffre.createdDate | date:'dd/MM/yyyy HH:mm' }}</p>
+          </div>
+          <div>
+            <p class="font-semibold">Dernière mise à jour</p>
+            <p>{{ detailOffre.lastModifiedDate | date:'dd/MM/yyyy HH:mm' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer détail -->
+      <div class="flex items-center justify-between gap-3 px-6 py-4 border-t border-gray-100">
+        @if (peutEvaluer(detailOffre)) {
+          <button
+            (click)="ouvrirTraitement(detailOffre); fermerDetail()"
+            class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white rounded-xl transition-colors"
+            style="background:#c0392b;">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+            </svg>
+            Traiter cette offre
+          </button>
+        }
+        <button
+          (click)="fermerDetail()"
+          class="px-4 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
+          Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+}

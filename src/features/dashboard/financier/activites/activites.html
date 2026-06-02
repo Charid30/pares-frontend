@@ -1,0 +1,163 @@
+<!-- activites.html — Activités récentes Agent Financier -->
+<div class="space-y-5">
+
+  <!-- En-tête -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Activités & Suivi</h1>
+      <p class="text-sm text-gray-500 mt-0.5">Activités récentes et éléments en attente de traitement</p>
+    </div>
+    <button (click)="refreshAll()"
+            class="flex items-center gap-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-xl transition-colors self-start sm:self-auto">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      </svg>
+      Actualiser
+    </button>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+    <!-- ===== ÉLÉMENTS EN ATTENTE ===== -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-50 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 bg-orange-100 rounded-xl flex items-center justify-center">
+            <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-gray-900">Éléments en attente</h2>
+            <p class="text-[10px] text-gray-400">Nécessitent votre attention</p>
+          </div>
+        </div>
+        <span *ngIf="!loadingPending && pendingItems.length > 0"
+              class="text-[10px] font-bold px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full">
+          {{ pendingItems.length }}
+        </span>
+      </div>
+
+      <!-- Skeleton -->
+      <div *ngIf="loadingPending" class="divide-y divide-gray-50">
+        <div *ngFor="let i of [1,2,3,4]" class="flex items-center gap-3 px-5 py-3.5 animate-pulse">
+          <div class="w-8 h-8 rounded-xl bg-gray-200 flex-shrink-0"></div>
+          <div class="flex-1">
+            <div class="w-40 h-3.5 bg-gray-200 rounded mb-1.5"></div>
+            <div class="w-24 h-3 bg-gray-100 rounded"></div>
+          </div>
+          <div class="w-14 h-5 bg-gray-100 rounded-full"></div>
+        </div>
+      </div>
+
+      <!-- Erreur -->
+      <div *ngIf="errorPending && !loadingPending" class="px-5 py-8 text-center">
+        <p class="text-sm text-red-500">{{ errorPending }}</p>
+        <button (click)="loadPending()" class="mt-2 text-xs text-emerald-600 hover:underline">Réessayer</button>
+      </div>
+
+      <!-- Vide -->
+      <div *ngIf="!loadingPending && !errorPending && pendingItems.length === 0"
+           class="flex flex-col items-center justify-center py-10 px-6 text-center">
+        <div class="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center mb-3">
+          <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <p class="text-sm text-gray-500 font-medium">Tout est à jour !</p>
+        <p class="text-xs text-gray-400 mt-1">Aucun élément en attente</p>
+      </div>
+
+      <!-- Liste -->
+      <div *ngIf="!loadingPending && !errorPending && pendingItems.length > 0"
+           class="divide-y divide-gray-50 max-h-96 overflow-y-auto">
+        <div *ngFor="let item of pendingItems"
+             class="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50/50 transition-colors">
+          <div class="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+               [ngClass]="getActivityColor(item.type)">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" [attr.d]="getActivityIcon(item.type)" />
+            </svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-gray-900 truncate">{{ item.title }}</p>
+            <p class="text-xs text-gray-400 truncate">{{ item.subtitle }}</p>
+          </div>
+          <div class="flex-shrink-0 text-right">
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full block mb-1"
+                  [ngClass]="getPriorityClass(item.priority)">
+              {{ getPriorityLabel(item.priority) }}
+            </span>
+            <p class="text-[10px] text-gray-400">{{ formatDate(item.date) }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ACTIVITÉS RÉCENTES ===== -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-50 flex items-center gap-2.5">
+        <div class="w-8 h-8 bg-emerald-100 rounded-xl flex items-center justify-center">
+          <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-sm font-bold text-gray-900">Activités récentes</h2>
+          <p class="text-[10px] text-gray-400">Dernières actions sur la plateforme</p>
+        </div>
+      </div>
+
+      <!-- Skeleton -->
+      <div *ngIf="loadingActivities" class="divide-y divide-gray-50">
+        <div *ngFor="let i of [1,2,3,4,5]" class="flex items-start gap-3 px-5 py-3.5 animate-pulse">
+          <div class="w-8 h-8 rounded-xl bg-gray-200 flex-shrink-0 mt-0.5"></div>
+          <div class="flex-1">
+            <div class="w-44 h-3.5 bg-gray-200 rounded mb-1.5"></div>
+            <div class="w-32 h-3 bg-gray-100 rounded mb-1"></div>
+            <div class="w-20 h-3 bg-gray-100 rounded"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Erreur -->
+      <div *ngIf="errorActivities && !loadingActivities" class="px-5 py-8 text-center">
+        <p class="text-sm text-red-500">{{ errorActivities }}</p>
+        <button (click)="loadActivities()" class="mt-2 text-xs text-emerald-600 hover:underline">Réessayer</button>
+      </div>
+
+      <!-- Vide -->
+      <div *ngIf="!loadingActivities && !errorActivities && activities.length === 0"
+           class="flex flex-col items-center justify-center py-10 px-6 text-center">
+        <p class="text-sm text-gray-400">Aucune activité récente</p>
+      </div>
+
+      <!-- Liste -->
+      <div *ngIf="!loadingActivities && !errorActivities && activities.length > 0"
+           class="divide-y divide-gray-50 max-h-96 overflow-y-auto">
+        <div *ngFor="let activity of activities"
+             class="flex items-start gap-3 px-5 py-3.5 hover:bg-gray-50/50 transition-colors">
+          <div class="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
+               [ngClass]="getActivityColor(activity.type)">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" [attr.d]="getActivityIcon(activity.type)" />
+            </svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <p class="text-sm font-semibold text-gray-900">{{ activity.action }}</p>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">{{ getTypeLabel(activity.type) }}</span>
+            </div>
+            <p class="text-xs text-gray-500 mt-0.5 truncate">{{ activity.description }}</p>
+            <div class="flex items-center gap-2 mt-1">
+              <p class="text-[10px] text-gray-400">{{ activity.user }}</p>
+              <span class="text-gray-300">·</span>
+              <p class="text-[10px] text-gray-400">{{ formatDate(activity.date) }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

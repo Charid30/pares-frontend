@@ -1,0 +1,396 @@
+<!-- stages-suivi.html -->
+<div class="p-3 sm:p-6 space-y-4 sm:space-y-6">
+
+  <!-- ══════════════════════════════════════════════════
+       EN-TÊTE
+       ══════════════════════════════════════════════════ -->
+  <div class="flex items-center justify-between gap-3">
+    <div>
+      <h1 class="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">Suivi des stages</h1>
+      <p class="text-xs sm:text-sm text-gray-500 mt-0.5">
+        Limite : <span class="font-semibold text-indigo-600">{{ DUREE_MAX_MOIS }} mois</span> continus
+      </p>
+    </div>
+    <button
+      (click)="loadSuivi()"
+      class="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 active:scale-95 transition-all shadow-sm"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      </svg>
+      <span class="hidden sm:inline">Actualiser</span>
+    </button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       CARTES STATISTIQUES — 2 colonnes sur mobile, 4 sur desktop
+       ══════════════════════════════════════════════════ -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+
+    <!-- En cours -->
+    <div class="bg-white rounded-2xl border border-gray-100 p-3 sm:p-4 shadow-sm flex items-center gap-3">
+      <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
+        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <div class="min-w-0">
+        <p class="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{{ totalEnCours }}</p>
+        <p class="text-xs text-gray-400 mt-0.5 truncate">En cours</p>
+      </div>
+    </div>
+
+    <!-- À la limite -->
+    <div class="bg-white rounded-2xl border border-red-100 p-3 sm:p-4 shadow-sm flex items-center gap-3">
+      <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0">
+        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.07 16.5c-.77.833.193 2.5 1.732 2.5z" />
+        </svg>
+      </div>
+      <div class="min-w-0">
+        <p class="text-xl sm:text-2xl font-bold text-red-600 leading-none">{{ totalAtLimite }}</p>
+        <p class="text-xs text-gray-400 mt-0.5 truncate">Limite 6 mois</p>
+      </div>
+    </div>
+
+    <!-- En alerte -->
+    <div class="bg-white rounded-2xl border border-orange-100 p-3 sm:p-4 shadow-sm flex items-center gap-3">
+      <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0">
+        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+        </svg>
+      </div>
+      <div class="min-w-0">
+        <p class="text-xl sm:text-2xl font-bold text-orange-500 leading-none">{{ totalEnAlerte }}</p>
+        <p class="text-xs text-gray-400 mt-0.5 truncate">En alerte</p>
+      </div>
+    </div>
+
+    <!-- Renouvellements -->
+    <div class="bg-white rounded-2xl border border-purple-100 p-3 sm:p-4 shadow-sm flex items-center gap-3">
+      <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
+        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+      </div>
+      <div class="min-w-0">
+        <p class="text-xl sm:text-2xl font-bold text-purple-600 leading-none">{{ totalRenouvellement }}</p>
+        <p class="text-xs text-gray-400 mt-0.5 truncate">Renouvellem.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       BARRE DE RECHERCHE
+       ══════════════════════════════════════════════════ -->
+  <div class="bg-white rounded-2xl border border-gray-100 px-3 py-3 sm:px-4 shadow-sm">
+    <div class="flex gap-2">
+      <div class="relative flex-1">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          (input)="onSearch()"
+          placeholder="Nom, email, domaine..."
+          class="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white focus:border-transparent transition-all"
+        />
+      </div>
+      <button
+        (click)="onSearchServer()"
+        class="px-3 sm:px-4 py-2.5 bg-indigo-50 text-indigo-700 rounded-xl text-sm font-medium hover:bg-indigo-100 active:scale-95 transition-all flex-shrink-0"
+      >
+        <svg class="w-4 h-4 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <span class="hidden sm:inline">Filtrer</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       ÉTATS : CHARGEMENT / ERREUR / VIDE
+       ══════════════════════════════════════════════════ -->
+
+  @if (isLoading) {
+    <div class="flex justify-center items-center py-16">
+      <div class="flex flex-col items-center gap-3">
+        <svg class="w-9 h-9 text-indigo-500 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p class="text-gray-400 text-sm">Chargement du suivi...</p>
+      </div>
+    </div>
+  }
+
+  @if (!isLoading && errorMessage) {
+    <div class="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-start gap-3">
+      <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <p class="text-red-700 text-sm">{{ errorMessage }}</p>
+    </div>
+  }
+
+  @if (!isLoading && !errorMessage && filteredStages.length === 0) {
+    <div class="bg-white rounded-2xl border border-gray-100 p-10 text-center shadow-sm">
+      <div class="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-7 h-7 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+      </div>
+      <p class="text-gray-600 font-semibold">Aucun stage en cours</p>
+      <p class="text-gray-400 text-sm mt-1">Il n'y a actuellement aucun stage actif à suivre.</p>
+    </div>
+  }
+
+  <!-- ══════════════════════════════════════════════════
+       LISTE DES STAGES
+       ══════════════════════════════════════════════════ -->
+  @if (!isLoading && sortedStages.length > 0) {
+    <div class="space-y-3 sm:space-y-4">
+
+      @for (stage of sortedStages; track stage.idstage) {
+        <div class="bg-white rounded-2xl overflow-hidden shadow-sm transition-all hover:shadow-md"
+          [ngClass]="{
+            'border-2 border-red-400':    stage.moisConsommes >= DUREE_MAX_MOIS,
+            'border-2 border-orange-400': stage.moisConsommes >= (DUREE_MAX_MOIS * 0.8) && stage.moisConsommes < DUREE_MAX_MOIS,
+            'border border-gray-100':     stage.moisConsommes < (DUREE_MAX_MOIS * 0.8)
+          }"
+        >
+
+          <!-- Bandeau alerte (rouge ou orange) -->
+          @if (stage.moisConsommes >= DUREE_MAX_MOIS) {
+            <div class="bg-red-600 text-white text-xs font-semibold px-4 py-1.5 flex items-center gap-2">
+              <svg class="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+              </svg>
+              LIMITE DE 6 MOIS ATTEINTE — Renouvellement non autorisé
+            </div>
+          }
+          @else if (stage.moisConsommes >= (DUREE_MAX_MOIS * 0.8)) {
+            <div class="bg-orange-500 text-white text-xs font-semibold px-4 py-1.5 flex items-center gap-2">
+              <svg class="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+              </svg>
+              ALERTE — {{ stage.moisRestantsAvantLimit }} mois restants avant la limite
+            </div>
+          }
+
+          <div class="p-4 sm:p-5 space-y-4">
+
+            <!-- ── Ligne 1 : Avatar + Nom + Badges ── -->
+            <div class="flex items-start gap-3">
+              <!-- Avatar initiales -->
+              <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center font-bold text-sm flex-shrink-0"
+                [ngClass]="{
+                  'bg-red-100 text-red-700':    stage.moisConsommes >= DUREE_MAX_MOIS,
+                  'bg-orange-100 text-orange-700': stage.moisConsommes >= (DUREE_MAX_MOIS * 0.8) && stage.moisConsommes < DUREE_MAX_MOIS,
+                  'bg-indigo-100 text-indigo-700': stage.moisConsommes < (DUREE_MAX_MOIS * 0.8)
+                }"
+              >
+                {{ stage.candidat.prenom.charAt(0) }}{{ stage.candidat.nom.charAt(0) }}
+              </div>
+
+              <!-- Nom + email + badges -->
+              <div class="flex-1 min-w-0">
+                <p class="font-semibold text-gray-900 text-sm sm:text-base truncate">{{ getNomComplet(stage) }}</p>
+                <p class="text-xs text-gray-400 truncate">{{ stage.candidat.email }}</p>
+
+                <!-- Badges inline -->
+                <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
+
+                  <!-- Badge jours restants -->
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                    [ngClass]="getJoursRestantsBadgeClass(stage.joursRestants)">
+                    {{ getJoursRestantsLabel(stage.joursRestants) }}
+                  </span>
+
+                  <!-- Badge renouvellement -->
+                  @if (stage.estRenouvellement) {
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      Renouvellement
+                    </span>
+                  }
+
+                </div>
+              </div>
+            </div>
+
+            <!-- ── Ligne 2 : Méta-infos du stage (grille 2 colonnes) ── -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 bg-gray-50 rounded-xl p-3">
+              <div>
+                <p class="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Type</p>
+                <p class="text-sm font-medium text-gray-700 truncate">{{ stage.typeStage }}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Domaine</p>
+                <p class="text-sm font-medium text-gray-700 truncate" [title]="stage.domaineStage">{{ stage.domaineStage }}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Début chaîne</p>
+                <p class="text-sm font-medium text-gray-700">{{ formatDate(stage.dateDebutChaine) }}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Fin actuelle</p>
+                <p class="text-sm font-medium text-gray-700">{{ formatDate(stage.dateFinEffective) }}</p>
+              </div>
+            </div>
+
+            <!-- ── Ligne 3 : Jauge durée cumulée ── -->
+            <div class="space-y-2">
+
+              <!-- Label + valeur -->
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-medium text-gray-500">Durée cumulée</span>
+                <span class="text-sm font-bold tabular-nums" [ngClass]="getProgressTextColor(stage.moisConsommes)">
+                  {{ stage.moisConsommes }} <span class="font-normal text-gray-400">/</span> {{ DUREE_MAX_MOIS }} mois
+                </span>
+              </div>
+
+              <!-- Barre de progression avec segments -->
+              <div class="relative">
+                <div class="w-full bg-gray-100 rounded-full h-4 overflow-hidden">
+                  <div
+                    class="h-4 rounded-full transition-all duration-700 ease-out"
+                    [ngClass]="getProgressColor(stage.moisConsommes)"
+                    [style.width.%]="getProgressPercent(stage.moisConsommes)"
+                  ></div>
+                </div>
+                <!-- Marqueur mi-chemin -->
+                <div class="absolute top-0 left-1/2 -translate-x-1/2 h-4 w-0.5 bg-white opacity-60 rounded"></div>
+              </div>
+
+              <!-- Graduations -->
+              <div class="flex justify-between text-xs text-gray-300">
+                <span>0</span>
+                <span>3 mois</span>
+                <span>6 mois</span>
+              </div>
+
+              <!-- Badge statut renouvellement -->
+              <div class="flex justify-end">
+                @if (stage.renouvellementPossible) {
+                  <span class="inline-flex items-center gap-1 text-xs text-green-700 bg-green-50 border border-green-100 px-2.5 py-1 rounded-lg font-medium">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Renouvellement possible · {{ stage.moisRestantsAvantLimit }} mois dispo.
+                  </span>
+                } @else {
+                  <span class="inline-flex items-center gap-1 text-xs text-red-700 bg-red-50 border border-red-100 px-2.5 py-1 rounded-lg font-medium">
+                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                    Renouvellement non autorisé
+                  </span>
+                }
+              </div>
+
+            </div>
+            <!-- fin jauge -->
+
+          </div>
+          <!-- fin p-4 -->
+
+        </div>
+        <!-- fin carte -->
+      }
+    </div>
+
+    <!-- ── Pagination ── -->
+    @if (totalPages > 1) {
+      <div class="bg-white rounded-2xl border border-gray-100 px-4 py-3 shadow-sm">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p class="text-xs sm:text-sm text-gray-500">
+            Page <span class="font-semibold text-gray-700">{{ currentPage }}</span> sur
+            <span class="font-semibold text-gray-700">{{ totalPages }}</span>
+            · <span class="font-semibold text-indigo-600">{{ totalItems }}</span> stage(s)
+          </p>
+          <div class="flex items-center gap-1">
+            <!-- Première page -->
+            <button (click)="goToPage(1)"
+                    [disabled]="currentPage === 1"
+                    class="p-2 rounded-lg hover:bg-indigo-50 text-gray-500 hover:text-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+              </svg>
+            </button>
+            <!-- Page précédente -->
+            <button (click)="goToPage(currentPage - 1)"
+                    [disabled]="currentPage === 1"
+                    class="p-2 rounded-lg hover:bg-indigo-50 text-gray-500 hover:text-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <!-- Pages numérotées -->
+            @for (page of visiblePages; track page) {
+              <button (click)="goToPage(page)"
+                      class="w-8 h-8 rounded-lg text-sm font-medium transition-colors"
+                      [ngClass]="page === currentPage ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-600 hover:bg-indigo-50 hover:text-indigo-600'">
+                {{ page }}
+              </button>
+            }
+            <!-- Page suivante -->
+            <button (click)="goToPage(currentPage + 1)"
+                    [disabled]="currentPage === totalPages"
+                    class="p-2 rounded-lg hover:bg-indigo-50 text-gray-500 hover:text-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+            <!-- Dernière page -->
+            <button (click)="goToPage(totalPages)"
+                    [disabled]="currentPage === totalPages"
+                    class="p-2 rounded-lg hover:bg-indigo-50 text-gray-500 hover:text-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ── Légende ── -->
+    <div class="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+      <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Légende</p>
+      <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-4 text-xs">
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 rounded-full bg-green-500 flex-shrink-0"></div>
+          <span class="text-gray-500">Normal (0–60%)</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 rounded-full bg-yellow-500 flex-shrink-0"></div>
+          <span class="text-gray-500">Attention (60–80%)</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 rounded-full bg-orange-500 flex-shrink-0"></div>
+          <span class="text-gray-500">Alerte (80–100%)</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 rounded-full bg-red-600 flex-shrink-0"></div>
+          <span class="text-gray-500">Limite atteinte</span>
+        </div>
+      </div>
+    </div>
+
+  }
+  <!-- fin @if sortedStages -->
+
+</div>

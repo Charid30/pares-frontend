@@ -1,0 +1,74 @@
+<!-- not-found.component.html -->
+<div class="min-h-screen bg-slate-900 flex flex-col items-center justify-center relative overflow-hidden px-4">
+
+  <!-- Grille décorative -->
+  <div class="absolute inset-0 opacity-[0.04]"
+       style="background-image: radial-gradient(circle, #ffffff 1px, transparent 1px); background-size: 32px 32px;"></div>
+
+  <!-- Halo lumineux -->
+  <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px]
+              bg-primary-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+  <!-- Contenu -->
+  <div class="relative z-10 flex flex-col items-center text-center max-w-lg">
+
+    <!-- Logo -->
+    <a routerLink="/accueil" class="flex items-center gap-3 mb-12 opacity-80 hover:opacity-100 transition-opacity">
+      <img src="assets/images/logo-sonabhy.png" alt="SONABHY" class="h-9 w-9">
+      <span class="text-white font-bold text-base">SONABHY Portail</span>
+    </a>
+
+    <!-- 404 -->
+    <div class="relative mb-6">
+      <p class="text-[10rem] md:text-[13rem] font-black text-white/5 leading-none select-none">404</p>
+      <div class="absolute inset-0 flex items-center justify-center">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-0.5 bg-primary-500 rounded-full"></div>
+          <span class="text-primary-400 text-xs font-semibold uppercase tracking-widest">Page introuvable</span>
+          <div class="w-10 h-0.5 bg-primary-500 rounded-full"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Titre -->
+    <h1 class="text-3xl md:text-4xl font-bold text-white mb-4 leading-tight">
+      Cette page n'existe pas
+    </h1>
+
+    <!-- Description -->
+    <p class="text-gray-400 text-base leading-relaxed mb-10">
+      L'adresse que vous avez saisie est incorrecte ou la page a été déplacée.
+      Retournez à l'accueil pour continuer.
+    </p>
+
+    <!-- Actions -->
+    <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+      <a routerLink="/accueil"
+         class="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl
+                bg-primary-500 hover:bg-primary-600 text-white font-semibold text-sm
+                transition-all duration-200 shadow-lg shadow-primary-500/20">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+        </svg>
+        Retour à l'accueil
+      </a>
+      <a routerLink="/services"
+         class="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl
+                border border-white/10 hover:border-white/25 text-gray-300 hover:text-white
+                font-medium text-sm transition-all duration-200">
+        Voir nos services
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+        </svg>
+      </a>
+    </div>
+
+  </div>
+
+  <!-- Bas de page -->
+  <div class="absolute bottom-6 left-0 right-0 flex justify-center">
+    <span class="text-gray-600 text-xs">© 2026 SONABHY · Burkina Faso</span>
+  </div>
+
+</div>

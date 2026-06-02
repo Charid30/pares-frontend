@@ -1,0 +1,86 @@
+/* candidat-layout.component.css - AVEC SOUS-MENUS */
+
+/* Animations */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Menu dropdown */
+.absolute {
+  animation: slideDown 0.2s ease-out;
+}
+
+/* Smooth transitions */
+nav a,
+nav button {
+  transition: all 0.2s ease;
+}
+
+/* Active link indicator */
+nav a.text-primary-500 {
+  position: relative;
+}
+
+nav a.text-primary-500::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: currentColor;
+  border-radius: 2px;
+}
+
+/* Rotation de la flèche du sous-menu */
+.rotate-180 {
+  transform: rotate(180deg);
+}
+
+/* Sous-menu mobile slide */
+.ml-8 {
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Mobile menu animation */
+@media (max-width: 768px) {
+  .md\:hidden > div {
+    animation: slideDown 0.3s ease-out;
+  }
+}
+
+/* Hover effect sur les liens */
+nav a:hover,
+nav button:hover {
+  transform: translateY(-1px);
+}
+
+/* Badge notification pulse */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.bg-primary-500.rounded-full {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

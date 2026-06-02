@@ -1,0 +1,564 @@
+<!-- aides-sociales.html — Gestion aides sociales Agent Financier (v2 : traitement) -->
+<div class="space-y-5 pb-8">
+
+  <!-- ── En-tête ─────────────────────────────────────────────────────────── -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Aides Sociales</h1>
+      <p class="text-sm text-gray-500 mt-0.5">Gérez et traitez les demandes d'aides sociales</p>
+    </div>
+    <button (click)="loadAides()"
+            class="flex items-center gap-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-xl transition-colors self-start sm:self-auto">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      </svg>
+      Actualiser
+    </button>
+  </div>
+
+  <!-- ── Message succès ──────────────────────────────────────────────────── -->
+  <div *ngIf="evalSuccessMessage"
+       class="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-xl text-green-700">
+    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <p class="text-sm font-medium">{{ evalSuccessMessage }}</p>
+  </div>
+
+  <!-- ── Stats rapides ───────────────────────────────────────────────────── -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm text-center">
+      <p class="text-2xl font-black text-gray-800">{{ totalAides }}</p>
+      <p class="text-xs text-gray-500 mt-0.5">Total</p>
+    </div>
+    <div class="bg-white rounded-2xl p-4 border border-emerald-100 shadow-sm text-center">
+      <p class="text-2xl font-black text-emerald-600">{{ aidesActives }}</p>
+      <p class="text-xs text-gray-500 mt-0.5">Actives</p>
+    </div>
+    <div class="bg-white rounded-2xl p-4 border border-orange-100 shadow-sm text-center">
+      <p class="text-2xl font-black text-orange-600">{{ aidesEnAttente }}</p>
+      <p class="text-xs text-gray-500 mt-0.5">En cours</p>
+    </div>
+    <!-- Badge demandes candidats à traiter -->
+    <div class="bg-white rounded-2xl p-4 border shadow-sm text-center"
+         [ngClass]="demandesCandidatsEnAttente > 0 ? 'border-red-200 bg-red-50' : 'border-gray-100'">
+      <p class="text-2xl font-black" [ngClass]="demandesCandidatsEnAttente > 0 ? 'text-red-600' : 'text-gray-400'">
+        {{ demandesCandidatsEnAttente }}
+      </p>
+      <p class="text-xs text-gray-500 mt-0.5">À traiter</p>
+    </div>
+  </div>
+
+  <!-- ── Filtres ─────────────────────────────────────────────────────────── -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 px-3 py-3 sm:px-4 sm:py-3.5">
+    <div class="flex gap-2">
+      <div class="relative flex-1">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input type="text" [(ngModel)]="searchQuery" (keyup.enter)="onSearch()" (input)="onSearch()"
+               placeholder="Titre, type, candidat..."
+               class="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:bg-white focus:border-transparent transition-all">
+      </div>
+      <button (click)="loadAides()"
+              class="px-3 sm:px-4 py-2.5 bg-emerald-50 text-emerald-700 rounded-xl text-sm font-medium hover:bg-emerald-100 transition-all flex-shrink-0 flex items-center gap-1.5 border border-emerald-200">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        <span class="hidden sm:inline">Actualiser</span>
+      </button>
+    </div>
+    <div class="flex flex-wrap items-center gap-2 mt-2.5">
+      <!-- Filtre statut -->
+      <div class="relative">
+        <select [(ngModel)]="filterStatus" (change)="applyFilters()"
+                class="appearance-none pl-3 pr-7 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer focus:outline-none"
+                [ngClass]="filterStatus ? 'bg-emerald-50 border-emerald-300 text-emerald-800' : 'bg-gray-50 border-gray-200 text-gray-600'">
+          <option value="">Tous les statuts</option>
+          <option value="EN_ATTENTE">En attente</option>
+          <option value="EN_TRAITEMENT">En traitement</option>
+          <option value="VALIDEE">Validée</option>
+          <option value="REJETEE">Rejetée</option>
+          <option value="ACTIVE">Active</option>
+          <option value="CLOTUREE">Clôturée</option>
+          <option value="BROUILLON">Brouillon</option>
+        </select>
+        <svg class="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
+      <!-- Filtre créé par -->
+      <div class="relative">
+        <select [(ngModel)]="filterCreePar" (change)="applyFilters()"
+                class="appearance-none pl-3 pr-7 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer focus:outline-none"
+                [ngClass]="filterCreePar ? 'bg-teal-50 border-teal-300 text-teal-800' : 'bg-gray-50 border-gray-200 text-gray-600'">
+          <option value="">Tous les créateurs</option>
+          <option value="CANDIDAT">Demandes candidats</option>
+          <option value="ADMIN">Programmes agents</option>
+        </select>
+        <svg class="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
+      <!-- Effacer -->
+      <button *ngIf="filterStatus || filterCreePar || searchQuery" (click)="resetFilters()"
+              class="flex items-center gap-1 pl-2.5 pr-3 py-1.5 rounded-full text-xs font-medium bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 transition-all">
+        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+        Effacer
+      </button>
+      <span *ngIf="filterStatus || filterCreePar || searchQuery" class="ml-auto text-xs text-gray-400 flex-shrink-0">
+        {{ filteredAides.length }} résultat(s)
+      </span>
+    </div>
+  </div>
+
+  <!-- ── Erreur ──────────────────────────────────────────────────────────── -->
+  <div *ngIf="errorMessage"
+       class="bg-red-50 border border-red-200 rounded-2xl px-5 py-4 flex items-center gap-3">
+    <svg class="w-5 h-5 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <p class="text-sm text-red-700">{{ errorMessage }}</p>
+    <button (click)="loadAides()" class="ml-auto text-xs font-medium text-red-600 hover:underline">Réessayer</button>
+  </div>
+
+  <!-- ── Liste ───────────────────────────────────────────────────────────── -->
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+
+    <!-- Skeleton -->
+    <div *ngIf="isLoading" class="divide-y divide-gray-50">
+      <div *ngFor="let i of [1,2,3,4,5]" class="flex items-center gap-4 px-5 py-4 animate-pulse">
+        <div class="w-10 h-10 rounded-xl bg-gray-200 flex-shrink-0"></div>
+        <div class="flex-1">
+          <div class="w-48 h-4 bg-gray-200 rounded mb-2"></div>
+          <div class="w-32 h-3 bg-gray-100 rounded"></div>
+        </div>
+        <div class="w-20 h-5 bg-gray-100 rounded-full"></div>
+        <div class="w-16 h-5 bg-gray-100 rounded-full"></div>
+        <div class="w-28 h-8 bg-gray-100 rounded-xl"></div>
+      </div>
+    </div>
+
+    <!-- Vide -->
+    <div *ngIf="!isLoading && filteredAides.length === 0"
+         class="flex flex-col items-center justify-center py-16 px-6 text-center">
+      <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
+        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+        </svg>
+      </div>
+      <p class="text-sm font-semibold text-gray-700 mb-1">Aucune aide trouvée</p>
+      <p class="text-xs text-gray-400">Modifiez vos filtres ou actualisez la liste</p>
+    </div>
+
+    <!-- Liste avec actions -->
+    <ng-container *ngIf="!isLoading && filteredAides.length > 0">
+      <!-- En-tête table desktop -->
+      <div class="hidden lg:grid grid-cols-12 gap-4 px-5 py-3 bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+        <div class="col-span-4">Demande / Titre</div>
+        <div class="col-span-2">Provenance</div>
+        <div class="col-span-2">Statut</div>
+        <div class="col-span-2">Date</div>
+        <div class="col-span-2 text-right">Actions</div>
+      </div>
+
+      <div class="divide-y divide-gray-50">
+        <div *ngFor="let aide of pagedAides"
+             class="grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-4 px-5 py-4 hover:bg-gray-50/50 transition-colors">
+
+          <!-- Titre / Type -->
+          <div class="lg:col-span-4 flex items-start gap-3">
+            <!-- Barre de statut verticale mobile -->
+            <div class="w-1 self-stretch rounded-full flex-shrink-0 lg:hidden"
+                 [ngClass]="getStatusBarClass(aide.statusAide)"></div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2 flex-wrap mb-0.5">
+                <p class="text-sm font-semibold text-gray-900 truncate">{{ aide.titre }}</p>
+                <!-- Badge urgence -->
+                <span *ngIf="aide.creePar === 'CANDIDAT' && aide.statusAide === 'EN_ATTENTE'"
+                      class="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded-full animate-pulse">
+                  <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3"/></svg>
+                  Urgent
+                </span>
+              </div>
+              <p class="text-xs text-gray-400">{{ aide.typeAide }}</p>
+              <!-- Nom candidat si demande candidat -->
+              <p *ngIf="aide.creePar === 'CANDIDAT' && aide.candidatCreateur"
+                 class="text-xs text-indigo-600 mt-0.5 font-medium">
+                {{ aide.candidatCreateur.prenom }} {{ aide.candidatCreateur.nom }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Provenance -->
+          <div class="lg:col-span-2 flex items-center">
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                  [ngClass]="getCreeParClass(aide.creePar)">
+              {{ getCreePar(aide.creePar) }}
+            </span>
+          </div>
+
+          <!-- Statut -->
+          <div class="lg:col-span-2 flex items-center">
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                  [ngClass]="getStatusClass(aide.statusAide)">
+              {{ getStatusLabel(aide.statusAide) }}
+            </span>
+          </div>
+
+          <!-- Date -->
+          <div class="lg:col-span-2 flex items-center">
+            <p class="text-xs text-gray-400">{{ formatDate(aide.createdDate) }}</p>
+          </div>
+
+          <!-- Actions -->
+          <div class="lg:col-span-2 flex items-center justify-end gap-2">
+            <!-- Voir détail -->
+            <button (click)="ouvrirDetail(aide)"
+                    class="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                    title="Voir les détails">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </button>
+
+            <!-- Boutons d'évaluation (demandes candidats EN_ATTENTE ou EN_TRAITEMENT) -->
+            <ng-container *ngIf="peutEvaluer(aide)">
+              <!-- Mettre en traitement -->
+              <button *ngIf="aide.statusAide === 'EN_ATTENTE'"
+                      (click)="ouvrirEvaluation(aide, 'EN_TRAITEMENT')"
+                      class="px-2.5 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap"
+                      title="Passer en traitement">
+                Traiter
+              </button>
+              <!-- Valider -->
+              <button (click)="ouvrirEvaluation(aide, 'VALIDEE')"
+                      class="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
+                      title="Valider la demande">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                </svg>
+              </button>
+              <!-- Rejeter -->
+              <button (click)="ouvrirEvaluation(aide, 'REJETEE')"
+                      class="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
+                      title="Rejeter la demande">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </ng-container>
+
+            <!-- Badge statut final (non modifiable) -->
+            <span *ngIf="!peutEvaluer(aide) && (aide.statusAide === 'VALIDEE' || aide.statusAide === 'REJETEE')"
+                  class="text-[10px] font-medium text-gray-400 italic">
+              {{ aide.statusAide === 'VALIDEE' ? 'Traitée ✓' : 'Rejetée ✗' }}
+            </span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div *ngIf="totalPages > 1" class="flex items-center justify-between px-5 py-3 border-t border-gray-100">
+        <p class="text-xs text-gray-500">
+          {{ (currentPage - 1) * pageSize + 1 }}–{{ currentPage * pageSize > filteredAides.length ? filteredAides.length : currentPage * pageSize }} sur {{ filteredAides.length }}
+        </p>
+        <div class="flex items-center gap-1">
+          <button (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1"
+                  class="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <button *ngFor="let page of visiblePages" (click)="goToPage(page)"
+                  class="min-w-[28px] h-7 rounded-lg text-xs font-medium transition-colors"
+                  [ngClass]="page === currentPage ? 'bg-emerald-600 text-white' : 'text-gray-600 hover:bg-gray-100'">
+            {{ page }}
+          </button>
+          <button (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages"
+                  class="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+
+</div>
+
+<!-- ======================================================================
+     MODAL : DÉTAIL DE L'AIDE
+     ====================================================================== -->
+<div *ngIf="showDetailModal" class="fixed inset-0 z-50 overflow-y-auto">
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" (click)="fermerDetail()"></div>
+  <div class="flex min-h-full items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="relative bg-white w-full sm:rounded-2xl shadow-2xl sm:max-w-lg max-h-screen sm:max-h-[92vh] flex flex-col"
+         (click)="$event.stopPropagation()">
+
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4 sm:rounded-t-2xl flex-shrink-0">
+        <div class="flex items-start justify-between">
+          <div class="flex-1 min-w-0 pr-4">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-xs px-2 py-0.5 bg-white/20 text-white rounded-full font-medium">
+                {{ selectedAide?.typeAide }}
+              </span>
+              <span class="text-xs px-2 py-0.5 rounded-full font-medium"
+                    [ngClass]="selectedAide?.creePar === 'CANDIDAT' ? 'bg-indigo-200 text-indigo-800' : 'bg-emerald-200 text-emerald-800'">
+                {{ selectedAide?.creePar === 'CANDIDAT' ? 'Demande candidat' : 'Programme agent' }}
+              </span>
+            </div>
+            <h2 class="text-base font-bold text-white truncate">{{ selectedAide?.titre }}</h2>
+          </div>
+          <button (click)="fermerDetail()" class="p-1.5 hover:bg-white/20 rounded-lg transition-colors flex-shrink-0">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Corps -->
+      <div class="flex-1 overflow-y-auto p-6 space-y-5">
+
+        <!-- Statut actuel -->
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Statut actuel</h3>
+          <span class="text-sm font-bold px-3 py-1 rounded-full"
+                [ngClass]="getStatusClass(selectedAide?.statusAide || '')">
+            {{ getStatusLabel(selectedAide?.statusAide || '') }}
+          </span>
+        </div>
+
+        <!-- Demandeur (si candidat) -->
+        <div *ngIf="selectedAide?.creePar === 'CANDIDAT' && selectedAide?.candidatCreateur"
+             class="p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+          <h3 class="text-xs font-bold text-indigo-600 uppercase tracking-widest mb-3">Demandeur</h3>
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-indigo-200 flex items-center justify-center text-indigo-700 font-bold text-sm flex-shrink-0">
+              {{ getInitials(selectedAide?.candidatCreateur?.nom, selectedAide?.candidatCreateur?.prenom) }}
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-gray-900">
+                {{ selectedAide?.candidatCreateur?.prenom }} {{ selectedAide?.candidatCreateur?.nom }}
+              </p>
+              <p class="text-xs text-gray-500">{{ selectedAide?.candidatCreateur?.email }}</p>
+              <p *ngIf="selectedAide?.candidatCreateur?.telephone" class="text-xs text-gray-500">
+                {{ selectedAide?.candidatCreateur?.telephone }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Description / Motif -->
+        <div *ngIf="selectedAide?.description">
+          <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+            {{ selectedAide?.creePar === 'CANDIDAT' ? 'Motif de la demande' : 'Description' }}
+          </h3>
+          <p class="text-sm text-gray-700 bg-gray-50 rounded-xl p-4 leading-relaxed">{{ selectedAide?.description }}</p>
+        </div>
+
+        <!-- Motif refus -->
+        <div *ngIf="selectedAide?.statusAide === 'REJETEE' && selectedAide?.motifRefus"
+             class="p-4 bg-red-50 border border-red-200 rounded-xl">
+          <h3 class="text-xs font-bold text-red-500 uppercase tracking-widest mb-2">Motif du rejet</h3>
+          <p class="text-sm text-red-700">{{ selectedAide?.motifRefus }}</p>
+        </div>
+
+        <!-- Infos programme (si admin) -->
+        <ng-container *ngIf="selectedAide?.creePar === 'ADMIN'">
+          <div *ngIf="selectedAide?.conditionsRequises"
+               class="p-4 bg-gray-50 rounded-xl">
+            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Conditions requises</h3>
+            <p class="text-sm text-gray-700">{{ selectedAide?.conditionsRequises }}</p>
+          </div>
+          <div *ngIf="selectedAide?.dateDebut || selectedAide?.dateFin" class="grid grid-cols-2 gap-3">
+            <div *ngIf="selectedAide?.dateDebut" class="p-3 bg-emerald-50 rounded-xl">
+              <p class="text-xs text-emerald-600 font-medium mb-1">Date de début</p>
+              <p class="font-bold text-emerald-700 text-sm">{{ formatDate(selectedAide?.dateDebut || '') }}</p>
+            </div>
+            <div *ngIf="selectedAide?.dateFin" class="p-3 bg-gray-50 rounded-xl">
+              <p class="text-xs text-gray-500 font-medium mb-1">Date de fin</p>
+              <p class="font-bold text-gray-700 text-sm">{{ formatDate(selectedAide?.dateFin || '') }}</p>
+            </div>
+          </div>
+          <div *ngIf="selectedAide?.nombreBeneficiairesMax" class="p-3 bg-teal-50 rounded-xl">
+            <p class="text-xs text-teal-600 font-medium mb-1">Bénéficiaires</p>
+            <p class="font-bold text-teal-700 text-sm">
+              {{ selectedAide?.nombreBeneficiairesActuels || 0 }} / {{ selectedAide?.nombreBeneficiairesMax }}
+            </p>
+          </div>
+        </ng-container>
+
+        <!-- Documents joints (demande candidat) -->
+        <div *ngIf="selectedAide?.creePar === 'CANDIDAT'">
+          <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Documents soumis</h3>
+          <div class="flex items-center gap-2 p-3 bg-gray-50 rounded-xl">
+            <svg class="w-5 h-5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <p class="text-xs text-gray-600">CNIB + Lettre manuscrite joints lors de la soumission</p>
+          </div>
+        </div>
+
+        <!-- Date -->
+        <div class="p-3 bg-gray-50 rounded-xl">
+          <p class="text-xs text-gray-500 font-medium mb-1">Date de soumission</p>
+          <p class="font-bold text-gray-700 text-sm">{{ formatDate(selectedAide?.createdDate || '') }}</p>
+        </div>
+      </div>
+
+      <!-- Footer avec actions d'évaluation (si demande candidat à traiter) -->
+      <div class="bg-gray-50 px-6 py-4 border-t sm:rounded-b-2xl flex-shrink-0">
+        <ng-container *ngIf="selectedAide && peutEvaluer(selectedAide)">
+          <p class="text-xs text-gray-500 mb-3 font-medium">Actions disponibles :</p>
+          <div class="flex gap-2">
+            <button *ngIf="selectedAide.statusAide === 'EN_ATTENTE'"
+                    (click)="ouvrirEvaluation(selectedAide, 'EN_TRAITEMENT')"
+                    class="flex-1 px-3 py-2.5 bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-1.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              Prendre en charge
+            </button>
+            <button (click)="ouvrirEvaluation(selectedAide, 'VALIDEE')"
+                    class="flex-1 px-3 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-1.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+              </svg>
+              Valider
+            </button>
+            <button (click)="ouvrirEvaluation(selectedAide, 'REJETEE')"
+                    class="flex-1 px-3 py-2.5 bg-red-100 hover:bg-red-200 text-red-700 font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-1.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Rejeter
+            </button>
+          </div>
+        </ng-container>
+        <button *ngIf="!selectedAide || !peutEvaluer(selectedAide)"
+                (click)="fermerDetail()"
+                class="w-full px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-xl transition-colors">
+          Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================================
+     MODAL : CONFIRMATION D'ÉVALUATION
+     ====================================================================== -->
+<div *ngIf="showEvalModal" class="fixed inset-0 z-[60] overflow-y-auto">
+  <div class="fixed inset-0 bg-black/70 backdrop-blur-sm" (click)="fermerEvaluation()"></div>
+  <div class="flex min-h-full items-center justify-center p-4">
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md"
+         (click)="$event.stopPropagation()">
+
+      <!-- Header coloré selon l'action -->
+      <div class="px-6 py-5 rounded-t-2xl"
+           [ngClass]="evalStatut === 'VALIDEE' ? 'bg-gradient-to-r from-emerald-600 to-teal-600' :
+                      evalStatut === 'REJETEE' ? 'bg-gradient-to-r from-red-500 to-red-600' :
+                      'bg-gradient-to-r from-blue-500 to-blue-600'">
+        <div class="flex items-center gap-3">
+          <!-- Icône selon action -->
+          <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+            <svg *ngIf="evalStatut === 'VALIDEE'" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+            </svg>
+            <svg *ngIf="evalStatut === 'REJETEE'" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            <svg *ngIf="evalStatut === 'EN_TRAITEMENT'" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">
+              {{ evalStatut === 'VALIDEE' ? 'Valider la demande' :
+                 evalStatut === 'REJETEE' ? 'Rejeter la demande' :
+                 'Prendre en charge' }}
+            </h3>
+            <p class="text-xs text-white/70 truncate">{{ evalAide?.titre }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Corps -->
+      <div class="p-6 space-y-4">
+
+        <!-- Message de confirmation -->
+        <div class="p-4 rounded-xl"
+             [ngClass]="evalStatut === 'VALIDEE' ? 'bg-emerald-50 border border-emerald-100' :
+                        evalStatut === 'REJETEE' ? 'bg-red-50 border border-red-100' :
+                        'bg-blue-50 border border-blue-100'">
+          <p class="text-sm"
+             [ngClass]="evalStatut === 'VALIDEE' ? 'text-emerald-700' :
+                        evalStatut === 'REJETEE' ? 'text-red-700' : 'text-blue-700'">
+            <ng-container *ngIf="evalStatut === 'VALIDEE'">
+              Vous êtes sur le point de <strong>valider</strong> cette demande d'aide. Le candidat sera notifié.
+            </ng-container>
+            <ng-container *ngIf="evalStatut === 'REJETEE'">
+              Vous êtes sur le point de <strong>rejeter</strong> cette demande. Un motif est obligatoire.
+            </ng-container>
+            <ng-container *ngIf="evalStatut === 'EN_TRAITEMENT'">
+              La demande passera en statut <strong>"En traitement"</strong>. Vous pourrez ensuite valider ou rejeter.
+            </ng-container>
+          </p>
+        </div>
+
+        <!-- Champ motif de refus (obligatoire si REJETEE) -->
+        <div *ngIf="evalStatut === 'REJETEE'">
+          <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+            Motif du refus <span class="text-red-500">*</span>
+          </label>
+          <textarea [(ngModel)]="evalMotif" rows="3"
+                    placeholder="Expliquez la raison du rejet de cette demande..."
+                    class="w-full px-4 py-3 bg-gray-50 border-2 rounded-xl text-gray-900 text-sm resize-none transition-all focus:ring-0"
+                    [ngClass]="evalError ? 'border-red-400 focus:border-red-500' : 'border-gray-200 focus:border-red-400'">
+          </textarea>
+        </div>
+
+        <!-- Erreur -->
+        <div *ngIf="evalError" class="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          {{ evalError }}
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="bg-gray-50 px-6 py-4 flex gap-3 rounded-b-2xl border-t">
+        <button (click)="fermerEvaluation()" [disabled]="isEvaluating"
+                class="flex-1 px-4 py-3 bg-white border-2 border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50">
+          Annuler
+        </button>
+        <button (click)="confirmerEvaluation()" [disabled]="isEvaluating"
+                class="flex-1 px-4 py-3 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                [ngClass]="evalStatut === 'VALIDEE' ? 'bg-emerald-600 hover:bg-emerald-700' :
+                           evalStatut === 'REJETEE' ? 'bg-red-500 hover:bg-red-600' :
+                           'bg-blue-500 hover:bg-blue-600'">
+          <!-- Spinner -->
+          <svg *ngIf="isEvaluating" class="w-4 h-4 animate-spin" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <ng-container *ngIf="!isEvaluating">
+            {{ evalStatut === 'VALIDEE' ? 'Confirmer la validation' :
+               evalStatut === 'REJETEE' ? 'Confirmer le rejet' :
+               'Confirmer la prise en charge' }}
+          </ng-container>
+          <span *ngIf="isEvaluating">Traitement...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

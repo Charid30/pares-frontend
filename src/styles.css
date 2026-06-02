@@ -1,0 +1,357 @@
+/* styles.scss - Global styles */
+
+/* ================================== */
+/* IMPORTS - DOIVENT ÊTRE EN PREMIER */
+/* ================================== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* ================================== */
+/* CUSTOM BASE STYLES */
+/* ================================== */
+@layer base {
+  * {
+    @apply box-border;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply font-sans antialiased bg-gray-50 text-gray-900;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold text-gray-900;
+  }
+
+  h1 {
+    @apply text-4xl md:text-5xl;
+  }
+
+  h2 {
+    @apply text-3xl md:text-4xl;
+  }
+
+  h3 {
+    @apply text-2xl md:text-3xl;
+  }
+
+  h4 {
+    @apply text-xl md:text-2xl;
+  }
+
+  h5 {
+    @apply text-lg md:text-xl;
+  }
+
+  h6 {
+    @apply text-base md:text-lg;
+  }
+}
+
+/* ================================== */
+/* CUSTOM COMPONENTS */
+/* ================================== */
+@layer components {
+  /* Buttons */
+  .btn {
+    @apply px-6 py-3 rounded-lg font-medium transition-all duration-200 ease-in-out
+           focus:outline-none focus:ring-2 focus:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed
+           inline-flex items-center justify-center gap-2;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary-500 text-white hover:bg-primary-600 
+           focus:ring-primary-500 shadow-md hover:shadow-lg;
+  }
+
+  .btn-secondary {
+    @apply btn bg-secondary-500 text-white hover:bg-secondary-600 
+           focus:ring-secondary-500 shadow-md hover:shadow-lg;
+  }
+
+  .btn-outline {
+    @apply btn bg-transparent border-2 border-primary-500 text-primary-500 
+           hover:bg-primary-500 hover:text-white focus:ring-primary-500;
+  }
+
+  .btn-success {
+    @apply btn bg-success text-white hover:bg-success-dark 
+           focus:ring-success shadow-md hover:shadow-lg;
+  }
+
+  .btn-danger {
+    @apply btn bg-danger text-white hover:bg-danger-dark 
+           focus:ring-danger shadow-md hover:shadow-lg;
+  }
+
+  .btn-ghost {
+    @apply btn bg-transparent hover:bg-gray-100 text-gray-700 
+           focus:ring-gray-300;
+  }
+
+  /* Cards */
+  .card {
+    @apply bg-white rounded-xl shadow-soft hover:shadow-medium 
+           transition-all duration-300 overflow-hidden;
+  }
+
+  .card-body {
+    @apply p-6;
+  }
+
+  .card-header {
+    @apply px-6 py-4 border-b border-gray-200 bg-gray-50;
+  }
+
+  .card-footer {
+    @apply px-6 py-4 border-t border-gray-200 bg-gray-50;
+  }
+
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+  }
+
+  .badge-primary {
+    @apply badge bg-primary-100 text-primary-700;
+  }
+
+  .badge-success {
+    @apply badge bg-green-100 text-green-700;
+  }
+
+  .badge-danger {
+    @apply badge bg-red-100 text-red-700;
+  }
+
+  .badge-warning {
+    @apply badge bg-yellow-100 text-yellow-700;
+  }
+
+  .badge-info {
+    @apply badge bg-blue-100 text-blue-700;
+  }
+
+  /* Form Inputs */
+  .input {
+    @apply w-full px-4 py-3 rounded-lg border border-gray-300 
+           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+           placeholder-gray-400 transition-all duration-200;
+  }
+
+  .input-error {
+    @apply input border-red-500 focus:ring-red-500;
+  }
+
+  .input-success {
+    @apply input border-green-500 focus:ring-green-500;
+  }
+
+  /* Labels */
+  .label {
+    @apply block text-sm font-medium text-gray-700 mb-2;
+  }
+
+  /* Error Messages */
+  .error-message {
+    @apply text-sm text-red-600 mt-1;
+  }
+
+  /* Containers */
+  .container-custom {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Glassmorphism Effect */
+  .glass {
+    @apply bg-white/80 backdrop-blur-lg border border-white/20 shadow-medium;
+  }
+
+  /* Gradient Backgrounds */
+  .gradient-primary {
+    @apply bg-gradient-to-r from-primary-500 to-primary-700;
+  }
+
+  .gradient-secondary {
+    @apply bg-gradient-to-r from-secondary-500 to-secondary-700;
+  }
+
+  /* Loading Spinner */
+  .spinner {
+    @apply inline-block w-6 h-6 border-2 border-current border-t-transparent 
+           rounded-full animate-spin;
+  }
+
+  /* Page Headers */
+  .page-header {
+    @apply mb-8 animate-fade-in;
+  }
+
+  .page-title {
+    @apply text-3xl md:text-4xl font-bold text-gray-900 mb-2;
+  }
+
+  .page-description {
+    @apply text-gray-600 text-lg;
+  }
+
+  /* Tables */
+  .table {
+    @apply w-full text-left border-collapse;
+  }
+
+  .table thead {
+    @apply bg-gray-50 border-b border-gray-200;
+  }
+
+  .table th {
+    @apply px-6 py-4 text-sm font-semibold text-gray-700 uppercase tracking-wider;
+  }
+
+  .table td {
+    @apply px-6 py-4 text-sm text-gray-900 border-b border-gray-100;
+  }
+
+  .table tbody tr {
+    @apply hover:bg-gray-50 transition-colors duration-150;
+  }
+
+  /* Status Indicators */
+  .status-dot {
+    @apply w-2 h-2 rounded-full inline-block mr-2;
+  }
+
+  .status-dot-success {
+    @apply status-dot bg-green-500;
+  }
+
+  .status-dot-warning {
+    @apply status-dot bg-yellow-500;
+  }
+
+  .status-dot-danger {
+    @apply status-dot bg-red-500;
+  }
+
+  .status-dot-info {
+    @apply status-dot bg-blue-500;
+  }
+}
+
+/* ================================== */
+/* CUSTOM UTILITIES */
+/* ================================== */
+@layer utilities {
+  /* Text Gradients */
+  .text-gradient-primary {
+    @apply bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent;
+  }
+
+  .text-gradient-secondary {
+    @apply bg-gradient-to-r from-secondary-500 to-secondary-700 bg-clip-text text-transparent;
+  }
+
+  /* Scrollbar Styles */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-gray-100 rounded-full;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-gray-400 rounded-full hover:bg-gray-500;
+  }
+}
+
+/* ================================== */
+/* ANIMATIONS */
+/* ================================== */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.skeleton {
+  @apply bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200;
+  background-size: 2000px 100%;
+  animation: shimmer 2s infinite linear;
+}
+
+/* ================================== */
+/* RESPONSIVE UTILITIES */
+/* ================================== */
+@media (max-width: 640px) {
+  .mobile-menu {
+    @apply fixed inset-0 z-50 bg-white;
+  }
+}
+
+/* ================================== */
+/* DRAWER ANIMATIONS                  */
+/* ================================== */
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* ================================== */
+/* SCROLL REVEAL                      */
+/* ================================== */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.55s ease-out, transform 0.55s ease-out;
+}
+
+.scroll-reveal.scroll-reveal--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ================================== */
+/* ROUTE TRANSITION                   */
+/* ================================== */
+@keyframes routeEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+router-outlet + * {
+  animation: routeEnter 0.22s ease-out;
+}

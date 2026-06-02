@@ -1,0 +1,300 @@
+<!-- home.component.html -->
+
+<app-loader
+  *ngIf="isLoading"
+  [fullscreen]="true"
+  [spinnerClass]="'spinner-white spinner-large'"
+  message="Chargement de SONABHY Portail...">
+</app-loader>
+
+<div class="min-h-screen bg-white" *ngIf="!isLoading">
+
+  <!-- ===== HERO ===== -->
+  <section class="bg-slate-900 text-white py-24 md:py-36 relative overflow-hidden">
+    <!-- Dot pattern -->
+    <div class="absolute inset-0 opacity-[0.04]"
+         style="background-image: radial-gradient(circle, #ffffff 1px, transparent 1px); background-size: 28px 28px;"></div>
+    <!-- Lueurs décoratives -->
+    <div class="absolute top-0 left-1/4 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute bottom-0 right-1/4 w-80 h-80 bg-primary-500/8 rounded-full blur-3xl pointer-events-none"></div>
+    <!-- Ligne décorative en bas -->
+    <div class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary-500/40 to-transparent"></div>
+
+    <div class="container-custom relative z-10 text-center">
+
+      <!-- Badge -->
+      <div class="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-5 py-2 mb-8 animate-fade-in">
+        <span class="w-1.5 h-1.5 bg-primary-500 rounded-full animate-pulse"></span>
+        <span class="text-gray-300 text-xs font-medium tracking-widest uppercase">Plateforme officielle SONABHY</span>
+      </div>
+
+      <!-- Titre principal -->
+      <h1 class="text-5xl md:text-7xl font-bold text-white mb-4 animate-fade-in tracking-tight">
+        SONABHY Portail
+      </h1>
+      <div class="w-14 h-1 bg-primary-500 mx-auto mb-6 rounded-full"></div>
+
+      <!-- Sous-titre court et percutant -->
+      <p class="text-lg md:text-xl text-gray-400 max-w-xl mx-auto mb-12 leading-relaxed animate-slide-up">
+        Soumettez vos sollicitations en ligne auprès de la Direction Générale, simplement et en toute transparence.
+      </p>
+
+      <!-- Services rapides — 6 chips cliquables -->
+      <div class="flex flex-wrap justify-center gap-3 max-w-3xl mx-auto mb-12 animate-slide-up">
+
+        <a routerLink="/services" fragment="stages"
+           class="group flex items-center gap-2 bg-white/5 hover:bg-primary-500/20 border border-white/10 hover:border-primary-500/40
+                  rounded-full px-4 py-2.5 text-sm text-gray-300 hover:text-white transition-all duration-200 cursor-pointer">
+          <svg class="w-4 h-4 text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+          Demande de stage
+        </a>
+
+        <a routerLink="/services" fragment="audience"
+           class="group flex items-center gap-2 bg-white/5 hover:bg-primary-500/20 border border-white/10 hover:border-primary-500/40
+                  rounded-full px-4 py-2.5 text-sm text-gray-300 hover:text-white transition-all duration-200 cursor-pointer">
+          <svg class="w-4 h-4 text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"/>
+          </svg>
+          Demande d'audience
+        </a>
+
+        <a routerLink="/services" fragment="offres"
+           class="group flex items-center gap-2 bg-white/5 hover:bg-primary-500/20 border border-white/10 hover:border-primary-500/40
+                  rounded-full px-4 py-2.5 text-sm text-gray-300 hover:text-white transition-all duration-200 cursor-pointer">
+          <svg class="w-4 h-4 text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          Offre de services
+        </a>
+
+        <a routerLink="/services" fragment="aides"
+           class="group flex items-center gap-2 bg-white/5 hover:bg-primary-500/20 border border-white/10 hover:border-primary-500/40
+                  rounded-full px-4 py-2.5 text-sm text-gray-300 hover:text-white transition-all duration-200 cursor-pointer">
+          <svg class="w-4 h-4 text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+          Aides & Partenariat
+        </a>
+
+        <a routerLink="/services" fragment="terrain"
+           class="group flex items-center gap-2 bg-white/5 hover:bg-primary-500/20 border border-white/10 hover:border-primary-500/40
+                  rounded-full px-4 py-2.5 text-sm text-gray-300 hover:text-white transition-all duration-200 cursor-pointer">
+          <svg class="w-4 h-4 text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          Visite de terrain
+        </a>
+
+        <a routerLink="/services" fragment="collecte"
+           class="group flex items-center gap-2 bg-white/5 hover:bg-primary-500/20 border border-white/10 hover:border-primary-500/40
+                  rounded-full px-4 py-2.5 text-sm text-gray-300 hover:text-white transition-all duration-200 cursor-pointer">
+          <svg class="w-4 h-4 text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+          Collecte de données
+        </a>
+
+      </div>
+
+      <!-- CTAs -->
+      <div class="flex flex-col sm:flex-row gap-3 justify-center items-center animate-scale-in">
+        <button (click)="go('/dashboard/candidat', '/auth/register')"
+           class="btn bg-primary-500 hover:bg-primary-600 text-white px-8 py-3.5 text-sm font-semibold
+                  shadow-lg shadow-primary-500/20 transition-all duration-300 whitespace-nowrap">
+          Créer un compte
+        </button>
+        <a routerLink="/services"
+           class="btn bg-transparent border border-white/20 text-white hover:bg-white/10
+                  px-8 py-3.5 text-sm transition-all duration-300 whitespace-nowrap">
+          Voir tous les services
+        </a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===== SERVICES ===== -->
+  <section class="py-24 bg-white">
+    <div class="container-custom">
+      <!-- En-tête section -->
+      <div scrollReveal class="text-center mb-16">
+        <span class="text-primary-500 text-xs font-semibold uppercase tracking-widest">Ce que nous offrons</span>
+        <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mt-3 mb-4">Nos Services</h2>
+        <div class="w-12 h-0.5 bg-primary-500 mx-auto"></div>
+      </div>
+
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+
+        <!-- Stages -->
+        <a scrollReveal [srDelay]="0" routerLink="/services" fragment="stages"
+           class="group flex flex-col p-7 bg-white border border-gray-100 rounded-2xl hover:border-primary-100 hover:shadow-medium transition-all duration-300 cursor-pointer">
+          <div class="w-12 h-12 bg-primary-50 rounded-xl flex items-center justify-center mb-5
+                      group-hover:bg-primary-500 transition-all duration-300 flex-shrink-0">
+            <svg class="w-6 h-6 text-primary-500 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+            </svg>
+          </div>
+          <h3 class="text-base font-semibold text-gray-900 mb-2">Demande de stage</h3>
+          <p class="text-gray-500 text-sm leading-relaxed flex-1">Stages de soutenance et de perfectionnement</p>
+          <div class="mt-5 flex items-center text-primary-500 text-xs font-semibold uppercase tracking-wider">
+            <span>En savoir plus</span>
+            <svg class="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+        </a>
+
+        <!-- Audience -->
+        <a scrollReveal [srDelay]="80" routerLink="/services" fragment="audience"
+           class="group flex flex-col p-7 bg-white border border-gray-100 rounded-2xl hover:border-primary-100 hover:shadow-medium transition-all duration-300 cursor-pointer">
+          <div class="w-12 h-12 bg-primary-50 rounded-xl flex items-center justify-center mb-5
+                      group-hover:bg-primary-500 transition-all duration-300 flex-shrink-0">
+            <svg class="w-6 h-6 text-primary-500 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"/>
+            </svg>
+          </div>
+          <h3 class="text-base font-semibold text-gray-900 mb-2">Demande d'audience</h3>
+          <p class="text-gray-500 text-sm leading-relaxed flex-1">Rencontrez la Direction Générale</p>
+          <div class="mt-5 flex items-center text-primary-500 text-xs font-semibold uppercase tracking-wider">
+            <span>En savoir plus</span>
+            <svg class="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+        </a>
+
+        <!-- Offres de services -->
+        <a scrollReveal [srDelay]="160" routerLink="/services" fragment="offres"
+           class="group flex flex-col p-7 bg-white border border-gray-100 rounded-2xl hover:border-primary-100 hover:shadow-medium transition-all duration-300 cursor-pointer">
+          <div class="w-12 h-12 bg-primary-50 rounded-xl flex items-center justify-center mb-5
+                      group-hover:bg-primary-500 transition-all duration-300 flex-shrink-0">
+            <svg class="w-6 h-6 text-primary-500 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+          </div>
+          <h3 class="text-base font-semibold text-gray-900 mb-2">Offres de services</h3>
+          <p class="text-gray-500 text-sm leading-relaxed flex-1">Proposez vos services et partenariats</p>
+          <div class="mt-5 flex items-center text-primary-500 text-xs font-semibold uppercase tracking-wider">
+            <span>En savoir plus</span>
+            <svg class="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+        </a>
+
+        <!-- Aides -->
+        <a scrollReveal [srDelay]="240" routerLink="/services" fragment="aides"
+           class="group flex flex-col p-7 bg-white border border-gray-100 rounded-2xl hover:border-primary-100 hover:shadow-medium transition-all duration-300 cursor-pointer">
+          <div class="w-12 h-12 bg-primary-50 rounded-xl flex items-center justify-center mb-5
+                      group-hover:bg-primary-500 transition-all duration-300 flex-shrink-0">
+            <svg class="w-6 h-6 text-primary-500 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+          </div>
+          <h3 class="text-base font-semibold text-gray-900 mb-2">Aides & Partenariat</h3>
+          <p class="text-gray-500 text-sm leading-relaxed flex-1">Soutien social et partenariats institutionnels</p>
+          <div class="mt-5 flex items-center text-primary-500 text-xs font-semibold uppercase tracking-wider">
+            <span>En savoir plus</span>
+            <svg class="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+        </a>
+
+        <!-- Visite de terrain -->
+        <a scrollReveal [srDelay]="320" routerLink="/services" fragment="terrain"
+           class="group flex flex-col p-7 bg-white border border-gray-100 rounded-2xl hover:border-primary-100 hover:shadow-medium transition-all duration-300 cursor-pointer">
+          <div class="w-12 h-12 bg-primary-50 rounded-xl flex items-center justify-center mb-5
+                      group-hover:bg-primary-500 transition-all duration-300 flex-shrink-0">
+            <svg class="w-6 h-6 text-primary-500 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+          </div>
+          <h3 class="text-base font-semibold text-gray-900 mb-2">Visite de terrain</h3>
+          <p class="text-gray-500 text-sm leading-relaxed flex-1">Visitez nos installations sur autorisation</p>
+          <div class="mt-5 flex items-center text-primary-500 text-xs font-semibold uppercase tracking-wider">
+            <span>En savoir plus</span>
+            <svg class="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+        </a>
+
+        <!-- Collecte de données -->
+        <a scrollReveal [srDelay]="400" routerLink="/services" fragment="collecte"
+           class="group flex flex-col p-7 bg-white border border-gray-100 rounded-2xl hover:border-primary-100 hover:shadow-medium transition-all duration-300 cursor-pointer">
+          <div class="w-12 h-12 bg-primary-50 rounded-xl flex items-center justify-center mb-5
+                      group-hover:bg-primary-500 transition-all duration-300 flex-shrink-0">
+            <svg class="w-6 h-6 text-primary-500 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+          </div>
+          <h3 class="text-base font-semibold text-gray-900 mb-2">Collecte de données</h3>
+          <p class="text-gray-500 text-sm leading-relaxed flex-1">Accès aux données pour recherches et études</p>
+          <div class="mt-5 flex items-center text-primary-500 text-xs font-semibold uppercase tracking-wider">
+            <span>En savoir plus</span>
+            <svg class="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== STATISTIQUES ===== -->
+  <section scrollReveal class="py-20 bg-slate-50 border-y border-gray-100">
+    <div class="container-custom">
+      <div class="grid md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-gray-200">
+        <div class="text-center py-10 md:py-8 group">
+          <div class="text-5xl font-bold text-gray-900 mb-3 group-hover:text-primary-500 transition-colors duration-300 tracking-tight">500+</div>
+          <div class="w-8 h-px bg-primary-500 mx-auto mb-3"></div>
+          <p class="text-gray-500 font-medium text-sm uppercase tracking-wider">Demandes traitées</p>
+        </div>
+        <div class="text-center py-10 md:py-8 group">
+          <div class="text-5xl font-bold text-gray-900 mb-3 group-hover:text-primary-500 transition-colors duration-300 tracking-tight">50+</div>
+          <div class="w-8 h-px bg-primary-500 mx-auto mb-3"></div>
+          <p class="text-gray-500 font-medium text-sm uppercase tracking-wider">Stages accordés</p>
+        </div>
+        <div class="text-center py-10 md:py-8 group">
+          <div class="text-5xl font-bold text-gray-900 mb-3 group-hover:text-primary-500 transition-colors duration-300 tracking-tight">15+</div>
+          <div class="w-8 h-px bg-primary-500 mx-auto mb-3"></div>
+          <p class="text-gray-500 font-medium text-sm uppercase tracking-wider">Années d'expérience</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CTA ===== -->
+  <section class="py-24 bg-slate-900 text-white relative overflow-hidden">
+    <div class="absolute inset-0 opacity-[0.04]"
+         style="background-image: radial-gradient(circle, #ffffff 1px, transparent 1px); background-size: 28px 28px;"></div>
+    <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary-500/40 to-transparent"></div>
+    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+      <div class="w-[600px] h-[300px] bg-primary-500/8 rounded-full blur-3xl"></div>
+    </div>
+
+    <div class="container-custom text-center relative z-10">
+      <span class="text-primary-400 text-xs font-semibold uppercase tracking-widest">Rejoignez-nous</span>
+      <h2 class="text-3xl md:text-4xl font-bold text-white mt-4 mb-4">Prêt à rejoindre la SONABHY ?</h2>
+      <div class="w-12 h-0.5 bg-primary-500 mx-auto mb-6"></div>
+      <p class="text-gray-400 text-lg mb-10 max-w-lg mx-auto leading-relaxed">
+        Découvrez nos opportunités de à travers les différents services et faites confiance à une équipe d'excellence
+      </p>
+      <div class="flex flex-row gap-3 justify-center max-w-xs sm:max-w-none mx-auto">
+        <a routerLink="/contact"
+           class="btn flex-1 sm:flex-none bg-transparent border border-white/20 text-white
+                  hover:bg-white/10 px-4 sm:px-8 py-2.5 sm:py-3.5 text-sm sm:text-base
+                  transition-all duration-300 whitespace-nowrap">
+          Nous contacter
+        </a>
+      </div>
+    </div>
+  </section>
+
+</div>

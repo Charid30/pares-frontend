@@ -1,0 +1,575 @@
+<!-- candidatures-recrutement.html — Vérification des dossiers (Recrutement) -->
+<div class="space-y-4 md:space-y-5">
+
+  <!-- ══ TOASTS ══════════════════════════════════════════ -->
+  <div class="fixed top-4 right-4 z-[100] space-y-2 max-w-[90vw] sm:max-w-sm pointer-events-none">
+    <div *ngFor="let toast of toasts"
+         class="pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl shadow-lg text-white text-sm"
+         [ngClass]="{
+           'bg-green-500': toast.type === 'success',
+           'bg-red-500':   toast.type === 'error',
+           'bg-blue-500':  toast.type === 'info'
+         }">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path *ngIf="toast.type==='success'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        <path *ngIf="toast.type==='error'"   stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        <path *ngIf="toast.type==='info'"    stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <div class="flex-1 min-w-0">
+        <p class="font-semibold truncate">{{ toast.title }}</p>
+        <p class="opacity-90 text-xs truncate">{{ toast.message }}</p>
+      </div>
+      <button (click)="removeToast(toast.id)" class="p-1 hover:bg-white/20 rounded-lg transition-colors flex-shrink-0">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ HEADER ══════════════════════════════════════════ -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div>
+      <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Candidatures reçues</h1>
+      <p class="text-sm text-gray-500 mt-0.5">{{ toutesLesCandidatures.length }} candidature(s) au total</p>
+    </div>
+    <button (click)="actualiser()"
+            class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 active:scale-95 transition-all text-sm flex-shrink-0">
+      <svg class="w-4 h-4" [class.animate-spin]="loading" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+      </svg>
+      Actualiser
+    </button>
+  </div>
+
+  <!-- ══ LOADING ══════════════════════════════════════════ -->
+  <div *ngIf="loading" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-10 text-center">
+    <div class="w-10 h-10 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+    <p class="text-gray-500 text-sm">Chargement des candidatures...</p>
+  </div>
+
+  <ng-container *ngIf="!loading">
+
+    <!-- ══ STATS (cliquables pour filtrer) ════════════════ -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+
+      <!-- Soumises -->
+      <button (click)="filtreCandidatureStatut = filtreCandidatureStatut === 'SOUMISE' ? '' : 'SOUMISE'; filtrerCandidatures()"
+              class="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border text-left transition-all hover:shadow-md active:scale-95"
+              [ngClass]="filtreCandidatureStatut === 'SOUMISE' ? 'border-yellow-400 ring-2 ring-yellow-300' : 'border-yellow-100'">
+        <div class="flex items-center gap-2 sm:gap-3">
+          <div class="w-9 h-9 bg-yellow-100 rounded-xl flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+          </div>
+          <div>
+            <p class="text-xl font-bold text-yellow-600 leading-none">{{ statsParStatut['SOUMISE'] || 0 }}</p>
+            <p class="text-xs text-gray-400 mt-0.5">Soumises</p>
+          </div>
+        </div>
+      </button>
+
+      <!-- En vérification -->
+      <button (click)="filtreCandidatureStatut = filtreCandidatureStatut === 'EN_VERIFICATION' ? '' : 'EN_VERIFICATION'; filtrerCandidatures()"
+              class="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border text-left transition-all hover:shadow-md active:scale-95"
+              [ngClass]="filtreCandidatureStatut === 'EN_VERIFICATION' ? 'border-blue-400 ring-2 ring-blue-300' : 'border-blue-100'">
+        <div class="flex items-center gap-2 sm:gap-3">
+          <div class="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+          </div>
+          <div>
+            <p class="text-xl font-bold text-blue-600 leading-none">{{ statsParStatut['EN_VERIFICATION'] || 0 }}</p>
+            <p class="text-xs text-gray-400 mt-0.5">En vérification</p>
+          </div>
+        </div>
+      </button>
+
+      <!-- Acceptées -->
+      <button (click)="filtreCandidatureStatut = filtreCandidatureStatut === 'ACCEPTEE' ? '' : 'ACCEPTEE'; filtrerCandidatures()"
+              class="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border text-left transition-all hover:shadow-md active:scale-95"
+              [ngClass]="filtreCandidatureStatut === 'ACCEPTEE' ? 'border-green-400 ring-2 ring-green-300' : 'border-green-100'">
+        <div class="flex items-center gap-2 sm:gap-3">
+          <div class="w-9 h-9 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+          </div>
+          <div>
+            <p class="text-xl font-bold text-green-600 leading-none">{{ statsParStatut['ACCEPTEE'] || 0 }}</p>
+            <p class="text-xs text-gray-400 mt-0.5">Acceptées</p>
+          </div>
+        </div>
+      </button>
+
+      <!-- Rejetées -->
+      <button (click)="filtreCandidatureStatut = filtreCandidatureStatut === 'REJETEE' ? '' : 'REJETEE'; filtrerCandidatures()"
+              class="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border text-left transition-all hover:shadow-md active:scale-95"
+              [ngClass]="filtreCandidatureStatut === 'REJETEE' ? 'border-red-400 ring-2 ring-red-300' : 'border-red-100'">
+        <div class="flex items-center gap-2 sm:gap-3">
+          <div class="w-9 h-9 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </div>
+          <div>
+            <p class="text-xl font-bold text-red-600 leading-none">{{ statsParStatut['REJETEE'] || 0 }}</p>
+            <p class="text-xs text-gray-400 mt-0.5">Rejetées</p>
+          </div>
+        </div>
+      </button>
+
+    </div>
+
+    <!-- ══ FILTRES ══════════════════════════════════════════ -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 px-3 py-3 sm:px-4">
+      <div class="flex flex-wrap gap-2">
+        <!-- Recherche -->
+        <div class="relative flex-1 min-w-[180px]">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <input type="text" [(ngModel)]="searchCandidature" (input)="filtrerCandidatures()"
+                 placeholder="Nom, prénom, email..."
+                 class="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:bg-white transition-all">
+        </div>
+        <!-- Filtre statut -->
+        <select [(ngModel)]="filtreCandidatureStatut" (change)="filtrerCandidatures()"
+                class="px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 transition-all flex-shrink-0">
+          <option value="">Tous statuts</option>
+          <option value="SOUMISE">Soumise</option>
+          <option value="EN_VERIFICATION">En vérification</option>
+          <option value="ACCEPTEE">Acceptée</option>
+          <option value="REJETEE">Rejetée</option>
+        </select>
+        <!-- Filtre campagne -->
+        <select [(ngModel)]="filtreCandidatureCampagne" (change)="filtrerCandidatures()"
+                class="px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 transition-all flex-shrink-0">
+          <option value="">Toutes campagnes</option>
+          <option *ngFor="let c of campagnesUniques" [value]="c.idcampagne">{{ c.titreCampagne }}</option>
+        </select>
+        <!-- Filtre profil -->
+        <select [(ngModel)]="filtreCandidatureProfil" (change)="filtrerCandidatures()"
+                class="px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 transition-all flex-shrink-0">
+          <option value="">Tous profils</option>
+          <option *ngFor="let p of profilsUniques" [value]="p.idprofil">{{ p.titreProfil }}</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- ══ EMPTY STATE ══════════════════════════════════════ -->
+    <div *ngIf="candidaturesFiltrees.length === 0" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-10 text-center">
+      <div class="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+      </div>
+      <h3 class="text-base font-semibold text-gray-900 mb-1">Aucune candidature trouvée</h3>
+      <p class="text-gray-500 text-sm">
+        {{ toutesLesCandidatures.length === 0
+          ? 'Aucune candidature reçue pour le moment.'
+          : 'Aucune candidature ne correspond aux filtres.' }}
+      </p>
+    </div>
+
+    <!-- ══ TABLE DESKTOP ══════════════════════════════════ -->
+    <div *ngIf="candidaturesFiltrees.length > 0" class="hidden md:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="bg-gray-50 border-b border-gray-100">
+              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Candidat</th>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Profil</th>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Campagne</th>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Statut</th>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Date</th>
+              <th class="px-4 py-3"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50">
+            <tr *ngFor="let cand of candidaturesFiltrees; trackBy: trackByCandidatureId"
+                class="hover:bg-gray-50/60 transition-colors">
+              <!-- Candidat -->
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-xl bg-primary-100 text-primary-700 font-bold text-xs flex items-center justify-center flex-shrink-0">
+                    {{ getInitiales(cand.candidat?.prenom, cand.candidat?.nom) }}
+                  </div>
+                  <div class="min-w-0">
+                    <p class="text-sm font-semibold text-gray-900 truncate">{{ cand.candidat?.prenom }} {{ cand.candidat?.nom }}</p>
+                    <p class="text-xs text-gray-400 truncate">{{ cand.candidat?.email }}</p>
+                  </div>
+                </div>
+              </td>
+              <!-- Profil -->
+              <td class="px-4 py-3">
+                <p class="text-sm text-gray-700 truncate max-w-[150px]">{{ cand.profil?.titreProfil || '—' }}</p>
+              </td>
+              <!-- Campagne -->
+              <td class="px-4 py-3">
+                <p class="text-xs text-gray-500 truncate max-w-[140px]">{{ getNomCampagne(cand.profil?.campagne_idcampagne) }}</p>
+              </td>
+              <!-- Statut -->
+              <td class="px-4 py-3">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap"
+                      [ngClass]="getStatutClass(cand.statusCandidature)">
+                  <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" [ngClass]="getStatutDot(cand.statusCandidature)"></span>
+                  {{ getStatutLabel(cand.statusCandidature) }}
+                </span>
+              </td>
+              <!-- Date -->
+              <td class="px-4 py-3">
+                <p class="text-xs text-gray-500 whitespace-nowrap">{{ formatDate(cand.dateCandidature) }}</p>
+              </td>
+              <!-- Action -->
+              <td class="px-4 py-3 text-right">
+                <button (click)="ouvrirVerifPanel(cand)"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl hover:opacity-80 active:scale-95 transition-all text-xs font-semibold"
+                        [ngClass]="peutPrendreDecision(cand.statusCandidature)
+                          ? 'bg-primary-50 text-primary-700 hover:bg-primary-100'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path *ngIf="peutPrendreDecision(cand.statusCandidature)" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    <path *ngIf="!peutPrendreDecision(cand.statusCandidature)" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                  {{ peutPrendreDecision(cand.statusCandidature) ? 'Vérifier le dossier' : 'Voir le dossier' }}
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="px-4 py-2.5 border-t border-gray-100 bg-gray-50/50">
+        <p class="text-xs text-gray-400">{{ candidaturesFiltrees.length }} candidature(s) affichée(s)</p>
+      </div>
+    </div>
+
+    <!-- ══ CARTES MOBILE ══════════════════════════════════ -->
+    <div *ngIf="candidaturesFiltrees.length > 0" class="md:hidden space-y-3">
+      <div *ngFor="let cand of candidaturesFiltrees; trackBy: trackByCandidatureId"
+           class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-3">
+        <!-- Candidat + statut -->
+        <div class="flex items-start gap-3">
+          <div class="w-10 h-10 rounded-xl bg-primary-100 text-primary-700 font-bold text-sm flex items-center justify-center flex-shrink-0">
+            {{ getInitiales(cand.candidat?.prenom, cand.candidat?.nom) }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-gray-900 truncate">{{ cand.candidat?.prenom }} {{ cand.candidat?.nom }}</p>
+            <p class="text-xs text-gray-400 truncate">{{ cand.candidat?.email }}</p>
+          </div>
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap flex-shrink-0"
+                [ngClass]="getStatutClass(cand.statusCandidature)">
+            <span class="w-1.5 h-1.5 rounded-full" [ngClass]="getStatutDot(cand.statusCandidature)"></span>
+            {{ getStatutLabel(cand.statusCandidature) }}
+          </span>
+        </div>
+        <!-- Infos -->
+        <div class="grid grid-cols-2 gap-2 bg-gray-50 rounded-xl p-2.5">
+          <div>
+            <p class="text-xs text-gray-400 mb-0.5">Profil</p>
+            <p class="text-xs font-medium text-gray-700 truncate">{{ cand.profil?.titreProfil || '—' }}</p>
+          </div>
+          <div>
+            <p class="text-xs text-gray-400 mb-0.5">Date</p>
+            <p class="text-xs font-medium text-gray-700">{{ formatDateShort(cand.dateCandidature) }}</p>
+          </div>
+          <div class="col-span-2">
+            <p class="text-xs text-gray-400 mb-0.5">Campagne</p>
+            <p class="text-xs font-medium text-gray-700 truncate">{{ getNomCampagne(cand.profil?.campagne_idcampagne) }}</p>
+          </div>
+        </div>
+        <!-- Bouton action -->
+        <button (click)="ouvrirVerifPanel(cand)"
+                class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl active:scale-95 transition-all text-sm font-semibold"
+                [ngClass]="peutPrendreDecision(cand.statusCandidature)
+                  ? 'bg-primary-50 text-primary-700 hover:bg-primary-100'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          {{ peutPrendreDecision(cand.statusCandidature) ? 'Vérifier le dossier' : 'Voir le dossier' }}
+        </button>
+      </div>
+    </div>
+
+  </ng-container><!-- fin !loading -->
+
+</div><!-- fin .space-y-4 -->
+
+
+<!-- ══════════════════════════════════════════════════════════
+     PANEL VÉRIFICATION DOSSIER — SLIDE DEPUIS LA DROITE
+══════════════════════════════════════════════════════════ -->
+<div *ngIf="showVerifPanel" class="fixed inset-0 z-[80] flex">
+  <!-- Overlay -->
+  <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" (click)="fermerVerifPanel()"></div>
+
+  <!-- Panel -->
+  <div class="relative ml-auto bg-white h-full w-full sm:max-w-lg shadow-2xl flex flex-col"
+       style="animation: slideInRight 0.3s ease-out;">
+
+    <!-- Header panel -->
+    <div class="flex-shrink-0 px-5 pt-6 pb-4 border-b border-gray-100">
+      <div class="flex items-start gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+             [ngClass]="candidatureEnVerif && peutPrendreDecision(candidatureEnVerif.statusCandidature) ? 'bg-primary-100' : 'bg-gray-100'">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+               [ngClass]="candidatureEnVerif && peutPrendreDecision(candidatureEnVerif.statusCandidature) ? 'text-primary-600' : 'text-gray-500'">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h3 class="text-lg font-bold text-gray-900">
+            {{ candidatureEnVerif && peutPrendreDecision(candidatureEnVerif.statusCandidature) ? 'Vérification du dossier' : 'Dossier de candidature' }}
+          </h3>
+          <p class="text-xs text-gray-500 mt-0.5 truncate">
+            {{ candidatureEnVerif?.candidat?.prenom }} {{ candidatureEnVerif?.candidat?.nom }}
+          </p>
+        </div>
+        <button (click)="fermerVerifPanel()" class="p-2 hover:bg-gray-100 rounded-xl transition-colors text-gray-400 flex-shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Corps -->
+    <div class="flex-1 overflow-y-auto px-5 py-5 space-y-5" *ngIf="candidatureEnVerif">
+
+      <!-- ── Fiche candidat ─────────────────────────────── -->
+      <div class="bg-gray-50 rounded-2xl p-4 space-y-3">
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Informations candidat</p>
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-primary-100 text-primary-700 font-bold text-base flex items-center justify-center flex-shrink-0">
+            {{ getInitiales(candidatureEnVerif.candidat?.prenom, candidatureEnVerif.candidat?.nom) }}
+          </div>
+          <div class="min-w-0">
+            <p class="font-bold text-gray-900">{{ candidatureEnVerif.candidat?.prenom }} {{ candidatureEnVerif.candidat?.nom }}</p>
+            <p class="text-sm text-gray-500 truncate">{{ candidatureEnVerif.candidat?.email }}</p>
+            <p *ngIf="candidatureEnVerif.candidat?.telephone" class="text-sm text-gray-500">{{ candidatureEnVerif.candidat?.telephone }}</p>
+          </div>
+        </div>
+        <div class="border-t border-gray-200 pt-3 space-y-2">
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-gray-500">Profil</span>
+            <span class="font-medium text-gray-800 text-right max-w-[200px] truncate">{{ candidatureEnVerif.profil?.titreProfil || '—' }}</span>
+          </div>
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-gray-500">Campagne</span>
+            <span class="font-medium text-gray-800 text-right max-w-[200px] truncate">{{ getNomCampagne(candidatureEnVerif.profil?.campagne_idcampagne) }}</span>
+          </div>
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-gray-500">Date de candidature</span>
+            <span class="font-medium text-gray-800">{{ formatDate(candidatureEnVerif.dateCandidature) }}</span>
+          </div>
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-gray-500">Statut actuel</span>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold"
+                  [ngClass]="getStatutClass(candidatureEnVerif.statusCandidature)">
+              <span class="w-1.5 h-1.5 rounded-full" [ngClass]="getStatutDot(candidatureEnVerif.statusCandidature)"></span>
+              {{ getStatutLabel(candidatureEnVerif.statusCandidature) }}
+            </span>
+          </div>
+          <!-- Motif de refus si rejeté -->
+          <div *ngIf="candidatureEnVerif.statusCandidature === 'REJETEE' && candidatureEnVerif.motifRefus" class="pt-1">
+            <p class="text-xs text-gray-400 mb-1">Motif de refus</p>
+            <p class="text-xs text-red-700 italic bg-red-50 rounded-xl p-2.5 border border-red-100">{{ candidatureEnVerif.motifRefus }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Pièces jointes ─────────────────────────────── -->
+      <div class="space-y-3">
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Pièces jointes</p>
+
+        <!-- Chargement documents -->
+        <div *ngIf="documentsLoading" class="flex items-center gap-3 p-4 bg-blue-50 rounded-2xl">
+          <div class="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin flex-shrink-0"></div>
+          <p class="text-sm text-blue-700">Chargement des documents...</p>
+        </div>
+
+        <!-- Aucun document -->
+        <div *ngIf="!documentsLoading && documents.length === 0"
+             class="flex items-center gap-3 p-4 bg-amber-50 rounded-2xl border border-amber-100">
+          <svg class="w-5 h-5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+          <p class="text-sm text-amber-700 font-medium">Aucun document joint à cette candidature.</p>
+        </div>
+
+        <!-- Liste documents -->
+        <div *ngIf="!documentsLoading && documents.length > 0" class="space-y-2">
+          <div *ngFor="let doc of documents"
+               class="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:border-gray-300 transition-colors">
+            <!-- Icône type fichier -->
+            <div class="w-9 h-9 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="getDocumentIcon(doc.document_filename)"/>
+              </svg>
+            </div>
+            <!-- Infos fichier -->
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-gray-800 truncate">{{ doc.document_filename }}</p>
+              <div class="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
+                <span *ngIf="doc.typeDocument" class="bg-gray-100 rounded-md px-1.5 py-0.5 font-medium">{{ doc.typeDocument }}</span>
+                <span>{{ formatFileSize(doc.document_size) }}</span>
+                <span>{{ formatDateShort(doc.dateUpload) }}</span>
+              </div>
+            </div>
+            <!-- Boutons voir / télécharger -->
+            <div class="flex items-center gap-1.5 flex-shrink-0">
+              <button (click)="voirDocument(doc)"
+                      title="Voir le document"
+                      class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+              </button>
+              <button (click)="telechargerDocument(doc)"
+                      title="Télécharger"
+                      class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Décision (si dossier en cours) ──────────────── -->
+      <div *ngIf="peutPrendreDecision(candidatureEnVerif.statusCandidature)" class="space-y-4">
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Décision</p>
+
+        <!-- Choix Accepter / Rejeter -->
+        <div class="grid grid-cols-2 gap-3">
+          <!-- Accepter -->
+          <label class="flex items-center gap-3 p-3.5 rounded-xl border-2 cursor-pointer transition-all"
+                 [ngClass]="decisionStatut === 'ACCEPTEE' ? 'border-green-400 bg-green-50' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'">
+            <input type="radio" name="decision" value="ACCEPTEE" [(ngModel)]="decisionStatut" class="sr-only">
+            <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all"
+                 [ngClass]="decisionStatut === 'ACCEPTEE' ? 'border-green-500 bg-green-500' : 'border-gray-300'">
+              <div *ngIf="decisionStatut === 'ACCEPTEE'" class="w-2 h-2 bg-white rounded-full"></div>
+            </div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <span class="text-sm font-semibold text-gray-800">Accepter</span>
+              </div>
+              <p class="text-xs text-gray-400 mt-0.5">Dossier complet</p>
+            </div>
+          </label>
+
+          <!-- Rejeter -->
+          <label class="flex items-center gap-3 p-3.5 rounded-xl border-2 cursor-pointer transition-all"
+                 [ngClass]="decisionStatut === 'REJETEE' ? 'border-red-400 bg-red-50' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'">
+            <input type="radio" name="decision" value="REJETEE" [(ngModel)]="decisionStatut" class="sr-only">
+            <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all"
+                 [ngClass]="decisionStatut === 'REJETEE' ? 'border-red-500 bg-red-500' : 'border-gray-300'">
+              <div *ngIf="decisionStatut === 'REJETEE'" class="w-2 h-2 bg-white rounded-full"></div>
+            </div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+                <span class="text-sm font-semibold text-gray-800">Rejeter</span>
+              </div>
+              <p class="text-xs text-gray-400 mt-0.5">Dossier incomplet</p>
+            </div>
+          </label>
+        </div>
+
+        <!-- Motif de refus -->
+        <div *ngIf="decisionStatut === 'REJETEE'" class="space-y-2">
+          <label class="block text-sm font-semibold text-gray-700">
+            Motif de refus <span class="text-red-500">*</span>
+          </label>
+          <textarea [(ngModel)]="decisionMotif" rows="4"
+                    placeholder="Précisez pourquoi le dossier est incomplet ou non conforme..."
+                    class="w-full px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm focus:ring-2 focus:ring-red-400 focus:border-transparent focus:bg-white transition-all resize-none"></textarea>
+          <p *ngIf="!decisionMotif.trim()" class="text-xs text-red-500 flex items-center gap-1">
+            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            Le motif de refus est obligatoire.
+          </p>
+        </div>
+      </div>
+
+      <!-- ── Dossier déjà traité ─────────────────────────── -->
+      <div *ngIf="!peutPrendreDecision(candidatureEnVerif.statusCandidature)"
+           class="flex items-start gap-3 p-4 rounded-2xl"
+           [ngClass]="candidatureEnVerif.statusCandidature === 'ACCEPTEE'
+             ? 'bg-green-50 border border-green-100'
+             : 'bg-red-50 border border-red-100'">
+        <svg class="w-5 h-5 flex-shrink-0 mt-0.5"
+             [ngClass]="candidatureEnVerif.statusCandidature === 'ACCEPTEE' ? 'text-green-600' : 'text-red-500'"
+             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path *ngIf="candidatureEnVerif.statusCandidature === 'ACCEPTEE'"
+                stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          <path *ngIf="candidatureEnVerif.statusCandidature !== 'ACCEPTEE'"
+                stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <div>
+          <p class="text-sm font-semibold"
+             [ngClass]="candidatureEnVerif.statusCandidature === 'ACCEPTEE' ? 'text-green-700' : 'text-red-700'">
+            {{ candidatureEnVerif.statusCandidature === 'ACCEPTEE' ? 'Candidature acceptée' : 'Candidature rejetée' }}
+          </p>
+          <p class="text-xs mt-0.5"
+             [ngClass]="candidatureEnVerif.statusCandidature === 'ACCEPTEE' ? 'text-green-600' : 'text-red-600'">
+            Ce dossier a déjà été traité et ne peut plus être modifié.
+          </p>
+          <p *ngIf="candidatureEnVerif.evaluePar" class="text-xs mt-1"
+             [ngClass]="candidatureEnVerif.statusCandidature === 'ACCEPTEE' ? 'text-green-500' : 'text-red-400'">
+            Évalué par : {{ candidatureEnVerif.evaluePar }}
+            <span *ngIf="candidatureEnVerif.dateEvaluation"> — {{ formatDate(candidatureEnVerif.dateEvaluation) }}</span>
+          </p>
+        </div>
+      </div>
+
+    </div><!-- fin corps -->
+
+    <!-- Footer -->
+    <div class="flex-shrink-0 px-5 py-4 border-t border-gray-100 bg-gray-50/80">
+      <div *ngIf="candidatureEnVerif && peutPrendreDecision(candidatureEnVerif.statusCandidature); else footerFermer" class="flex gap-3">
+        <button (click)="fermerVerifPanel()"
+                class="flex-1 py-3 text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium">
+          Annuler
+        </button>
+        <button (click)="soumettreDecision()"
+                [disabled]="soumettingDecision || !decisionStatut || (decisionStatut === 'REJETEE' && !decisionMotif.trim())"
+                class="flex-1 py-3 text-white rounded-xl disabled:opacity-50 transition-colors text-sm font-semibold flex items-center justify-center gap-2"
+                [ngClass]="decisionStatut === 'REJETEE' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'">
+          <span *ngIf="soumettingDecision" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+          <ng-container *ngIf="!soumettingDecision">
+            <svg *ngIf="decisionStatut === 'ACCEPTEE'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            <svg *ngIf="decisionStatut === 'REJETEE'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            {{ decisionStatut === 'ACCEPTEE' ? 'Confirmer l\'acceptation' : decisionStatut === 'REJETEE' ? 'Confirmer le rejet' : 'Choisir une décision' }}
+          </ng-container>
+          <span *ngIf="soumettingDecision">Enregistrement...</span>
+        </button>
+      </div>
+      <ng-template #footerFermer>
+        <button (click)="fermerVerifPanel()"
+                class="w-full py-3 text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium">
+          Fermer
+        </button>
+      </ng-template>
+    </div>
+
+  </div><!-- fin panel -->
+</div><!-- fin overlay -->

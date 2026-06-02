@@ -1,0 +1,47 @@
+@if (visible) {
+  <div class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100vw-2rem)] max-w-md
+              bg-white border border-blue-200 rounded-2xl shadow-xl px-5 py-4
+              flex items-center gap-4">
+    <!-- Icône -->
+    <img src="logo-sonabhy.png" alt="SONABHY" class="w-12 h-12 rounded-xl flex-shrink-0 object-contain">
+
+    @if (mode === 'install') {
+      <!-- Texte installation -->
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-semibold text-gray-800 leading-tight">Installer l'application</p>
+        <p class="text-xs text-gray-500 mt-0.5 leading-tight">
+          Accédez au portail SONABHY directement depuis votre écran d'accueil.
+        </p>
+      </div>
+      <!-- Boutons installation -->
+      <div class="flex flex-col gap-1.5 flex-shrink-0">
+        <button
+          (click)="install()"
+          class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors">
+          Installer
+        </button>
+        <button
+          (click)="dismiss()"
+          class="text-gray-400 hover:text-gray-600 text-xs px-3 py-1.5 rounded-lg transition-colors">
+          Plus tard
+        </button>
+      </div>
+    } @else {
+      <!-- Texte "déjà installée" -->
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-semibold text-gray-800 leading-tight">Application déjà installée</p>
+        <p class="text-xs text-gray-500 mt-0.5 leading-tight">
+          Utilisez l'application installée sur votre appareil pour une meilleure expérience.
+        </p>
+      </div>
+      <!-- Bouton fermer -->
+      <div class="flex flex-col gap-1.5 flex-shrink-0">
+        <button
+          (click)="dismiss()"
+          class="text-gray-400 hover:text-gray-600 text-xs px-3 py-1.5 rounded-lg transition-colors">
+          OK
+        </button>
+      </div>
+    }
+  </div>
+}

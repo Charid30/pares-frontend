@@ -1,0 +1,285 @@
+<!-- rh-candidats.html — Liste des candidats (vue RH) -->
+<div class="space-y-5">
+
+  <!-- En-tête -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-xl font-black text-gray-900">Candidats</h1>
+      <p class="text-sm text-gray-500 mt-0.5">Tous les candidats inscrits sur SONABHY Portail</p>
+    </div>
+    <span class="px-3 py-1.5 bg-green-100 text-secondary-700 text-xs font-bold rounded-full w-fit">
+      {{ total }} candidat{{ total > 1 ? 's' : '' }}
+    </span>
+  </div>
+
+  <!-- Stats rapides -->
+  <div *ngIf="stats" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <div class="bg-white rounded-xl p-3.5 shadow-sm border border-gray-100">
+      <p class="text-2xl font-black text-gray-900">{{ stats.total }}</p>
+      <p class="text-xs text-gray-500 mt-0.5">Total inscrits</p>
+    </div>
+    <div class="bg-white rounded-xl p-3.5 shadow-sm border border-green-100">
+      <p class="text-2xl font-black text-secondary-600">+{{ stats.thisMonth }}</p>
+      <p class="text-xs text-gray-500 mt-0.5">Ce mois</p>
+    </div>
+    <div class="bg-white rounded-xl p-3.5 shadow-sm border border-amber-100">
+      <p class="text-2xl font-black text-amber-600">{{ stats.withCandidatures }}</p>
+      <p class="text-xs text-gray-500 mt-0.5">Avec candidatures</p>
+    </div>
+    <div class="bg-white rounded-xl p-3.5 shadow-sm border border-blue-100">
+      <p class="text-2xl font-black text-blue-600">{{ stats.withStages }}</p>
+      <p class="text-xs text-gray-500 mt-0.5">En stage</p>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 px-4 py-3">
+    <div class="flex gap-2">
+      <div class="relative flex-1">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input type="text" [(ngModel)]="searchTerm" (keyup.enter)="onSearch()"
+               placeholder="Nom, prénom ou email..."
+               class="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-secondary-400 focus:bg-white transition-all">
+      </div>
+      <button (click)="onSearch()"
+              class="px-4 py-2.5 bg-secondary-600 text-white rounded-xl text-sm font-medium hover:bg-secondary-700 active:scale-95 transition-all flex-shrink-0">
+        Rechercher
+      </button>
+    </div>
+    <div *ngIf="searchTerm" class="mt-2.5">
+      <button (click)="clearFilters()"
+              class="flex items-center gap-1 pl-2.5 pr-3 py-1.5 rounded-full text-xs font-medium bg-red-50 border border-red-200 text-red-600 hover:bg-red-100">
+        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        Effacer la recherche
+      </button>
+    </div>
+  </div>
+
+  <!-- Tableau -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+
+    <!-- Chargement -->
+    <div *ngIf="loading" class="p-5">
+      <div *ngFor="let i of [1,2,3,4,5]" class="animate-pulse flex items-center gap-4 py-3 border-b border-gray-50 last:border-0">
+        <div class="w-9 h-9 bg-gray-200 rounded-xl flex-shrink-0"></div>
+        <div class="flex-1"><div class="w-32 h-4 bg-gray-200 rounded mb-2"></div><div class="w-48 h-3 bg-gray-100 rounded"></div></div>
+        <div class="w-20 h-3 bg-gray-100 rounded"></div>
+        <div class="w-16 h-5 bg-gray-100 rounded-full"></div>
+      </div>
+    </div>
+
+    <!-- Erreur -->
+    <div *ngIf="error && !loading" class="p-8 text-center">
+      <p class="text-sm text-red-600 mb-2">{{ error }}</p>
+      <button (click)="loadCandidats()" class="text-xs text-primary-600 hover:underline">Réessayer</button>
+    </div>
+
+    <!-- Table -->
+    <div *ngIf="!loading && !error" class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gray-50 border-b border-gray-100">
+          <tr>
+            <th class="px-5 py-3 text-left text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+              <button (click)="toggleSort('nom')" class="flex items-center gap-1 hover:text-gray-600">
+                Candidat
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        [attr.d]="sortBy === 'nom' ? (sortOrder === 'ASC' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7') : 'M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4'" />
+                </svg>
+              </button>
+            </th>
+            <th class="px-4 py-3 text-left text-[11px] font-bold text-gray-400 uppercase tracking-wider hidden md:table-cell">Contact</th>
+            <th class="px-4 py-3 text-left text-[11px] font-bold text-gray-400 uppercase tracking-wider hidden lg:table-cell">
+              <button (click)="toggleSort('createdDate')" class="flex items-center gap-1 hover:text-gray-600">
+                Inscrit le
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        [attr.d]="sortBy === 'createdDate' ? (sortOrder === 'ASC' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7') : 'M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4'" />
+                </svg>
+              </button>
+            </th>
+            <th class="px-4 py-3 text-center text-[11px] font-bold text-gray-400 uppercase tracking-wider hidden sm:table-cell">Stages</th>
+            <th class="px-4 py-3 text-center text-[11px] font-bold text-gray-400 uppercase tracking-wider hidden sm:table-cell">Candid.</th>
+            <th class="px-5 py-3 text-right text-[11px] font-bold text-gray-400 uppercase tracking-wider">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          <tr *ngIf="candidats.length === 0">
+            <td colspan="6" class="px-5 py-10 text-center text-sm text-gray-400">
+              Aucun candidat trouvé
+            </td>
+          </tr>
+          <tr *ngFor="let c of candidats"
+              class="hover:bg-gray-50/50 transition-colors"
+              [ngClass]="{'bg-green-50': selectedCandidat?.idcandidats === c.idcandidats}">
+            <td class="px-5 py-3.5">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-secondary-400 to-secondary-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                  {{ getInitiales(c) }}
+                </div>
+                <div class="min-w-0">
+                  <p class="text-sm font-bold text-gray-900 truncate">{{ getNomComplet(c) }}</p>
+                  <p class="text-xs text-gray-400 truncate md:hidden">{{ c.email }}</p>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-3.5 hidden md:table-cell">
+              <p class="text-xs text-gray-600">{{ c.email }}</p>
+              <p class="text-xs text-gray-400">{{ c.telephone || '—' }}</p>
+            </td>
+            <td class="px-4 py-3.5 hidden lg:table-cell">
+              <p class="text-xs text-gray-500">{{ formatDate(c.createdDate) }}</p>
+            </td>
+            <td class="px-4 py-3.5 text-center hidden sm:table-cell">
+              <span class="text-sm font-bold" [ngClass]="(c.stagesCount || 0) > 0 ? 'text-blue-600' : 'text-gray-300'">
+                {{ c.stagesCount || 0 }}
+              </span>
+            </td>
+            <td class="px-4 py-3.5 text-center hidden sm:table-cell">
+              <span class="text-sm font-bold" [ngClass]="(c.candidaturesCount || 0) > 0 ? 'text-amber-600' : 'text-gray-300'">
+                {{ c.candidaturesCount || 0 }}
+              </span>
+            </td>
+            <td class="px-5 py-3.5 text-right">
+              <button (click)="viewCandidat(c)"
+                      class="px-3 py-1.5 bg-green-50 hover:bg-green-100 border border-green-200 text-secondary-700 text-xs font-medium rounded-lg transition-colors">
+                Voir
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="!loading && totalPages > 1" class="px-5 py-3 border-t border-gray-50 flex items-center justify-between">
+      <p class="text-xs text-gray-400">
+        {{ (page - 1) * limit + 1 }}–{{ Math.min(page * limit, total) }} sur {{ total }}
+      </p>
+      <div class="flex items-center gap-1">
+        <button (click)="page = page - 1; loadCandidats()" [disabled]="page === 1"
+                class="p-1.5 rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition-colors">
+          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <button *ngFor="let p of pages" (click)="page = p; loadCandidats()"
+                class="px-3 py-1.5 text-xs rounded-lg border transition-colors"
+                [ngClass]="p === page ? 'bg-secondary-600 text-white border-secondary-600' : 'border-gray-200 hover:bg-gray-50 text-gray-600'">
+          {{ p }}
+        </button>
+        <button (click)="page = page + 1; loadCandidats()" [disabled]="page >= totalPages"
+                class="p-1.5 rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition-colors">
+          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DRAWER DÉTAIL CANDIDAT ===== -->
+<div *ngIf="selectedCandidat" class="fixed inset-0 z-50 flex items-center justify-end">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" (click)="closeDetails()"></div>
+  <div class="relative bg-white h-full w-full max-w-md shadow-2xl overflow-y-auto flex flex-col">
+
+    <!-- Header -->
+    <div class="sticky top-0 bg-gradient-to-r from-secondary-600 to-secondary-700 px-6 py-4 flex items-center justify-between flex-shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-white font-black text-sm">
+          {{ getInitiales(selectedCandidat) }}
+        </div>
+        <div>
+          <p class="text-sm font-bold text-white">{{ getNomComplet(selectedCandidat) }}</p>
+          <p class="text-xs text-green-200">Profil candidat</p>
+        </div>
+      </div>
+      <button (click)="closeDetails()" class="p-2 text-green-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="flex-1 p-6 space-y-5">
+
+      <!-- Chargement -->
+      <div *ngIf="loadingDetails" class="space-y-3 animate-pulse">
+        <div class="h-20 bg-gray-100 rounded-xl"></div>
+        <div class="h-32 bg-gray-100 rounded-xl"></div>
+        <div class="h-24 bg-gray-100 rounded-xl"></div>
+      </div>
+
+      <!-- Infos -->
+      <div *ngIf="!loadingDetails">
+        <!-- Infos personnelles -->
+        <div class="bg-gray-50 rounded-xl p-4">
+          <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Informations personnelles</h3>
+          <div class="space-y-2">
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">Nom complet</span>
+              <span class="font-semibold text-gray-900">{{ getNomComplet(selectedCandidat) }}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">Email</span>
+              <span class="font-medium text-gray-700">{{ selectedCandidat.email }}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">Téléphone</span>
+              <span class="font-medium text-gray-700">{{ selectedCandidat.telephone || '—' }}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">Inscrit le</span>
+              <span class="font-medium text-gray-700">{{ formatDate(selectedCandidat.createdDate) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats (depuis les détails) -->
+        <div *ngIf="candidatDetails?.stats" class="grid grid-cols-2 gap-3">
+          <div class="bg-blue-50 rounded-xl p-3 text-center border border-blue-100">
+            <p class="text-xl font-black text-blue-600">{{ candidatDetails.stats.totalStages }}</p>
+            <p class="text-xs text-gray-500 mt-0.5">Stages total</p>
+          </div>
+          <div class="bg-amber-50 rounded-xl p-3 text-center border border-amber-100">
+            <p class="text-xl font-black text-amber-600">{{ candidatDetails.stats.totalCandidatures }}</p>
+            <p class="text-xs text-gray-500 mt-0.5">Candidatures</p>
+          </div>
+          <div class="bg-green-50 rounded-xl p-3 text-center border border-green-100">
+            <p class="text-xl font-black text-secondary-600">{{ candidatDetails.stats.stagesEnCours }}</p>
+            <p class="text-xs text-gray-500 mt-0.5">Stages en cours</p>
+          </div>
+          <div class="bg-red-50 rounded-xl p-3 text-center border border-red-100">
+            <p class="text-xl font-black text-primary-600">{{ candidatDetails.stats.candidaturesRetenues }}</p>
+            <p class="text-xs text-gray-500 mt-0.5">Retenues</p>
+          </div>
+        </div>
+
+        <!-- Candidatures récentes -->
+        <div *ngIf="candidatDetails?.candidatures?.length > 0">
+          <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Candidatures récentes</h3>
+          <div class="space-y-2">
+            <div *ngFor="let cand of candidatDetails.candidatures.slice(0, 4)"
+                 class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+              <div class="min-w-0 flex-1">
+                <p class="text-xs font-semibold text-gray-800 truncate">{{ cand.profil?.titreProfil || 'Poste' }}</p>
+                <p class="text-[10px] text-gray-400">{{ formatDate(cand.dateCandidature) }}</p>
+              </div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ml-2 flex-shrink-0"
+                    [ngClass]="cand.statusCandidature === 'RETENUE' ? 'bg-green-100 text-green-700' :
+                               cand.statusCandidature === 'REJETEE' ? 'bg-red-100 text-red-600' :
+                               cand.statusCandidature === 'EN_EXAMEN' ? 'bg-amber-100 text-amber-700' :
+                               'bg-gray-100 text-gray-600'">
+                {{ cand.statusCandidature }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>

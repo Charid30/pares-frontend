@@ -1,0 +1,111 @@
+<!-- notification-bell.html -->
+<div class="notif-bell-wrapper relative">
+
+  <!-- ── Bouton cloche ─────────────────────────────────────────────────────── -->
+  <button (click)="togglePanel()"
+          class="relative p-2 rounded-lg transition-colors"
+          [ngClass]="buttonClass"
+          title="Notifications">
+    <!-- Icône cloche -->
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+    </svg>
+    <!-- Pastille non-lues -->
+    <span *ngIf="unreadCount > 0"
+          class="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white rounded-full shadow-md"
+          [ngClass]="badgeClass">
+      {{ unreadCount > 99 ? '99+' : unreadCount }}
+    </span>
+  </button>
+
+  <!-- ── Panel dropdown ────────────────────────────────────────────────────── -->
+  <div *ngIf="open"
+       class="fixed right-2 top-16 w-[calc(100vw-1rem)] sm:absolute sm:right-0 sm:top-auto sm:mt-2 sm:w-80 bg-[#1e293b] border border-white/10 rounded-2xl shadow-2xl z-[9999] overflow-hidden">
+
+    <!-- En-tête -->
+    <div class="flex items-center justify-between px-4 py-3 border-b border-white/10">
+      <div class="flex items-center gap-2">
+        <span class="text-sm font-semibold text-white">Notifications</span>
+        <span *ngIf="unreadCount > 0"
+              class="px-1.5 py-0.5 text-[10px] font-bold text-white rounded-full"
+              [ngClass]="badgeClass">
+          {{ unreadCount }}
+        </span>
+      </div>
+      <button *ngIf="unreadCount > 0"
+              (click)="markAllRead()"
+              class="text-xs text-slate-400 hover:text-white transition-colors">
+        Tout lire
+      </button>
+    </div>
+
+    <!-- Liste des notifications -->
+    <div class="max-h-80 overflow-y-auto divide-y divide-white/5">
+
+      <!-- Loader -->
+      <div *ngIf="loading && notifications.length === 0"
+           class="flex justify-center py-8">
+        <svg class="w-5 h-5 text-slate-400 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+      </div>
+
+      <!-- Vide -->
+      <div *ngIf="!loading && notifications.length === 0"
+           class="py-10 text-center">
+        <svg class="w-10 h-10 text-slate-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+        </svg>
+        <p class="text-sm text-slate-500">Aucune notification</p>
+      </div>
+
+      <!-- Item notif -->
+      <button *ngFor="let notif of notifications"
+              (click)="handleClick(notif)"
+              class="w-full flex gap-3 px-4 py-3 text-left hover:bg-white/5 transition-colors"
+              [class.bg-white/[0.03]]="!notif.read">
+
+        <!-- Icône colorée -->
+        <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mt-0.5"
+             [ngClass]="{
+               'bg-green-500/20 text-green-400': isSuccess(notif.type),
+               'bg-red-500/20 text-red-400':     isError(notif.type),
+               'bg-blue-500/20 text-blue-400':   !isSuccess(notif.type) && !isError(notif.type)
+             }">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="iconForType(notif.type)" />
+          </svg>
+        </div>
+
+        <!-- Contenu -->
+        <div class="flex-1 min-w-0">
+          <p class="text-xs font-semibold text-white leading-tight truncate">{{ notif.titre }}</p>
+          <p class="text-xs text-slate-400 mt-0.5 leading-relaxed line-clamp-2">{{ notif.message }}</p>
+          <p class="text-[10px] text-slate-600 mt-1">{{ timeAgo(notif.createdAt) }}</p>
+        </div>
+
+        <!-- Point non-lu -->
+        <div *ngIf="!notif.read"
+             class="flex-shrink-0 w-2 h-2 rounded-full mt-1.5"
+             [ngClass]="badgeClass">
+        </div>
+      </button>
+
+    </div>
+
+    <!-- Pied — charger plus -->
+    <div *ngIf="hasMore" class="px-4 py-2 border-t border-white/10 text-center">
+      <button (click)="loadMore()"
+              [disabled]="loading"
+              class="text-xs text-slate-400 hover:text-white transition-colors disabled:opacity-50">
+        <span *ngIf="!loading">Voir plus</span>
+        <span *ngIf="loading">Chargement...</span>
+      </button>
+    </div>
+
+  </div>
+
+</div>

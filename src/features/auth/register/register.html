@@ -1,0 +1,723 @@
+<!-- register.html — Split-screen desktop + Stepper 2 étapes avec scanner NIP -->
+<div class="min-h-screen flex">
+
+  <!-- ===== PANNEAU GAUCHE — Brand (masqué mobile) ===== -->
+  <div class="hidden lg:flex flex-col w-[42%] xl:w-[45%] bg-slate-900 relative overflow-hidden p-14">
+    <!-- Dot pattern -->
+    <div class="absolute inset-0 opacity-[0.04]"
+      style="background-image: radial-gradient(circle, #ffffff 1px, transparent 1px); background-size: 28px 28px;">
+    </div>
+    <!-- Ligne séparatrice verticale -->
+    <div
+      class="absolute right-0 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-primary-500/40 to-transparent">
+    </div>
+    <!-- Lueur rouge douce -->
+    <div class="absolute bottom-0 left-0 right-0 h-[400px] bg-primary-500/5 blur-3xl pointer-events-none"></div>
+
+    <!-- Contenu brand -->
+    <div class="relative z-10 flex flex-col h-full">
+
+      <!-- Logo + Nom -->
+      <div class="flex items-center gap-3 mb-16">
+        <img src="/assets/images/logo-sonabhy.png" alt="Logo SONABHY" class="h-12 w-12">
+        <div>
+          <p class="text-white font-bold text-lg leading-none">SONABHY Portail</p>
+          <p class="text-gray-500 text-xs">Plateforme de services SONABHY</p>
+        </div>
+      </div>
+
+      <!-- Message central -->
+      <div class="mt-auto mb-auto">
+        <!-- Icône principale -->
+        <div
+          class="w-16 h-16 bg-primary-500/10 border border-primary-500/20 rounded-2xl flex items-center justify-center mb-8">
+          <svg class="w-8 h-8 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+          </svg>
+        </div>
+
+        <h2 class="text-4xl font-bold text-white mb-4 leading-tight tracking-tight">
+          Rejoignez<br>la SONABHY
+        </h2>
+        <div class="w-10 h-1 bg-primary-500 rounded-full mb-6"></div>
+        <p class="text-gray-400 text-base leading-relaxed max-w-xs">
+          Créez votre compte SONABHY Portail et accédez à tous les services en ligne de la SONABHY.
+        </p>
+
+        <!-- Indicateurs visuels -->
+        <div class="mt-10 space-y-4">
+          <div class="flex items-center gap-3 text-sm">
+            <div
+              class="w-8 h-8 bg-primary-500/10 border border-primary-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            </div>
+            <span class="text-gray-500">Inscription en 2 étapes simples</span>
+          </div>
+          <div class="flex items-center gap-3 text-sm">
+            <div
+              class="w-8 h-8 bg-primary-500/10 border border-primary-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <span class="text-gray-500">Scan automatique de votre CNIB</span>
+          </div>
+          <div class="flex items-center gap-3 text-sm">
+            <div
+              class="w-8 h-8 bg-primary-500/10 border border-primary-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <span class="text-gray-500">Accès à tous nos services en ligne</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pied de page -->
+      <p class="text-gray-600 text-xs">© 2026 SONABHY — Tous droits réservés</p>
+    </div>
+  </div>
+
+  <!-- ===== PANNEAU DROIT — Formulaire ===== -->
+  <div class="flex-1 flex flex-col bg-white overflow-y-auto">
+    <div class="flex-1 flex flex-col items-center justify-center py-10 px-6 sm:px-10">
+
+      <!-- Logo mobile uniquement -->
+      <div class="lg:hidden text-center mb-8">
+        <img src="/assets/images/logo-sonabhy.png" alt="Logo SONABHY" class="h-14 w-14 mx-auto mb-3">
+        <h1 class="text-xl font-bold text-gray-900">SONABHY Portail</h1>
+        <p class="text-gray-500 text-sm">Plateforme de services SONABHY</p>
+      </div>
+
+      <div class="w-full max-w-lg animate-scale-in">
+
+        <!-- En-tête formulaire -->
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold text-gray-900 mb-1.5">Créer un compte</h2>
+          <p class="text-gray-500 text-sm">Rejoignez la plateforme officielle de services SONABHY</p>
+          <div class="w-8 h-0.5 bg-primary-500 mt-4"></div>
+        </div>
+
+        <!-- ── Stepper ──────────────────────────────────────── -->
+        <div class="flex items-center mb-7">
+          <!-- Étape 1 -->
+          <div
+            class="flex items-center justify-center w-7 h-7 rounded-full font-semibold text-xs flex-shrink-0 transition-all"
+            [ngClass]="currentStep > 1
+                           ? 'bg-green-500 text-white shadow shadow-green-200'
+                           : 'bg-primary-500 text-white shadow shadow-primary-200'">
+            <svg *ngIf="currentStep > 1" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+            </svg>
+            <span *ngIf="currentStep === 1">1</span>
+          </div>
+          <span class="ml-2 text-xs font-semibold flex-shrink-0"
+            [ngClass]="currentStep === 1 ? 'text-gray-900' : 'text-gray-400'">Connexion</span>
+          <div class="flex-1 mx-3 h-0.5 rounded-full transition-colors"
+            [ngClass]="currentStep > 1 ? 'bg-primary-300' : 'bg-gray-200'"></div>
+          <!-- Étape 2 -->
+          <div
+            class="flex items-center justify-center w-7 h-7 rounded-full font-semibold text-xs flex-shrink-0 transition-all"
+            [ngClass]="currentStep === 2
+                           ? 'bg-primary-500 text-white shadow shadow-primary-200'
+                           : 'bg-gray-200 text-gray-400'">
+            <span>2</span>
+          </div>
+          <span class="ml-2 text-xs font-semibold flex-shrink-0"
+            [ngClass]="currentStep === 2 ? 'text-gray-900' : 'text-gray-400'">Identité</span>
+        </div>
+
+        <!-- ── Formulaire ──────────────────────────────────────── -->
+        <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+
+          <!-- Alertes globales -->
+          <div *ngIf="errorMessage" class="mb-5">
+            <div class="flex items-start gap-3 p-4 bg-red-50 border border-red-100 rounded-xl">
+              <svg class="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p class="text-sm text-red-700">{{ errorMessage }}</p>
+            </div>
+          </div>
+          <div *ngIf="successMessage" class="mb-5">
+            <div class="flex items-start gap-3 p-4 bg-green-50 border border-green-100 rounded-xl">
+              <svg class="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p class="text-sm text-green-700">{{ successMessage }}</p>
+            </div>
+          </div>
+
+          <!-- ════════════════════════════════════════════════════
+               ÉTAPE 1 — Informations de connexion
+          ════════════════════════════════════════════════════ -->
+          <div *ngIf="currentStep === 1" class="space-y-4">
+
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Informations de connexion</p>
+
+            <!-- Nom d'utilisateur -->
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                Nom d'utilisateur <span class="text-red-500">*</span>
+              </label>
+              <div class="relative">
+                <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <input type="text" formControlName="username" placeholder="Ex: ulrich.bationo"
+                  class="w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:bg-white"
+                  [ngClass]="registerForm.get('username')?.invalid && registerForm.get('username')?.touched
+                                   ? 'border-red-300 focus:ring-red-400'
+                                   : 'border-gray-200 focus:ring-primary-400 focus:border-transparent'">
+              </div>
+              <p *ngIf="registerForm.get('username')?.invalid && registerForm.get('username')?.touched"
+                class="mt-1.5 text-xs text-red-500">Nom d'utilisateur requis (min. 3 caractères)</p>
+            </div>
+
+            <!-- Email -->
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                Adresse email <span class="text-red-500">*</span>
+              </label>
+              <div class="relative">
+                <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <input type="email" formControlName="email" placeholder="exemple@email.com"
+                  class="w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:bg-white"
+                  [ngClass]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched
+                                   ? 'border-red-300 focus:ring-red-400'
+                                   : 'border-gray-200 focus:ring-primary-400 focus:border-transparent'">
+              </div>
+              <p *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched"
+                class="mt-1.5 text-xs text-red-500">Adresse email invalide</p>
+            </div>
+
+            <!-- Mot de passe + Confirmation -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                  Mot de passe <span class="text-red-500">*</span>
+                </label>
+                <div class="relative">
+                  <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  <input [type]="showPassword ? 'text' : 'password'" formControlName="password"
+                    placeholder="Min. 8 car., majuscule, chiffre"
+                    class="w-full pl-10 pr-10 py-3 bg-gray-50 border rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:bg-white"
+                    [ngClass]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched
+                                     ? 'border-red-300 focus:ring-red-400'
+                                     : 'border-gray-200 focus:ring-primary-400 focus:border-transparent'">
+                  <button type="button" (click)="togglePasswordVisibility()"
+                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg *ngIf="!showPassword" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <svg *ngIf="showPassword" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                    </svg>
+                  </button>
+                </div>
+                <p *ngIf="registerForm.get('password')?.hasError('minlength') && registerForm.get('password')?.touched"
+                  class="mt-1.5 text-xs text-red-500">Minimum 8 caractères requis</p>
+                <p *ngIf="registerForm.get('password')?.hasError('pattern') && registerForm.get('password')?.touched"
+                  class="mt-1.5 text-xs text-red-500">Doit contenir une majuscule, une minuscule et un chiffre</p>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                  Confirmation <span class="text-red-500">*</span>
+                </label>
+                <div class="relative">
+                  <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  <input [type]="showPassword ? 'text' : 'password'" formControlName="confirmPassword"
+                    placeholder="Retapez le mot de passe"
+                    class="w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:bg-white"
+                    [ngClass]="registerForm.get('confirmPassword')?.touched && (registerForm.get('confirmPassword')?.invalid || registerForm.errors?.['passwordMismatch'])
+                                     ? 'border-red-300 focus:ring-red-400'
+                                     : 'border-gray-200 focus:ring-primary-400 focus:border-transparent'">
+                </div>
+                <p *ngIf="registerForm.get('confirmPassword')?.touched && registerForm.errors?.['passwordMismatch']"
+                  class="mt-1.5 text-xs text-red-500">Les mots de passe ne correspondent pas</p>
+              </div>
+            </div>
+
+            <!-- Bouton Suivant -->
+            <div class="pt-2 space-y-3">
+              <button type="button" (click)="nextStep()"
+                class="group w-full relative flex items-center justify-center gap-2 py-3.5 bg-primary-500 text-white text-sm font-semibold rounded-xl hover:bg-primary-600 active:scale-[0.98] transition-all shadow-sm overflow-hidden">
+                <div
+                  class="absolute inset-0 bg-white/10 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none">
+                </div>
+                <span class="relative z-10">Suivant</span>
+                <svg class="w-4 h-4 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+              <p class="text-center text-sm text-gray-500">
+                Déjà un compte ?
+                <a routerLink="/auth/login"
+                  class="font-semibold text-primary-500 hover:text-primary-600 ml-1 transition-colors">
+                  Se connecter
+                </a>
+              </p>
+            </div>
+
+          </div>
+
+          <!-- ════════════════════════════════════════════════════
+               ÉTAPE 2 — Informations personnelles
+          ════════════════════════════════════════════════════ -->
+          <div *ngIf="currentStep === 2" class="space-y-4">
+
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Informations personnelles</p>
+
+            <!-- Prénom + Nom -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                  Prénom <span class="text-red-500">*</span>
+                </label>
+                <input type="text" formControlName="prenom" placeholder="Votre prénom"
+                  class="w-full px-4 py-3 bg-gray-50 border rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:bg-white"
+                  [ngClass]="registerForm.get('prenom')?.invalid && registerForm.get('prenom')?.touched
+                                   ? 'border-red-300 focus:ring-red-400'
+                                   : 'border-gray-200 focus:ring-primary-400 focus:border-transparent'">
+                <p *ngIf="registerForm.get('prenom')?.invalid && registerForm.get('prenom')?.touched"
+                  class="mt-1.5 text-xs text-red-500">Le prénom est requis</p>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                  Nom <span class="text-red-500">*</span>
+                </label>
+                <input type="text" formControlName="nom" placeholder="Votre nom de famille"
+                  class="w-full px-4 py-3 bg-gray-50 border rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:bg-white"
+                  [ngClass]="registerForm.get('nom')?.invalid && registerForm.get('nom')?.touched
+                                   ? 'border-red-300 focus:ring-red-400'
+                                   : 'border-gray-200 focus:ring-primary-400 focus:border-transparent'">
+                <p *ngIf="registerForm.get('nom')?.invalid && registerForm.get('nom')?.touched"
+                  class="mt-1.5 text-xs text-red-500">Le nom est requis</p>
+              </div>
+            </div>
+
+            <!-- Téléphone -->
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                Téléphone <span class="text-red-500">*</span>
+              </label>
+              <div class="relative flex items-center">
+                <!-- Préfixe drapeau + indicatif -->
+                <div
+                  class="absolute left-0 flex items-center gap-1.5 pl-3 pr-3 py-3 border-r border-gray-200 pointer-events-none select-none">
+                  <span class="text-base leading-none">🇧🇫</span>
+                  <span class="text-sm font-medium text-gray-500">+226</span>
+                </div>
+                <input type="tel" formControlName="telephone" placeholder="70000000" maxlength="8"
+                  class="w-full pl-28 pr-4 py-3 bg-gray-50 border rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:bg-white"
+                  [ngClass]="registerForm.get('telephone')?.invalid && registerForm.get('telephone')?.touched
+                                   ? 'border-red-300 focus:ring-red-400'
+                                   : 'border-gray-200 focus:ring-primary-400 focus:border-transparent'">
+              </div>
+              <p *ngIf="registerForm.get('telephone')?.invalid && registerForm.get('telephone')?.touched"
+                class="mt-1.5 text-xs text-red-500">Numéro de téléphone invalide (8 chiffres requis)</p>
+            </div>
+
+            <!-- ════════════════════════════════════════════════
+                 Champ NIP avec scanner
+            ════════════════════════════════════════════════ -->
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                Numéro NIP <span class="text-red-500">*</span>
+              </label>
+
+              <!-- ── Idle / Error : champ + bouton Scanner ── -->
+              <ng-container *ngIf="scanState === 'idle' || scanState === 'error'">
+                <div class="relative">
+                  <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+                  </svg>
+                  <input id="nip-input" type="text" formControlName="nip" placeholder="17 chiffres de votre CNIB"
+                    maxlength="17"
+                    class="w-full pl-10 pr-14 py-3 bg-gray-50 border rounded-xl text-sm font-mono tracking-wider transition-all focus:outline-none focus:ring-2 focus:bg-white"
+                    [ngClass]="registerForm.get('nip')?.invalid && registerForm.get('nip')?.touched
+                                     ? 'border-red-300 focus:ring-red-400'
+                                     : 'border-gray-200 focus:ring-primary-400 focus:border-transparent'">
+                  <span class="absolute inset-y-0 right-3 flex items-center text-xs font-medium pointer-events-none"
+                    [ngClass]="(registerForm.get('nip')?.value?.length ?? 0) === 17 ? 'text-green-500' : 'text-gray-400'">
+                    {{ registerForm.get('nip')?.value?.length ?? 0 }}/17
+                  </span>
+                </div>
+
+                <!-- Erreur OCR -->
+                <div *ngIf="scanState === 'error' && scanError"
+                  class="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                  <div class="flex items-start gap-2.5">
+                    <svg class="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                      viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p class="text-xs text-amber-700 leading-relaxed">{{ scanError }}</p>
+                  </div>
+                  <div class="mt-2 flex gap-2">
+                    <button type="button" (click)="retryScan()"
+                      class="flex-1 py-1.5 text-xs font-semibold text-amber-800 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors">
+                      🔄 Réessayer le scan
+                    </button>
+                    <button type="button" (click)="useManualInput()"
+                      class="flex-1 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg transition-colors">
+                      ✏️ Saisir manuellement
+                    </button>
+                  </div>
+                </div>
+
+                <p *ngIf="registerForm.get('nip')?.invalid && registerForm.get('nip')?.touched && scanState !== 'error'"
+                  class="mt-1.5 text-xs text-red-500">Le NIP doit contenir exactement 17 chiffres</p>
+
+                <!-- Bouton Scanner -->
+                <button type="button" (click)="openScanChooser()"
+                  class="mt-2 w-full flex items-center justify-center gap-2 py-2.5 bg-gray-50 border border-dashed border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 hover:border-gray-300 active:scale-[0.98] transition-all">
+                  <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Scanner ma CNIB automatiquement
+                </button>
+                <p class="mt-1 text-center text-xs text-gray-400">Ou saisissez le numéro manuellement ci-dessus</p>
+              </ng-container>
+
+              <!-- ── Choosing : caméra ou fichier ── -->
+              <div *ngIf="scanState === 'choosing'"
+                class="mt-1 p-4 bg-gray-50 border border-gray-200 rounded-xl space-y-3">
+                <p class="text-xs font-semibold text-gray-600 text-center">Comment voulez-vous scanner votre CNIB ?</p>
+                <div class="grid grid-cols-2 gap-3">
+                  <button type="button" (click)="startCamera()"
+                    class="flex flex-col items-center gap-2 p-4 bg-white border border-gray-200 rounded-xl hover:border-primary-300 hover:bg-primary-50 active:scale-[0.97] transition-all">
+                    <div class="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center">
+                      <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M15 10l4.553-2.069A1 1 0 0121 8.868v6.264a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <span class="text-xs font-semibold text-gray-700">Caméra</span>
+                    <span class="text-xs text-gray-400 text-center leading-tight">Prendre une photo maintenant</span>
+                  </button>
+                  <button type="button" (click)="triggerFileInput()"
+                    class="flex flex-col items-center gap-2 p-4 bg-white border border-gray-200 rounded-xl hover:border-primary-300 hover:bg-primary-50 active:scale-[0.97] transition-all">
+                    <div class="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center">
+                      <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <span class="text-xs font-semibold text-gray-700">Galerie</span>
+                    <span class="text-xs text-gray-400 text-center leading-tight">Choisir une photo existante</span>
+                  </button>
+                </div>
+                <button type="button" (click)="closeScan()"
+                  class="w-full py-2 text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors">
+                  Annuler — saisir manuellement
+                </button>
+              </div>
+
+              <!-- ── Camera : prévisualisation vidéo ── -->
+              <div *ngIf="scanState === 'camera'"
+                class="mt-1 rounded-xl overflow-hidden border border-gray-200 bg-black relative">
+                <div class="absolute top-2 left-0 right-0 z-10 flex justify-center pointer-events-none">
+                  <span class="bg-black/60 backdrop-blur-sm text-white text-xs font-medium px-3 py-1 rounded-full">
+                    Cadrez <strong>toute la CNIB</strong> dans le rectangle
+                  </span>
+                </div>
+                <video #videoEl autoplay playsinline muted class="w-full max-h-64 object-cover"></video>
+                <div class="absolute inset-0 pointer-events-none">
+                  <div class="absolute inset-x-4 top-8 bottom-10 border-2 border-white/60 rounded-lg">
+                    <div
+                      class="absolute -top-0.5 -left-0.5 w-6 h-6 border-t-4 border-l-4 border-primary-500 rounded-tl-lg">
+                    </div>
+                    <div
+                      class="absolute -top-0.5 -right-0.5 w-6 h-6 border-t-4 border-r-4 border-primary-500 rounded-tr-lg">
+                    </div>
+                    <div
+                      class="absolute -bottom-0.5 -left-0.5 w-6 h-6 border-b-4 border-l-4 border-primary-500 rounded-bl-lg">
+                    </div>
+                    <div
+                      class="absolute -bottom-0.5 -right-0.5 w-6 h-6 border-b-4 border-r-4 border-primary-500 rounded-br-lg">
+                    </div>
+                    <div
+                      class="absolute left-[28%] right-[2%] top-[16%] h-[22%] border-2 border-yellow-400/80 rounded bg-yellow-400/10">
+                      <span
+                        class="absolute -top-4 left-1/2 -translate-x-1/2 text-yellow-300 text-[10px] font-bold whitespace-nowrap tracking-wide">
+                        NUMÉRO NIP ICI
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <canvas #canvasEl class="hidden"></canvas>
+                <div class="absolute bottom-2 left-0 right-0 flex items-center justify-center gap-3 px-4">
+                  <button type="button" (click)="closeScan()"
+                    class="px-4 py-2 bg-white/20 backdrop-blur-sm text-white text-xs font-semibold rounded-xl border border-white/30 hover:bg-white/30 transition-colors">
+                    Annuler
+                  </button>
+                  <button type="button" (click)="captureAndScan()"
+                    class="flex items-center gap-1.5 px-5 py-2.5 bg-primary-500 text-white text-xs font-bold rounded-xl hover:bg-primary-600 active:scale-[0.97] transition-all shadow-lg">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    📸 Capturer
+                  </button>
+                </div>
+              </div>
+
+              <!-- ── Scanning : loader OCR ── -->
+              <div *ngIf="scanState === 'scanning'"
+                class="mt-1 p-5 bg-gray-50 border border-gray-200 rounded-xl flex flex-col items-center gap-3">
+                <div class="relative w-12 h-12">
+                  <svg class="animate-spin w-12 h-12 text-primary-200" fill="none" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
+                  </svg>
+                  <svg class="animate-spin w-12 h-12 text-primary-500 absolute inset-0" style="animation-duration:0.8s"
+                    fill="none" viewBox="0 0 24 24">
+                    <path fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                </div>
+                <div class="text-center">
+                  <p class="text-sm font-semibold text-gray-700">{{ scanProgress }}</p>
+                  <p class="text-xs text-gray-400 mt-0.5">Scan OCR en cours, veuillez patienter (~5 Mo)</p>
+                </div>
+                <div class="w-full h-1 bg-gray-200 rounded-full overflow-hidden">
+                  <div class="h-full bg-primary-500 rounded-full animate-pulse" style="width: 60%"></div>
+                </div>
+                <div *ngIf="debugPreprocessedImage" class="w-full">
+                  <p class="text-xs text-gray-400 text-center mb-1">Image envoyée à l'OCR :</p>
+                  <img [src]="debugPreprocessedImage" class="w-full rounded-lg border border-gray-200 bg-white"
+                    style="image-rendering: pixelated;" alt="Aperçu OCR">
+                </div>
+              </div>
+
+              <!-- ── Aperçu debug après erreur ── -->
+              <div *ngIf="scanState === 'error' && debugPreprocessedImage" class="mt-2">
+                <p class="text-xs text-gray-400 mb-1">Zone analysée par l'OCR :</p>
+                <img [src]="debugPreprocessedImage" class="w-full rounded-lg border border-gray-200 bg-white"
+                  style="image-rendering: pixelated;" alt="Zone OCR analysée">
+              </div>
+
+              <!-- Input fichier caché -->
+              <input #fileInput type="file" accept="image/*" class="hidden" (change)="onFileSelected($event)">
+            </div>
+
+            <!-- IFU — toggle révélateur -->
+            <div class="rounded-xl border border-dashed border-gray-200 overflow-hidden">
+
+              <!-- Ligne toggle -->
+              <button type="button" (click)="toggleIfuField()"
+                class="w-full flex items-center justify-between gap-3 px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left">
+                <div class="flex items-center gap-3">
+                  <!-- Icône reçu/fiscal -->
+                  <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors"
+                    [ngClass]="showIfuField ? 'bg-primary-100' : 'bg-gray-100'">
+                    <svg class="w-4 h-4 transition-colors"
+                      [ngClass]="showIfuField ? 'text-primary-500' : 'text-gray-400'" fill="none" stroke="currentColor"
+                      viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="text-sm font-semibold text-gray-700">Je possède un numéro IFU</p>
+                    <p class="text-xs text-gray-400 leading-tight">Requis pour postuler aux offres et aides</p>
+                  </div>
+                </div>
+                <!-- Toggle switch visuel -->
+                <div
+                  class="relative flex-shrink-0 w-10 h-5.5 rounded-full transition-colors duration-200 flex items-center"
+                  style="height:22px; width:40px;" [ngClass]="showIfuField ? 'bg-primary-500' : 'bg-gray-300'">
+                  <span class="absolute block w-4 h-4 bg-white rounded-full shadow transition-transform duration-200"
+                    style="top:3px;" [ngClass]="showIfuField ? 'translate-x-5' : 'translate-x-1'"></span>
+                </div>
+              </button>
+
+              <!-- Champ IFU (visible si toggle ON) -->
+              <div *ngIf="showIfuField" class="px-4 pt-3 pb-4 bg-white border-t border-gray-100">
+                <div class="relative">
+                  <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
+                  </svg>
+                  <input type="text" formControlName="ifu" placeholder="Ex: 12345678A" maxlength="9"
+                    class="w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl text-sm font-mono tracking-wider transition-all focus:outline-none focus:ring-2 focus:bg-white"
+                    [ngClass]="registerForm.get('ifu')?.invalid && registerForm.get('ifu')?.touched
+                                     ? 'border-red-300 focus:ring-red-400'
+                                     : 'border-gray-200 focus:ring-primary-400 focus:border-transparent'">
+                </div>
+                <p *ngIf="registerForm.get('ifu')?.invalid && registerForm.get('ifu')?.touched"
+                  class="mt-1.5 text-xs text-red-500">Format invalide — 8 chiffres + 1 lettre (ex: 12345678A)</p>
+                <p *ngIf="!(registerForm.get('ifu')?.invalid && registerForm.get('ifu')?.touched)"
+                  class="mt-1.5 text-xs text-gray-400">8 chiffres suivis d'une lettre — attribué par l'administration
+                  financière du Burkina Faso</p>
+              </div>
+
+            </div>
+
+            <!-- Autres Informations — toggle révélateur -->
+            <div class="rounded-xl border border-dashed border-gray-200 overflow-hidden">
+
+              <!-- Ligne toggle -->
+              <button type="button" (click)="toggleIfuField()"
+                class="w-full flex items-center justify-between gap-3 px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left">
+                <div class="flex items-center gap-3">
+                  <!-- Icône reçu/fiscal -->
+                  <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors"
+                    [ngClass]="showIfuField ? 'bg-primary-100' : 'bg-gray-100'">
+                    <svg class="w-4 h-4 transition-colors"
+                      [ngClass]="showIfuField ? 'text-primary-500' : 'text-gray-400'" fill="none" stroke="currentColor"
+                      viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="text-sm font-semibold text-gray-700">Je dois renseigner autres informations</p>
+                    <p class="text-xs text-gray-400 leading-tight">Requis pour postuler aux offres et aides</p>
+                  </div>
+                </div>
+                <!-- Toggle switch visuel -->
+                <div
+                  class="relative flex-shrink-0 w-10 h-5.5 rounded-full transition-colors duration-200 flex items-center"
+                  style="height:22px; width:40px;" [ngClass]="showIfuField ? 'bg-primary-500' : 'bg-gray-300'">
+                  <span class="absolute block w-4 h-4 bg-white rounded-full shadow transition-transform duration-200"
+                    style="top:3px;" [ngClass]="showIfuField ? 'translate-x-5' : 'translate-x-1'"></span>
+                </div>
+              </button>
+
+              <!-- Champ "Autre Informations" (visible si toggle ON) -->
+              <div *ngIf="showIfuField" class="px-4 pt-3 pb-4 bg-white border-t border-gray-100">
+                <div class="relative">
+                  <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
+                  </svg>
+                  <input type="text" formControlName="ifu" placeholder="Ex: 12345678A" maxlength="9"
+                    class="w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl text-sm font-mono tracking-wider transition-all focus:outline-none focus:ring-2 focus:bg-white"
+                    [ngClass]="registerForm.get('ifu')?.invalid && registerForm.get('ifu')?.touched
+                                     ? 'border-red-300 focus:ring-red-400'
+                                     : 'border-gray-200 focus:ring-primary-400 focus:border-transparent'">
+                </div>
+                <p *ngIf="registerForm.get('ifu')?.invalid && registerForm.get('ifu')?.touched"
+                  class="mt-1.5 text-xs text-red-500">Format invalide — 8 chiffres + 1 lettre (ex: 12345678A)</p>
+                <p *ngIf="!(registerForm.get('ifu')?.invalid && registerForm.get('ifu')?.touched)"
+                  class="mt-1.5 text-xs text-gray-400">8 chiffres suivis d'une lettre — attribué par l'administration
+                  financière du Burkina Faso</p>
+              </div>
+
+            </div>
+            <!-- ════════════════════════════════════════════════ -->
+
+            <!-- Conditions d'utilisation -->
+            <label
+              class="flex items-start gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer select-none hover:bg-gray-100 transition-colors">
+              <input type="checkbox" formControlName="acceptTerms" class="sr-only">
+              <div class="flex-shrink-0 w-5 h-5 rounded border-2 mt-0.5 flex items-center justify-center transition-all"
+                [ngClass]="registerForm.get('acceptTerms')?.value ? 'bg-primary-500 border-primary-500' : 'border-gray-300 bg-white'">
+                <svg *ngIf="registerForm.get('acceptTerms')?.value" class="w-3 h-3 text-white" fill="none"
+                  stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <p class="text-sm text-gray-600 leading-relaxed">
+                J'accepte les
+                <a href="#" class="font-semibold text-primary-500 hover:underline"
+                  (click)="$event.preventDefault()">conditions d'utilisation</a>
+                et la
+                <a href="#" class="font-semibold text-primary-500 hover:underline"
+                  (click)="$event.preventDefault()">politique de confidentialité</a>
+                de SONABHY Portail <span class="text-red-500">*</span>
+              </p>
+            </label>
+            <p *ngIf="registerForm.get('acceptTerms')?.invalid && registerForm.get('acceptTerms')?.touched"
+              class="text-xs text-red-500 -mt-2">
+              Vous devez accepter les conditions pour continuer
+            </p>
+
+            <!-- Boutons Retour + Créer -->
+            <div class="flex gap-3 pt-2">
+              <button type="button" (click)="prevStep()"
+                class="flex items-center gap-1.5 px-5 py-3.5 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 active:scale-[0.98] transition-all flex-shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                Retour
+              </button>
+              <button type="submit" [disabled]="registerForm.invalid || isLoading"
+                class="group flex-1 relative flex items-center justify-center gap-2 py-3.5 bg-primary-500 text-white text-sm font-semibold rounded-xl hover:bg-primary-600 active:scale-[0.98] transition-all shadow-sm overflow-hidden disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100">
+                <div
+                  class="absolute inset-0 bg-white/10 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none">
+                </div>
+                <ng-container *ngIf="!isLoading">
+                  <svg class="w-4 h-4 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                  </svg>
+                  <span class="relative z-10">Créer mon compte</span>
+                </ng-container>
+                <ng-container *ngIf="isLoading">
+                  <span class="spinner text-white w-4 h-4 relative z-10"></span>
+                  <span class="relative z-10">Création en cours...</span>
+                </ng-container>
+              </button>
+            </div>
+
+          </div>
+
+        </form>
+      </div>
+
+      <!-- Retour accueil -->
+      <div class="mt-8">
+        <a routerLink="/accueil"
+          class="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Retour à l'accueil
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+</div>

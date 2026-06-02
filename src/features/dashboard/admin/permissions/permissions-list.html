@@ -1,0 +1,487 @@
+<!-- permissions-list.html -->
+<div class="space-y-4 md:space-y-5">
+
+  <!-- ── Toasts ─────────────────────────────────────────────────────────── -->
+  <div class="fixed top-4 right-4 z-50 space-y-2 max-w-[90vw] sm:max-w-[350px]">
+    <div *ngFor="let toast of toasts"
+         class="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-lg text-white"
+         [style]="toast.type === 'success' ? 'background:#27ae60;' : 'background:#c0392b;'">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path *ngIf="toast.type === 'success'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        <path *ngIf="toast.type === 'error'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+      <div class="flex-1 min-w-0">
+        <p class="font-semibold text-sm">{{ toast.title }}</p>
+        <p class="text-xs opacity-90 truncate">{{ toast.message }}</p>
+      </div>
+      <button (click)="removeToast(toast.id)" class="p-1 hover:bg-white/20 rounded-lg transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── En-tête ────────────────────────────────────────────────────────── -->
+  <div class="flex items-center justify-between gap-3">
+    <div>
+      <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Rôles & Permissions</h1>
+      <p class="text-xs sm:text-sm text-gray-500 mt-0.5">{{ roles.length }} rôle(s) configuré(s)</p>
+    </div>
+    <button (click)="openCreateModal()"
+            class="group relative flex-shrink-0 inline-flex items-center gap-1.5 px-3 sm:px-5 py-2 sm:py-2.5 text-white rounded-xl text-sm font-medium active:scale-95 transition-all shadow-sm overflow-hidden"
+            style="background:#c0392b;">
+      <div class="absolute inset-0 bg-white/10 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+      <svg class="w-4 h-4 relative z-10 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+      </svg>
+      <span class="relative z-10 hidden sm:inline">Nouveau rôle</span>
+    </button>
+  </div>
+
+  <!-- ── Chargement ─────────────────────────────────────────────────────── -->
+  <div *ngIf="loading" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-10 text-center">
+    <div class="w-10 h-10 border-4 border-t-transparent rounded-full animate-spin mx-auto mb-3"
+         style="border-color:#f3f4f6; border-top-color:#c0392b;"></div>
+    <p class="text-gray-400 text-sm">Chargement des rôles...</p>
+  </div>
+
+  <!-- ── État vide ──────────────────────────────────────────────────────── -->
+  <div *ngIf="!loading && roles.length === 0"
+       class="bg-white rounded-2xl shadow-sm border border-gray-100 p-10 text-center">
+    <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+         style="background:#fde8e8;">
+      <svg class="w-7 h-7" style="color:#c0392b;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+      </svg>
+    </div>
+    <h3 class="text-base font-semibold text-gray-900 mb-1">Aucun rôle configuré</h3>
+    <p class="text-gray-400 text-sm mb-4">Créez votre premier rôle pour commencer</p>
+    <button (click)="openCreateModal()"
+            class="inline-flex items-center gap-2 px-4 py-2 text-white rounded-xl active:scale-95 transition-all text-sm font-medium"
+            style="background:#c0392b;">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+      </svg>
+      Créer un rôle
+    </button>
+  </div>
+
+  <!-- ── Grille de cards ────────────────────────────────────────────────── -->
+  <div *ngIf="!loading && roles.length > 0"
+       class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+
+    <div *ngFor="let role of roles"
+         class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col">
+
+      <!-- Bande couleur + initiales -->
+      <div class="h-2 w-full" style="background:linear-gradient(90deg,#c0392b,#96281b);"></div>
+
+      <div class="p-5 flex flex-col flex-1">
+
+        <!-- Icône + nom -->
+        <div class="flex items-start gap-3 mb-4">
+          <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+               style="background:#fde8e8;">
+            <span class="text-sm font-bold" style="color:#c0392b;">
+              {{ role.accronyme.substring(0, 2) }}
+            </span>
+          </div>
+          <div class="min-w-0 flex-1">
+            <h3 class="font-bold text-gray-900 text-sm leading-tight">
+              {{ role.description }}
+              <span class="ml-1 text-xs font-normal text-gray-400">({{ role.accronyme }})</span>
+            </h3>
+          </div>
+        </div>
+
+        <!-- Compteur de permissions -->
+        <div class="flex items-center gap-2 mb-5">
+          <div class="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden">
+            <div class="h-1.5 rounded-full transition-all"
+                 style="background:#27ae60;"
+                 [style.width]="(modules.length * actions.length) > 0
+                   ? ((countRolePerms(role) / (modules.length * actions.length)) * 100) + '%'
+                   : '0%'">
+            </div>
+          </div>
+          <span class="text-xs text-gray-500 flex-shrink-0">
+            {{ countRolePerms(role) }} / {{ modules.length * actions.length }} permissions
+          </span>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-2 mt-auto pt-3 border-t border-gray-50">
+          <!-- Modifier les permissions -->
+          <button (click)="openPermsModal(role)"
+                  class="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-medium transition-all active:scale-95"
+                  style="background:#fde8e8; color:#c0392b;">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+            Permissions
+          </button>
+          <!-- Modifier infos -->
+          <button (click)="openEditInfoModal(role)"
+                  class="p-2 rounded-xl text-gray-500 bg-gray-50 hover:bg-gray-100 active:scale-95 transition-all"
+                  title="Modifier le nom / acronyme">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+            </svg>
+          </button>
+          <!-- Supprimer -->
+          <button (click)="openDeleteModal(role)"
+                  class="p-2 rounded-xl bg-red-50 hover:bg-red-100 active:scale-95 transition-all"
+                  style="color:#c0392b;" title="Supprimer ce rôle">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     MODAL — CRÉER / ÉDITER RÔLE (2 étapes)
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div *ngIf="showModal" class="fixed inset-0 z-50 overflow-y-auto">
+  <div class="flex items-end sm:items-center justify-center min-h-screen px-0 sm:px-4 pt-4 pb-0 sm:pb-20">
+    <div class="fixed inset-0 bg-gray-900/50" (click)="closeModal()"></div>
+
+    <div class="relative bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full sm:max-w-lg mx-auto z-10 overflow-hidden">
+
+      <!-- Header modal -->
+      <div class="px-5 py-4" style="background:linear-gradient(135deg,#c0392b,#96281b);">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-bold text-white">
+              {{ modalMode === 'create' ? 'Nouveau rôle' : 'Modifier le rôle' }}
+            </h3>
+          </div>
+          <button (click)="closeModal()" class="p-1.5 hover:bg-white/20 rounded-lg transition-colors text-white">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Stepper (création uniquement, 2 étapes) -->
+        <div *ngIf="modalMode === 'create'" class="flex items-center gap-2">
+          <!-- Étape 1 -->
+          <div class="flex items-center gap-1.5">
+            <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all"
+                 [style]="modalStep >= 1 ? 'background:white; color:#c0392b;' : 'background:rgba(255,255,255,0.3); color:white;'">
+              <svg *ngIf="modalStep > 1" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span *ngIf="modalStep <= 1">1</span>
+            </div>
+            <span class="text-white text-xs font-medium">Informations</span>
+          </div>
+          <!-- Séparateur -->
+          <div class="flex-1 h-px" style="background:rgba(255,255,255,0.3);"></div>
+          <!-- Étape 2 -->
+          <div class="flex items-center gap-1.5">
+            <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all"
+                 [style]="modalStep >= 2 ? 'background:white; color:#c0392b;' : 'background:rgba(255,255,255,0.3); color:white;'">
+              2
+            </div>
+            <span class="text-white text-xs font-medium">Permissions</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Étape 1 : infos rôle ── -->
+      <div *ngIf="modalStep === 1" class="p-5 space-y-4">
+
+        <div *ngIf="formError"
+             class="flex items-start gap-3 p-3 rounded-xl text-sm"
+             style="background:#fde8e8; border:1px solid #f5b7b1; color:#96281b;">
+          <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          {{ formError }}
+        </div>
+
+        <!-- Acronyme -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">
+            Acronyme <span class="text-red-500">*</span>
+            <span class="ml-1 text-xs text-gray-400 font-normal">(sera mis en majuscules)</span>
+          </label>
+          <input type="text"
+                 [(ngModel)]="formAccronyme"
+                 placeholder="Ex: AGENT_RH, AGENT_FINANCE..."
+                 maxlength="50"
+                 class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:border-transparent transition-all placeholder:normal-case"
+                 style="--tw-ring-color:#c0392b;"
+                 [style.outline]="'none'"
+                 (focus)="$event.target.style.boxShadow='0 0 0 2px #c0392b40'"
+                 (blur)="$event.target.style.boxShadow='none'">
+        </div>
+
+        <!-- Description -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">
+            Description <span class="text-red-500">*</span>
+          </label>
+          <input type="text"
+                 [(ngModel)]="formDescription"
+                 placeholder="Ex: Agent Ressources Humaines"
+                 maxlength="255"
+                 class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-transparent transition-all"
+                 (focus)="$event.target.style.boxShadow='0 0 0 2px #c0392b40'"
+                 (blur)="$event.target.style.boxShadow='none'">
+        </div>
+      </div>
+
+      <!-- ── Étape 2 : matrice permissions ── -->
+      <div *ngIf="modalStep === 2" class="p-4">
+        <p class="text-xs text-gray-500 mb-3">
+          Définissez les permissions pour le rôle
+          <span class="font-semibold" style="color:#c0392b;">{{ formDescription }}</span>.
+          Vous pourrez les modifier plus tard.
+        </p>
+
+        <div class="overflow-x-auto rounded-xl border border-gray-100">
+          <table class="text-xs w-full" style="min-width:420px;">
+            <thead>
+              <tr style="background:#f9fafb;">
+                <th class="px-3 py-2 text-left font-medium text-gray-600" style="min-width:110px;">Module</th>
+                <th *ngFor="let act of actions"
+                    class="px-2 py-2 text-center font-medium text-gray-600" style="min-width:64px;">
+                  <div class="flex flex-col items-center gap-1">
+                    <span>{{ act.label }}</span>
+                    <button (click)="toggleCol(act.key)"
+                            class="w-4 h-4 rounded border-2 flex items-center justify-center transition-colors"
+                            [style]="isColAll(act.key) ? 'background:#c0392b; border-color:#c0392b;' : 'background:white; border-color:#d1d5db;'">
+                      <svg *ngIf="isColAll(act.key)" class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                      </svg>
+                    </button>
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let mod of modules; let odd = odd"
+                  [style]="odd ? 'background:#f9fafb;' : 'background:white;'"
+                  class="border-t border-gray-100">
+                <td class="px-3 py-2">
+                  <div class="flex items-center gap-1.5">
+                    <button (click)="toggleRow(mod.key)"
+                            class="w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors"
+                            [style]="isRowAll(mod.key) ? 'background:#c0392b; border-color:#c0392b;' : 'background:white; border-color:#d1d5db;'">
+                      <svg *ngIf="isRowAll(mod.key)" class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                      </svg>
+                    </button>
+                    <span class="font-medium text-gray-700 text-xs">{{ mod.label }}</span>
+                  </div>
+                </td>
+                <td *ngFor="let act of actions" class="px-2 py-2 text-center">
+                  <button (click)="togglePermission(mod.key, act.key)"
+                          class="w-5 h-5 rounded border-2 mx-auto flex items-center justify-center transition-all"
+                          [style]="permMatrix[mod.key]?.[act.key] ? 'background:#27ae60; border-color:#27ae60;' : 'background:white; border-color:#d1d5db;'">
+                    <svg *ngIf="permMatrix[mod.key]?.[act.key]"
+                         class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="text-xs text-gray-400 mt-2">{{ countEnabled() }} permission(s) sélectionnée(s)</p>
+      </div>
+
+      <!-- Footer modal -->
+      <div class="bg-gray-50 px-5 py-4 flex flex-col-reverse sm:flex-row sm:justify-between gap-2 border-t border-gray-100">
+        <!-- Bouton gauche -->
+        <button *ngIf="modalStep === 1" type="button" (click)="closeModal()"
+                class="w-full sm:w-auto px-4 py-2.5 text-gray-700 hover:bg-gray-200 rounded-xl transition-colors text-sm font-medium">
+          Annuler
+        </button>
+        <button *ngIf="modalStep === 2" type="button" (click)="modalStep = 1"
+                class="w-full sm:w-auto px-4 py-2.5 text-gray-700 hover:bg-gray-200 rounded-xl transition-colors text-sm font-medium">
+          ← Retour
+        </button>
+
+        <!-- Bouton droit -->
+        <button *ngIf="modalStep === 1" (click)="submitStep1()"
+                [disabled]="submitting"
+                class="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 text-white rounded-xl disabled:opacity-50 transition-all text-sm font-medium"
+                style="background:#c0392b;">
+          <span *ngIf="submitting" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+          {{ modalMode === 'create' ? 'Suivant →' : (submitting ? 'Enregistrement...' : 'Enregistrer') }}
+        </button>
+        <button *ngIf="modalStep === 2" (click)="submitStep2()"
+                [disabled]="savingPerms"
+                class="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 text-white rounded-xl disabled:opacity-50 transition-all text-sm font-medium"
+                style="background:#c0392b;">
+          <span *ngIf="savingPerms" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+          {{ savingPerms ? 'Création...' : 'Créer le rôle' }}
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     MODAL — ÉDITER LES PERMISSIONS D'UN RÔLE EXISTANT
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div *ngIf="showPermsModal && permsRole" class="fixed inset-0 z-50 overflow-y-auto">
+  <div class="flex items-end sm:items-center justify-center min-h-screen px-0 sm:px-4 pt-4 pb-0 sm:pb-20">
+    <div class="fixed inset-0 bg-gray-900/50" (click)="closePermsModal()"></div>
+
+    <div class="relative bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full sm:max-w-2xl mx-auto z-10 overflow-hidden">
+
+      <!-- Header -->
+      <div class="px-5 py-4 flex items-center justify-between" style="background:linear-gradient(135deg,#c0392b,#96281b);">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Permissions — {{ permsRole.description }}</h3>
+            <p class="text-xs text-white/70">{{ countEnabled() }} permission(s) active(s)</p>
+          </div>
+        </div>
+        <button (click)="closePermsModal()" class="p-1.5 hover:bg-white/20 rounded-lg transition-colors text-white">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Matrice -->
+      <div class="p-4 overflow-x-auto">
+        <table class="text-xs w-full" style="min-width:480px;">
+          <thead>
+            <tr style="background:#f9fafb;">
+              <th class="px-3 py-2.5 text-left font-medium text-gray-600" style="min-width:120px;">Module</th>
+              <th *ngFor="let act of actions"
+                  class="px-2 py-2.5 text-center font-medium text-gray-600" style="min-width:72px;">
+                <div class="flex flex-col items-center gap-1">
+                  <span class="text-xs">{{ act.label }}</span>
+                  <button (click)="toggleCol(act.key)"
+                          class="w-4 h-4 rounded border-2 flex items-center justify-center transition-colors"
+                          [style]="isColAll(act.key) ? 'background:#c0392b; border-color:#c0392b;' : 'background:white; border-color:#d1d5db;'">
+                    <svg *ngIf="isColAll(act.key)" class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                    </svg>
+                  </button>
+                </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let mod of modules; let odd = odd"
+                [style]="odd ? 'background:#f9fafb;' : 'background:white;'"
+                class="border-t border-gray-100 hover:bg-red-50 transition-colors">
+              <td class="px-3 py-2.5">
+                <div class="flex items-center gap-2">
+                  <button (click)="toggleRow(mod.key)"
+                          class="w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors"
+                          [style]="isRowAll(mod.key) ? 'background:#c0392b; border-color:#c0392b;' : 'background:white; border-color:#d1d5db;'">
+                    <svg *ngIf="isRowAll(mod.key)" class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                    </svg>
+                  </button>
+                  <span class="font-medium text-gray-700">{{ mod.label }}</span>
+                </div>
+              </td>
+              <td *ngFor="let act of actions" class="px-2 py-2.5 text-center">
+                <button (click)="togglePermission(mod.key, act.key)"
+                        class="w-5 h-5 rounded border-2 mx-auto flex items-center justify-center transition-all"
+                        [style]="permMatrix[mod.key]?.[act.key] ? 'background:#27ae60; border-color:#27ae60;' : 'background:white; border-color:#d1d5db;'">
+                  <svg *ngIf="permMatrix[mod.key]?.[act.key]"
+                       class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                  </svg>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Footer -->
+      <div class="bg-gray-50 px-5 py-4 flex flex-col-reverse sm:flex-row sm:justify-end gap-2 border-t border-gray-100">
+        <button (click)="closePermsModal()"
+                class="w-full sm:w-auto px-4 py-2.5 text-gray-700 hover:bg-gray-200 rounded-xl transition-colors text-sm font-medium">
+          Annuler
+        </button>
+        <button (click)="savePermsStandalone()"
+                [disabled]="savingPermsStandalone"
+                class="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 text-white rounded-xl disabled:opacity-50 transition-all text-sm font-medium"
+                style="background:#c0392b;">
+          <span *ngIf="savingPermsStandalone" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+          {{ savingPermsStandalone ? 'Enregistrement...' : 'Enregistrer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     MODAL — SUPPRESSION
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div *ngIf="showDeleteModal && deletingRole" class="fixed inset-0 z-[70] overflow-y-auto">
+  <div class="flex items-center justify-center min-h-screen px-4">
+    <div class="fixed inset-0 bg-gray-900/50" (click)="closeDeleteModal()"></div>
+
+    <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-sm mx-auto z-10 p-6">
+      <div class="text-center">
+        <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+             style="background:#fde8e8;">
+          <svg class="w-7 h-7" style="color:#c0392b;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+          </svg>
+        </div>
+        <h3 class="text-lg font-bold text-gray-900 mb-2">Supprimer le rôle</h3>
+        <p class="text-gray-500 text-sm mb-1">Vous allez supprimer :</p>
+        <p class="font-bold text-sm mb-1" style="color:#c0392b;">
+          {{ deletingRole.description }}
+          <span class="text-gray-400 font-normal">({{ deletingRole.accronyme }})</span>
+        </p>
+        <p class="text-xs text-gray-400 mb-2">{{ countRolePerms(deletingRole) }} permission(s) associée(s) seront supprimées.</p>
+        <p class="text-xs mb-5" style="color:#c0392b;">⚠ Impossible si des agents ont ce rôle.</p>
+
+        <div class="flex flex-col-reverse sm:flex-row justify-center gap-2">
+          <button (click)="closeDeleteModal()"
+                  class="w-full sm:w-auto px-4 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors text-sm font-medium">
+            Annuler
+          </button>
+          <button (click)="confirmDelete()"
+                  [disabled]="deleting"
+                  class="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 text-white rounded-xl disabled:opacity-50 transition-colors text-sm font-medium"
+                  style="background:#c0392b;">
+            <span *ngIf="deleting" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            {{ deleting ? 'Suppression...' : 'Supprimer' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

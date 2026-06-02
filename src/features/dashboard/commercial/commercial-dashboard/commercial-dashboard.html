@@ -1,0 +1,360 @@
+<!-- commercial-dashboard.html — Dashboard Agent Commercial -->
+<div class="bg-slate-900 rounded-2xl overflow-hidden shadow-xl border border-slate-800">
+
+  <!-- ===== HERO ===== -->
+  <div class="relative overflow-hidden">
+    <div class="absolute inset-0 opacity-30"
+         style="background-image: radial-gradient(circle, #ffffff22 1px, transparent 1px); background-size: 24px 24px;"></div>
+    <div class="absolute top-0 right-0 w-96 h-96 bg-red-600/20 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="relative z-10 px-6 pt-8 pb-4">
+      <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+            <span class="text-xs font-semibold text-red-400 uppercase tracking-widest">Agent Commercial</span>
+          </div>
+          <p class="text-slate-400 text-sm mb-1">{{ greeting }},</p>
+          <h1 class="text-2xl sm:text-3xl font-black text-white">{{ currentUser?.username || 'Agent Commercial' }}</h1>
+          <p class="text-slate-400 text-sm mt-1">Tableau de bord — Gestion commerciale SONABHY</p>
+        </div>
+        <button (click)="refreshData()"
+                class="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-medium rounded-xl transition-all active:scale-95 flex-shrink-0">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Actualiser
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats dans le hero -->
+    <div class="relative z-10 px-6 pb-6 grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="bg-green-500/10 border border-green-500/20 rounded-2xl p-4 text-center">
+        <ng-container *ngIf="loadingOffres; else heroActives">
+          <div class="w-10 h-8 bg-slate-700 rounded animate-pulse mx-auto mb-1"></div>
+        </ng-container>
+        <ng-template #heroActives>
+          <p class="text-2xl font-black text-green-400">{{ offresActives }}</p>
+        </ng-template>
+        <p class="text-xs text-slate-400 mt-0.5">Actives</p>
+      </div>
+      <div class="bg-orange-500/10 border border-orange-500/20 rounded-2xl p-4 text-center">
+        <ng-container *ngIf="loadingOffres; else heroAttente">
+          <div class="w-10 h-8 bg-slate-700 rounded animate-pulse mx-auto mb-1"></div>
+        </ng-container>
+        <ng-template #heroAttente>
+          <p class="text-2xl font-black text-orange-400">{{ offresEnAttente }}</p>
+        </ng-template>
+        <p class="text-xs text-slate-400 mt-0.5">En attente</p>
+      </div>
+      <div class="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4 text-center">
+        <ng-container *ngIf="loadingOffres; else heroCandidatures">
+          <div class="w-10 h-8 bg-slate-700 rounded animate-pulse mx-auto mb-1"></div>
+        </ng-container>
+        <ng-template #heroCandidatures>
+          <p class="text-2xl font-black text-blue-400">{{ candidaturesTotal }}</p>
+        </ng-template>
+        <p class="text-xs text-slate-400 mt-0.5">Candidatures</p>
+      </div>
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-4 text-center">
+        <ng-container *ngIf="loadingOffres; else heroCloturees">
+          <div class="w-10 h-8 bg-slate-700 rounded animate-pulse mx-auto mb-1"></div>
+        </ng-container>
+        <ng-template #heroCloturees>
+          <p class="text-2xl font-black text-slate-300">{{ offresCloturees }}</p>
+        </ng-template>
+        <p class="text-xs text-slate-400 mt-0.5">Clôturées</p>
+      </div>
+    </div>
+
+    <div class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-red-500/50 to-transparent"></div>
+  </div>
+
+  <!-- ===== CONTENU PRINCIPAL ===== -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 bg-slate-800/30">
+
+    <!-- Colonne principale (2/3) -->
+    <div class="lg:col-span-2 space-y-5">
+
+      <!-- Erreur -->
+      <div *ngIf="error" class="bg-red-900/20 border border-red-500/30 rounded-2xl px-5 py-4 flex items-start gap-3">
+        <div class="w-8 h-8 rounded-xl bg-red-900/50 flex items-center justify-center flex-shrink-0 mt-0.5">
+          <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div class="flex-1">
+          <p class="text-sm font-semibold text-red-300">Erreur de chargement</p>
+          <p class="text-xs text-red-400 mt-0.5">{{ error }}</p>
+        </div>
+        <button (click)="refreshData()"
+                class="px-3 py-1.5 bg-red-900/40 hover:bg-red-900/60 text-red-400 text-xs font-medium rounded-lg transition-colors flex-shrink-0">
+          Réessayer
+        </button>
+      </div>
+
+      <!-- Graphiques -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+        <!-- Graphique ligne (2/3) -->
+        <div class="lg:col-span-2 bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden">
+          <div class="px-5 py-4 border-b border-slate-700">
+            <h2 class="text-sm font-bold text-white">Évolution — 6 derniers mois</h2>
+            <p class="text-[10px] text-slate-400 mt-0.5">Offres créées et candidatures reçues</p>
+          </div>
+          <div class="p-4">
+            <div *ngIf="loadingOffres" class="h-52 bg-slate-700/50 rounded-xl animate-pulse"></div>
+            <div *ngIf="!loadingOffres" class="relative h-52">
+              <canvas #chartCanvas></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Donut (1/3) -->
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden">
+          <div class="px-5 py-4 border-b border-slate-700">
+            <h2 class="text-sm font-bold text-white">Répartition</h2>
+            <p class="text-[10px] text-slate-400 mt-0.5">{{ getTotalOffres() }} offres</p>
+          </div>
+          <div class="p-4 flex items-center justify-center">
+            <div *ngIf="loadingOffres" class="w-32 h-32 rounded-full border-8 border-slate-700 animate-pulse"></div>
+            <div *ngIf="!loadingOffres" class="relative w-full h-44">
+              <canvas #donutCanvas></canvas>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Stats secondaires -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4">
+          <ng-container *ngIf="loadingOffres; else adminCard">
+            <div class="animate-pulse"><div class="w-12 h-6 bg-slate-700 rounded mb-1"></div><div class="w-20 h-3 bg-slate-700/60 rounded"></div></div>
+          </ng-container>
+          <ng-template #adminCard>
+            <p class="text-2xl font-black text-blue-400">{{ offresAdmin }}</p>
+            <p class="text-xs text-slate-400 mt-0.5">Par agents</p>
+          </ng-template>
+        </div>
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4">
+          <ng-container *ngIf="loadingOffres; else candidatCard">
+            <div class="animate-pulse"><div class="w-12 h-6 bg-slate-700 rounded mb-1"></div><div class="w-20 h-3 bg-slate-700/60 rounded"></div></div>
+          </ng-container>
+          <ng-template #candidatCard>
+            <p class="text-2xl font-black text-purple-400">{{ offresCandidat }}</p>
+            <p class="text-xs text-slate-400 mt-0.5">Par candidats</p>
+          </ng-template>
+        </div>
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4">
+          <ng-container *ngIf="loadingStats; else totalOffresCard">
+            <div class="animate-pulse"><div class="w-12 h-6 bg-slate-700 rounded mb-1"></div><div class="w-20 h-3 bg-slate-700/60 rounded"></div></div>
+          </ng-container>
+          <ng-template #totalOffresCard>
+            <p class="text-2xl font-black text-amber-400">{{ mainStats?.offres?.total ?? '—' }}</p>
+            <p class="text-xs text-slate-400 mt-0.5">Total (BD)</p>
+          </ng-template>
+        </div>
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4">
+          <ng-container *ngIf="loadingOffres; else tauxCard">
+            <div class="animate-pulse"><div class="w-12 h-6 bg-slate-700 rounded mb-1"></div><div class="w-20 h-3 bg-slate-700/60 rounded"></div></div>
+          </ng-container>
+          <ng-template #tauxCard>
+            <p class="text-2xl font-black text-teal-400">{{ tauxValidation }}%</p>
+            <p class="text-xs text-slate-400 mt-0.5">Taux validation</p>
+          </ng-template>
+        </div>
+      </div>
+
+      <!-- Listes -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+        <!-- À traiter -->
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden">
+          <div class="px-5 py-4 border-b border-slate-700 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 bg-orange-900/50 border border-orange-500/20 rounded-xl flex items-center justify-center">
+                <svg class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <h2 class="text-sm font-bold text-white">À traiter</h2>
+                <p class="text-[10px] text-slate-400">Offres en attente</p>
+              </div>
+            </div>
+            <span *ngIf="!loadingOffres && offresEnAttente > 0"
+                  class="text-[10px] font-bold px-2 py-0.5 bg-orange-900/50 text-orange-400 border border-orange-500/30 rounded-full">
+              {{ offresEnAttente }}
+            </span>
+          </div>
+
+          <div *ngIf="loadingOffres" class="divide-y divide-slate-700/50">
+            <div *ngFor="let i of [1,2,3]" class="flex items-center gap-4 px-5 py-3.5 animate-pulse">
+              <div class="flex-1">
+                <div class="w-36 h-3.5 bg-slate-700 rounded mb-1.5"></div>
+                <div class="w-24 h-3 bg-slate-700/60 rounded"></div>
+              </div>
+              <div class="w-16 h-5 bg-slate-700/60 rounded-full flex-shrink-0"></div>
+            </div>
+          </div>
+
+          <ng-container *ngIf="!loadingOffres">
+            <div *ngIf="pendingOffres.length === 0" class="flex flex-col items-center justify-center py-10 px-6 text-center">
+              <div class="w-12 h-12 bg-green-900/30 border border-green-500/20 rounded-2xl flex items-center justify-center mb-3">
+                <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <p class="text-sm text-slate-300 font-medium">Tout est traité !</p>
+              <p class="text-xs text-slate-500 mt-1">Aucune offre en attente</p>
+            </div>
+            <div class="divide-y divide-slate-700/50 max-h-72 overflow-y-auto">
+              <div *ngFor="let offre of pendingOffres"
+                   class="flex items-center gap-3 px-5 py-3.5 hover:bg-slate-700/30 transition-colors">
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-semibold text-white truncate">{{ offre.titre }}</p>
+                  <div class="flex items-center gap-2 mt-0.5">
+                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full" [ngClass]="getCreeParClass(offre.creePar)">
+                      {{ getCreePar(offre.creePar) }}
+                    </span>
+                    <span class="text-[10px] text-slate-500">{{ offre.typeOffre }}</span>
+                  </div>
+                </div>
+                <div class="flex-shrink-0 text-right">
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full block mb-1" [ngClass]="getStatusClass(offre.statusOffre)">
+                    {{ getStatusLabel(offre.statusOffre) }}
+                  </span>
+                  <p class="text-[10px] text-slate-500">{{ getTimeAgo(offre.createdDate) }}</p>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+
+        <!-- Offres récentes -->
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden">
+          <div class="flex items-center gap-2.5 px-5 py-4 border-b border-slate-700">
+            <div class="w-8 h-8 bg-blue-900/50 border border-blue-500/20 rounded-xl flex items-center justify-center">
+              <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-sm font-bold text-white">Offres récentes</h2>
+              <p class="text-[10px] text-slate-400">Dernières enregistrées</p>
+            </div>
+          </div>
+
+          <div *ngIf="loadingOffres" class="divide-y divide-slate-700/50">
+            <div *ngFor="let i of [1,2,3,4]" class="flex items-start gap-4 px-5 py-3.5 animate-pulse">
+              <div class="flex-1">
+                <div class="w-40 h-3.5 bg-slate-700 rounded mb-1.5"></div>
+                <div class="w-28 h-3 bg-slate-700/60 rounded"></div>
+              </div>
+              <div class="w-14 h-5 bg-slate-700/60 rounded-full flex-shrink-0"></div>
+            </div>
+          </div>
+
+          <ng-container *ngIf="!loadingOffres">
+            <div *ngIf="recentOffres.length === 0" class="flex flex-col items-center justify-center py-10 px-6 text-center">
+              <p class="text-sm text-slate-400">Aucune offre enregistrée</p>
+            </div>
+            <div class="divide-y divide-slate-700/50 max-h-72 overflow-y-auto">
+              <div *ngFor="let offre of recentOffres"
+                   class="flex items-center gap-3 px-5 py-3.5 hover:bg-slate-700/30 transition-colors">
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-semibold text-white truncate">{{ offre.titre }}</p>
+                  <div class="flex items-center gap-2 mt-0.5">
+                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full" [ngClass]="getCreeParClass(offre.creePar)">
+                      {{ getCreePar(offre.creePar) }}
+                    </span>
+                    <span class="text-[10px] text-slate-500">{{ offre.typeOffre }}</span>
+                    <span *ngIf="offre.nombreCandidaturesActuelles > 0"
+                          class="text-[10px] text-blue-400 font-semibold">
+                      {{ offre.nombreCandidaturesActuelles }} cand.
+                    </span>
+                  </div>
+                </div>
+                <div class="flex-shrink-0 text-right">
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full block mb-1" [ngClass]="getStatusClass(offre.statusOffre)">
+                    {{ getStatusLabel(offre.statusOffre) }}
+                  </span>
+                  <p class="text-[10px] text-slate-500">{{ getTimeAgo(offre.createdDate) }}</p>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Sidebar (1/3) -->
+    <div class="space-y-5">
+
+      <!-- Statut chargement -->
+      <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full flex-shrink-0 animate-pulse"
+              [ngClass]="(loadingStats || loadingOffres) ? 'bg-amber-400' : 'bg-green-400'"></span>
+        <p class="text-xs font-medium"
+           [ngClass]="(loadingStats || loadingOffres) ? 'text-amber-400' : 'text-green-400'">
+          {{ (loadingStats || loadingOffres) ? 'Chargement...' : 'Données à jour' }}
+        </p>
+        <span class="ml-auto text-[10px] text-slate-500">{{ today | date:'d MMM, HH:mm' }}</span>
+      </div>
+
+      <!-- Navigation rapide -->
+      <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5">
+        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Navigation</h3>
+        <nav class="space-y-1">
+          <a routerLink="/dashboard/commercial/offres"
+             class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors">
+            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+            Offres commerciales
+          </a>
+          <a routerLink="/dashboard/commercial/candidatures"
+             class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors">
+            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Candidatures
+          </a>
+          <a routerLink="/dashboard/commercial/activites"
+             class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors">
+            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Activités & Suivi
+          </a>
+        </nav>
+      </div>
+
+      <!-- Résumé stats -->
+      <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 space-y-3">
+        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Résumé</h3>
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-slate-400">Taux de validation</span>
+          <span class="text-xs font-bold text-teal-400">{{ tauxValidation }}%</span>
+        </div>
+        <div class="w-full bg-slate-700 rounded-full h-1.5">
+          <div class="bg-teal-500 h-1.5 rounded-full transition-all" [style.width.%]="tauxValidation"></div>
+        </div>
+        <div class="flex items-center justify-between pt-1">
+          <span class="text-xs text-slate-400">Offres par agents</span>
+          <span class="text-xs font-bold text-blue-400">{{ offresAdmin }}</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-slate-400">Offres par candidats</span>
+          <span class="text-xs font-bold text-purple-400">{{ offresCandidat }}</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>

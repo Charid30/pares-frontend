@@ -1,0 +1,471 @@
+<!-- HERO -->
+<div class="bg-slate-900 relative overflow-hidden">
+  <!-- Dot pattern -->
+  <div class="absolute inset-0 opacity-[0.04]"
+       style="background-image: radial-gradient(circle, #ffffff 1px, transparent 1px); background-size: 28px 28px;"></div>
+  <div class="absolute inset-0 flex items-start justify-center pointer-events-none pt-8">
+    <div class="w-[500px] h-[200px] bg-primary-500/10 rounded-full blur-3xl"></div>
+  </div>
+  <div class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary-500/40 to-transparent"></div>
+
+  <div class="container-custom relative z-10 py-10 md:py-14">
+    <div class="flex flex-col md:flex-row md:items-center gap-6">
+
+      <!-- Left: icon + text + buttons -->
+      <div class="flex items-start gap-5 flex-1 min-w-0">
+        <div class="w-14 h-14 md:w-20 md:h-20 bg-primary-500 rounded-2xl flex items-center justify-center text-white shadow-2xl ring-4 ring-white/10 flex-shrink-0">
+          <svg class="w-7 h-7 md:w-10 md:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-primary-400 text-xs font-semibold uppercase tracking-widest mb-0.5">Agent — Tableau de bord</p>
+          <h1 class="text-xl md:text-3xl font-bold text-white mt-0.5 tracking-tight">Recrutements</h1>
+          <p class="text-xs md:text-sm text-gray-400 mt-1">Gestion des campagnes de recrutement</p>
+          <div class="flex flex-wrap gap-3 mt-4">
+            <button (click)="filtrer()"
+                    class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-white/10 hover:bg-white/15 border border-white/20 rounded-xl transition-all">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+              Actualiser
+            </button>
+            <button *ngIf="peutCreer"
+                    (click)="ouvrirFormulaire()"
+                    class="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white rounded-xl shadow-lg ring-2 ring-white/20 hover:ring-white/40 transition-all flex-shrink-0"
+                    style="background:#c0392b">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+              <span class="hidden sm:inline">Nouvelle campagne</span>
+              <span class="sm:hidden">Nouveau</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: stats cliquables -->
+      <div class="grid grid-cols-4 gap-3 md:w-auto md:min-w-[360px]">
+        <button *ngFor="let s of statsStatuts"
+                (click)="filtreStatut = (filtreStatut === s.value ? '' : s.value); filtrer()"
+                class="rounded-xl p-3 text-center transition-all border focus:outline-none"
+                [ngClass]="filtreStatut === s.value
+                  ? 'bg-white/10 border-white/20'
+                  : 'bg-white/5 border-white/10 hover:bg-white/8'">
+          <div class="flex items-center justify-center gap-1 mb-1">
+            <span class="inline-block w-2 h-2 rounded-full" [ngClass]="s.dot"></span>
+            <p class="text-xs text-slate-300 truncate">{{ s.label }}</p>
+          </div>
+          <p class="text-2xl font-bold text-white">{{ s.count }}</p>
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="container-custom py-8 md:py-12">
+
+  <!-- Toasts -->
+  <div class="fixed top-4 right-4 z-[9999] flex flex-col gap-2" style="pointer-events:none">
+    <div *ngFor="let t of toasts"
+         class="flex items-start gap-3 px-4 py-3 rounded-xl shadow-lg text-white text-sm w-80"
+         [ngClass]="{'bg-green-600': t.type==='success','bg-red-600': t.type==='error','bg-amber-500': t.type==='warning'}"
+         style="pointer-events:auto">
+      <div class="flex-1">
+        <p class="font-semibold">{{ t.title }}</p>
+        <p class="opacity-90">{{ t.message }}</p>
+      </div>
+      <button (click)="dismissToast(t.id)" class="text-white/70 hover:text-white mt-0.5 flex-shrink-0">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Accès non autorisé -->
+  <div *ngIf="!peutConsulter" class="bg-white rounded-2xl border border-red-100 shadow-sm p-12 text-center">
+    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+      </svg>
+    </div>
+    <h3 class="text-lg font-semibold text-gray-800 mb-1">Accès non autorisé</h3>
+    <p class="text-sm text-gray-500">Vous n'avez pas la permission de consulter les campagnes de recrutement.</p>
+  </div>
+
+  <div *ngIf="peutConsulter" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+    <!-- Main (2/3) -->
+    <div class="lg:col-span-2 space-y-5">
+
+      <!-- Filtres -->
+      <div class="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm space-y-3">
+        <!-- Ligne 1: recherche + effacer -->
+        <div class="flex gap-2">
+          <div class="relative flex-1">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
+            </svg>
+            <input type="text" [(ngModel)]="search" (ngModelChange)="filtrer()"
+                   placeholder="Rechercher une campagne..."
+                   class="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 rounded-xl focus:ring-2 focus:ring-red-400 focus:border-red-400 outline-none transition-all"/>
+          </div>
+          <button (click)="effacerFiltres()"
+                  class="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 border border-gray-200 hover:border-gray-300 bg-gray-50 rounded-xl transition-colors flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            <span class="hidden sm:inline">Effacer</span>
+          </button>
+        </div>
+        <!-- Ligne 2: filtre statut -->
+        <div class="grid grid-cols-2 gap-3">
+          <select [(ngModel)]="filtreStatut" (ngModelChange)="filtrer()"
+                  class="px-3 py-2 text-sm bg-gray-50 border border-gray-200 text-gray-700 rounded-xl focus:ring-2 focus:ring-red-400 outline-none">
+            <option value="">Tous les statuts</option>
+            <option value="BROUILLON">Brouillon</option>
+            <option value="ACTIVE">Active</option>
+            <option value="CLOTUREE">Clôturée</option>
+            <option value="ANNULEE">Annulée</option>
+          </select>
+          <div></div>
+        </div>
+      </div>
+
+      <!-- Chargement -->
+      <div *ngIf="loading" class="flex justify-center py-12">
+        <div class="w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+
+      <!-- Erreur -->
+      <div *ngIf="erreur && !loading" class="bg-red-50 border border-red-200 rounded-2xl p-4 text-red-700 text-sm">
+        {{ erreur }}
+      </div>
+
+      <!-- Grille de cartes -->
+      <div *ngIf="!loading && !erreur">
+
+        <!-- Vide -->
+        <div *ngIf="campagnesFiltrees.length === 0" class="bg-white rounded-2xl border border-gray-100 p-12 text-center shadow-sm">
+          <svg class="w-12 h-12 mx-auto mb-3 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+          <p class="text-sm text-gray-400">Aucune campagne trouvée</p>
+        </div>
+
+        <!-- Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div *ngFor="let c of campagnesFiltrees"
+               class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+            <!-- Barre colorée statut -->
+            <div class="h-1 w-full" [ngClass]="getStatutBarClass(c.statutCampagne)"></div>
+
+            <!-- Corps carte -->
+            <div class="p-4 flex-1 flex flex-col gap-3">
+              <!-- Avatar + identité -->
+              <div class="flex items-start gap-3">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-bold text-white"
+                     style="background:linear-gradient(135deg,#c0392b,#96281b)">
+                  {{ c.titreCampagne.charAt(0).toUpperCase() }}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-semibold text-gray-900 text-sm leading-tight line-clamp-2">{{ c.titreCampagne }}</p>
+                  <p class="text-xs text-gray-500 mt-0.5">
+                    {{ c.nombrePostes ? (c.nombrePostes + ' poste(s)') : 'Postes non définis' }}
+                  </p>
+                </div>
+                <!-- Badge statut -->
+                <span class="px-2 py-0.5 text-xs font-semibold rounded-full flex-shrink-0"
+                      [ngClass]="getStatutClass(c.statutCampagne)">
+                  {{ getStatutLabel(c.statutCampagne) }}
+                </span>
+              </div>
+
+              <!-- Description -->
+              <p *ngIf="c.descriptionCampagne" class="text-xs text-gray-500 line-clamp-2">{{ c.descriptionCampagne }}</p>
+
+              <!-- Dates -->
+              <div class="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
+                <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <span>{{ c.dateOuverture | date:'dd/MM/yyyy' }}</span>
+                <span class="text-gray-300">→</span>
+                <span>{{ c.dateFermeture | date:'dd/MM/yyyy' }}</span>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="px-4 py-3 border-t border-gray-100 flex gap-2">
+              <button (click)="voirDetail(c)"
+                      class="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+                Voir
+              </button>
+              <button *ngIf="peutModifier"
+                      (click)="modifier(c)"
+                      class="flex-1 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
+                Modifier
+              </button>
+              <button *ngIf="peutSupprimer"
+                      (click)="supprimer(c)"
+                      class="flex-1 py-1.5 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-colors">
+                Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Sidebar (1/3) -->
+    <div class="space-y-5">
+
+      <!-- Permissions -->
+      <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+        <h3 class="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+          Mes permissions
+        </h3>
+        <div class="space-y-2">
+          <div class="flex items-center gap-2 px-3 py-2 rounded-lg"
+               [ngClass]="peutConsulter ? 'bg-green-50' : 'bg-gray-50'">
+            <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" [ngClass]="peutConsulter ? 'bg-green-500' : 'bg-gray-300'"></span>
+            <span class="text-xs font-medium" [ngClass]="peutConsulter ? 'text-green-700' : 'text-gray-400'">Consulter</span>
+          </div>
+          <div class="flex items-center gap-2 px-3 py-2 rounded-lg"
+               [ngClass]="peutCreer ? 'bg-green-50' : 'bg-gray-50'">
+            <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" [ngClass]="peutCreer ? 'bg-green-500' : 'bg-gray-300'"></span>
+            <span class="text-xs font-medium" [ngClass]="peutCreer ? 'text-green-700' : 'text-gray-400'">Créer</span>
+          </div>
+          <div class="flex items-center gap-2 px-3 py-2 rounded-lg"
+               [ngClass]="peutModifier ? 'bg-green-50' : 'bg-gray-50'">
+            <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" [ngClass]="peutModifier ? 'bg-green-500' : 'bg-gray-300'"></span>
+            <span class="text-xs font-medium" [ngClass]="peutModifier ? 'text-green-700' : 'text-gray-400'">Modifier</span>
+          </div>
+          <div class="flex items-center gap-2 px-3 py-2 rounded-lg"
+               [ngClass]="peutSupprimer ? 'bg-green-50' : 'bg-gray-50'">
+            <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" [ngClass]="peutSupprimer ? 'bg-green-500' : 'bg-gray-300'"></span>
+            <span class="text-xs font-medium" [ngClass]="peutSupprimer ? 'text-green-700' : 'text-gray-400'">Supprimer</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtres actifs -->
+      <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+        <h3 class="text-sm font-semibold text-gray-800 mb-3">Filtres actifs</h3>
+        <div *ngIf="!filtreStatut && !search" class="text-xs text-gray-400">Aucun filtre appliqué</div>
+        <div class="space-y-2">
+          <div *ngIf="filtreStatut" class="flex items-center justify-between">
+            <span class="text-xs text-gray-500">Statut</span>
+            <span class="text-xs font-medium text-gray-700 bg-gray-100 px-2 py-0.5 rounded-full">{{ getStatutLabel(filtreStatut) }}</span>
+          </div>
+          <div *ngIf="search" class="flex items-center justify-between">
+            <span class="text-xs text-gray-500">Recherche</span>
+            <span class="text-xs font-medium text-gray-700 bg-gray-100 px-2 py-0.5 rounded-full truncate max-w-[120px]">{{ search }}</span>
+          </div>
+        </div>
+        <p class="text-xs text-gray-400 mt-3">
+          <span class="font-semibold text-gray-700">{{ campagnesFiltrees.length }}</span> campagne(s) affichée(s)
+        </p>
+      </div>
+
+      <!-- Info -->
+      <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+        <h3 class="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          Information
+        </h3>
+        <p class="text-xs text-gray-500 leading-relaxed">
+          Les campagnes de recrutement permettent de gérer les offres d'emploi et les candidatures associées.
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Modal Détail -->
+  <div *ngIf="campagneSelectionnee"
+       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+       (click)="campagneSelectionnee = null">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg"
+         (click)="$event.stopPropagation()">
+      <!-- Header gradient -->
+      <div class="px-6 py-4 rounded-t-2xl flex items-center gap-4"
+           style="background:linear-gradient(135deg,#c0392b,#96281b)">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg text-white flex-shrink-0"
+             style="background:rgba(255,255,255,0.2)">
+          {{ campagneSelectionnee.titreCampagne.charAt(0).toUpperCase() }}
+        </div>
+        <div class="flex-1 min-w-0">
+          <h3 class="font-bold text-white text-lg leading-tight line-clamp-1">{{ campagneSelectionnee.titreCampagne }}</h3>
+          <p class="text-white/70 text-xs mt-0.5">
+            {{ campagneSelectionnee.nombrePostes ? (campagneSelectionnee.nombrePostes + ' poste(s)') : 'Postes non définis' }}
+          </p>
+        </div>
+        <button (click)="campagneSelectionnee = null" class="text-white/70 hover:text-white p-1">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <!-- Corps -->
+      <div class="p-6 space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <p class="text-xs text-gray-500 mb-1">Statut</p>
+            <span class="px-2 py-0.5 text-xs font-semibold rounded-full"
+                  [ngClass]="getStatutClass(campagneSelectionnee.statutCampagne)">
+              {{ getStatutLabel(campagneSelectionnee.statutCampagne) }}
+            </span>
+          </div>
+          <div>
+            <p class="text-xs text-gray-500 mb-1">Date création</p>
+            <p class="text-sm font-medium text-gray-800">{{ campagneSelectionnee.createdDate | date:'dd/MM/yyyy' }}</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <p class="text-xs text-gray-500 mb-1">Date d'ouverture</p>
+            <p class="text-sm font-medium text-gray-800">{{ campagneSelectionnee.dateOuverture | date:'dd/MM/yyyy' }}</p>
+          </div>
+          <div>
+            <p class="text-xs text-gray-500 mb-1">Date de fermeture</p>
+            <p class="text-sm font-medium text-gray-800">{{ campagneSelectionnee.dateFermeture | date:'dd/MM/yyyy' }}</p>
+          </div>
+        </div>
+        <div *ngIf="campagneSelectionnee.descriptionCampagne">
+          <p class="text-xs text-gray-500 mb-1">Description</p>
+          <p class="text-sm text-gray-700 bg-gray-50 rounded-lg p-2">{{ campagneSelectionnee.descriptionCampagne }}</p>
+        </div>
+      </div>
+      <!-- Footer -->
+      <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+        <button *ngIf="peutModifier"
+                (click)="modifier(campagneSelectionnee); campagneSelectionnee = null"
+                class="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors">
+          Modifier
+        </button>
+        <button (click)="campagneSelectionnee = null"
+                class="px-4 py-2 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
+          Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Créer / Modifier Campagne -->
+  <div *ngIf="showModal"
+       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+       (click)="fermerModal()">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col"
+         (click)="$event.stopPropagation()">
+      <!-- Header gradient -->
+      <div class="px-6 py-4 flex items-center justify-between flex-shrink-0 rounded-t-2xl"
+           style="background:linear-gradient(135deg,#c0392b,#96281b)">
+        <div>
+          <h3 class="font-bold text-white text-lg">
+            {{ modalMode === 'create' ? 'Nouvelle campagne' : 'Modifier la campagne' }}
+          </h3>
+          <p class="text-white/70 text-xs mt-0.5">
+            {{ modalMode === 'create' ? 'Créer une campagne de recrutement' : 'Mettre à jour les informations' }}
+          </p>
+        </div>
+        <button (click)="fermerModal()" [disabled]="soumission" class="text-white/70 hover:text-white disabled:opacity-40 p-1">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Corps modal -->
+      <div class="p-6 space-y-4 overflow-y-auto flex-1">
+        <!-- Titre campagne -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Titre de la campagne <span class="text-red-500">*</span>
+          </label>
+          <input type="text" [(ngModel)]="form.titreCampagne"
+                 placeholder="Ex: Recrutement techniciens 2025"
+                 class="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-400 outline-none"/>
+        </div>
+
+        <!-- Description -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+          <textarea [(ngModel)]="form.description" rows="3"
+                    placeholder="Description de la campagne..."
+                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-400 outline-none resize-none"></textarea>
+        </div>
+
+        <!-- Dates -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Date de début <span class="text-red-500">*</span>
+            </label>
+            <input type="date" [(ngModel)]="form.dateDebut"
+                   class="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-400 outline-none"/>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Date de fin <span class="text-red-500">*</span>
+            </label>
+            <input type="date" [(ngModel)]="form.dateFin"
+                   class="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-400 outline-none"/>
+          </div>
+        </div>
+
+        <!-- Statut -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+          <select [(ngModel)]="form.statusCampagne"
+                  class="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-400 outline-none">
+            <option value="BROUILLON">Brouillon</option>
+            <option value="ACTIVE">Active</option>
+            <option value="CLOTUREE">Clôturée</option>
+            <option value="ANNULEE">Annulée</option>
+          </select>
+        </div>
+
+        <!-- Erreur formulaire -->
+        <div *ngIf="formErreur" class="bg-red-50 border border-red-200 rounded-xl p-3 text-red-700 text-sm flex items-start gap-2">
+          <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          {{ formErreur }}
+        </div>
+      </div>
+
+      <!-- Footer modal -->
+      <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3 flex-shrink-0">
+        <button (click)="fermerModal()" [disabled]="soumission"
+                class="px-4 py-2 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors disabled:opacity-50">
+          Annuler
+        </button>
+        <button (click)="soumettre()" [disabled]="soumission"
+                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-xl transition-colors disabled:opacity-50"
+                style="background:#c0392b">
+          <svg *ngIf="soumission" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          {{ modalMode === 'create' ? 'Créer la campagne' : 'Enregistrer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

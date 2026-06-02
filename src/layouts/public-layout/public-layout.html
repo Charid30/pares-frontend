@@ -1,0 +1,27 @@
+<!-- public-layout.component.html -->
+<div class="min-h-screen flex flex-col">
+  <!-- Navbar -->
+  <app-navbar></app-navbar>
+
+  <!-- Contenu principal (pt-16 compense la navbar fixed h-16) -->
+  <main class="flex-1 pt-16">
+    <router-outlet></router-outlet>
+  </main>
+
+  <!-- Footer -->
+  <app-footer></app-footer>
+</div>
+
+<!-- Bouton retour en haut -->
+@if (showScrollTop()) {
+  <button (click)="scrollToTop()"
+          title="Retour en haut"
+          class="fixed bottom-6 right-6 z-50 w-11 h-11 bg-primary-500 hover:bg-primary-600
+                 text-white rounded-xl shadow-lg shadow-primary-500/30
+                 flex items-center justify-center transition-all duration-200
+                 hover:scale-110 animate-fade-in">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/>
+    </svg>
+  </button>
+}

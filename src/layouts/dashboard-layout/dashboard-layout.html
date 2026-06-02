@@ -1,0 +1,281 @@
+<!-- dashboard-layout.html — Layout Agent Commercial / Financier SONABHY Portail -->
+<div class="min-h-screen bg-gray-50 flex">
+
+  <!-- =====================================================
+       SIDEBAR DESKTOP
+       ===================================================== -->
+  <aside class="hidden lg:flex flex-col fixed inset-y-0 left-0 z-40 transition-all duration-300"
+         [ngClass]="sidebarOpen ? 'w-64' : 'w-20'">
+
+    <!-- Header Sidebar -->
+    <div class="flex items-center h-16 px-4 flex-shrink-0 bg-gradient-to-r"
+         [ngClass]="headerGradient">
+      <div class="flex items-center gap-3 flex-1 min-w-0" *ngIf="sidebarOpen">
+        <img src="assets/images/logo-sonabhy.png" alt="SONABHY" class="h-9 flex-shrink-0">
+        <div class="min-w-0">
+          <h1 class="text-sm font-bold text-white leading-tight">SONABHY Portail</h1>
+          <p class="text-xs truncate" [ngClass]="textAccent">{{ roleSubtitle }}</p>
+        </div>
+      </div>
+      <img *ngIf="!sidebarOpen" src="assets/images/logo-sonabhy.png" alt="SONABHY" class="h-9 mx-auto">
+      <button (click)="toggleSidebar()"
+              class="p-1.5 rounded-lg transition-colors opacity-70 hover:opacity-100 flex-shrink-0"
+              [ngClass]="[textAccent, sidebarOpen ? 'ml-2' : '']">
+        <svg class="w-5 h-5 transition-transform" [class.rotate-180]="!sidebarOpen" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 py-4 overflow-y-auto bg-gradient-to-b" [ngClass]="sidebarGradient">
+
+      <!-- Label section -->
+      <p *ngIf="sidebarOpen" class="px-4 mb-2 text-[10px] font-bold uppercase tracking-widest"
+         [ngClass]="role === 'AGENT_FINANCIER' ? 'text-emerald-400' : 'text-blue-400'">
+        Menu principal
+      </p>
+
+      <ul class="space-y-0.5 px-2">
+        <li *ngFor="let item of menuItems">
+          <a [routerLink]="item.route"
+             routerLinkActive="bg-white/15 text-white"
+             [routerLinkActiveOptions]="{exact: item.exact ?? false}"
+             class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group relative hover:bg-white/10 hover:text-white"
+             [ngClass]="textAccent"
+             [title]="!sidebarOpen ? item.label : ''">
+            <svg class="w-5 h-5 flex-shrink-0 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" [attr.d]="item.icon" />
+            </svg>
+            <span *ngIf="sidebarOpen" class="flex-1 text-sm font-medium">{{ item.label }}</span>
+            <!-- Badge nombre (sidebar ouverte) -->
+            <span *ngIf="sidebarOpen && item.badge && item.badge > 0"
+                  class="px-2 py-0.5 text-[11px] font-bold text-white rounded-full"
+                  [ngClass]="item.badgeColor || 'bg-orange-500'">
+              {{ item.badge }}
+            </span>
+            <!-- Dot badge (sidebar fermée) -->
+            <span *ngIf="!sidebarOpen && item.badge && item.badge > 0"
+                  class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
+                  [ngClass]="item.badgeColor || 'bg-orange-400'">
+            </span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- User Info -->
+    <div class="border-t p-3 flex-shrink-0"
+         [ngClass]="role === 'AGENT_FINANCIER' ? 'bg-emerald-950 border-emerald-800/50' : 'bg-blue-950 border-blue-800/50'">
+      <div *ngIf="sidebarOpen" class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-lg bg-gradient-to-br"
+             [ngClass]="avatarGradient">
+          {{ currentUser?.username?.charAt(0).toUpperCase() || 'A' }}
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-white truncate">{{ currentUser?.username }}</p>
+          <p class="text-xs truncate" [ngClass]="textAccent">{{ roleLabel }}</p>
+        </div>
+        <button (click)="logout()" title="Déconnexion"
+                class="p-1.5 rounded-lg transition-colors flex-shrink-0"
+                [ngClass]="role === 'AGENT_FINANCIER' ? 'text-emerald-400 hover:text-emerald-200 hover:bg-emerald-400/10' : 'text-blue-400 hover:text-blue-200 hover:bg-blue-400/10'">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+        </button>
+      </div>
+      <div *ngIf="!sidebarOpen" class="flex justify-center">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg bg-gradient-to-br"
+             [ngClass]="avatarGradient">
+          {{ currentUser?.username?.charAt(0).toUpperCase() || 'A' }}
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- =====================================================
+       SIDEBAR MOBILE (OVERLAY)
+       ===================================================== -->
+  <div *ngIf="sidebarMobileOpen"
+       (click)="closeSidebarMobile()"
+       class="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"></div>
+
+  <aside *ngIf="sidebarMobileOpen"
+         class="lg:hidden fixed inset-y-0 left-0 z-50 w-72 shadow-2xl flex flex-col">
+
+    <!-- Header Mobile -->
+    <div class="flex items-center justify-between h-16 px-4 flex-shrink-0 bg-gradient-to-r"
+         [ngClass]="headerGradient">
+      <div class="flex items-center gap-3">
+        <img src="assets/images/logo-sonabhy.png" alt="SONABHY" class="h-9">
+        <div>
+          <h1 class="text-sm font-bold text-white">SONABHY Portail</h1>
+          <p class="text-xs" [ngClass]="textAccent">{{ roleSubtitle }}</p>
+        </div>
+      </div>
+      <button (click)="closeSidebarMobile()" class="p-2 rounded-lg transition-colors opacity-70 hover:opacity-100"
+              [ngClass]="textAccent">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Navigation Mobile -->
+    <nav class="flex-1 py-4 overflow-y-auto bg-gradient-to-b" [ngClass]="sidebarGradient">
+      <ul class="space-y-0.5 px-2">
+        <li *ngFor="let item of menuItems">
+          <a [routerLink]="item.route"
+             (click)="closeSidebarMobile()"
+             routerLinkActive="bg-white/15 text-white"
+             [routerLinkActiveOptions]="{exact: item.exact ?? false}"
+             class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-white/10 hover:text-white"
+             [ngClass]="textAccent">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" [attr.d]="item.icon" />
+            </svg>
+            <span class="flex-1 text-sm font-medium">{{ item.label }}</span>
+            <span *ngIf="item.badge && item.badge > 0"
+                  class="px-2 py-0.5 text-[11px] font-bold text-white rounded-full"
+                  [ngClass]="item.badgeColor || 'bg-orange-500'">
+              {{ item.badge }}
+            </span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- User Info Mobile -->
+    <div class="border-t p-4 flex-shrink-0"
+         [ngClass]="role === 'AGENT_FINANCIER' ? 'bg-emerald-950 border-emerald-800/50' : 'bg-blue-950 border-blue-800/50'">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold shadow-lg bg-gradient-to-br"
+             [ngClass]="avatarGradient">
+          {{ currentUser?.username?.charAt(0).toUpperCase() || 'A' }}
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-white truncate">{{ currentUser?.username }}</p>
+          <p class="text-xs" [ngClass]="textAccent">{{ roleLabel }}</p>
+        </div>
+      </div>
+      <button (click)="logout()"
+              class="w-full flex items-center justify-center gap-2 px-4 py-2.5 border text-sm font-medium rounded-xl transition-colors"
+              [ngClass]="role === 'AGENT_FINANCIER'
+                ? 'bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/20 text-emerald-300'
+                : 'bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/20 text-blue-300'">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+        Déconnexion
+      </button>
+    </div>
+  </aside>
+
+  <!-- =====================================================
+       MAIN CONTENT
+       ===================================================== -->
+  <div class="flex-1 flex flex-col min-h-screen transition-all duration-300"
+       [ngClass]="sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'">
+
+    <!-- Top Navbar -->
+    <header class="sticky top-0 z-30 bg-white border-b border-gray-100 shadow-sm">
+      <div class="flex items-center justify-between h-16 px-4 lg:px-6">
+
+        <!-- Left: bouton menu mobile + titre -->
+        <div class="flex items-center gap-3">
+          <button (click)="toggleSidebarMobile()"
+                  class="lg:hidden p-2 text-gray-500 rounded-xl transition-colors"
+                  [ngClass]="role === 'AGENT_FINANCIER' ? 'hover:text-emerald-600 hover:bg-emerald-50' : 'hover:text-blue-600 hover:bg-blue-50'">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+
+          <!-- Titre -->
+          <div class="hidden sm:flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center"
+                 [ngClass]="role === 'AGENT_FINANCIER' ? 'bg-emerald-100' : 'bg-blue-100'">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                   [ngClass]="role === 'AGENT_FINANCIER' ? 'text-emerald-600' : 'text-blue-600'">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-gray-900">SONABHY Portail — {{ roleLabel }}</p>
+              <p class="text-xs text-gray-400 hidden md:block">{{ roleSubtitle }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: User dropdown -->
+        <div class="flex items-center gap-2">
+
+          <!-- Notifications (futur) -->
+          <button class="relative p-2 text-gray-500 rounded-xl transition-colors"
+                  [ngClass]="role === 'AGENT_FINANCIER' ? 'hover:text-emerald-600 hover:bg-emerald-50' : 'hover:text-blue-600 hover:bg-blue-50'">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+          </button>
+
+          <!-- User Dropdown -->
+          <div class="relative" data-user-menu>
+            <button (click)="toggleUserMenu()"
+                    class="flex items-center gap-2 pl-2 pr-3 py-1.5 hover:bg-gray-50 rounded-xl transition-colors border border-transparent hover:border-gray-100">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm bg-gradient-to-br"
+                   [ngClass]="avatarGradient">
+                {{ currentUser?.username?.charAt(0).toUpperCase() || 'A' }}
+              </div>
+              <span class="hidden lg:block text-sm font-medium text-gray-700">
+                {{ currentUser?.username }}
+              </span>
+              <svg class="hidden lg:block w-4 h-4 text-gray-400 transition-transform" [class.rotate-180]="userMenuOpen"
+                   fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            <!-- Dropdown Menu -->
+            <div *ngIf="userMenuOpen"
+                 class="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">
+              <!-- Header dropdown -->
+              <div class="px-4 py-3 bg-gradient-to-br border-b border-gray-100" [ngClass]="dropdownHeaderBg">
+                <p class="text-sm font-semibold text-gray-900">{{ currentUser?.username }}</p>
+                <p class="text-xs text-gray-500 truncate">{{ currentUser?.email }}</p>
+                <span class="inline-block mt-1.5 px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wide"
+                      [ngClass]="dropdownRolePill">
+                  {{ roleLabel }}
+                </span>
+              </div>
+              <!-- Actions -->
+              <div class="py-1">
+                <button (click)="logout()"
+                        class="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  Déconnexion
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <main class="flex-1 p-4 lg:p-6 overflow-x-hidden">
+      <router-outlet></router-outlet>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-100 py-3 px-6">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-1 text-xs text-gray-400">
+        <p>© 2026 SONABHY Portail. Tous droits réservés.</p>
+        <p>Version {{ appVersion }}</p>
+      </div>
+    </footer>
+  </div>
+
+</div>

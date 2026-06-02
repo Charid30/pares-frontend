@@ -1,0 +1,49 @@
+/* candidat-dashboard.component.css */
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Appliquer l'animation aux cards */
+.card {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Responsive utilities */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Badge styles complémentaires */
+.badge-success {
+  @apply bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-medium;
+}
+
+.badge-warning {
+  @apply bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs font-medium;
+}
+
+.badge-info {
+  @apply bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-medium;
+}
+
+.badge-danger {
+  @apply bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-medium;
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  .container-custom {
+    @apply px-3;
+  }
+}

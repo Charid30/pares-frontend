@@ -1,0 +1,122 @@
+<!-- navbar.component.html -->
+
+<!-- ══ BARRE DE NAVIGATION (fixed → menu overlay sans pousser la page) ═ -->
+<nav class="bg-white border-b border-gray-100 shadow-sm fixed top-0 left-0 right-0 z-50">
+  <div class="container-custom">
+    <div class="flex items-center justify-between h-16">
+
+      <!-- Logo SONABHY -->
+      <a routerLink="/accueil" class="flex items-center gap-3 cursor-pointer group">
+        <div class="flex-shrink-0">
+          <img src="assets/images/logo-sonabhy.png" alt="Logo SONABHY"
+               class="h-9 w-9 md:h-10 md:w-10 transition-opacity group-hover:opacity-80">
+        </div>
+        <div class="hidden sm:block leading-tight">
+          <p class="text-sm font-bold text-gray-900 leading-none">SONABHY Portail</p>
+          <p class="text-[10px] text-gray-400 mt-0.5 tracking-wide uppercase">Plateforme de services SONABHY</p>
+        </div>
+        <div class="hidden sm:block w-px h-6 bg-gray-200 ml-1"></div>
+      </a>
+
+      <!-- Navigation Desktop -->
+      <div class="hidden md:flex items-center gap-1">
+        <a routerLink="/accueil" routerLinkActive="text-primary-500 font-semibold bg-primary-50"
+           [routerLinkActiveOptions]="{exact: true}"
+           class="px-3.5 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all duration-150">
+          Accueil
+        </a>
+        <a routerLink="/a-propos" routerLinkActive="text-primary-500 font-semibold bg-primary-50"
+           class="px-3.5 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all duration-150">
+          À propos
+        </a>
+        <a routerLink="/services" routerLinkActive="text-primary-500 font-semibold bg-primary-50"
+           class="px-3.5 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all duration-150">
+          Services
+        </a>
+        <a routerLink="/carrieres" routerLinkActive="text-primary-500 font-semibold bg-primary-50"
+           class="px-3.5 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all duration-150">
+          Carrières
+        </a>
+        <a routerLink="/contact" routerLinkActive="text-primary-500 font-semibold bg-primary-50"
+           class="px-3.5 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all duration-150">
+          Contact
+        </a>
+      </div>
+
+      <!-- Boutons Connexion / Inscription (Desktop) -->
+      <div class="hidden md:flex items-center gap-2">
+        <a routerLink="/auth/login"
+           class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-600
+                  hover:text-gray-900 hover:bg-gray-50 transition-all duration-150">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+          </svg>
+          Connexion
+        </a>
+        <a routerLink="/auth/register"
+           class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white
+                  bg-primary-500 hover:bg-primary-600 transition-all duration-150 shadow-sm">
+          S'inscrire
+        </a>
+      </div>
+
+      <!-- Hamburger Menu (Mobile) — devient X quand ouvert -->
+      <button (click)="toggleMobileMenu()"
+              class="md:hidden p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+        <svg *ngIf="!isMobileMenuOpen" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+        <svg *ngIf="isMobileMenuOpen" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ══ MENU MOBILE (inline dans nav fixed → s'étend vers le bas en overlay) ══ -->
+  <div *ngIf="isMobileMenuOpen" class="md:hidden border-t border-gray-100 bg-white shadow-lg">
+    <div class="container-custom py-3 flex flex-col gap-1">
+      <a routerLink="/accueil" (click)="closeMobileMenu()"
+         routerLinkActive="bg-primary-50 text-primary-600 font-semibold"
+         [routerLinkActiveOptions]="{exact: true}"
+         class="flex items-center px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors">
+        Accueil
+      </a>
+      <a routerLink="/a-propos" (click)="closeMobileMenu()"
+         routerLinkActive="bg-primary-50 text-primary-600 font-semibold"
+         class="flex items-center px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors">
+        À propos
+      </a>
+      <a routerLink="/services" (click)="closeMobileMenu()"
+         routerLinkActive="bg-primary-50 text-primary-600 font-semibold"
+         class="flex items-center px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors">
+        Services
+      </a>
+      <a routerLink="/carrieres" (click)="closeMobileMenu()"
+         routerLinkActive="bg-primary-50 text-primary-600 font-semibold"
+         class="flex items-center px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors">
+        Carrières
+      </a>
+      <a routerLink="/contact" (click)="closeMobileMenu()"
+         routerLinkActive="bg-primary-50 text-primary-600 font-semibold"
+         class="flex items-center px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors">
+        Contact
+      </a>
+      <div class="pt-2 border-t border-gray-100 mt-1 flex flex-row gap-2">
+        <a routerLink="/auth/login" (click)="closeMobileMenu()"
+           class="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl text-sm font-medium
+                  text-gray-700 border border-gray-200 hover:bg-gray-50 transition-colors">
+          Connexion
+        </a>
+        <a routerLink="/auth/register" (click)="closeMobileMenu()"
+           class="flex items-center justify-center w-full px-4 py-2.5 rounded-xl text-sm font-semibold
+                  text-white bg-primary-500 hover:bg-primary-600 transition-colors shadow-sm">
+          S'inscrire
+        </a>
+      </div>
+    </div>
+  </div>
+
+</nav>

@@ -1,0 +1,872 @@
+<!-- demandes-audience.html — Design SONABHY -->
+<div class="min-h-screen bg-slate-50">
+
+  <!-- ══════════════════════════════════════════════════════
+       HERO
+       ══════════════════════════════════════════════════════ -->
+  <div class="relative bg-slate-900 overflow-hidden">
+    <div class="absolute inset-0 opacity-[0.04]"
+         style="background-image: radial-gradient(circle, #ffffff 1px, transparent 1px); background-size: 28px 28px;"></div>
+    <div class="absolute inset-0 flex items-start justify-center pointer-events-none pt-8">
+      <div class="w-[500px] h-[200px] bg-primary-500/10 rounded-full blur-3xl"></div>
+    </div>
+    <div class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary-500/40 to-transparent"></div>
+
+    <div class="container-custom relative z-10 py-10 md:py-14">
+
+      <div class="flex flex-row items-center gap-4 md:gap-6">
+
+        <!-- Icône -->
+        <div class="w-14 h-14 md:w-20 md:h-20 bg-primary-500 rounded-2xl flex items-center justify-center
+                    text-white shadow-2xl ring-4 ring-white/10 flex-shrink-0">
+          <svg class="w-7 h-7 md:w-10 md:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+          </svg>
+        </div>
+
+        <!-- Identité -->
+        <div class="flex-1 min-w-0 text-left">
+          <p class="text-primary-400 text-xs font-semibold uppercase tracking-widest">Dashboard candidat</p>
+          <h1 class="text-xl md:text-3xl font-bold text-white mt-0.5 tracking-tight">Demandes d'Audience</h1>
+          <p class="text-xs md:text-sm text-gray-400 mt-1">Soumettez vos demandes auprès de la direction SONABHY</p>
+        </div>
+
+        <!-- Bouton CTA -->
+        <button (click)="ouvrirModal()"
+                class="flex items-center gap-1.5 md:gap-2 px-3 md:px-5 py-2 md:py-2.5 bg-primary-500 hover:bg-primary-600 text-white
+                       text-xs md:text-sm font-medium rounded-xl transition-all shadow-lg shadow-primary-500/25 flex-shrink-0">
+          <svg class="w-3.5 h-3.5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          <span class="hidden sm:inline">Nouvelle demande</span>
+          <span class="sm:hidden">Nouveau</span>
+        </button>
+
+      </div>
+
+      <!-- Stats row -->
+      <div class="grid grid-cols-3 gap-0 mt-8 pt-8 border-t border-white/10">
+        <div class="text-center px-2 sm:px-4">
+          <p class="text-xl sm:text-2xl md:text-3xl font-bold text-white">{{ pagination.total }}</p>
+          <p class="text-[10px] sm:text-xs text-gray-400 mt-1 uppercase tracking-wide">Total</p>
+        </div>
+        <div class="text-center px-2 sm:px-4 border-x border-white/10">
+          <p class="text-xl sm:text-2xl md:text-3xl font-bold text-amber-400">{{ countEnAttente }}</p>
+          <p class="text-[10px] sm:text-xs text-gray-400 mt-1 uppercase tracking-wide">En attente</p>
+        </div>
+        <div class="text-center px-2 sm:px-4">
+          <p class="text-xl sm:text-2xl md:text-3xl font-bold text-green-400">{{ countAccepte }}</p>
+          <p class="text-[10px] sm:text-xs text-gray-400 mt-1 uppercase tracking-wide">Acceptées</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       CONTENU
+       ══════════════════════════════════════════════════════ -->
+  <div class="container-custom py-8 md:py-12">
+
+    <!-- Section header -->
+    <div class="mb-6">
+      <span class="text-primary-500 text-xs font-semibold uppercase tracking-widest">Dashboard candidat</span>
+      <h2 class="text-xl font-bold text-gray-900 mt-1">Mes demandes</h2>
+      <div class="w-12 h-0.5 bg-primary-500 mt-2 rounded-full"></div>
+    </div>
+
+    <!-- Loader -->
+    <div *ngIf="isLoading" class="flex justify-center py-16">
+      <div class="animate-spin rounded-full h-8 w-8 border-[3px] border-primary-100 border-t-primary-500"></div>
+    </div>
+
+    <!-- Liste -->
+    <div *ngIf="!isLoading" class="space-y-3">
+
+      <!-- État vide -->
+      <div *ngIf="mesDemandes.length === 0"
+           class="flex flex-col items-center justify-center py-16 bg-white border border-gray-100 rounded-2xl text-center">
+        <div class="w-14 h-14 bg-primary-50 rounded-2xl flex items-center justify-center mb-4">
+          <svg class="w-7 h-7 text-primary-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+          </svg>
+        </div>
+        <h3 class="text-sm font-semibold text-gray-800 mb-1">Aucune demande</h3>
+        <p class="text-xs text-gray-400 mb-5">Vous n'avez pas encore soumis de demande d'audience</p>
+        <button (click)="ouvrirModal()"
+                class="inline-flex items-center gap-1.5 px-4 py-2 bg-primary-500 hover:bg-primary-600
+                       text-white text-xs font-semibold rounded-xl transition-all shadow-sm shadow-primary-500/20">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          Créer une demande
+        </button>
+      </div>
+
+      <!-- Items -->
+      <div *ngFor="let demande of mesDemandes"
+           class="flex items-start gap-3 bg-white border border-gray-100 rounded-2xl px-4 py-4
+                  hover:border-primary-100 hover:shadow-sm transition-all duration-200">
+
+        <!-- Barre statut -->
+        <div class="w-1 self-stretch rounded-full flex-shrink-0 mt-1"
+             [ngClass]="{
+               'bg-amber-400': demande.status === 'EN_ATTENTE',
+               'bg-green-500': demande.status === 'ACCEPTE',
+               'bg-red-500':   demande.status === 'REJETE',
+               'bg-gray-300':  demande.status === 'ANNULE'
+             }"></div>
+
+        <!-- Icône mode -->
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
+             [ngClass]="demande.modeSoumission === 'FICHIER' ? 'bg-primary-50' : 'bg-green-50'">
+          <svg *ngIf="demande.modeSoumission === 'FICHIER'" class="w-4 h-4 text-primary-500"
+               fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+          </svg>
+          <svg *ngIf="demande.modeSoumission === 'FORMULAIRE'" class="w-4 h-4 text-green-600"
+               fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+          </svg>
+        </div>
+
+        <!-- Contenu -->
+        <div class="flex-1 min-w-0">
+          <div class="flex flex-wrap items-center gap-1.5 mb-1.5">
+            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                  [ngClass]="demande.modeSoumission === 'FICHIER'
+                    ? 'bg-primary-50 text-primary-600'
+                    : 'bg-green-50 text-green-700'">
+              {{ demande.modeSoumission === 'FICHIER' ? 'Fichier' : 'Fiche message' }}
+            </span>
+            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full border"
+                  [ngClass]="getStatusClass(demande.status)">
+              {{ getStatusLabel(demande.status) }}
+            </span>
+          </div>
+
+          <p *ngIf="demande.modeSoumission === 'FICHIER'" class="text-xs font-semibold text-gray-800 truncate">
+            📎 {{ demande.fichier_filename || 'Document joint' }}
+            <span *ngIf="demande.fichier_size" class="text-gray-400 font-normal">
+              ({{ formatFileSize(demande.fichier_size) }})
+            </span>
+          </p>
+          <p *ngIf="demande.modeSoumission === 'FORMULAIRE'" class="text-xs font-semibold text-gray-800">
+            Pour M. {{ demande.pourM }}
+            <span *ngIf="demande.actionCochee"
+                  class="ml-1 text-[11px] px-1.5 py-0.5 bg-primary-50 text-primary-600 rounded-full font-normal">
+              {{ getActionLabel(demande.actionCochee) }}
+            </span>
+          </p>
+
+          <p class="text-xs text-gray-400 mt-1">
+            Audience : {{ demande.dateAudience | date:'dd/MM/yyyy' }} à {{ demande.heureAudience }}
+            · Soumise le {{ demande.createdDate | date:'dd/MM/yy' }}
+          </p>
+
+          <div *ngIf="demande.commentaireAdmin"
+               class="mt-2 px-3 py-2 bg-primary-50 border border-primary-100 rounded-xl text-xs text-primary-700">
+            <span class="font-semibold">Réponse :</span> {{ demande.commentaireAdmin }}
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex flex-col items-end gap-1.5 flex-shrink-0 mt-0.5">
+          <button (click)="voirDetail(demande)"
+                  class="text-[10px] px-2.5 py-1.5 rounded-lg bg-primary-50 text-primary-600
+                         hover:bg-primary-100 flex items-center gap-1 transition-colors font-medium">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+            Détails
+          </button>
+          <button *ngIf="demande.status === 'EN_ATTENTE'"
+                  (click)="annulerDemande(demande)"
+                  class="text-[10px] px-2.5 py-1.5 bg-white border border-red-200 text-red-600
+                         rounded-lg hover:bg-red-50 transition-colors flex items-center gap-1 font-medium">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            Annuler
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Pagination -->
+      <div *ngIf="pagination.totalPages > 1"
+           class="mt-2 px-4 py-3 bg-white border border-gray-100 rounded-2xl flex items-center justify-between">
+        <p class="text-[10px] text-gray-400">
+          {{ (pagination.page - 1) * pagination.limit + 1 }}–{{ minVal(pagination.page * pagination.limit, pagination.total) }}
+          sur {{ pagination.total }}
+        </p>
+        <div class="flex items-center gap-1.5">
+          <button (click)="changerPage(pagination.page - 1)" [disabled]="!pagination.hasPrev"
+                  class="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50
+                         disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </button>
+          <span class="text-xs font-semibold text-gray-600 min-w-[3rem] text-center">
+            {{ pagination.page }}/{{ pagination.totalPages }}
+          </span>
+          <button (click)="changerPage(pagination.page + 1)" [disabled]="!pagination.hasNext"
+                  class="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50
+                         disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /!isLoading -->
+
+  </div><!-- /container -->
+</div>
+
+<!-- ── Toast ──────────────────────────────────────────────────── -->
+<div *ngIf="toastMessage"
+     class="fixed bottom-4 right-4 z-50 max-w-[calc(100vw-2rem)] sm:max-w-xs"
+     style="animation: slideUp 0.25s ease-out;">
+  <div class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl shadow-lg text-white text-xs font-medium"
+       [ngClass]="toastType === 'success' ? 'bg-green-600' : 'bg-red-700'">
+    <svg *ngIf="toastType === 'success'" class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+    </svg>
+    <svg *ngIf="toastType === 'error'" class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+    </svg>
+    <span class="flex-1">{{ toastMessage }}</span>
+    <button (click)="fermerToast()" class="hover:opacity-70 ml-1">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- =========================================================
+     MODAL
+     ========================================================= -->
+<div *ngIf="showModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+
+  <!-- Overlay -->
+  <div class="fixed inset-0 bg-black/40 backdrop-blur-[2px]" (click)="fermerModal()"></div>
+
+  <!-- Panel -->
+  <div class="relative bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl shadow-2xl
+              max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden"
+       (click)="$event.stopPropagation()">
+
+    <!-- Barre drag (mobile) -->
+    <div class="flex justify-center pt-2.5 pb-1 sm:hidden flex-shrink-0">
+      <div class="w-8 h-1 bg-gray-300 rounded-full"></div>
+    </div>
+
+    <!-- Header -->
+    <div class="flex-shrink-0 px-4 py-3 flex items-center justify-between"
+         style="background:linear-gradient(135deg, #c0392b, #96281b);">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-xs font-black text-white tracking-widest uppercase leading-none">SONABHY</p>
+          <p class="text-red-200 text-[10px] mt-0.5">
+            <span *ngIf="etape === 1">Nouvelle demande d'audience</span>
+            <span *ngIf="etape === 2 && modeSoumission === 'FICHIER'">Joindre un document PDF</span>
+            <span *ngIf="etape === 2 && modeSoumission === 'FORMULAIRE'">Fiche message</span>
+          </p>
+        </div>
+      </div>
+      <button (click)="fermerModal()"
+              class="w-7 h-7 bg-white/15 hover:bg-white/30 rounded-lg flex items-center justify-center transition-colors">
+        <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Stepper -->
+    <div class="flex-shrink-0 flex items-center px-4 py-2.5 border-b border-gray-100 bg-gray-50/60">
+      <div class="flex items-center gap-1.5">
+        <div class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
+             [style.background]="etape >= 1 ? '#c0392b' : '#e5e7eb'"
+             [style.color]="etape >= 1 ? 'white' : '#9ca3af'">
+          <svg *ngIf="etape > 1" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+          </svg>
+          <span *ngIf="etape <= 1">1</span>
+        </div>
+        <span class="text-[10px] font-medium" [style.color]="etape >= 1 ? '#c0392b' : '#9ca3af'">Mode</span>
+      </div>
+      <div class="flex-1 h-px mx-2 rounded-full" [style.background]="etape >= 2 ? '#c0392b' : '#e5e7eb'"></div>
+      <div class="flex items-center gap-1.5">
+        <div class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
+             [style.background]="etape >= 2 ? '#c0392b' : '#e5e7eb'"
+             [style.color]="etape >= 2 ? 'white' : '#9ca3af'">2</div>
+        <span class="text-[10px] font-medium" [style.color]="etape >= 2 ? '#c0392b' : '#9ca3af'">Formulaire</span>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="flex-1 overflow-y-auto p-4">
+
+      <!-- ── Étape 1 : choix du mode ── -->
+      <div *ngIf="etape === 1">
+        <p class="text-xs text-gray-500 text-center mb-4">Comment souhaitez-vous soumettre votre demande ?</p>
+        <div class="grid grid-cols-2 gap-3">
+
+          <button (click)="choisirMode('FICHIER')"
+                  class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200
+                         hover:border-red-300 hover:bg-red-50/50 active:scale-[0.97] transition-all text-center">
+            <div class="w-11 h-11 rounded-xl flex items-center justify-center" style="background:#fde8e8;">
+              <svg class="w-5 h-5" style="color:#c0392b;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-xs font-semibold text-gray-900">Joindre un fichier</p>
+              <p class="text-[10px] text-gray-400 mt-0.5 leading-relaxed">Uploadez un PDF</p>
+            </div>
+            <span class="text-[10px] font-semibold px-3 py-1 text-white rounded-full" style="background:#c0392b;">
+              Choisir
+            </span>
+          </button>
+
+          <button (click)="choisirMode('FORMULAIRE')"
+                  class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200
+                         hover:border-green-300 hover:bg-green-50/50 active:scale-[0.97] transition-all text-center">
+            <div class="w-11 h-11 rounded-xl flex items-center justify-center" style="background:#e8f5e9;">
+              <svg class="w-5 h-5" style="color:#27ae60;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-xs font-semibold text-gray-900">Fiche message</p>
+              <p class="text-[10px] text-gray-400 mt-0.5 leading-relaxed">Remplir un formulaire</p>
+            </div>
+            <span class="text-[10px] font-semibold px-3 py-1 text-white rounded-full" style="background:#27ae60;">
+              Choisir
+            </span>
+          </button>
+
+        </div>
+      </div>
+
+      <!-- ── Étape 2A : fichier ── -->
+      <div *ngIf="etape === 2 && modeSoumission === 'FICHIER'">
+        <form [formGroup]="fichierForm" class="space-y-4">
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 mb-1.5">
+              Document PDF <span class="text-red-600">*</span>
+              <span class="font-normal text-gray-400 ml-1">(max 5 Mo)</span>
+            </label>
+            <div class="rounded-xl border-2 border-dashed transition-all overflow-hidden"
+                 [style.borderColor]="fichierJoint ? '#27ae60' : fichierJointError ? '#e53e3e' : '#d1d5db'"
+                 [style.background]="fichierJoint ? '#f0fdf4' : fichierJointError ? '#fff5f5' : '#fafafa'">
+
+              <!-- Sans fichier -->
+              <div *ngIf="!fichierJoint" class="flex flex-col items-center py-6 px-4 text-center">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-2" style="background:#fde8e8;">
+                  <svg class="w-5 h-5" style="color:#c0392b;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                  </svg>
+                </div>
+                <p class="text-xs text-gray-600 font-medium mb-0.5">Sélectionnez un fichier PDF</p>
+                <p class="text-[10px] text-gray-400 mb-3">Format PDF uniquement</p>
+                <input type="file" id="fichier-audience" class="hidden" accept=".pdf" (change)="onFichierSelect($event)">
+                <label for="fichier-audience"
+                       class="px-3 py-1.5 text-white text-xs font-semibold rounded-lg cursor-pointer"
+                       style="background:#c0392b;">
+                  Parcourir
+                </label>
+                <p *ngIf="fichierJointError" class="text-[10px] text-red-600 mt-2 font-medium">⚠️ {{ fichierJointError }}</p>
+              </div>
+
+              <!-- Avec fichier -->
+              <div *ngIf="fichierJoint" class="flex items-center gap-3 p-3">
+                <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style="background:#c0392b;">
+                  <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                  </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-xs font-semibold text-gray-900 truncate">{{ fichierJointName }}</p>
+                  <p class="text-[10px] text-green-600 font-medium">✓ Prêt</p>
+                </div>
+                <div class="flex items-center gap-1.5 flex-shrink-0">
+                  <input type="file" id="fichier-change" class="hidden" accept=".pdf" (change)="onFichierSelect($event)">
+                  <label for="fichier-change"
+                         class="px-2 py-1 text-[10px] font-medium rounded-lg cursor-pointer"
+                         style="background:#fde8e8; color:#c0392b;">
+                    Changer
+                  </label>
+                  <button type="button" (click)="removeFichier()"
+                          class="w-6 h-6 flex items-center justify-center text-red-500 hover:bg-red-100 rounded-lg transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-gray-700 mb-1.5">
+                Date <span class="text-red-600">*</span>
+              </label>
+              <input type="date" formControlName="dateAudience"
+                     class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 text-xs
+                            focus:outline-none focus:border-red-400 focus:bg-white transition-all">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-700 mb-1.5">
+                Heure <span class="text-red-600">*</span>
+              </label>
+              <input type="time" formControlName="heureAudience"
+                     class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 text-xs
+                            focus:outline-none focus:border-red-400 focus:bg-white transition-all">
+            </div>
+          </div>
+
+        </form>
+      </div>
+
+      <!-- ── Étape 2B : fiche message ── -->
+      <div *ngIf="etape === 2 && modeSoumission === 'FORMULAIRE'">
+        <form [formGroup]="ficheForm">
+          <div class="rounded-xl border border-gray-200 overflow-hidden">
+
+            <!-- Header fiche -->
+            <div class="px-4 py-2.5 flex items-center gap-2"
+                 style="background:linear-gradient(135deg, #c0392b, #96281b);">
+              <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+              </svg>
+              <span class="text-white font-bold text-xs tracking-widest uppercase">Fiche Message</span>
+            </div>
+            <div class="h-0.5" style="background:#27ae60;"></div>
+
+            <div class="p-3.5 space-y-3 bg-white">
+
+              <!-- Pour M. -->
+              <div class="flex items-start gap-2">
+                <label class="text-xs font-bold text-gray-600 w-14 pt-2 flex-shrink-0 text-right">Pour M.</label>
+                <div class="flex-1">
+                  <input type="text" formControlName="pourM"
+                         placeholder="Nom du responsable"
+                         class="w-full px-3 py-2 bg-gray-50 border rounded-xl text-gray-900 text-xs focus:outline-none transition-colors"
+                         [style.borderColor]="ficheForm.get('pourM')?.invalid && ficheForm.get('pourM')?.touched ? '#e53e3e' : '#e5e7eb'">
+                  <p *ngIf="ficheForm.get('pourM')?.invalid && ficheForm.get('pourM')?.touched"
+                     class="text-[10px] text-red-600 mt-0.5">Champ requis</p>
+                </div>
+              </div>
+
+              <!-- Date / Heure -->
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[10px] font-bold text-gray-500 mb-1">Date <span class="text-red-500">*</span></label>
+                  <input type="date" formControlName="dateAudience"
+                         class="w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 text-xs focus:outline-none focus:border-red-400 transition-all">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-gray-500 mb-1">Heure <span class="text-red-500">*</span></label>
+                  <input type="time" formControlName="heureAudience"
+                         class="w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 text-xs focus:outline-none focus:border-red-400 transition-all">
+                </div>
+              </div>
+
+              <!-- Pendant -->
+              <div>
+                <label class="block text-[10px] font-bold text-gray-500 mb-1.5">Pendant votre <span class="text-red-500">*</span></label>
+                <div class="flex gap-4">
+                  <label class="flex items-center gap-1.5 cursor-pointer">
+                    <input type="radio" formControlName="pendant" value="ABSENCE"
+                           class="w-3.5 h-3.5" style="accent-color:#c0392b;">
+                    <span class="text-xs text-gray-700">Absence</span>
+                  </label>
+                  <label class="flex items-center gap-1.5 cursor-pointer">
+                    <input type="radio" formControlName="pendant" value="PRESENCE"
+                           class="w-3.5 h-3.5" style="accent-color:#c0392b;">
+                    <span class="text-xs text-gray-700">Présence</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Contact -->
+              <div>
+                <label class="block text-[10px] font-bold text-gray-500 mb-1">Contact</label>
+                <input type="text" formControlName="contact"
+                       placeholder="Téléphone ou contact"
+                       class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 text-xs focus:outline-none focus:border-red-400 transition-all">
+              </div>
+
+              <!-- Actions -->
+              <div class="border-t border-dashed border-gray-200 pt-3">
+                <label class="block text-[10px] font-bold text-gray-500 mb-2">
+                  Action <span class="text-red-500">*</span>
+                </label>
+                <div class="grid grid-cols-2 gap-1">
+                  <label *ngFor="let action of ACTIONS"
+                         class="flex items-center gap-2 cursor-pointer p-2 rounded-lg border transition-all"
+                         [style.borderColor]="ficheForm.get('actionCochee')?.value === action.value ? '#c0392b' : 'transparent'"
+                         [style.background]="ficheForm.get('actionCochee')?.value === action.value ? '#fde8e8' : 'transparent'">
+                    <input type="radio" formControlName="actionCochee" [value]="action.value"
+                           class="w-3.5 h-3.5 flex-shrink-0" style="accent-color:#c0392b;">
+                    <span class="text-[11px] font-medium"
+                          [style.color]="action.value === 'URGENT' ? '#c0392b' : '#374151'"
+                          [style.fontWeight]="action.value === 'URGENT' ? '700' : '500'">
+                      {{ action.label }}
+                    </span>
+                  </label>
+                </div>
+                <p *ngIf="ficheForm.get('actionCochee')?.invalid && ficheForm.get('actionCochee')?.touched"
+                   class="text-[10px] text-red-600 mt-1">Veuillez sélectionner une action</p>
+              </div>
+
+              <!-- Motif -->
+              <div class="border-t border-dashed border-gray-200 pt-3">
+                <label class="block text-[10px] font-bold text-gray-500 mb-1">
+                  Motif <span class="text-red-500">*</span>
+                </label>
+                <textarea formControlName="motif" rows="3"
+                          placeholder="Motif de la demande d'audience..."
+                          class="w-full px-3 py-2 bg-gray-50 border rounded-xl text-gray-900 text-xs
+                                 focus:outline-none transition-all resize-none"
+                          [style.borderColor]="ficheForm.get('motif')?.invalid && ficheForm.get('motif')?.touched ? '#e53e3e' : '#e5e7eb'">
+                </textarea>
+                <p *ngIf="ficheForm.get('motif')?.invalid && ficheForm.get('motif')?.touched"
+                   class="text-[10px] text-red-600 mt-0.5">Requis (min. 5 caractères)</p>
+              </div>
+
+            </div>
+          </div>
+        </form>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="flex-shrink-0 bg-white px-4 py-3 flex gap-2.5 border-t border-gray-100
+                shadow-[0_-2px_12px_rgba(0,0,0,0.05)]">
+
+      <ng-container *ngIf="etape === 1">
+        <button type="button" (click)="fermerModal()"
+                class="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold
+                       text-xs rounded-xl transition-colors active:scale-95">
+          Fermer
+        </button>
+      </ng-container>
+
+      <ng-container *ngIf="etape === 2">
+        <button type="button" (click)="retourEtape1()"
+                class="px-3.5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold
+                       text-xs rounded-xl transition-colors active:scale-95 flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+          Retour
+        </button>
+        <button type="button" (click)="soumettreDemande()"
+                [disabled]="isSubmitting || !isFormValid()"
+                class="flex-1 px-4 py-2.5 text-white font-semibold text-xs rounded-xl transition-all
+                       active:scale-95 flex items-center justify-center gap-1.5
+                       disabled:opacity-50 disabled:cursor-not-allowed"
+                style="background:#c0392b;">
+          <svg *ngIf="isSubmitting" class="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+          </svg>
+          <svg *ngIf="!isSubmitting" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+          </svg>
+          {{ isSubmitting ? 'Envoi...' : 'Soumettre' }}
+        </button>
+      </ng-container>
+
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================
+     MODAL DÉTAIL
+     ========================================================= -->
+<div *ngIf="showDetail && demandeDetail"
+     class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+
+  <!-- Overlay -->
+  <div class="fixed inset-0 bg-black/40 backdrop-blur-[2px]" (click)="fermerDetail()"></div>
+
+  <!-- Panel -->
+  <div class="relative bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl shadow-2xl
+              max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden"
+       style="animation: slideUp 0.25s ease-out;"
+       (click)="$event.stopPropagation()">
+
+    <!-- Barre drag (mobile) -->
+    <div class="flex justify-center pt-2.5 pb-1 sm:hidden flex-shrink-0">
+      <div class="w-8 h-1 bg-gray-300 rounded-full"></div>
+    </div>
+
+    <!-- Header -->
+    <div class="flex-shrink-0 px-4 py-3 flex items-center justify-between"
+         style="background:linear-gradient(135deg, #c0392b, #96281b);">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-xs font-black text-white tracking-widest uppercase leading-none">SONABHY</p>
+          <p class="text-red-200 text-[10px] mt-0.5">Détails de la demande #{{ demandeDetail.iddemande }}</p>
+        </div>
+      </div>
+      <button (click)="fermerDetail()"
+              class="w-7 h-7 bg-white/15 hover:bg-white/30 rounded-lg flex items-center justify-center transition-colors">
+        <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Body scrollable -->
+    <div class="flex-1 overflow-y-auto p-4 space-y-3">
+
+      <!-- Statut -->
+      <div class="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50/60">
+        <span class="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">Statut</span>
+        <span class="inline-flex items-center gap-1.5 text-[10px] font-semibold px-2.5 py-1 rounded-full border"
+              [ngClass]="getStatusClass(demandeDetail.status)">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="getStatusIcon(demandeDetail.status)"/>
+          </svg>
+          {{ getStatusLabel(demandeDetail.status) }}
+        </span>
+      </div>
+
+      <!-- Mode + Dates -->
+      <div class="rounded-xl border border-gray-100 overflow-hidden">
+        <div class="px-3 py-2 border-b border-gray-100 flex items-center gap-2" style="background:#fde8e8;">
+          <svg class="w-3.5 h-3.5 flex-shrink-0" style="color:#c0392b;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span class="text-[10px] font-bold uppercase tracking-wide" style="color:#c0392b;">Informations générales</span>
+        </div>
+        <div class="p-3 space-y-2.5 bg-white">
+
+          <!-- Mode soumission -->
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] text-gray-500">Mode de soumission</span>
+            <span class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                  [style.background]="demandeDetail.modeSoumission === 'FICHIER' ? '#fde8e8' : '#e8f5e9'"
+                  [style.color]="demandeDetail.modeSoumission === 'FICHIER' ? '#c0392b' : '#27ae60'">
+              <svg *ngIf="demandeDetail.modeSoumission === 'FICHIER'" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+              </svg>
+              <svg *ngIf="demandeDetail.modeSoumission === 'FORMULAIRE'" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+              </svg>
+              {{ demandeDetail.modeSoumission === 'FICHIER' ? 'Fichier PDF' : 'Fiche message' }}
+            </span>
+          </div>
+
+          <!-- Date audience -->
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] text-gray-500">Date d'audience</span>
+            <span class="text-xs font-semibold text-gray-800">
+              {{ demandeDetail.dateAudience | date:'dd/MM/yyyy' }}
+            </span>
+          </div>
+
+          <!-- Heure audience -->
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] text-gray-500">Heure d'audience</span>
+            <span class="text-xs font-semibold text-gray-800">{{ demandeDetail.heureAudience }}</span>
+          </div>
+
+          <!-- Date soumission -->
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] text-gray-500">Soumise le</span>
+            <span class="text-[10px] text-gray-500">{{ demandeDetail.createdDate | date:'dd/MM/yyyy à HH:mm' }}</span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── Mode FICHIER : informations du fichier ── -->
+      <div *ngIf="demandeDetail.modeSoumission === 'FICHIER'"
+           class="rounded-xl border border-gray-100 overflow-hidden">
+        <div class="px-3 py-2 border-b border-gray-100 flex items-center gap-2" style="background:#fde8e8;">
+          <svg class="w-3.5 h-3.5 flex-shrink-0" style="color:#c0392b;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+          </svg>
+          <span class="text-[10px] font-bold uppercase tracking-wide" style="color:#c0392b;">Document joint</span>
+        </div>
+        <div class="p-3 bg-white">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#c0392b;">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-semibold text-gray-800 truncate">
+                {{ demandeDetail.fichier_filename || 'Document joint' }}
+              </p>
+              <p class="text-[10px] text-gray-400 mt-0.5">
+                {{ demandeDetail.fichier_size ? formatFileSize(demandeDetail.fichier_size) : '' }}
+                · Format PDF
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Mode FORMULAIRE : fiche message ── -->
+      <div *ngIf="demandeDetail.modeSoumission === 'FORMULAIRE'"
+           class="rounded-xl border border-gray-100 overflow-hidden">
+        <div class="px-3 py-2 border-b border-gray-100 flex items-center gap-2"
+             style="background:linear-gradient(135deg, #c0392b, #96281b);">
+          <svg class="w-3.5 h-3.5 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+          </svg>
+          <span class="text-[10px] font-bold uppercase tracking-widest text-white">Fiche Message</span>
+        </div>
+        <!-- Bande verte signature -->
+        <div class="h-0.5" style="background:#27ae60;"></div>
+
+        <div class="p-3.5 bg-white space-y-2.5">
+
+          <!-- Pour M. -->
+          <div class="flex items-center justify-between py-1.5 border-b border-dashed border-gray-100">
+            <span class="text-[10px] font-semibold text-gray-500">Pour M.</span>
+            <span class="text-xs font-bold text-gray-900">{{ demandeDetail.pourM }}</span>
+          </div>
+
+          <!-- Pendant -->
+          <div class="flex items-center justify-between py-1.5 border-b border-dashed border-gray-100">
+            <span class="text-[10px] font-semibold text-gray-500">Pendant votre</span>
+            <span class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                  style="background:#fde8e8; color:#c0392b;">
+              {{ demandeDetail.pendant === 'ABSENCE' ? 'Absence' : 'Présence' }}
+            </span>
+          </div>
+
+          <!-- Contact -->
+          <div *ngIf="demandeDetail.contact"
+               class="flex items-center justify-between py-1.5 border-b border-dashed border-gray-100">
+            <span class="text-[10px] font-semibold text-gray-500">Contact</span>
+            <span class="text-xs text-gray-700">{{ demandeDetail.contact }}</span>
+          </div>
+
+          <!-- Action cochée -->
+          <div *ngIf="demandeDetail.actionCochee"
+               class="flex items-center justify-between py-1.5 border-b border-dashed border-gray-100">
+            <span class="text-[10px] font-semibold text-gray-500">Action</span>
+            <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full"
+                  [style.background]="demandeDetail.actionCochee === 'URGENT' ? '#c0392b' : '#fde8e8'"
+                  [style.color]="demandeDetail.actionCochee === 'URGENT' ? 'white' : '#c0392b'">
+              <span *ngIf="demandeDetail.actionCochee === 'URGENT'">🔴</span>
+              {{ getActionLabel(demandeDetail.actionCochee) }}
+            </span>
+          </div>
+
+          <!-- Motif -->
+          <div *ngIf="demandeDetail.motif" class="pt-1.5">
+            <p class="text-[10px] font-semibold text-gray-500 mb-1.5">Motif</p>
+            <div class="px-3 py-2.5 rounded-xl text-xs text-gray-700 leading-relaxed"
+                 style="background:#fafafa; border:1px solid #f0f0f0;">
+              {{ demandeDetail.motif }}
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Commentaire admin (si présent) -->
+      <div *ngIf="demandeDetail.commentaireAdmin"
+           class="rounded-xl overflow-hidden border"
+           style="border-color:#f5c6c6;">
+        <div class="px-3 py-2 border-b flex items-center gap-2"
+             style="background:#fde8e8; border-color:#f5c6c6;">
+          <svg class="w-3.5 h-3.5 flex-shrink-0" style="color:#c0392b;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+          </svg>
+          <span class="text-[10px] font-bold uppercase tracking-wide" style="color:#c0392b;">Réponse de l'administration</span>
+        </div>
+        <div class="p-3 bg-white">
+          <p class="text-xs text-gray-700 leading-relaxed">{{ demandeDetail.commentaireAdmin }}</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="flex-shrink-0 bg-white px-4 py-3 border-t border-gray-100 flex gap-2.5
+                shadow-[0_-2px_12px_rgba(0,0,0,0.05)]">
+
+      <!-- Bouton Fermer -->
+      <button type="button" (click)="fermerDetail()"
+              class="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold
+                     text-xs rounded-xl transition-colors active:scale-95">
+        Fermer
+      </button>
+
+      <!-- Bouton Annuler la demande (si EN_ATTENTE) -->
+      <button *ngIf="demandeDetail.status === 'EN_ATTENTE'"
+              type="button"
+              (click)="annulerDemande(demandeDetail); fermerDetail()"
+              class="flex-1 px-4 py-2.5 text-white font-semibold text-xs rounded-xl
+                     transition-all active:scale-95 flex items-center justify-center gap-1.5"
+              style="background:#c0392b;">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+        Annuler la demande
+      </button>
+
+    </div>
+  </div>
+</div>
+
+<style>
+  @keyframes slideUp {
+    from { transform: translateY(100%); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+</style>

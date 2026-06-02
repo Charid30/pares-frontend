@@ -1,0 +1,63 @@
+/* Admin Layout Styles - v2 */
+
+/* Sidebar scrollbar */
+nav::-webkit-scrollbar {
+  width: 4px;
+}
+
+nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+nav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
+nav::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Sidebar smooth transition */
+aside {
+  transition: width 0.3s ease;
+}
+
+/* Active menu item */
+.active-menu-item {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  position: relative;
+}
+
+.active-menu-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background-color: #E31E24;
+  border-radius: 0 4px 4px 0;
+}
+
+/* Mobile sidebar animation */
+@keyframes slideIn {
+  from { transform: translateX(-100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+aside.lg\:hidden {
+  animation: slideIn 0.25s ease;
+}
+
+/* Badge pulse */
+.badge-pulse {
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.65; }
+}

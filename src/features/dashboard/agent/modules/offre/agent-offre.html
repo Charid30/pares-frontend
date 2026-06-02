@@ -1,0 +1,902 @@
+<!-- agent-offre.html — Design unifié PARES (style Suivi des Stages) -->
+
+<!-- Toasts -->
+<div class="fixed top-4 right-4 z-[9999] flex flex-col gap-2" style="pointer-events:none">
+  <div *ngFor="let t of toasts"
+       class="flex items-start gap-3 px-4 py-3 rounded-xl shadow-lg text-white text-sm w-80"
+       [ngClass]="{'bg-green-600': t.type==='success','bg-red-600': t.type==='error','bg-amber-500': t.type==='warning'}"
+       style="pointer-events:auto">
+    <div class="flex-1">
+      <p class="font-semibold">{{ t.title }}</p>
+      <p class="opacity-90">{{ t.message }}</p>
+    </div>
+    <button (click)="dismissToast(t.id)" class="text-white/70 hover:text-white mt-0.5 flex-shrink-0">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- ══ HERO ══════════════════════════════════════════════════════════════ -->
+<div class="bg-slate-900 relative overflow-hidden">
+  <!-- Dot pattern -->
+  <div class="absolute inset-0 opacity-[0.04]"
+       style="background-image: radial-gradient(circle, #ffffff 1px, transparent 1px); background-size: 28px 28px;"></div>
+  <!-- Lueur rouge douce -->
+  <div class="absolute bottom-0 left-0 right-0 h-64 bg-primary-500/5 blur-3xl pointer-events-none"></div>
+  <!-- Ligne de séparation en bas -->
+  <div class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary-500/40 to-transparent"></div>
+
+  <div class="container-custom py-10 md:py-14 relative z-10">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+
+      <!-- Titre + boutons -->
+      <div class="flex items-center gap-5">
+        <div class="w-14 h-14 bg-primary-500 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
+          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-primary-400 text-xs font-semibold uppercase tracking-widest mb-1">Agent — Tableau de bord</p>
+          <h1 class="text-2xl md:text-3xl font-bold text-white leading-tight">Offres Commerciales</h1>
+          <p class="text-gray-400 text-sm mt-1">Gestion des demandes d'offres commerciales</p>
+          <!-- Boutons d'action -->
+          <div class="flex items-center gap-2 mt-3">
+            <button (click)="charger()"
+                    class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-300
+                           bg-white/10 hover:bg-white/15 border border-white/20 rounded-xl transition-all">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+              Actualiser
+            </button>
+            <button *ngIf="peutCreer" (click)="creerOffre()"
+                    class="flex items-center gap-1.5 px-4 py-1.5 bg-primary-500 hover:bg-primary-600 text-white
+                           text-xs font-semibold rounded-xl shadow-sm transition-all">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+              Nouvelle offre
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats cliquables -->
+      <div class="grid grid-cols-4 gap-3 lg:min-w-[440px]">
+        <button *ngFor="let s of statsStatuts" type="button"
+                (click)="filtreStatut = (filtreStatut === s.value ? '' : s.value); filtrer()"
+                class="rounded-2xl px-3 py-3 text-center transition-all border focus:outline-none"
+                [ngClass]="filtreStatut === s.value
+                  ? 'bg-white/15 border-white/30 ring-2 ring-white/30'
+                  : 'bg-white/5 border-white/10 hover:bg-white/10'">
+          <p class="text-2xl font-bold text-white">{{ s.count }}</p>
+          <p class="text-[10px] text-gray-400 mt-0.5 truncate">{{ s.label }}</p>
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══ CONTENU ════════════════════════════════════════════════════════════ -->
+<div class="container-custom py-8 md:py-12">
+
+  <!-- Accès refusé -->
+  <div *ngIf="!peutConsulter"
+       class="bg-white border border-gray-100 rounded-2xl p-12 text-center shadow-sm">
+    <div class="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+      <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+      </svg>
+    </div>
+    <p class="text-base font-semibold text-gray-700 mb-1">Accès non autorisé</p>
+    <p class="text-sm text-gray-400">Vous n'avez pas la permission de consulter les offres commerciales.</p>
+  </div>
+
+  <div *ngIf="peutConsulter" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+    <!-- ── Colonne principale (2/3) ── -->
+    <div class="lg:col-span-2 space-y-5">
+
+      <!-- Filtres -->
+      <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+        <div class="flex flex-col gap-2">
+          <div class="flex gap-2">
+            <div class="relative flex-1">
+              <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
+              </svg>
+              <input type="text" [(ngModel)]="search" (ngModelChange)="filtrer()"
+                     placeholder="Titre, type, candidat..."
+                     class="w-full pl-10 pr-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl
+                            focus:border-primary-500 focus:ring-0 outline-none transition-all text-gray-700 placeholder:text-gray-400"/>
+            </div>
+            <button *ngIf="search || filtreStatut || filtreType"
+                    (click)="effacerFiltres()"
+                    class="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-500
+                           bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+              Effacer
+            </button>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <select [(ngModel)]="filtreStatut" (ngModelChange)="filtrer()"
+                    class="px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-xl
+                           focus:border-primary-500 focus:ring-0 outline-none transition-all text-gray-600">
+              <option value="">Tous les statuts</option>
+              <option value="EN_ATTENTE">En attente</option>
+              <option value="EN_TRAITEMENT">En traitement</option>
+              <option value="VALIDEE">Validée</option>
+              <option value="REJETEE">Rejetée</option>
+              <option value="ACTIVE">Active</option>
+              <option value="CLOTUREE">Clôturée</option>
+            </select>
+            <select [(ngModel)]="filtreType" (ngModelChange)="filtrer()"
+                    class="px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-xl
+                           focus:border-primary-500 focus:ring-0 outline-none transition-all text-gray-600">
+              <option value="">Tous les types</option>
+              <option value="EMPLOI">Emploi</option>
+              <option value="STAGE">Stage</option>
+              <option value="BOURSE">Bourse</option>
+              <option value="FORMATION">Formation</option>
+              <option value="APPRENTISSAGE">Apprentissage</option>
+              <option value="VENTE">Vente</option>
+              <option value="PARTENARIAT">Partenariat</option>
+              <option value="DISTRIBUTION">Distribution</option>
+              <option value="SERVICE">Service</option>
+              <option value="AUTRE">Autre</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chargement -->
+      <div *ngIf="loading" class="flex flex-col items-center justify-center py-16 gap-3">
+        <div class="w-10 h-10 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+        <p class="text-sm text-gray-400">Chargement des offres...</p>
+      </div>
+
+      <!-- Erreur -->
+      <div *ngIf="erreur && !loading"
+           class="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl">
+        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span class="text-sm flex-1">{{ erreur }}</span>
+        <button (click)="charger()" class="text-xs text-red-600 hover:underline font-medium">Réessayer</button>
+      </div>
+
+      <!-- Contenu chargé -->
+      <div *ngIf="!loading && !erreur">
+
+        <!-- Compteur -->
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-sm text-gray-500">
+            <span class="font-semibold text-gray-900">{{ offresFiltrees.length }}</span> offre(s) trouvée(s)
+          </span>
+        </div>
+
+        <!-- Vide -->
+        <div *ngIf="offresFiltrees.length === 0"
+             class="bg-white border border-gray-100 rounded-2xl p-12 text-center shadow-sm">
+          <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+          </div>
+          <p class="text-base font-semibold text-gray-500 mb-1">Aucune offre trouvée</p>
+          <p class="text-sm text-gray-400">
+            {{ (search || filtreStatut || filtreType) ? 'Aucun résultat pour ces filtres.' : 'Aucune offre n\'a encore été créée.' }}
+          </p>
+        </div>
+
+        <!-- Grille des offres -->
+        <div *ngIf="offresFiltrees.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          <div *ngFor="let o of offresFiltrees"
+               class="group bg-white border border-gray-100 rounded-2xl overflow-hidden
+                      hover:border-primary-100 hover:shadow-md transition-all duration-200 cursor-pointer"
+               (click)="voirDetail(o)">
+
+            <!-- Barre statut colorée -->
+            <div class="h-1 w-full" [ngClass]="getStatutBarClass(o.statusOffre)"></div>
+
+            <div class="p-5">
+              <!-- En-tête carte -->
+              <div class="flex items-start justify-between gap-3 mb-3">
+                <div class="flex items-center gap-3 min-w-0">
+                  <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 bg-primary-500 text-white shadow">
+                    {{ getInitiales(o) }}
+                  </div>
+                  <div class="min-w-0">
+                    <p class="text-sm font-semibold text-gray-900 truncate">{{ getNomSource(o) }}</p>
+                    <p *ngIf="o.candidatCreateur?.email" class="text-xs text-gray-500 truncate">{{ o.candidatCreateur!.email }}</p>
+                    <p *ngIf="!o.candidatCreateur" class="text-xs text-gray-400">Créée par admin</p>
+                  </div>
+                </div>
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium shrink-0"
+                      [ngClass]="getStatutClass(o.statusOffre)">
+                  {{ getStatutLabel(o.statusOffre) }}
+                </span>
+              </div>
+
+              <!-- Titre & Type -->
+              <div class="mb-3">
+                <p class="text-sm font-semibold text-gray-800 truncate mb-1.5">{{ o.titre }}</p>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                  {{ o.typeOffre }}
+                </span>
+              </div>
+
+              <!-- Description -->
+              <p *ngIf="o.description" class="text-xs text-gray-400 mb-3 line-clamp-2">{{ o.description }}</p>
+
+              <!-- Motif refus -->
+              <div *ngIf="o.statusOffre === 'REJETEE' && o.motifRefus"
+                   class="flex items-start gap-2 bg-red-50 border border-red-100 rounded-lg p-2.5 mb-3">
+                <svg class="w-3.5 h-3.5 text-red-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p class="text-xs text-red-600 line-clamp-2">{{ o.motifRefus }}</p>
+              </div>
+
+              <!-- Date + Fichiers -->
+              <div class="flex items-center justify-between text-xs text-gray-400 mb-4">
+                <span>{{ o.createdDate | date:'dd/MM/yyyy' }}</span>
+                <div class="flex items-center gap-2">
+                  <span *ngIf="o.cnib_filename" class="flex items-center gap-1 text-gray-400">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    CNIB
+                  </span>
+                  <span *ngIf="o.demandeOffre_filename" class="flex items-center gap-1 text-gray-400">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Offre
+                  </span>
+                </div>
+              </div>
+
+              <!-- Actions -->
+              <div class="flex items-center gap-2 pt-3 border-t border-gray-100" (click)="$event.stopPropagation()">
+                <button (click)="voirDetail(o)"
+                        class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                  Voir
+                </button>
+                <button *ngIf="peutModifier" (click)="ouvrirEditModal(o)"
+                        class="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                  </svg>
+                </button>
+                <button *ngIf="peutValider && peutEvaluer(o)" (click)="validerRapide(o)"
+                        class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-green-600 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg transition-colors">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                  </svg>
+                  Valider
+                </button>
+                <button *ngIf="peutRejeter && peutEvaluer(o)" (click)="rejeterRapide(o)"
+                        class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                  Rejeter
+                </button>
+                <button *ngIf="(peutValider || peutRejeter) && !peutEvaluer(o)" (click)="ouvrirTraitement(o)"
+                        class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-violet-600 bg-violet-50 hover:bg-violet-100 border border-violet-200 rounded-lg transition-colors">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                  </svg>
+                  Traiter
+                </button>
+                <button *ngIf="peutSupprimer" (click)="ouvrirDeleteModal(o)"
+                        class="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-gray-400 bg-gray-50 hover:bg-red-50 hover:text-red-500 rounded-lg transition-colors">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /colonne principale -->
+
+    <!-- ── Sidebar Desktop (1/3) ── -->
+    <div class="hidden lg:flex flex-col gap-6">
+
+      <!-- Permissions -->
+      <div class="bg-white border border-gray-100 rounded-2xl p-6">
+        <span class="text-primary-500 text-xs font-semibold uppercase tracking-widest">Vos permissions</span>
+        <h3 class="text-base font-bold text-gray-900 mt-1">Accès au module</h3>
+        <div class="w-8 h-0.5 bg-primary-500 mt-3 mb-5 rounded-full"></div>
+
+        <div class="space-y-2">
+          <!-- Consulter -->
+          <div class="flex items-center gap-3 p-2.5 rounded-xl bg-green-50 border border-green-100">
+            <div class="w-7 h-7 rounded-lg bg-green-500 flex items-center justify-center flex-shrink-0">
+              <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              </svg>
+            </div>
+            <p class="text-xs font-semibold text-green-800 flex-1">Consulter</p>
+            <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+          <!-- Créer -->
+          <div class="flex items-center gap-3 p-2.5 rounded-xl"
+               [ngClass]="peutCreer ? 'bg-green-50 border border-green-100' : 'bg-gray-50 border border-gray-100'">
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                 [ngClass]="peutCreer ? 'bg-green-500' : 'bg-gray-200'">
+              <svg class="w-3.5 h-3.5" [class]="peutCreer ? 'text-white' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+            </div>
+            <p class="text-xs font-semibold flex-1" [class]="peutCreer ? 'text-green-800' : 'text-gray-500'">Créer</p>
+            <svg *ngIf="peutCreer" class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+            <svg *ngIf="!peutCreer" class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636"/>
+            </svg>
+          </div>
+          <!-- Modifier -->
+          <div class="flex items-center gap-3 p-2.5 rounded-xl"
+               [ngClass]="peutModifier ? 'bg-green-50 border border-green-100' : 'bg-gray-50 border border-gray-100'">
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                 [ngClass]="peutModifier ? 'bg-green-500' : 'bg-gray-200'">
+              <svg class="w-3.5 h-3.5" [class]="peutModifier ? 'text-white' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+              </svg>
+            </div>
+            <p class="text-xs font-semibold flex-1" [class]="peutModifier ? 'text-green-800' : 'text-gray-500'">Modifier</p>
+            <svg *ngIf="peutModifier" class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+            <svg *ngIf="!peutModifier" class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636"/>
+            </svg>
+          </div>
+          <!-- Valider -->
+          <div class="flex items-center gap-3 p-2.5 rounded-xl"
+               [ngClass]="peutValider ? 'bg-green-50 border border-green-100' : 'bg-gray-50 border border-gray-100'">
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                 [ngClass]="peutValider ? 'bg-green-500' : 'bg-gray-200'">
+              <svg class="w-3.5 h-3.5" [class]="peutValider ? 'text-white' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+            </div>
+            <p class="text-xs font-semibold flex-1" [class]="peutValider ? 'text-green-800' : 'text-gray-500'">Valider</p>
+            <svg *ngIf="peutValider" class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+            <svg *ngIf="!peutValider" class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636"/>
+            </svg>
+          </div>
+          <!-- Rejeter -->
+          <div class="flex items-center gap-3 p-2.5 rounded-xl"
+               [ngClass]="peutRejeter ? 'bg-green-50 border border-green-100' : 'bg-gray-50 border border-gray-100'">
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                 [ngClass]="peutRejeter ? 'bg-green-500' : 'bg-gray-200'">
+              <svg class="w-3.5 h-3.5" [class]="peutRejeter ? 'text-white' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </div>
+            <p class="text-xs font-semibold flex-1" [class]="peutRejeter ? 'text-green-800' : 'text-gray-500'">Rejeter</p>
+            <svg *ngIf="peutRejeter" class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+            <svg *ngIf="!peutRejeter" class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636"/>
+            </svg>
+          </div>
+          <!-- Supprimer -->
+          <div class="flex items-center gap-3 p-2.5 rounded-xl"
+               [ngClass]="peutSupprimer ? 'bg-green-50 border border-green-100' : 'bg-gray-50 border border-gray-100'">
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                 [ngClass]="peutSupprimer ? 'bg-green-500' : 'bg-gray-200'">
+              <svg class="w-3.5 h-3.5" [class]="peutSupprimer ? 'text-white' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </div>
+            <p class="text-xs font-semibold flex-1" [class]="peutSupprimer ? 'text-green-800' : 'text-gray-500'">Supprimer</p>
+            <svg *ngIf="peutSupprimer" class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+            <svg *ngIf="!peutSupprimer" class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtres actifs -->
+      <div *ngIf="filtreStatut || filtreType || search"
+           class="bg-blue-50 border border-blue-100 rounded-2xl p-5">
+        <span class="text-blue-600 text-xs font-semibold uppercase tracking-widest">Filtres actifs</span>
+        <div class="mt-3 space-y-1.5">
+          <p *ngIf="filtreStatut" class="text-xs text-gray-600">Statut : <span class="font-semibold text-gray-900">{{ getStatutLabel(filtreStatut) }}</span></p>
+          <p *ngIf="filtreType" class="text-xs text-gray-600">Type : <span class="font-semibold text-gray-900">{{ filtreType }}</span></p>
+          <p *ngIf="search" class="text-xs text-gray-600">Recherche : <span class="font-semibold text-gray-900">{{ search }}</span></p>
+          <p class="text-xs text-blue-600 font-semibold mt-2">{{ offresFiltrees.length }} résultat(s)</p>
+        </div>
+        <button (click)="effacerFiltres()" class="mt-3 text-xs text-primary-600 hover:underline font-medium">Effacer tout</button>
+      </div>
+
+      <!-- Info -->
+      <div class="bg-gray-50 border border-gray-100 rounded-2xl p-4">
+        <p class="text-xs text-gray-400 leading-relaxed">
+          Cliquez sur les compteurs en haut pour filtrer par statut. Cliquez sur une carte pour voir le détail complet.
+        </p>
+      </div>
+
+    </div><!-- /sidebar -->
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════ MODALS ══════════════════════════════ -->
+
+<!-- Modal Créer Offre -->
+<div *ngIf="showCreateModal"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+     (click)="fermerCreateModal()">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col"
+       (click)="$event.stopPropagation()">
+    <div class="px-6 py-4 flex items-center justify-between flex-shrink-0 rounded-t-2xl"
+         style="background:linear-gradient(135deg,#c0392b,#96281b);">
+      <div>
+        <h3 class="text-lg font-bold text-white">Nouvelle offre commerciale</h3>
+        <p class="text-sm text-white/70">Créer une offre administrative</p>
+      </div>
+      <button (click)="fermerCreateModal()" [disabled]="soumission"
+              class="w-8 h-8 flex items-center justify-center rounded-full text-white/70 hover:text-white disabled:opacity-40"
+              style="background:rgba(255,255,255,0.15)">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="p-6 space-y-4 overflow-y-auto flex-1">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Type d'offre <span class="text-red-500">*</span></label>
+          <select [(ngModel)]="form.typeOffre"
+                  class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-400 outline-none">
+            <option value="">-- Sélectionner --</option>
+            <option value="EMPLOI">Emploi</option><option value="STAGE">Stage</option>
+            <option value="BOURSE">Bourse</option><option value="FORMATION">Formation</option>
+            <option value="APPRENTISSAGE">Apprentissage</option><option value="VENTE">Vente</option>
+            <option value="PARTENARIAT">Partenariat</option><option value="DISTRIBUTION">Distribution</option>
+            <option value="SERVICE">Service</option><option value="AUTRE">Autre</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Statut initial</label>
+          <select [(ngModel)]="form.statusOffre"
+                  class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-400 outline-none">
+            <option value="BROUILLON">Brouillon</option>
+            <option value="EN_ATTENTE">En attente</option>
+            <option value="VALIDEE">Validée</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Titre <span class="text-red-500">*</span></label>
+        <input type="text" [(ngModel)]="form.titre" placeholder="Ex: Offre d'emploi informaticien"
+               class="w-full px-3 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-400 outline-none"/>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+        <textarea [(ngModel)]="form.description" rows="3" placeholder="Description de l'offre..."
+                  class="w-full px-3 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-400 outline-none resize-none"></textarea>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Conditions requises</label>
+        <textarea [(ngModel)]="form.conditionsRequises" rows="2" placeholder="Ex: Diplôme BAC+3 minimum..."
+                  class="w-full px-3 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-400 outline-none resize-none"></textarea>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Documents requis</label>
+        <textarea [(ngModel)]="form.documentsRequis" rows="2" placeholder="Ex: CV, lettre de motivation..."
+                  class="w-full px-3 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-400 outline-none resize-none"></textarea>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Date de début</label>
+          <input type="date" [(ngModel)]="form.dateDebut"
+                 class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-400 outline-none"/>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Date de fin</label>
+          <input type="date" [(ngModel)]="form.dateFin"
+                 class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-400 outline-none"/>
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre max de candidatures</label>
+        <input type="number" [(ngModel)]="form.nombreCandidaturesMax" min="1" placeholder="Ex: 100"
+               class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-400 outline-none"/>
+      </div>
+      <div *ngIf="formErreur" class="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl p-3 text-red-700 text-sm">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        {{ formErreur }}
+      </div>
+    </div>
+    <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3 flex-shrink-0">
+      <button (click)="fermerCreateModal()" [disabled]="soumission"
+              class="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors disabled:opacity-50">
+        Annuler
+      </button>
+      <button (click)="soumettre()" [disabled]="soumission"
+              class="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white rounded-xl transition-colors disabled:opacity-50"
+              style="background:#c0392b">
+        <svg *ngIf="soumission" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+        Créer l'offre
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Traitement -->
+<div *ngIf="showTraitementModal && selectedOffre"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+     (click)="fermerTraitement()">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg" (click)="$event.stopPropagation()">
+    <div class="flex items-center justify-between px-6 py-4 rounded-t-2xl"
+         style="background:linear-gradient(135deg,#c0392b,#96281b);">
+      <div>
+        <h2 class="text-lg font-bold text-white">Traitement de l'offre</h2>
+        <p class="text-sm text-white/70 truncate max-w-xs">{{ selectedOffre.titre }}</p>
+      </div>
+      <button (click)="fermerTraitement()"
+              class="w-8 h-8 flex items-center justify-center rounded-full text-white/70 hover:text-white"
+              style="background:rgba(255,255,255,0.15)">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="px-6 py-5 space-y-5">
+      <div class="flex items-center gap-3 bg-gray-50 rounded-xl p-3">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0" style="background:#fde8e8; color:#c0392b;">
+          {{ getInitiales(selectedOffre) }}
+        </div>
+        <div>
+          <p class="text-sm font-semibold text-gray-900">{{ getNomSource(selectedOffre) }}</p>
+          <p *ngIf="selectedOffre.candidatCreateur?.email" class="text-xs text-gray-500">{{ selectedOffre.candidatCreateur!.email }}</p>
+        </div>
+        <div class="ml-auto">
+          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium" [ngClass]="getStatutClass(selectedOffre.statusOffre)">
+            {{ getStatutLabel(selectedOffre.statusOffre) }}
+          </span>
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Décision <span class="text-red-500">*</span></label>
+        <div class="grid grid-cols-3 gap-2">
+          <button *ngFor="let d of decisionsDisponibles" type="button"
+                  (click)="evaluation.statusOffre = d.value"
+                  class="px-3 py-2.5 rounded-xl text-sm font-medium border-2 transition-all"
+                  [ngClass]="evaluation.statusOffre === d.value ? d.activeClass : 'border-gray-200 text-gray-500'">
+            {{ d.label }}
+          </button>
+        </div>
+      </div>
+      <div *ngIf="evaluation.statusOffre === 'REJETEE'">
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Motif du refus <span class="text-red-500">*</span></label>
+        <textarea [(ngModel)]="evaluation.motifRefus" rows="3" placeholder="Expliquer le motif du refus…"
+                  class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-red-400"></textarea>
+      </div>
+      <div *ngIf="erreurEval" class="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 px-3 py-2.5 rounded-xl text-sm">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        {{ erreurEval }}
+      </div>
+    </div>
+    <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100">
+      <button (click)="fermerTraitement()" class="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">Annuler</button>
+      <button (click)="enregistrerDecision()" [disabled]="soumission || !evaluation.statusOffre"
+              class="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white rounded-xl transition-colors disabled:opacity-50"
+              style="background:#c0392b">
+        <svg *ngIf="soumission" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+        Enregistrer la décision
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Détail -->
+<div *ngIf="showDetailModal && detailOffre"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+     (click)="fermerDetail()">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+    <div class="flex items-center justify-between px-6 py-4 sticky top-0 z-10 rounded-t-2xl"
+         style="background:linear-gradient(135deg,#c0392b,#96281b);">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm bg-white/20 text-white">
+          {{ getInitiales(detailOffre) }}
+        </div>
+        <div>
+          <h2 class="text-base font-bold text-white">Détail de l'offre</h2>
+          <p class="text-xs text-white/70">{{ detailOffre.createdDate | date:'dd MMMM yyyy' }}</p>
+        </div>
+      </div>
+      <button (click)="fermerDetail()" class="w-8 h-8 flex items-center justify-center rounded-full text-white/70 hover:text-white" style="background:rgba(255,255,255,0.15)">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="px-6 py-5 space-y-4">
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium" [ngClass]="getStatutClass(detailOffre.statusOffre)">{{ getStatutLabel(detailOffre.statusOffre) }}</span>
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-600">{{ detailOffre.typeOffre }}</span>
+      </div>
+      <div *ngIf="detailOffre.candidatCreateur" class="bg-gray-50 rounded-xl p-4">
+        <p class="text-xs text-gray-400 uppercase font-semibold mb-2">Candidat</p>
+        <p class="text-sm font-semibold text-gray-900">{{ getNomSource(detailOffre) }}</p>
+        <p *ngIf="detailOffre.candidatCreateur.email" class="text-sm text-gray-600">{{ detailOffre.candidatCreateur.email }}</p>
+        <p *ngIf="detailOffre.candidatCreateur.telephone" class="text-sm text-gray-600">{{ detailOffre.candidatCreateur.telephone }}</p>
+      </div>
+      <div *ngIf="!detailOffre.candidatCreateur" class="bg-violet-50 rounded-xl p-3">
+        <p class="text-sm text-red-700 font-medium">Offre créée par l'administration</p>
+      </div>
+      <div>
+        <p class="text-xs text-gray-400 uppercase font-semibold mb-1">Objet de l'offre</p>
+        <p class="text-sm text-gray-800 font-medium">{{ detailOffre.titre }}</p>
+      </div>
+      <div *ngIf="detailOffre.description">
+        <p class="text-xs text-gray-400 uppercase font-semibold mb-1">Description</p>
+        <p class="text-sm text-gray-700 whitespace-pre-line">{{ detailOffre.description }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-gray-400 uppercase font-semibold mb-2">Fichiers joints</p>
+        <div class="grid grid-cols-2 gap-3">
+          <div *ngIf="detailOffre.cnib_filename" class="bg-gray-50 border border-gray-200 rounded-xl p-3">
+            <div class="flex items-center gap-2 mb-2">
+              <svg class="w-5 h-5 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              <div class="min-w-0">
+                <p class="text-xs font-semibold text-gray-700">CNIB</p>
+                <p class="text-xs text-gray-400 truncate">{{ detailOffre.cnib_filename }}</p>
+              </div>
+            </div>
+            <div class="flex gap-1.5">
+              <button type="button" (click)="ouvrirFichier(detailOffre.idoffres, 'cnib', detailOffre.cnib_filename!, 'view')"
+                      class="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-700 hover:bg-red-100 transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                Voir
+              </button>
+              <button type="button" (click)="ouvrirFichier(detailOffre.idoffres, 'cnib', detailOffre.cnib_filename!, 'download')"
+                      class="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                DL
+              </button>
+            </div>
+          </div>
+          <div *ngIf="!detailOffre.cnib_filename" class="bg-gray-50 rounded-xl p-3 flex items-center gap-2 opacity-60">
+            <svg class="w-5 h-5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <div><p class="text-xs font-semibold text-gray-500">CNIB</p><p class="text-xs text-gray-400">Non fourni</p></div>
+          </div>
+          <div *ngIf="detailOffre.demandeOffre_filename" class="bg-gray-50 border border-gray-200 rounded-xl p-3">
+            <div class="flex items-center gap-2 mb-2">
+              <svg class="w-5 h-5 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              <div class="min-w-0"><p class="text-xs font-semibold text-gray-700">Offre PDF</p><p class="text-xs text-gray-400 truncate">{{ detailOffre.demandeOffre_filename }}</p></div>
+            </div>
+            <div class="flex gap-1.5">
+              <button type="button" (click)="ouvrirFichier(detailOffre.idoffres, 'demandeOffre', detailOffre.demandeOffre_filename!, 'view')"
+                      class="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-700 hover:bg-red-100 transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                Voir
+              </button>
+              <button type="button" (click)="ouvrirFichier(detailOffre.idoffres, 'demandeOffre', detailOffre.demandeOffre_filename!, 'download')"
+                      class="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                DL
+              </button>
+            </div>
+          </div>
+          <div *ngIf="!detailOffre.demandeOffre_filename" class="bg-gray-50 rounded-xl p-3 flex items-center gap-2 opacity-60">
+            <svg class="w-5 h-5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <div><p class="text-xs font-semibold text-gray-500">Offre PDF</p><p class="text-xs text-gray-400">Non fourni</p></div>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="detailOffre.statusOffre === 'REJETEE' && detailOffre.motifRefus" class="bg-red-50 border border-red-100 rounded-xl p-4">
+        <p class="text-xs text-red-400 uppercase font-semibold mb-1">Motif du refus</p>
+        <p class="text-sm text-red-700">{{ detailOffre.motifRefus }}</p>
+      </div>
+      <div class="grid grid-cols-2 gap-3 text-xs text-gray-500">
+        <div>
+          <p class="font-semibold">Soumise le</p>
+          <p>{{ detailOffre.createdDate | date:'dd/MM/yyyy HH:mm' }}</p>
+        </div>
+        <div *ngIf="detailOffre.lastModifiedDate">
+          <p class="font-semibold">Dernière mise à jour</p>
+          <p>{{ detailOffre.lastModifiedDate | date:'dd/MM/yyyy HH:mm' }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="flex items-center justify-between gap-3 px-6 py-4 border-t border-gray-100">
+      <div class="flex gap-2">
+        <button *ngIf="peutModifier" (click)="ouvrirEditModal(detailOffre!); fermerDetail()"
+                class="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          Modifier
+        </button>
+        <button *ngIf="(peutValider || peutRejeter) && peutEvaluer(detailOffre!)"
+                (click)="ouvrirTraitement(detailOffre!); fermerDetail()"
+                class="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white rounded-xl transition-colors"
+                style="background:#c0392b">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+          Traiter
+        </button>
+      </div>
+      <button (click)="fermerDetail()" class="px-4 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Modifier -->
+<div *ngIf="showEditModal && offreAModifier"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+     (click)="fermerEditModal()">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col" (click)="$event.stopPropagation()">
+    <div class="px-6 py-4 flex items-center justify-between flex-shrink-0 rounded-t-2xl"
+         style="background:linear-gradient(135deg,#374151,#1f2937);">
+      <div>
+        <h3 class="text-lg font-bold text-white">Modifier l'offre</h3>
+        <p class="text-sm text-white/70 truncate max-w-xs">{{ offreAModifier.titre }}</p>
+      </div>
+      <button (click)="fermerEditModal()" [disabled]="soumissionEdit"
+              class="w-8 h-8 flex items-center justify-center rounded-full text-white/70 hover:text-white disabled:opacity-40"
+              style="background:rgba(255,255,255,0.15)">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="p-6 space-y-4 overflow-y-auto flex-1">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Type d'offre</label>
+          <select [(ngModel)]="editForm.typeOffre"
+                  class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400 outline-none">
+            <option value="">-- Inchangé --</option>
+            <option value="EMPLOI">Emploi</option><option value="STAGE">Stage</option>
+            <option value="BOURSE">Bourse</option><option value="FORMATION">Formation</option>
+            <option value="APPRENTISSAGE">Apprentissage</option><option value="VENTE">Vente</option>
+            <option value="PARTENARIAT">Partenariat</option><option value="DISTRIBUTION">Distribution</option>
+            <option value="SERVICE">Service</option><option value="AUTRE">Autre</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+          <select [(ngModel)]="editForm.statusOffre"
+                  class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400 outline-none">
+            <option value="">-- Inchangé --</option>
+            <option value="BROUILLON">Brouillon</option><option value="EN_ATTENTE">En attente</option>
+            <option value="EN_TRAITEMENT">En traitement</option><option value="VALIDEE">Validée</option>
+            <option value="REJETEE">Rejetée</option><option value="ACTIVE">Active</option><option value="CLOTUREE">Clôturée</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Titre <span class="text-red-500">*</span></label>
+        <input type="text" [(ngModel)]="editForm.titre"
+               class="w-full px-3 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400 outline-none"/>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+        <textarea [(ngModel)]="editForm.description" rows="3"
+                  class="w-full px-3 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400 outline-none resize-none"></textarea>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Conditions requises</label>
+        <textarea [(ngModel)]="editForm.conditionsRequises" rows="2"
+                  class="w-full px-3 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400 outline-none resize-none"></textarea>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Date de début</label>
+          <input type="date" [(ngModel)]="editForm.dateDebut"
+                 class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400 outline-none"/>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Date de fin</label>
+          <input type="date" [(ngModel)]="editForm.dateFin"
+                 class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400 outline-none"/>
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre max de candidatures</label>
+        <input type="number" [(ngModel)]="editForm.nombreCandidaturesMax" min="1"
+               class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400 outline-none"/>
+      </div>
+      <div *ngIf="erreurEdit" class="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl p-3 text-red-700 text-sm">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        {{ erreurEdit }}
+      </div>
+    </div>
+    <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3 flex-shrink-0">
+      <button (click)="fermerEditModal()" [disabled]="soumissionEdit"
+              class="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors disabled:opacity-50">Annuler</button>
+      <button (click)="modifierOffre()" [disabled]="soumissionEdit"
+              class="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white rounded-xl transition-colors disabled:opacity-50"
+              style="background:#374151">
+        <svg *ngIf="soumissionEdit" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+        Enregistrer
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Suppression -->
+<div *ngIf="showDeleteModal && offreASupprimer"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+     (click)="fermerDeleteModal()">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md" (click)="$event.stopPropagation()">
+    <div class="px-6 py-4 flex items-center justify-between rounded-t-2xl"
+         style="background:linear-gradient(135deg,#dc2626,#991b1b);">
+      <div>
+        <h3 class="text-lg font-bold text-white">Supprimer l'offre</h3>
+        <p class="text-sm text-white/70">Cette action est irréversible</p>
+      </div>
+      <button (click)="fermerDeleteModal()" [disabled]="soumissionDelete"
+              class="w-8 h-8 flex items-center justify-center rounded-full text-white/70 hover:text-white disabled:opacity-40"
+              style="background:rgba(255,255,255,0.15)">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="px-6 py-5">
+      <p class="text-sm text-gray-700 mb-1">Voulez-vous vraiment supprimer l'offre :</p>
+      <p class="text-base font-semibold text-gray-900 mb-1">« {{ offreASupprimer.titre }} »</p>
+      <p class="text-xs text-gray-500">Type : {{ offreASupprimer.typeOffre }} · Statut : {{ getStatutLabel(offreASupprimer.statusOffre) }}</p>
+    </div>
+    <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3">
+      <button (click)="fermerDeleteModal()" [disabled]="soumissionDelete"
+              class="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors disabled:opacity-50">Annuler</button>
+      <button (click)="supprimerOffre()" [disabled]="soumissionDelete"
+              class="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white rounded-xl transition-colors disabled:opacity-50"
+              style="background:#dc2626">
+        <svg *ngIf="soumissionDelete" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+        Supprimer
+      </button>
+    </div>
+  </div>
+</div>

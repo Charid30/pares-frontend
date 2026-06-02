@@ -1,0 +1,1104 @@
+<!-- agent-stage.html — Design unifié admin SONABHY -->
+<div class="space-y-4 md:space-y-6">
+
+  <!-- Notification succès -->
+  <div *ngIf="successMessage"
+       class="flex items-center gap-3 px-5 py-3.5 bg-green-50 border border-green-200 rounded-2xl text-green-700 text-sm shadow-sm">
+    <svg class="w-5 h-5 flex-shrink-0 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+    </svg>
+    <span class="font-medium">{{ successMessage }}</span>
+  </div>
+  <div *ngIf="erreur && !stageEnDecision"
+       class="flex items-center gap-3 px-5 py-3.5 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-sm shadow-sm">
+    <svg class="w-5 h-5 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <span class="font-medium">{{ erreur }}</span>
+  </div>
+
+  <!-- Header -->
+  <div class="flex items-center justify-between gap-3">
+    <div>
+      <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Gestion des Stages</h1>
+      <p class="text-xs sm:text-sm text-gray-500 mt-0.5">{{ stagesFiltres.length }} demande(s) de stage</p>
+    </div>
+    <button (click)="charger()"
+            class="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 active:scale-95 transition-all text-sm shadow-sm">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+      </svg>
+      <span class="hidden sm:inline">Actualiser</span>
+    </button>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+
+    <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-red-100 hover:shadow-md transition-shadow flex items-center gap-2 sm:gap-3">
+      <div class="w-8 h-8 sm:w-11 sm:h-11 bg-red-50 rounded-xl flex items-center justify-center flex-shrink-0">
+        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 14l9-5-9-5-9 5 9 5z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/>
+        </svg>
+      </div>
+      <div class="min-w-0">
+        <p class="text-lg sm:text-2xl font-bold text-gray-900 leading-none">{{ stats.total }}</p>
+        <p class="text-xs text-gray-400 mt-0.5 truncate">Total</p>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-amber-100 hover:shadow-md transition-shadow flex items-center gap-2 sm:gap-3">
+      <div class="w-8 h-8 sm:w-11 sm:h-11 bg-amber-50 rounded-xl flex items-center justify-center flex-shrink-0">
+        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <div class="min-w-0">
+        <p class="text-lg sm:text-2xl font-bold text-gray-900 leading-none">{{ stats.enAttente }}</p>
+        <p class="text-xs text-gray-400 mt-0.5 truncate">En attente</p>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-green-100 hover:shadow-md transition-shadow flex items-center gap-2 sm:gap-3">
+      <div class="w-8 h-8 sm:w-11 sm:h-11 bg-green-50 rounded-xl flex items-center justify-center flex-shrink-0">
+        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <div class="min-w-0">
+        <p class="text-lg sm:text-2xl font-bold text-gray-900 leading-none">{{ stats.enCours }}</p>
+        <p class="text-xs text-gray-400 mt-0.5 truncate">En cours</p>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex items-center gap-2 sm:gap-3">
+      <div class="w-8 h-8 sm:w-11 sm:h-11 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
+        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+      </div>
+      <div class="min-w-0">
+        <p class="text-lg sm:text-2xl font-bold text-gray-900 leading-none">{{ stats.termine }}</p>
+        <p class="text-xs text-gray-400 mt-0.5 truncate">Terminés</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Filtres -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-3">
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+
+      <!-- Recherche texte -->
+      <div class="relative sm:col-span-2">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
+        </svg>
+        <input type="text" [(ngModel)]="search" (ngModelChange)="filtrer()"
+               placeholder="Rechercher par nom, prénom, email..."
+               class="w-full pl-10 pr-10 py-2 rounded-xl text-sm border bg-gray-50 border-gray-200 text-gray-700
+                      focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-400 transition-all"/>
+        <button *ngIf="search" (click)="search = ''; filtrer()"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Filtre statut -->
+      <div class="relative">
+        <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none"
+             [ngClass]="filtreStatut ? 'text-yellow-600' : 'text-gray-400'"
+             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <select [(ngModel)]="filtreStatut" (change)="filtrer()"
+                class="w-full appearance-none pl-8 pr-7 py-2 rounded-xl text-xs font-medium border transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
+                [ngClass]="filtreStatut ? 'bg-yellow-50 border-yellow-300 text-yellow-800 font-semibold' : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-100'">
+          <option value="">Tous les statuts</option>
+          <option value="EN_ATTENTE">En attente</option>
+          <option value="EN_TRAITEMENT">En traitement</option>
+          <option value="ACCEPTE">Accepté</option>
+          <option value="EN_COURS">En cours</option>
+          <option value="TERMINE">Terminé</option>
+          <option value="REJETE">Rejeté</option>
+        </select>
+        <svg class="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none"
+             [ngClass]="filtreStatut ? 'text-yellow-500' : 'text-gray-400'"
+             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </div>
+
+      <!-- Filtre type -->
+      <div class="relative">
+        <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none"
+             [ngClass]="filtreType ? 'text-indigo-600' : 'text-gray-400'"
+             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+        </svg>
+        <select [(ngModel)]="filtreType" (change)="filtrer()"
+                class="w-full appearance-none pl-8 pr-7 py-2 rounded-xl text-xs font-medium border transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
+                [ngClass]="filtreType ? 'bg-indigo-50 border-indigo-300 text-indigo-800 font-semibold' : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-100'">
+          <option value="">Tous les types</option>
+          <option value="ACADEMIQUE">Académique</option>
+          <option value="PROFESSIONNEL">Professionnel</option>
+          <option value="PRE_EMPLOI">Pré-emploi</option>
+          <option value="PERFECTIONNEMENT">Perfectionnement</option>
+        </select>
+        <svg class="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none"
+             [ngClass]="filtreType ? 'text-indigo-500' : 'text-gray-400'"
+             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </div>
+
+    </div>
+
+    <!-- Reset + compteur -->
+    <div *ngIf="filtreStatut || filtreType || search"
+         class="flex items-center justify-between pt-1 border-t border-gray-100">
+      <span class="text-xs text-gray-400">{{ stagesFiltres.length }} résultat(s)</span>
+      <button (click)="effacerFiltres()"
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 active:scale-95 transition-all">
+        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+        Effacer les filtres
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Contenu principal -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+
+    <!-- Accès refusé -->
+    <div *ngIf="!peutConsulter" class="p-8 text-center">
+      <div class="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+        </svg>
+      </div>
+      <h3 class="text-lg font-semibold text-gray-900 mb-2">Accès non autorisé</h3>
+      <p class="text-gray-500">Vous n'avez pas la permission de consulter les stages.</p>
+    </div>
+
+    <!-- Chargement -->
+    <div *ngIf="peutConsulter && isLoading" class="p-8 text-center">
+      <div class="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+      <p class="text-gray-500">Chargement des stages...</p>
+    </div>
+
+    <!-- État vide -->
+    <div *ngIf="peutConsulter && !isLoading && stagesFiltres.length === 0" class="p-8 text-center">
+      <div class="w-16 h-16 bg-yellow-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/>
+        </svg>
+      </div>
+      <h3 class="text-lg font-semibold text-gray-900 mb-2">
+        {{ search || filtreStatut || filtreType ? 'Aucun résultat pour ce filtre' : 'Aucune demande de stage' }}
+      </h3>
+      <p class="text-gray-500">
+        {{ search || filtreStatut || filtreType
+          ? 'Essayez de modifier vos critères.'
+          : 'Les demandes soumises par les candidats apparaîtront ici.' }}
+      </p>
+    </div>
+
+    <!-- TABLE DESKTOP -->
+    <div *ngIf="peutConsulter && !isLoading && stagesFiltres.length > 0" class="hidden md:block overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gray-50 border-b border-gray-100">
+          <tr>
+            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Candidat</th>
+            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
+            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Domaine</th>
+            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date souhaitée</th>
+            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date effective</th>
+            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Statut</th>
+            <th class="px-4 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr *ngFor="let s of stagesFiltres" class="hover:bg-gray-50 transition-colors">
+
+            <!-- Candidat -->
+            <td class="px-4 py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-gradient-to-br from-red-100 to-red-200 rounded-full flex items-center justify-center text-red-700 font-semibold text-sm flex-shrink-0">
+                  {{ getInitiales(s) }}
+                </div>
+                <div class="min-w-0">
+                  <p class="text-sm font-medium text-gray-900 truncate">{{ s.candidat?.prenom || '—' }} {{ s.candidat?.nom || '' }}</p>
+                  <p class="text-xs text-gray-500 truncate">{{ s.candidat?.email || '—' }}</p>
+                </div>
+              </div>
+            </td>
+
+            <!-- Type -->
+            <td class="px-4 py-4">
+              <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-indigo-100 text-indigo-700 whitespace-nowrap">
+                {{ getTypeLabel(s.typeStage) }}
+              </span>
+            </td>
+
+            <!-- Domaine -->
+            <td class="px-4 py-4">
+              <span *ngIf="s.domaineStage" class="px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">
+                {{ s.domaineStage }}
+              </span>
+              <span *ngIf="!s.domaineStage" class="text-xs text-gray-300">—</span>
+            </td>
+
+            <!-- Date souhaitée -->
+            <td class="px-4 py-4">
+              <span *ngIf="s.dateDebutSouhaitee" class="text-xs text-gray-600 whitespace-nowrap">
+                {{ s.dateDebutSouhaitee | date:'dd/MM/yyyy' }}
+              </span>
+              <span *ngIf="!s.dateDebutSouhaitee" class="text-xs text-gray-300">—</span>
+            </td>
+
+            <!-- Date effective -->
+            <td class="px-4 py-4">
+              <span *ngIf="s.dateDebutEffective" class="inline-flex items-center gap-1 text-xs font-medium text-green-700 whitespace-nowrap">
+                <svg class="w-3 h-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                {{ s.dateDebutEffective | date:'dd/MM/yyyy' }}
+              </span>
+              <span *ngIf="!s.dateDebutEffective" class="text-xs text-gray-300">—</span>
+            </td>
+
+            <!-- Statut -->
+            <td class="px-4 py-4">
+              <span class="px-2.5 py-1 text-xs font-semibold rounded-full" [ngClass]="getStatutBadgeClass(s.statusStage)">
+                {{ getStatutLabel(s.statusStage) }}
+              </span>
+            </td>
+
+            <!-- Actions -->
+            <td class="px-4 py-4">
+              <div class="flex items-center justify-end gap-1">
+                <button (click)="voirDetail(s)"
+                        class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Voir détail">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                </button>
+                <button *ngIf="peutValider && s.statusStage === 'EN_ATTENTE'"
+                        (click)="ouvrirDecision(s, 'ACCEPTE')"
+                        class="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                        title="Accepter">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                  </svg>
+                </button>
+                <button *ngIf="peutRejeter && s.statusStage === 'EN_ATTENTE'"
+                        (click)="ouvrirDecision(s, 'REJETE')"
+                        class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Rejeter">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                </button>
+                <button *ngIf="peutCreer && (s.statusStage === 'ACCEPTE' || s.statusStage === 'EN_COURS' || s.statusStage === 'TERMINE')"
+                        (click)="ouvrirDocModal(s)"
+                        class="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                        title="Créer document">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  </svg>
+                </button>
+                <button *ngIf="peutModifier"
+                        (click)="ouvrirEditModal(s)"
+                        class="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="Modifier">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                  </svg>
+                </button>
+                <button *ngIf="peutSupprimer"
+                        (click)="ouvrirDeleteStageModal(s)"
+                        class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Supprimer">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                </button>
+              </div>
+            </td>
+
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- CARDS MOBILE -->
+    <div *ngIf="peutConsulter && !isLoading && stagesFiltres.length > 0" class="md:hidden p-3 space-y-3">
+      <div *ngFor="let s of stagesFiltres"
+           class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100">
+
+        <!-- Barre colorée statut -->
+        <div class="h-1 w-full" [ngClass]="getStatutBarClass(s.statusStage)"></div>
+
+        <div class="p-4 space-y-3">
+
+          <!-- En-tête : Avatar + Identité + Statut -->
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-primary-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-md">
+              {{ getInitiales(s) }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="font-bold text-gray-900 text-sm truncate">{{ s.candidat?.prenom || '—' }} {{ s.candidat?.nom || '' }}</p>
+              <p class="text-xs text-gray-400 truncate">{{ s.candidat?.email || '—' }}</p>
+            </div>
+            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
+                  [ngClass]="getStatutBadgeClass(s.statusStage)">
+              {{ getStatutLabel(s.statusStage) }}
+            </span>
+          </div>
+
+          <!-- Badges -->
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-indigo-100 text-indigo-700">
+              {{ getTypeLabel(s.typeStage) }}
+            </span>
+            <span *ngIf="s.domaineStage" class="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">
+              {{ s.domaineStage }}
+            </span>
+          </div>
+
+          <!-- Dates -->
+          <div class="bg-gray-50 rounded-xl p-2.5 space-y-1.5">
+            <div *ngIf="s.dateDebutSouhaitee" class="flex items-center gap-2 text-xs text-gray-500">
+              <svg class="w-3 h-3 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+              <span class="text-gray-400">Souhaitée :</span>
+              <span class="font-medium text-gray-700">{{ s.dateDebutSouhaitee | date:'dd/MM/yyyy' }}</span>
+            </div>
+            <div *ngIf="s.dateDebutEffective" class="flex items-center gap-2 text-xs">
+              <svg class="w-3 h-3 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span class="text-gray-400">Effective :</span>
+              <span class="font-medium text-green-700">{{ s.dateDebutEffective | date:'dd/MM/yyyy' }}</span>
+            </div>
+          </div>
+          <p class="text-xs text-gray-400">Soumis le <span class="font-medium text-gray-500">{{ s.createdDate | date:'dd/MM/yyyy' }}</span></p>
+
+          <!-- Actions -->
+          <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-100">
+            <button (click)="voirDetail(s)"
+                    class="flex items-center gap-1.5 py-2 px-3 text-xs font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 active:scale-95 transition-all">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              </svg>
+              Détail
+            </button>
+            <button *ngIf="peutValider && s.statusStage === 'EN_ATTENTE'"
+                    (click)="ouvrirDecision(s, 'ACCEPTE')"
+                    class="flex items-center gap-1.5 py-2 px-3 text-xs font-semibold text-green-600 bg-green-50 rounded-xl hover:bg-green-100 active:scale-95 transition-all">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              Accepter
+            </button>
+            <button *ngIf="peutRejeter && s.statusStage === 'EN_ATTENTE'"
+                    (click)="ouvrirDecision(s, 'REJETE')"
+                    class="flex items-center gap-1.5 py-2 px-3 text-xs font-semibold text-red-600 bg-red-50 rounded-xl hover:bg-red-100 active:scale-95 transition-all">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+              Rejeter
+            </button>
+            <button *ngIf="peutCreer && (s.statusStage === 'ACCEPTE' || s.statusStage === 'EN_COURS' || s.statusStage === 'TERMINE')"
+                    (click)="ouvrirDocModal(s)"
+                    class="flex items-center gap-1.5 py-2 px-3 text-xs font-semibold text-indigo-600 bg-indigo-50 rounded-xl hover:bg-indigo-100 active:scale-95 transition-all">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              Doc
+            </button>
+            <button *ngIf="peutModifier"
+                    (click)="ouvrirEditModal(s)"
+                    class="flex items-center gap-1.5 py-2 px-3 text-xs font-semibold text-gray-600 bg-gray-50 rounded-xl hover:bg-gray-100 active:scale-95 transition-all border border-gray-200">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+              </svg>
+            </button>
+            <button *ngIf="peutSupprimer"
+                    (click)="ouvrirDeleteStageModal(s)"
+                    class="flex items-center gap-1.5 py-2 px-3 text-xs font-semibold text-red-600 bg-red-50 rounded-xl hover:bg-red-100 active:scale-95 transition-all border border-red-100">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL — DÉTAIL STAGE
+     ══════════════════════════════════════════════════════════ -->
+<div *ngIf="showDetailModal && detailStage"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+
+    <!-- Header modal -->
+    <div class="flex items-center gap-4 px-6 py-4 border-b border-gray-100 bg-slate-900 flex-shrink-0">
+      <div class="w-12 h-12 rounded-xl bg-primary-500 flex items-center justify-center text-white font-bold text-base">
+        {{ getInitiales(detailStage) }}
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="font-bold text-white truncate">
+          {{ detailStage.candidat?.prenom || '—' }} {{ detailStage.candidat?.nom || '' }}
+        </p>
+        <p class="text-xs text-gray-400">{{ detailStage.candidat?.email || '—' }}</p>
+      </div>
+      <span class="flex-shrink-0 px-2.5 py-1 text-xs font-semibold rounded-lg"
+            [ngClass]="getStatutBadgeClass(detailStage.statusStage)">
+        {{ getStatutLabel(detailStage.statusStage) }}
+      </span>
+      <button (click)="fermerDetail()" class="text-gray-400 hover:text-white transition-colors flex-shrink-0 ml-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Contenu scrollable -->
+    <div class="flex-1 overflow-y-auto p-6 space-y-5">
+
+      <div>
+        <p class="text-xs font-semibold text-primary-500 uppercase tracking-widest mb-3">Informations du stage</p>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="p-3 bg-gray-50 rounded-xl">
+            <p class="text-xs text-gray-400 mb-1">Type</p>
+            <p class="text-sm font-semibold text-gray-900">{{ getTypeLabel(detailStage.typeStage) }}</p>
+          </div>
+          <div class="p-3 bg-gray-50 rounded-xl">
+            <p class="text-xs text-gray-400 mb-1">Statut</p>
+            <span class="inline-flex px-2 py-0.5 text-xs font-semibold rounded-lg"
+                  [ngClass]="getStatutBadgeClass(detailStage.statusStage)">
+              {{ getStatutLabel(detailStage.statusStage) }}
+            </span>
+          </div>
+          <div *ngIf="detailStage.service" class="col-span-2 p-3 bg-gray-50 rounded-xl">
+            <p class="text-xs text-gray-400 mb-1">Service affecté</p>
+            <p class="text-sm font-medium text-gray-900">{{ detailStage.service }}</p>
+          </div>
+          <div *ngIf="detailStage.dateDebutEffective || detailStage.dateDebut"
+               class="p-3 bg-green-50 rounded-xl border border-green-100">
+            <p class="text-xs text-green-600 mb-1">Date de début</p>
+            <p class="text-sm font-semibold text-green-800">
+              {{ (detailStage.dateDebutEffective || detailStage.dateDebut) | date:'dd MMMM yyyy' }}
+            </p>
+          </div>
+          <div *ngIf="detailStage.dateFinEffective || detailStage.dateFin"
+               class="p-3 bg-red-50 rounded-xl border border-red-100">
+            <p class="text-xs text-red-500 mb-1">Date de fin</p>
+            <p class="text-sm font-semibold text-red-700">
+              {{ (detailStage.dateFinEffective || detailStage.dateFin) | date:'dd MMMM yyyy' }}
+            </p>
+          </div>
+          <div class="p-3 bg-gray-50 rounded-xl">
+            <p class="text-xs text-gray-400 mb-1">Date de soumission</p>
+            <p class="text-sm font-medium text-gray-900">{{ detailStage.createdDate | date:'dd MMMM yyyy' }}</p>
+          </div>
+          <div class="p-3 bg-gray-50 rounded-xl">
+            <p class="text-xs text-gray-400 mb-1">Durée souhaitée</p>
+            <p class="text-sm font-medium text-gray-900">
+              {{ detailStage.dureeStage ? detailStage.dureeStage + (detailStage.dureeStage === 1 ? ' mois' : ' mois') : '-' }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dossier soumis par le candidat -->
+      <div>
+        <div class="flex items-center justify-between mb-3">
+          <p class="text-xs font-semibold text-primary-500 uppercase tracking-widest">Dossier soumis par le candidat</p>
+          <button *ngIf="!loadingDetailDocs && getCandidatDocs().length > 0"
+                  (click)="telechargerTousDocs()"
+                  [disabled]="downloadingAllDocs"
+                  class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-white text-[10px] font-medium
+                         hover:bg-[#96281b] active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                  style="background:#c0392b;"
+                  title="Télécharger tout le dossier (ZIP)">
+            <div *ngIf="downloadingAllDocs" class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            <svg *ngIf="!downloadingAllDocs" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            {{ downloadingAllDocs ? 'Préparation...' : 'Tout télécharger' }}
+          </button>
+        </div>
+
+        <div *ngIf="loadingDetailDocs" class="flex items-center gap-2 text-xs text-gray-400 py-2">
+          <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          Chargement des documents...
+        </div>
+
+        <div *ngIf="!loadingDetailDocs" class="space-y-2">
+          <div *ngFor="let doc of getCandidatDocs()"
+               class="flex items-center justify-between gap-3 px-4 py-3 bg-blue-50 border border-blue-100 rounded-xl">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+              </div>
+              <div class="min-w-0">
+                <p class="text-xs font-semibold text-blue-900">{{ doc.label }}</p>
+                <p class="text-xs text-blue-500 truncate">{{ doc.filename }}</p>
+              </div>
+            </div>
+            <div class="flex gap-1.5 flex-shrink-0">
+              <button (click)="accederDocCandidatBlob(doc.type, doc.filename, 'voir')"
+                      class="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-blue-700 bg-white border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+                Voir
+              </button>
+              <button (click)="accederDocCandidatBlob(doc.type, doc.filename, 'telecharger')"
+                      class="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="getCandidatDocs().length === 0"
+               class="flex items-center gap-3 px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-xs text-gray-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            Aucun document soumis
+          </div>
+        </div>
+      </div>
+
+      <!-- Documents de stage (convention / attestation) -->
+      <div>
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">Documents de stage</p>
+        <div class="grid grid-cols-2 gap-3">
+
+          <!-- Convention de stage -->
+          <div class="flex items-center gap-3 p-3 rounded-xl border"
+               [ngClass]="loadingDetailDocs ? 'bg-gray-50 border-gray-100' :
+                          hasDoc('CONVENTION') ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-100'">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                 [ngClass]="loadingDetailDocs ? 'bg-gray-100' :
+                            hasDoc('CONVENTION') ? 'bg-green-100' : 'bg-amber-100'">
+              <svg *ngIf="!loadingDetailDocs && hasDoc('CONVENTION')" class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <svg *ngIf="!loadingDetailDocs && !hasDoc('CONVENTION')" class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-xs font-semibold"
+                 [ngClass]="hasDoc('CONVENTION') ? 'text-green-800' : 'text-amber-700'">Convention de stage</p>
+              <p class="text-xs"
+                 [ngClass]="hasDoc('CONVENTION') ? 'text-green-600' : 'text-amber-500'">
+                {{ hasDoc('CONVENTION') ? 'Jointe' : 'À joindre lors de l\'acceptation' }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Attestation de stage -->
+          <div class="flex items-center gap-3 p-3 rounded-xl border"
+               [ngClass]="loadingDetailDocs ? 'bg-gray-50 border-gray-100' :
+                          hasDoc('ATTESTATION') ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-100'">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                 [ngClass]="hasDoc('ATTESTATION') ? 'bg-green-100' : 'bg-gray-100'">
+              <svg *ngIf="hasDoc('ATTESTATION')" class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <svg *ngIf="!hasDoc('ATTESTATION')" class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-xs font-semibold"
+                 [ngClass]="hasDoc('ATTESTATION') ? 'text-green-800' : 'text-gray-500'">Attestation de stage</p>
+              <p class="text-xs"
+                 [ngClass]="hasDoc('ATTESTATION') ? 'text-green-600' : 'text-gray-400'">
+                {{ hasDoc('ATTESTATION') ? 'Disponible' : 'Non encore émise' }}
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div *ngIf="detailStage.commentaireAdmin">
+        <p class="text-xs font-semibold text-primary-500 uppercase tracking-widest mb-3">Commentaire administratif</p>
+        <div class="p-4 bg-amber-50 border border-amber-200 rounded-xl">
+          <p class="text-sm text-amber-800">{{ detailStage.commentaireAdmin }}</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between flex-shrink-0">
+      <div class="flex gap-2">
+        <button *ngIf="peutValider && detailStage.statusStage === 'EN_ATTENTE'"
+                (click)="ouvrirDecision(detailStage, 'ACCEPTE'); fermerDetail()"
+                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-green-700 bg-green-50
+                       hover:bg-green-100 rounded-xl transition-colors border border-green-200">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          Accepter
+        </button>
+        <button *ngIf="peutRejeter && detailStage.statusStage === 'EN_ATTENTE'"
+                (click)="ouvrirDecision(detailStage, 'REJETE'); fermerDetail()"
+                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-700 bg-red-50
+                       hover:bg-red-100 rounded-xl transition-colors border border-red-100">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+          Rejeter
+        </button>
+        <button *ngIf="peutModifier"
+                (click)="ouvrirEditModal(detailStage); fermerDetail()"
+                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100
+                       hover:bg-gray-200 rounded-xl transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+          </svg>
+          Modifier
+        </button>
+        <button *ngIf="peutSupprimer"
+                (click)="ouvrirDeleteStageModal(detailStage); fermerDetail()"
+                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-700 bg-red-50
+                       hover:bg-red-100 rounded-xl transition-colors border border-red-100">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+          </svg>
+          Supprimer
+        </button>
+      </div>
+      <button (click)="fermerDetail()"
+              class="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:border-gray-300 rounded-xl transition-colors">
+        Fermer
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL — DÉCISION (ACCEPTER / REJETER)
+     ══════════════════════════════════════════════════════════ -->
+<div *ngIf="stageEnDecision"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+
+    <!-- Header -->
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-3 flex-shrink-0"
+         [ngClass]="decisionType === 'ACCEPTE' ? 'bg-green-600' : 'bg-red-600'">
+      <div class="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
+        <svg *ngIf="decisionType === 'ACCEPTE'" class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        <svg *ngIf="decisionType === 'REJETE'" class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </div>
+      <div class="flex-1">
+        <p class="font-semibold text-white text-sm">
+          {{ decisionType === 'ACCEPTE' ? 'Accepter la demande' : 'Rejeter la demande' }}
+        </p>
+        <p class="text-xs text-white/70 mt-0.5">
+          {{ stageEnDecision.candidat?.prenom }} {{ stageEnDecision.candidat?.nom }}
+          — {{ getTypeLabel(stageEnDecision.typeStage) }}
+        </p>
+      </div>
+      <button (click)="fermerDecision()" class="text-white/70 hover:text-white transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Corps -->
+    <div class="p-6 space-y-5">
+
+      <div *ngIf="errorDecision"
+           class="flex items-center gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        {{ errorDecision }}
+      </div>
+
+      <div *ngIf="decisionType === 'ACCEPTE'" class="space-y-4">
+
+        <div *ngIf="stageEnDecision.dateDebutSouhaitee"
+             class="flex items-center gap-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl">
+          <svg class="w-4 h-4 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          <p class="text-xs text-amber-800">
+            <span class="font-semibold">Date souhaitée par le candidat :</span>
+            {{ stageEnDecision.dateDebutSouhaitee | date:'dd/MM/yyyy' }}
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
+            Date de début effective <span class="text-primary-500">*</span>
+          </label>
+          <input type="date" [(ngModel)]="dateDebut"
+                 class="w-full px-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl
+                        focus:border-green-500 focus:bg-white focus:ring-0 outline-none transition-all"/>
+          <p class="mt-1.5 text-xs text-gray-400">Vous pouvez définir une date différente de celle souhaitée par le candidat.</p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
+            Convention de stage <span class="text-primary-500">*</span>
+            <span class="text-gray-400 font-normal normal-case ml-1">(PDF obligatoire)</span>
+          </label>
+          <label class="flex items-center gap-3 px-4 py-3 bg-gray-50 border-2 border-dashed border-gray-200
+                        rounded-xl cursor-pointer hover:border-green-400 hover:bg-green-50/50 transition-all group">
+            <svg class="w-5 h-5 text-gray-400 group-hover:text-green-500 transition-colors flex-shrink-0"
+                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+            </svg>
+            <span class="text-sm text-gray-500 group-hover:text-green-700 transition-colors">
+              {{ conventionFile ? conventionFile.name : 'Choisir un fichier PDF...' }}
+            </span>
+            <input type="file" accept="application/pdf" class="hidden" (change)="onConventionFileChange($event)"/>
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
+          Commentaire
+          <span *ngIf="decisionType === 'REJETE'" class="text-gray-400 font-normal normal-case">(motif du rejet)</span>
+          <span *ngIf="decisionType === 'ACCEPTE'" class="text-gray-400 font-normal normal-case">(optionnel)</span>
+        </label>
+        <textarea [(ngModel)]="commentaire" rows="3"
+                  [placeholder]="decisionType === 'REJETE' ? 'Expliquez le motif du rejet...' : 'Informations complémentaires...'"
+                  class="w-full px-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl
+                         focus:border-primary-500 focus:bg-white focus:ring-0 outline-none transition-all resize-none">
+        </textarea>
+      </div>
+
+      <div class="flex items-start gap-3 p-3 rounded-xl text-xs"
+           [ngClass]="decisionType === 'ACCEPTE' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'">
+        <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        {{ decisionType === 'ACCEPTE'
+          ? 'En acceptant, le candidat sera informé et son stage passera en statut "Accepté".'
+          : 'En rejetant, le candidat sera informé du refus de sa demande.' }}
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3">
+      <button (click)="fermerDecision()" [disabled]="soumission"
+              class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200
+                     hover:border-gray-300 rounded-xl transition-colors disabled:opacity-50">
+        Annuler
+      </button>
+      <button (click)="confirmerDecision()" [disabled]="soumission"
+              class="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white rounded-xl
+                     transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              [ngClass]="decisionType === 'ACCEPTE'
+                ? 'bg-green-600 hover:bg-green-700 shadow-green-500/25'
+                : 'bg-red-600 hover:bg-red-700 shadow-red-500/25'">
+        <div *ngIf="soumission" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+        <svg *ngIf="!soumission && decisionType === 'ACCEPTE'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        <svg *ngIf="!soumission && decisionType === 'REJETE'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+        {{ soumission ? 'Traitement...' : (decisionType === 'ACCEPTE' ? "Confirmer l'acceptation" : 'Confirmer le rejet') }}
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL — MODIFIER STAGE
+     ══════════════════════════════════════════════════════════ -->
+<div *ngIf="showEditStageModal"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-3 bg-gray-700">
+      <div class="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+        </svg>
+      </div>
+      <div class="flex-1">
+        <p class="font-semibold text-white text-sm">Modifier le stage</p>
+        <p class="text-xs text-white/70 mt-0.5">
+          {{ stageAModifier?.candidat?.prenom }} {{ stageAModifier?.candidat?.nom }}
+        </p>
+      </div>
+      <button (click)="fermerEditModal()" class="text-white/70 hover:text-white transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="p-6 space-y-4">
+      <div *ngIf="errorEdit"
+           class="flex items-center gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        {{ errorEdit }}
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Date de début</label>
+          <input type="date" [(ngModel)]="editDateDebut"
+                 class="w-full px-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl
+                        focus:border-primary-500 focus:bg-white focus:ring-0 outline-none transition-all"/>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Date de fin</label>
+          <input type="date" [(ngModel)]="editDateFin"
+                 class="w-full px-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl
+                        focus:border-primary-500 focus:bg-white focus:ring-0 outline-none transition-all"/>
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Commentaire interne</label>
+        <textarea [(ngModel)]="editCommentaire" rows="3"
+                  placeholder="Observations, notes internes..."
+                  class="w-full px-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl
+                         focus:border-primary-500 focus:bg-white focus:ring-0 outline-none transition-all resize-none"></textarea>
+      </div>
+    </div>
+
+    <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3">
+      <button (click)="fermerEditModal()" [disabled]="soumissionEdit"
+              class="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:border-gray-300 rounded-xl transition-colors disabled:opacity-50">
+        Annuler
+      </button>
+      <button (click)="modifierStage()" [disabled]="soumissionEdit"
+              class="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-gray-700 hover:bg-gray-800 rounded-xl transition-all shadow-md disabled:opacity-50">
+        <div *ngIf="soumissionEdit" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+        {{ soumissionEdit ? 'Enregistrement...' : 'Enregistrer' }}
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL — CONFIRMER SUPPRESSION
+     ══════════════════════════════════════════════════════════ -->
+<div *ngIf="showDeleteStageModal"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-3 bg-red-600">
+      <div class="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+      </div>
+      <div class="flex-1">
+        <p class="font-semibold text-white text-sm">Supprimer le stage</p>
+        <p class="text-xs text-white/70 mt-0.5">
+          {{ stageASupprimer?.candidat?.prenom }} {{ stageASupprimer?.candidat?.nom }}
+        </p>
+      </div>
+      <button (click)="fermerDeleteStageModal()" class="text-white/70 hover:text-white transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="p-6 text-center">
+      <p class="text-sm text-gray-600 mb-1">Êtes-vous sûr de vouloir supprimer cette demande de stage ?</p>
+      <p class="text-xs text-red-500 font-medium">Cette action est irréversible.</p>
+    </div>
+
+    <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3">
+      <button (click)="fermerDeleteStageModal()" [disabled]="soumissionSupprimer"
+              class="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:border-gray-300 rounded-xl transition-colors disabled:opacity-50">
+        Annuler
+      </button>
+      <button (click)="supprimerStage()" [disabled]="soumissionSupprimer"
+              class="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-all shadow-md shadow-red-500/25 disabled:opacity-50">
+        <div *ngIf="soumissionSupprimer" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+        {{ soumissionSupprimer ? 'Suppression...' : 'Supprimer' }}
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL — CRÉER DOCUMENT (CONVENTION / ATTESTATION)
+     ══════════════════════════════════════════════════════════ -->
+<div *ngIf="showDocModal"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-3 bg-indigo-600">
+      <div class="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+      </div>
+      <div class="flex-1">
+        <p class="font-semibold text-white text-sm">Créer un document</p>
+        <p class="text-xs text-white/70 mt-0.5">Convention ou attestation de stage</p>
+      </div>
+      <button (click)="fermerDocModal()" class="text-white/70 hover:text-white transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="p-6 space-y-4">
+
+      <div *ngIf="checkingConvention" class="flex items-center gap-2 text-sm text-gray-400">
+        <div class="w-4 h-4 border-2 border-gray-300 border-t-indigo-500 rounded-full animate-spin"></div>
+        Vérification des documents...
+      </div>
+
+      <div *ngIf="!checkingConvention && stageHasConvention"
+           class="flex items-start gap-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-sm">
+        <svg class="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+        </svg>
+        <span>Une convention de stage est déjà jointe. Seule une attestation peut être créée.</span>
+      </div>
+
+      <div *ngIf="errorDoc"
+           class="flex items-center gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        {{ errorDoc }}
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
+          Type de document <span class="text-primary-500">*</span>
+        </label>
+        <select [(ngModel)]="docType"
+                class="w-full px-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl
+                       focus:border-indigo-500 focus:bg-white focus:ring-0 outline-none transition-all">
+          <option value="CONVENTION" [disabled]="stageHasConvention">
+            Convention de stage{{ stageHasConvention ? ' (déjà jointe)' : '' }}
+          </option>
+          <option value="ATTESTATION">Attestation de stage</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
+          Date d'émission <span class="text-primary-500">*</span>
+        </label>
+        <input type="date" [(ngModel)]="docDateEmission"
+               class="w-full px-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl
+                      focus:border-indigo-500 focus:bg-white focus:ring-0 outline-none transition-all"/>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
+          Fichier PDF <span class="text-primary-500">*</span>
+        </label>
+        <label class="flex items-center gap-3 px-4 py-3 bg-gray-50 border-2 border-dashed border-gray-200
+                      rounded-xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 transition-all group">
+          <svg class="w-5 h-5 text-gray-400 group-hover:text-indigo-500 transition-colors flex-shrink-0"
+               fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+          </svg>
+          <span class="text-sm" [ngClass]="docFile ? 'text-indigo-700 font-medium' : 'text-gray-400'">
+            {{ docFile ? docFile.name : 'Cliquer pour sélectionner un PDF' }}
+          </span>
+          <input type="file" accept="application/pdf" class="hidden" (change)="onDocFileChange($event)"/>
+        </label>
+      </div>
+
+    </div>
+
+    <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3">
+      <button (click)="fermerDocModal()" [disabled]="soumissionDoc"
+              class="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:border-gray-300 rounded-xl transition-colors disabled:opacity-50">
+        Annuler
+      </button>
+      <button (click)="creerDocument()" [disabled]="soumissionDoc || (stageHasConvention && docType === 'CONVENTION')"
+              class="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all shadow-md shadow-indigo-500/25 disabled:opacity-50 disabled:cursor-not-allowed">
+        <div *ngIf="soumissionDoc" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+        {{ soumissionDoc ? 'Création...' : 'Créer le document' }}
+      </button>
+    </div>
+
+  </div>
+</div>

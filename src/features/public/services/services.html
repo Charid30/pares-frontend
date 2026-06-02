@@ -1,0 +1,552 @@
+<!-- services.component.html -->
+<div class="min-h-screen bg-white">
+
+  <!-- ===== HERO ===== -->
+  <section class="bg-slate-900 text-white py-20 md:py-28 relative overflow-hidden">
+    <div class="absolute inset-0 opacity-[0.04]"
+         style="background-image: radial-gradient(circle, #ffffff 1px, transparent 1px); background-size: 28px 28px;"></div>
+    <div class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary-500/40 to-transparent"></div>
+
+    <div class="container-custom relative z-10">
+      <div class="max-w-2xl">
+        <span class="text-primary-400 text-xs font-semibold uppercase tracking-widest">Ce que nous proposons</span>
+        <h1 class="text-4xl md:text-5xl font-bold text-white mt-3 mb-4 animate-fade-in tracking-tight">Nos Services</h1>
+        <div class="w-12 h-1 bg-primary-500 mb-6 rounded-full"></div>
+        <p class="text-xl text-gray-400 animate-slide-up leading-relaxed">
+          Découvrez toutes les sollicitations que vous pouvez soumettre auprès de la SONABHY
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Navigation ancres (barre sticky) -->
+  <div class="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-gray-100 shadow-sm">
+    <div class="container-custom">
+      <div class="flex items-center gap-6 overflow-x-auto py-3.5 text-sm font-medium">
+        <a href="#stages"
+           class="whitespace-nowrap transition-colors duration-200 pb-0.5"
+           [ngClass]="activeSection === 'stages' ? 'text-primary-500 font-semibold border-b-2 border-primary-500' : 'text-gray-500 hover:text-primary-500 border-b-2 border-transparent'">
+          Stages
+        </a>
+        <span class="text-gray-200">|</span>
+        <a href="#audience"
+           class="whitespace-nowrap transition-colors duration-200 pb-0.5"
+           [ngClass]="activeSection === 'audience' ? 'text-primary-500 font-semibold border-b-2 border-primary-500' : 'text-gray-500 hover:text-primary-500 border-b-2 border-transparent'">
+          Demande d'audience
+        </a>
+        <span class="text-gray-200">|</span>
+        <a href="#offres"
+           class="whitespace-nowrap transition-colors duration-200 pb-0.5"
+           [ngClass]="activeSection === 'offres' ? 'text-primary-500 font-semibold border-b-2 border-primary-500' : 'text-gray-500 hover:text-primary-500 border-b-2 border-transparent'">
+          Offres de services
+        </a>
+        <span class="text-gray-200">|</span>
+        <a href="#aides"
+           class="whitespace-nowrap transition-colors duration-200 pb-0.5"
+           [ngClass]="activeSection === 'aides' ? 'text-primary-500 font-semibold border-b-2 border-primary-500' : 'text-gray-500 hover:text-primary-500 border-b-2 border-transparent'">
+          Aides & Partenariat
+        </a>
+        <span class="text-gray-200">|</span>
+        <a href="#terrain"
+           class="whitespace-nowrap transition-colors duration-200 pb-0.5"
+           [ngClass]="activeSection === 'terrain' ? 'text-primary-500 font-semibold border-b-2 border-primary-500' : 'text-gray-500 hover:text-primary-500 border-b-2 border-transparent'">
+          Visite de terrain
+        </a>
+        <span class="text-gray-200">|</span>
+        <a href="#collecte"
+           class="whitespace-nowrap transition-colors duration-200 pb-0.5"
+           [ngClass]="activeSection === 'collecte' ? 'text-primary-500 font-semibold border-b-2 border-primary-500' : 'text-gray-500 hover:text-primary-500 border-b-2 border-transparent'">
+          Collecte de données
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SERVICES ===== -->
+  <section class="py-16">
+    <div class="container-custom">
+      <div class="space-y-8">
+
+        <!-- ── Service 01 : Stages ── -->
+        <div id="stages" scrollReveal class="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-soft">
+          <div class="grid md:grid-cols-5">
+
+            <!-- Visuel -->
+            <div class="md:col-span-2 relative overflow-hidden order-2 md:order-1 min-h-[220px]">
+              <img src="/assets/image/stage.jpg" alt="Demande de stage"
+                   class="absolute inset-0 w-full h-full object-cover">
+              <div class="absolute inset-0 bg-slate-900/65"></div>
+              <div class="absolute inset-0 bg-gradient-to-t from-primary-500/30 to-transparent"></div>
+              <div class="relative z-10 flex flex-col items-center justify-center h-full p-10 text-center text-white min-h-[220px]">
+                <div class="w-12 h-12 bg-white/10 border border-white/20 rounded-xl flex items-center justify-center mb-4">
+                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                  </svg>
+                </div>
+                <p class="text-white font-semibold text-sm">Développez vos compétences</p>
+                <p class="text-white/60 text-xs mt-1">Encadrement professionnel garanti</p>
+              </div>
+            </div>
+
+            <!-- Contenu -->
+            <div class="md:col-span-3 p-8 md:p-12 order-1 md:order-2">
+              <div class="flex items-center gap-3 mb-8">
+                <div class="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                  </svg>
+                </div>
+                <div>
+                  <span class="text-primary-500 text-xs font-semibold uppercase tracking-wider">Service 01</span>
+                  <h2 class="text-2xl font-bold text-gray-900">Demande de stage</h2>
+                </div>
+              </div>
+
+              <p class="text-gray-600 mb-8 leading-relaxed text-sm">
+                La SONABHY accueille des étudiants en stage pour leur permettre de mettre en pratique leurs connaissances
+                théoriques et de découvrir le secteur des hydrocarbures.
+              </p>
+
+              <div class="grid grid-cols-2 gap-4 mb-8">
+                <div class="bg-slate-50 rounded-xl p-4 border border-gray-100">
+                  <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Types de stages</h4>
+                  <ul class="space-y-1.5 text-sm text-gray-600">
+                    <li class="flex items-start gap-2">
+                      <svg class="w-3.5 h-3.5 text-primary-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                      </svg>
+                      Soutenance (Licence, Master, Doctorat)
+                    </li>
+                    <li class="flex items-start gap-2">
+                      <svg class="w-3.5 h-3.5 text-primary-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                      </svg>
+                      Perfectionnement (3 à 6 mois)
+                    </li>
+                  </ul>
+                </div>
+                <div class="bg-slate-50 rounded-xl p-4 border border-gray-100">
+                  <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Avantages</h4>
+                  <ul class="space-y-1.5 text-sm text-gray-600">
+                    <li class="flex items-start gap-2">
+                      <svg class="w-3.5 h-3.5 text-primary-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                      </svg>
+                      Encadrement professionnel
+                    </li>
+                    <li class="flex items-start gap-2">
+                      <svg class="w-3.5 h-3.5 text-primary-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                      </svg>
+                      Attestation de stage
+                    </li>
+                    <li class="flex items-start gap-2">
+                      <svg class="w-3.5 h-3.5 text-primary-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                      </svg>
+                      Possibilité de renouvellement
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <button (click)="go('/dashboard/candidat/stages')" class="btn-primary inline-flex text-sm">
+                Demander un stage
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Service 02 : Demande d'audience ── -->
+        <div id="audience" scrollReveal class="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-soft">
+          <div class="grid md:grid-cols-5">
+
+            <!-- Contenu -->
+            <div class="md:col-span-3 p-8 md:p-12">
+              <div class="flex items-center gap-3 mb-8">
+                <div class="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"/>
+                  </svg>
+                </div>
+                <div>
+                  <span class="text-primary-500 text-xs font-semibold uppercase tracking-wider">Service 02</span>
+                  <h2 class="text-2xl font-bold text-gray-900">Demande d'audience</h2>
+                </div>
+              </div>
+
+              <p class="text-gray-600 mb-8 leading-relaxed text-sm">
+                Vous souhaitez rencontrer la Direction Générale de la SONABHY ? Soumettez votre demande d'audience
+                en ligne. Votre dossier sera examiné et vous recevrez une réponse dans les meilleurs délais.
+              </p>
+
+              <div class="mb-8">
+                <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Étapes du processus</h3>
+                <div class="space-y-0 divide-y divide-gray-50">
+                  <div class="flex items-center gap-3 py-3">
+                    <div class="w-6 h-6 rounded-full bg-primary-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">1</div>
+                    <span class="text-gray-600 text-sm">Soumission de la demande en ligne</span>
+                  </div>
+                  <div class="flex items-center gap-3 py-3">
+                    <div class="w-6 h-6 rounded-full bg-primary-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">2</div>
+                    <span class="text-gray-600 text-sm">Examen par le secrétariat de la Direction</span>
+                  </div>
+                  <div class="flex items-center gap-3 py-3">
+                    <div class="w-6 h-6 rounded-full bg-primary-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">3</div>
+                    <span class="text-gray-600 text-sm">Confirmation et planification du rendez-vous</span>
+                  </div>
+                </div>
+              </div>
+
+              <button (click)="go('/dashboard/candidat/demandes-audience')" class="btn-primary inline-flex text-sm">
+                Demander une audience
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Visuel -->
+            <div class="md:col-span-2 relative overflow-hidden min-h-[220px]">
+              <img src="/assets/image/audience.jpg" alt="Demande d'audience"
+                   class="absolute inset-0 w-full h-full object-cover">
+              <div class="absolute inset-0 bg-slate-900/65"></div>
+              <div class="absolute inset-0 bg-gradient-to-t from-primary-500/30 to-transparent"></div>
+              <div class="relative z-10 flex flex-col items-center justify-center h-full p-10 text-center text-white min-h-[220px]">
+                <div class="w-12 h-12 bg-white/10 border border-white/20 rounded-xl flex items-center justify-center mb-4">
+                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"/>
+                  </svg>
+                </div>
+                <p class="text-white font-semibold text-sm">Rencontrez la Direction</p>
+                <p class="text-white/60 text-xs mt-1">Processus rapide et traçable</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Service 03 : Offres de services ── -->
+        <div id="offres" scrollReveal class="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-soft">
+          <div class="grid md:grid-cols-5">
+
+            <!-- Visuel -->
+            <div class="md:col-span-2 relative overflow-hidden order-2 md:order-1 min-h-[220px]">
+              <img src="/assets/image/offre.jpg" alt="Offres de services"
+                   class="absolute inset-0 w-full h-full object-cover">
+              <div class="absolute inset-0 bg-slate-900/65"></div>
+              <div class="absolute inset-0 bg-gradient-to-t from-primary-500/30 to-transparent"></div>
+              <div class="relative z-10 flex flex-col items-center justify-center h-full p-10 text-center text-white min-h-[220px]">
+                <div class="w-12 h-12 bg-white/10 border border-white/20 rounded-xl flex items-center justify-center mb-4">
+                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  </svg>
+                </div>
+                <p class="text-white font-semibold text-sm">Proposez vos services</p>
+                <p class="text-white/60 text-xs mt-1">Partenariat et collaboration</p>
+              </div>
+            </div>
+
+            <!-- Contenu -->
+            <div class="md:col-span-3 p-8 md:p-12 order-1 md:order-2">
+              <div class="flex items-center gap-3 mb-8">
+                <div class="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  </svg>
+                </div>
+                <div>
+                  <span class="text-primary-500 text-xs font-semibold uppercase tracking-wider">Service 03</span>
+                  <h2 class="text-2xl font-bold text-gray-900">Offres de services</h2>
+                </div>
+              </div>
+
+              <p class="text-gray-600 mb-8 leading-relaxed text-sm">
+                Vous êtes une entreprise ou un prestataire et souhaitez proposer vos services à la SONABHY ?
+                Soumettez votre offre commerciale en ligne. Notre équipe l'examinera et vous contactera si votre
+                proposition correspond à nos besoins.
+              </p>
+
+              <div class="mb-8">
+                <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Types d'offres acceptées</h3>
+                <div class="space-y-0 divide-y divide-gray-50">
+                  <div class="flex items-center gap-3 py-3">
+                    <svg class="w-4 h-4 text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span class="text-gray-600 text-sm">Prestations de services et fournitures</span>
+                  </div>
+                  <div class="flex items-center gap-3 py-3">
+                    <svg class="w-4 h-4 text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span class="text-gray-600 text-sm">Propositions de partenariat commercial</span>
+                  </div>
+                  <div class="flex items-center gap-3 py-3">
+                    <svg class="w-4 h-4 text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span class="text-gray-600 text-sm">Offres de sous-traitance</span>
+                  </div>
+                </div>
+              </div>
+
+              <button (click)="go('/dashboard/candidat/offres-commerciales')" class="btn-primary inline-flex text-sm">
+                Soumettre une offre
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Service 04 : Aides & Partenariat ── -->
+        <div id="aides" scrollReveal class="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-soft">
+          <div class="grid md:grid-cols-5">
+
+            <!-- Contenu -->
+            <div class="md:col-span-3 p-8 md:p-12">
+              <div class="flex items-center gap-3 mb-8">
+                <div class="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                  </svg>
+                </div>
+                <div>
+                  <span class="text-primary-500 text-xs font-semibold uppercase tracking-wider">Service 04</span>
+                  <h2 class="text-2xl font-bold text-gray-900">Aides & Partenariat</h2>
+                </div>
+              </div>
+
+              <p class="text-gray-600 mb-8 leading-relaxed text-sm">
+                La SONABHY soutient des initiatives sociales et des projets de partenariat. Vous pouvez soumettre
+                une demande d'aide ou de soutien financier pour votre projet ou votre organisation.
+              </p>
+
+              <div class="mb-8">
+                <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Programmes disponibles</h3>
+                <div class="space-y-0 divide-y divide-gray-50">
+                  <div class="flex items-center gap-3 py-3">
+                    <svg class="w-4 h-4 text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span class="text-gray-600 text-sm">Aides financières et soutien social</span>
+                  </div>
+                  <div class="flex items-center gap-3 py-3">
+                    <svg class="w-4 h-4 text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span class="text-gray-600 text-sm">Soutien aux projets associatifs et communautaires</span>
+                  </div>
+                  <div class="flex items-center gap-3 py-3">
+                    <svg class="w-4 h-4 text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span class="text-gray-600 text-sm">Partenariats institutionnels</span>
+                  </div>
+                </div>
+              </div>
+
+              <button (click)="go('/dashboard/candidat/aides-sociales')" class="btn-primary inline-flex text-sm">
+                Demander une aide
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Visuel -->
+            <div class="md:col-span-2 relative overflow-hidden min-h-[220px]">
+              <img src="/assets/image/aide.jpg" alt="Aides & Partenariat"
+                   class="absolute inset-0 w-full h-full object-cover">
+              <div class="absolute inset-0 bg-slate-900/65"></div>
+              <div class="absolute inset-0 bg-gradient-to-t from-primary-500/30 to-transparent"></div>
+              <div class="relative z-10 flex flex-col items-center justify-center h-full p-10 text-center text-white min-h-[220px]">
+                <div class="w-12 h-12 bg-white/10 border border-white/20 rounded-xl flex items-center justify-center mb-4">
+                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+                <p class="text-white font-semibold text-sm">Bénéficiez d'un soutien</p>
+                <p class="text-white/60 text-xs mt-1">Programme personnalisé</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Service 05 : Visite de terrain ── -->
+        <div id="terrain" scrollReveal class="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-soft">
+          <div class="grid md:grid-cols-5">
+
+            <!-- Visuel -->
+            <div class="md:col-span-2 relative overflow-hidden order-2 md:order-1 min-h-[220px]">
+              <img src="/assets/image/terrain.jpg" alt="Visite de terrain"
+                   class="absolute inset-0 w-full h-full object-cover">
+              <div class="absolute inset-0 bg-slate-900/65"></div>
+              <div class="absolute inset-0 bg-gradient-to-t from-primary-500/30 to-transparent"></div>
+              <div class="relative z-10 flex flex-col items-center justify-center h-full p-10 text-center text-white min-h-[220px]">
+                <div class="w-12 h-12 bg-white/10 border border-white/20 rounded-xl flex items-center justify-center mb-4">
+                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                </div>
+                <p class="text-white font-semibold text-sm">Découvrez nos installations</p>
+                <p class="text-white/60 text-xs mt-1">Sur autorisation préalable</p>
+              </div>
+            </div>
+
+            <!-- Contenu -->
+            <div class="md:col-span-3 p-8 md:p-12 order-1 md:order-2">
+              <div class="flex items-center gap-3 mb-8">
+                <div class="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                </div>
+                <div>
+                  <span class="text-primary-500 text-xs font-semibold uppercase tracking-wider">Service 05</span>
+                  <h2 class="text-2xl font-bold text-gray-900">Visite de terrain</h2>
+                </div>
+              </div>
+
+              <p class="text-gray-600 mb-8 leading-relaxed text-sm">
+                Vous souhaitez visiter les installations ou les dépôts de la SONABHY dans le cadre d'une étude,
+                d'un projet académique ou d'une mission professionnelle ? Soumettez votre demande en ligne
+                pour obtenir une autorisation de visite.
+              </p>
+
+              <div class="mb-8">
+                <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Profils concernés</h3>
+                <div class="space-y-0 divide-y divide-gray-50">
+                  <div class="flex items-center gap-3 py-3">
+                    <svg class="w-4 h-4 text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span class="text-gray-600 text-sm">Étudiants et chercheurs</span>
+                  </div>
+                  <div class="flex items-center gap-3 py-3">
+                    <svg class="w-4 h-4 text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span class="text-gray-600 text-sm">Délégations officielles et institutions</span>
+                  </div>
+                  <div class="flex items-center gap-3 py-3">
+                    <svg class="w-4 h-4 text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span class="text-gray-600 text-sm">Partenaires et prestataires agréés</span>
+                  </div>
+                </div>
+              </div>
+
+              <button (click)="go('/dashboard/candidat/visites-terrain')" class="btn-primary inline-flex text-sm">
+                Demander une visite
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Service 06 : Collecte de données ── -->
+        <div id="collecte" scrollReveal class="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-soft">
+          <div class="grid md:grid-cols-5">
+
+            <!-- Contenu -->
+            <div class="md:col-span-3 p-8 md:p-12">
+              <div class="flex items-center gap-3 mb-8">
+                <div class="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                  </svg>
+                </div>
+                <div>
+                  <span class="text-primary-500 text-xs font-semibold uppercase tracking-wider">Service 06</span>
+                  <h2 class="text-2xl font-bold text-gray-900">Collecte de données</h2>
+                </div>
+              </div>
+
+              <p class="text-gray-600 mb-8 leading-relaxed text-sm">
+                Dans le cadre de travaux de recherche, d'études sectorielles ou de missions académiques,
+                vous pouvez soumettre une demande d'accès à des données auprès de la SONABHY.
+                Chaque demande est examinée selon les règles de confidentialité en vigueur.
+              </p>
+
+              <div class="mb-8">
+                <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Types de demandes</h3>
+                <div class="space-y-0 divide-y divide-gray-50">
+                  <div class="flex items-center gap-3 py-3">
+                    <svg class="w-4 h-4 text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span class="text-gray-600 text-sm">Données statistiques sectorielles</span>
+                  </div>
+                  <div class="flex items-center gap-3 py-3">
+                    <svg class="w-4 h-4 text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span class="text-gray-600 text-sm">Informations pour mémoires et thèses</span>
+                  </div>
+                  <div class="flex items-center gap-3 py-3">
+                    <svg class="w-4 h-4 text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span class="text-gray-600 text-sm">Données pour études d'impact ou rapports officiels</span>
+                  </div>
+                </div>
+              </div>
+
+              <button (click)="go('/dashboard/candidat/collecte-donnees')" class="btn-primary inline-flex text-sm">
+                Soumettre une demande
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Visuel -->
+            <div class="md:col-span-2 relative overflow-hidden min-h-[220px]">
+              <img src="/assets/image/collecte.jpg" alt="Collecte de données"
+                   class="absolute inset-0 w-full h-full object-cover">
+              <div class="absolute inset-0 bg-slate-900/65"></div>
+              <div class="absolute inset-0 bg-gradient-to-t from-primary-500/30 to-transparent"></div>
+              <div class="relative z-10 flex flex-col items-center justify-center h-full p-10 text-center text-white min-h-[220px]">
+                <div class="w-12 h-12 bg-white/10 border border-white/20 rounded-xl flex items-center justify-center mb-4">
+                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                  </svg>
+                </div>
+                <p class="text-white font-semibold text-sm">Accédez aux données SONABHY</p>
+                <p class="text-white/60 text-xs mt-1">Sous réserve de validation</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CTA ===== -->
+  <section class="py-20 bg-slate-900 relative overflow-hidden">
+    <div class="absolute inset-0 opacity-[0.04]"
+         style="background-image: radial-gradient(circle, #ffffff 1px, transparent 1px); background-size: 28px 28px;"></div>
+    <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary-500/40 to-transparent"></div>
+    <div class="container-custom text-center relative z-10">
+      <h2 class="text-3xl font-bold text-white mb-4">Prêt à soumettre votre demande ?</h2>
+      <div class="w-12 h-0.5 bg-primary-500 mx-auto mb-6"></div>
+      <p class="text-gray-400 text-lg mb-10 max-w-lg mx-auto">Créez votre compte et accédez à tous nos services en ligne</p>
+      <button (click)="go('/dashboard/candidat', '/auth/register')"
+         class="btn bg-primary-500 text-white hover:bg-primary-600 px-8 py-3.5 text-base shadow-lg transition-all duration-300">
+        Créer un compte gratuitement
+      </button>
+    </div>
+  </section>
+
+</div>

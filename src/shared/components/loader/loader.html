@@ -1,0 +1,18 @@
+<div 
+  class="loader-container"
+  [class.fullscreen]="fullscreen"
+  [class.bg-primary]="backgroundColor === 'primary' && fullscreen">
+  
+  <div class="loader-content">
+    <div 
+      class="spinner" 
+      [class]="spinnerClass">
+    </div>
+    
+    @if (message) {
+      <p class="loader-message">
+        {{ message }}
+      </p>
+    }
+  </div>
+</div>

@@ -1,0 +1,377 @@
+<!-- rh-dashboard.html — Dashboard Ressources Humaines SONABHY Portail -->
+<div class="space-y-5">
+
+  <!-- ===== BANNER BIENVENUE ===== -->
+  <div class="relative bg-gradient-to-br from-primary-600 via-primary-700 to-red-800 rounded-2xl px-6 py-5 overflow-hidden shadow-lg">
+    <div class="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/4 pointer-events-none"></div>
+    <div class="absolute bottom-0 left-1/3 w-32 h-32 bg-white/5 rounded-full translate-y-1/2 pointer-events-none"></div>
+    <div class="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <p class="text-red-200 text-sm mb-1">{{ greeting }},</p>
+        <h1 class="text-2xl sm:text-3xl font-black text-white">{{ currentUser?.username || 'Agent RH' }} 👋</h1>
+        <p class="text-red-200/80 text-sm mt-1">Tableau de bord — Ressources Humaines SONABHY</p>
+      </div>
+      <div class="flex gap-2 flex-shrink-0 flex-wrap">
+        <a routerLink="/dashboard/rh/recrutements"
+           class="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-medium rounded-xl transition-all active:scale-95">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          Recrutements
+        </a>
+        <a routerLink="/dashboard/rh/candidats"
+           class="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-medium rounded-xl transition-all active:scale-95">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          Candidats
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ERREUR ===== -->
+  <div *ngIf="error"
+       class="bg-red-50 border border-red-200 rounded-2xl px-5 py-4 flex items-start gap-3">
+    <div class="w-8 h-8 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+      <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    </div>
+    <div class="flex-1">
+      <p class="text-sm font-semibold text-red-800">Erreur de chargement</p>
+      <p class="text-xs text-red-600 mt-0.5">{{ error }}</p>
+    </div>
+    <button (click)="loadDashboardData()"
+            class="px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 text-xs font-medium rounded-lg transition-colors flex-shrink-0">
+      Réessayer
+    </button>
+  </div>
+
+  <!-- ===== CONTENU (toujours visible, skeletons par section) ===== -->
+  <ng-container *ngIf="!error">
+
+    <!-- ===== STAT CARDS ===== -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+
+      <!-- Candidats — skeleton ou données -->
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-green-100 hover:shadow-md transition-all cursor-default">
+        <ng-container *ngIf="loadingStats; else candidatCard">
+          <div class="animate-pulse">
+            <div class="w-10 h-10 rounded-xl bg-gray-100 mb-3"></div>
+            <div class="w-16 h-7 bg-gray-200 rounded mb-2"></div>
+            <div class="w-20 h-3 bg-gray-100 rounded mb-1"></div>
+            <div class="w-24 h-3 bg-gray-100 rounded"></div>
+          </div>
+        </ng-container>
+        <ng-template #candidatCard>
+          <div class="flex items-start justify-between mb-3">
+            <div class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-secondary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <span *ngIf="mainStats && mainStats.candidats.change !== 0"
+                  class="flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                  [ngClass]="mainStats.candidats.changeType === 'increase' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'">
+              <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                      [attr.d]="mainStats.candidats.changeType === 'increase' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'" />
+              </svg>
+              {{ mainStats.candidats.change > 0 ? '+' : '' }}{{ mainStats.candidats.change }}%
+            </span>
+          </div>
+          <p class="text-2xl sm:text-3xl font-black leading-none mb-1 text-secondary-600">{{ mainStats?.candidats?.total ?? '—' }}</p>
+          <p class="text-xs font-semibold text-gray-700">Candidats</p>
+          <p class="text-[10px] text-gray-400 mt-0.5">inscrits sur la plateforme</p>
+        </ng-template>
+      </div>
+
+      <!-- Campagnes actives — skeleton ou données -->
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-red-100 hover:shadow-md transition-all cursor-default">
+        <ng-container *ngIf="loadingStats; else campagneCard">
+          <div class="animate-pulse">
+            <div class="w-10 h-10 rounded-xl bg-gray-100 mb-3"></div>
+            <div class="w-16 h-7 bg-gray-200 rounded mb-2"></div>
+            <div class="w-20 h-3 bg-gray-100 rounded mb-1"></div>
+            <div class="w-24 h-3 bg-gray-100 rounded"></div>
+          </div>
+        </ng-container>
+        <ng-template #campagneCard>
+          <div class="flex items-start justify-between mb-3">
+            <div class="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+          </div>
+          <p class="text-2xl sm:text-3xl font-black leading-none mb-1 text-primary-600">{{ mainStats?.recrutements?.campagnesActives ?? '—' }}</p>
+          <p class="text-xs font-semibold text-gray-700">Campagnes actives</p>
+          <p class="text-[10px] text-gray-400 mt-0.5">{{ mainStats?.recrutements?.totalCandidatures ?? 0 }} candidatures</p>
+        </ng-template>
+      </div>
+
+      <!-- Stages — skeleton ou données -->
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-blue-100 hover:shadow-md transition-all cursor-default">
+        <ng-container *ngIf="loadingStats; else stageCard">
+          <div class="animate-pulse">
+            <div class="w-10 h-10 rounded-xl bg-gray-100 mb-3"></div>
+            <div class="w-16 h-7 bg-gray-200 rounded mb-2"></div>
+            <div class="w-20 h-3 bg-gray-100 rounded mb-1"></div>
+            <div class="w-24 h-3 bg-gray-100 rounded"></div>
+          </div>
+        </ng-container>
+        <ng-template #stageCard>
+          <div class="flex items-start justify-between mb-3">
+            <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+            </div>
+            <span *ngIf="mainStats && mainStats.stages.change !== 0"
+                  class="flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                  [ngClass]="mainStats.stages.changeType === 'increase' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'">
+              <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                      [attr.d]="mainStats.stages.changeType === 'increase' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'" />
+              </svg>
+              {{ mainStats.stages.change > 0 ? '+' : '' }}{{ mainStats.stages.change }}%
+            </span>
+          </div>
+          <p class="text-2xl sm:text-3xl font-black leading-none mb-1 text-blue-600">{{ mainStats?.stages?.total ?? '—' }}</p>
+          <p class="text-xs font-semibold text-gray-700">Stages</p>
+          <p class="text-[10px] text-gray-400 mt-0.5">{{ mainStats?.stages?.enCours ?? 0 }} en cours</p>
+        </ng-template>
+      </div>
+
+      <!-- En attente — skeleton ou données -->
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-amber-100 hover:shadow-md transition-all cursor-default">
+        <ng-container *ngIf="loadingSecondary; else attenteCard">
+          <div class="animate-pulse">
+            <div class="w-10 h-10 rounded-xl bg-gray-100 mb-3"></div>
+            <div class="w-16 h-7 bg-gray-200 rounded mb-2"></div>
+            <div class="w-20 h-3 bg-gray-100 rounded mb-1"></div>
+            <div class="w-24 h-3 bg-gray-100 rounded"></div>
+          </div>
+        </ng-container>
+        <ng-template #attenteCard>
+          <div class="flex items-start justify-between mb-3">
+            <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <span *ngIf="secondaryStats" class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-green-50 text-green-600">
+              {{ secondaryStats.tauxValidation }}% validé
+            </span>
+          </div>
+          <p class="text-2xl sm:text-3xl font-black leading-none mb-1 text-amber-600">
+            {{ secondaryStats?.candidaturesEnAttente ?? '—' }}
+          </p>
+          <p class="text-xs font-semibold text-gray-700">En attente</p>
+          <p class="text-[10px] text-gray-400 mt-0.5">dossiers à traiter</p>
+        </ng-template>
+      </div>
+
+    </div>
+
+    <!-- ===== GRILLE ACTIVITÉS + PENDING ===== -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+      <!-- Activités récentes -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="flex items-center gap-2.5 px-5 py-4 border-b border-gray-50">
+          <div class="w-8 h-8 bg-red-100 rounded-xl flex items-center justify-center">
+            <svg class="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-gray-900">Activité récente</h2>
+            <p class="text-[10px] text-gray-400">Dernières actions sur la plateforme</p>
+          </div>
+        </div>
+
+        <!-- Skeleton activités -->
+        <div *ngIf="loadingActivities" class="divide-y divide-gray-50">
+          <div *ngFor="let i of [1,2,3,4]" class="flex items-start gap-4 px-5 py-3.5 animate-pulse">
+            <div class="w-8 h-8 rounded-xl bg-gray-100 flex-shrink-0"></div>
+            <div class="flex-1">
+              <div class="w-32 h-3.5 bg-gray-200 rounded mb-1.5"></div>
+              <div class="w-48 h-3 bg-gray-100 rounded"></div>
+            </div>
+            <div class="w-12 h-3 bg-gray-100 rounded flex-shrink-0"></div>
+          </div>
+        </div>
+
+        <ng-container *ngIf="!loadingActivities">
+          <div *ngIf="activities.length === 0" class="flex flex-col items-center justify-center py-10 px-6 text-center">
+            <div class="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center mb-3">
+              <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <p class="text-sm text-gray-400">Aucune activité récente</p>
+          </div>
+
+          <div class="divide-y divide-gray-50">
+            <div *ngFor="let a of activities"
+                 class="flex items-start gap-4 px-5 py-3.5 hover:bg-gray-50/50 transition-colors">
+              <div class="relative mt-0.5 flex-shrink-0">
+                <div class="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center">
+                  <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" [attr.d]="getActivityIcon(a.type)" />
+                  </svg>
+                </div>
+                <span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white"
+                      [ngClass]="getActivityDotColor(a.type)"></span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-gray-900">{{ a.action }}</p>
+                <p class="text-xs text-gray-500 truncate">{{ a.description }}</p>
+              </div>
+              <p class="text-[10px] text-gray-400 flex-shrink-0 mt-0.5 whitespace-nowrap">{{ formatTimeAgo(a.date) }}</p>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+
+      <!-- Éléments en attente -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-50">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 bg-amber-100 rounded-xl flex items-center justify-center">
+              <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-sm font-bold text-gray-900">À traiter</h2>
+              <p class="text-[10px] text-gray-400">Dossiers en attente</p>
+            </div>
+          </div>
+          <a routerLink="/dashboard/rh/recrutements"
+             class="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1">
+            Voir tout
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+            </svg>
+          </a>
+        </div>
+
+        <!-- Skeleton pending -->
+        <div *ngIf="loadingPending" class="divide-y divide-gray-50">
+          <div *ngFor="let i of [1,2,3,4]" class="flex items-center gap-4 px-5 py-3.5 animate-pulse">
+            <div class="w-8 h-8 rounded-xl bg-gray-100 flex-shrink-0"></div>
+            <div class="flex-1">
+              <div class="w-36 h-3.5 bg-gray-200 rounded mb-1.5"></div>
+              <div class="w-24 h-3 bg-gray-100 rounded"></div>
+            </div>
+            <div class="w-14 h-5 bg-gray-100 rounded-full flex-shrink-0"></div>
+          </div>
+        </div>
+
+        <ng-container *ngIf="!loadingPending">
+          <div *ngIf="pendingItems.length === 0" class="flex flex-col items-center justify-center py-10 px-6 text-center">
+            <div class="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center mb-3">
+              <svg class="w-6 h-6 text-secondary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <p class="text-sm text-gray-400 font-medium">Tout est traité !</p>
+            <p class="text-xs text-gray-300 mt-1">Aucun dossier en attente</p>
+          </div>
+
+          <div class="divide-y divide-gray-50">
+            <div *ngFor="let item of pendingItems"
+                 class="flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50/50 transition-colors">
+              <div class="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                   [ngClass]="item.priority === 'high' ? 'bg-red-100' : item.priority === 'medium' ? 'bg-amber-100' : 'bg-gray-100'">
+                <svg class="w-4 h-4"
+                     [ngClass]="item.priority === 'high' ? 'text-red-600' : item.priority === 'medium' ? 'text-amber-600' : 'text-gray-500'"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" [attr.d]="getPendingTypeIcon(item.type)" />
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-gray-900 truncate">{{ item.title }}</p>
+                <p class="text-xs text-gray-400 truncate">{{ item.subtitle }}</p>
+              </div>
+              <div class="flex-shrink-0 text-right">
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                      [ngClass]="getPriorityClass(item.priority)">
+                  {{ getPriorityLabel(item.priority) }}
+                </span>
+                <p class="text-[10px] text-gray-400 mt-1">{{ formatTimeAgo(item.date) }}</p>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+
+    </div>
+
+    <!-- ===== ACCÈS RAPIDES ===== -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-50">
+        <h2 class="text-sm font-bold text-gray-900">Accès rapides</h2>
+      </div>
+      <div class="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+
+        <a routerLink="/dashboard/rh/recrutements"
+           class="flex flex-col items-center gap-2 p-4 rounded-xl hover:bg-red-50 border border-transparent hover:border-red-100 transition-all group text-center">
+          <div class="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center group-hover:bg-red-200 transition-colors">
+            <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <span class="text-xs font-semibold text-gray-700">Recrutements</span>
+        </a>
+
+        <a routerLink="/dashboard/rh/candidats"
+           class="flex flex-col items-center gap-2 p-4 rounded-xl hover:bg-green-50 border border-transparent hover:border-green-100 transition-all group text-center">
+          <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center group-hover:bg-green-200 transition-colors">
+            <svg class="w-5 h-5 text-secondary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          </div>
+          <span class="text-xs font-semibold text-gray-700">Candidats</span>
+        </a>
+
+        <a routerLink="/dashboard/rh/offres"
+           class="flex flex-col items-center gap-2 p-4 rounded-xl hover:bg-amber-50 border border-transparent hover:border-amber-100 transition-all group text-center">
+          <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center group-hover:bg-amber-200 transition-colors">
+            <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <span class="text-xs font-semibold text-gray-700">Offres d'emploi</span>
+        </a>
+
+        <a routerLink="/dashboard/rh/rapports"
+           class="flex flex-col items-center gap-2 p-4 rounded-xl hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-all group text-center">
+          <div class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center group-hover:bg-gray-200 transition-colors">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <span class="text-xs font-semibold text-gray-700">Rapports</span>
+        </a>
+
+      </div>
+    </div>
+
+    <!-- Indicateur données en direct -->
+    <div class="bg-green-50 border border-green-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
+      <span class="w-2 h-2 rounded-full flex-shrink-0"
+            [ngClass]="(loadingStats || loadingSecondary || loadingActivities || loadingPending) ? 'bg-amber-400 animate-pulse' : 'bg-secondary-500 animate-pulse'"></span>
+      <p class="text-xs font-medium"
+         [ngClass]="(loadingStats || loadingSecondary || loadingActivities || loadingPending) ? 'text-amber-700' : 'text-secondary-700'">
+        {{ (loadingStats || loadingSecondary || loadingActivities || loadingPending) ? 'Chargement en cours...' : 'Données chargées depuis SONABHY Portail' }}
+      </p>
+      <span class="ml-auto text-[10px] text-gray-400">{{ today | date:'d MMM yyyy, HH:mm' }}</span>
+    </div>
+
+  </ng-container>
+
+</div>

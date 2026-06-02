@@ -1,0 +1,429 @@
+<!-- admin-layout.html - LAYOUT ADMIN SONABHY - Design v2 -->
+<div class="min-h-screen bg-[#f0f4f8] flex">
+
+  <!-- =====================================================
+       SIDEBAR DESKTOP
+       ===================================================== -->
+  <aside class="hidden lg:flex flex-col fixed inset-y-0 left-0 z-40 transition-all duration-300"
+         [ngClass]="sidebarOpen ? 'w-64' : 'w-20'">
+
+    <!-- Header Sidebar -->
+    <div class="flex items-center justify-between h-16 px-4 bg-[#0f172a] border-b border-white/5">
+      <div class="flex items-center gap-3 overflow-hidden" *ngIf="sidebarOpen">
+        <img src="assets/images/logo-sonabhy.png" alt="SONABHY" class="h-9 flex-shrink-0">
+        <div class="min-w-0">
+          <h1 class="text-sm font-bold text-white leading-tight">SONABHY Portail</h1>
+          <p class="text-xs text-slate-400 leading-tight">Administration</p>
+        </div>
+      </div>
+      <img *ngIf="!sidebarOpen" src="assets/images/logo-sonabhy.png" alt="SONABHY" class="h-9 mx-auto">
+      <button (click)="toggleSidebar()"
+              class="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors flex-shrink-0"
+              [ngClass]="{'ml-auto': sidebarOpen}">
+        <svg class="w-4 h-4 transition-transform" [class.rotate-180]="!sidebarOpen" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 bg-[#0f172a] py-3 overflow-y-auto">
+      <ul class="space-y-0.5 px-2.5">
+        <li *ngFor="let item of menuItems">
+
+          <!-- Menu sans enfants -->
+          <a *ngIf="!item.children"
+             [routerLink]="item.route"
+             routerLinkActive="active-menu-item"
+             [routerLinkActiveOptions]="{exact: item.route === '/admin/dashboard'}"
+             class="relative flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:bg-white/5 hover:text-white rounded-lg transition-all group"
+             [title]="!sidebarOpen ? item.label : ''">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" [attr.d]="item.icon" />
+            </svg>
+            <span *ngIf="sidebarOpen" class="flex-1 text-sm font-medium truncate">{{ item.label }}</span>
+            <!-- Badge sidebar ouverte -->
+            <span *ngIf="sidebarOpen && item.badgeKey && getBadgeValue(item) > 0"
+                  class="px-1.5 py-0.5 text-xs font-bold text-white rounded-full min-w-[20px] text-center"
+                  [ngClass]="item.badgeColor || 'bg-slate-600'">
+              {{ getBadgeValue(item) }}
+            </span>
+            <!-- Badge point sidebar fermée -->
+            <span *ngIf="!sidebarOpen && item.badgeKey && getBadgeValue(item) > 0"
+                  class="absolute top-2 right-2 w-2 h-2 rounded-full"
+                  [ngClass]="item.badgeColor || 'bg-slate-600'">
+            </span>
+          </a>
+
+          <!-- Menu avec enfants -->
+          <div *ngIf="item.children">
+            <button (click)="toggleSubmenu(item.label)"
+                    class="w-full flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:bg-white/5 hover:text-white rounded-lg transition-all"
+                    [title]="!sidebarOpen ? item.label : ''">
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" [attr.d]="item.icon" />
+              </svg>
+              <span *ngIf="sidebarOpen" class="flex-1 text-sm font-medium text-left truncate">{{ item.label }}</span>
+              <svg *ngIf="sidebarOpen" class="w-4 h-4 transition-transform flex-shrink-0" [class.rotate-180]="isSubmenuExpanded(item.label)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            <!-- Sous-menu -->
+            <ul *ngIf="sidebarOpen && isSubmenuExpanded(item.label)" class="mt-0.5 ml-4 pl-3 border-l border-white/10 space-y-0.5">
+              <li *ngFor="let child of item.children">
+                <a [routerLink]="child.route"
+                   routerLinkActive="text-primary-400 bg-white/5"
+                   class="flex items-center gap-2 px-3 py-2 text-sm text-slate-500 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+                  <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="child.icon" />
+                  </svg>
+                  <span class="truncate">{{ child.label }}</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+
+        </li>
+      </ul>
+    </nav>
+
+    <!-- User Info -->
+    <div class="bg-[#0f172a] border-t border-white/5 p-4">
+      <div class="flex items-center gap-3" *ngIf="sidebarOpen">
+        <div class="w-9 h-9 bg-primary-500 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+          {{ currentUser?.username?.charAt(0).toUpperCase() || 'A' }}
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-white truncate">{{ currentUser?.username || 'Admin' }}</p>
+          <p class="text-xs text-slate-400 truncate">Super Administrateur</p>
+        </div>
+      </div>
+      <div *ngIf="!sidebarOpen" class="flex justify-center">
+        <div class="w-9 h-9 bg-primary-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+          {{ currentUser?.username?.charAt(0).toUpperCase() || 'A' }}
+        </div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- =====================================================
+       SIDEBAR MOBILE (OVERLAY)
+       ===================================================== -->
+  <div *ngIf="sidebarMobileOpen"
+       (click)="closeSidebarMobile()"
+       class="lg:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"></div>
+
+  <aside *ngIf="sidebarMobileOpen"
+         class="lg:hidden fixed inset-y-0 left-0 z-50 w-72 bg-[#0f172a] shadow-2xl flex flex-col">
+
+    <!-- Header Mobile -->
+    <div class="flex items-center justify-between h-16 px-4 border-b border-white/5">
+      <div class="flex items-center gap-3">
+        <img src="assets/images/logo-sonabhy.png" alt="SONABHY" class="h-9">
+        <div>
+          <h1 class="text-sm font-bold text-white leading-tight">SONABHY Portail</h1>
+          <p class="text-xs text-slate-400 leading-tight">Administration</p>
+        </div>
+      </div>
+      <button (click)="closeSidebarMobile()" class="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Navigation Mobile -->
+    <nav class="flex-1 py-3 overflow-y-auto">
+      <ul class="space-y-0.5 px-2.5">
+        <li *ngFor="let item of menuItems">
+          <a *ngIf="!item.children"
+             [routerLink]="item.route"
+             (click)="closeSidebarMobile()"
+             routerLinkActive="active-menu-item"
+             [routerLinkActiveOptions]="{exact: item.route === '/admin/dashboard'}"
+             class="flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:bg-white/5 hover:text-white rounded-lg transition-all">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" [attr.d]="item.icon" />
+            </svg>
+            <span class="flex-1 text-sm font-medium">{{ item.label }}</span>
+            <span *ngIf="item.badgeKey && getBadgeValue(item) > 0"
+                  class="px-1.5 py-0.5 text-xs font-bold text-white rounded-full min-w-[20px] text-center"
+                  [ngClass]="item.badgeColor || 'bg-slate-600'">
+              {{ getBadgeValue(item) }}
+            </span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- User Info Mobile -->
+    <div class="border-t border-white/5 p-4">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-9 h-9 bg-primary-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+          {{ currentUser?.username?.charAt(0).toUpperCase() || 'A' }}
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-white truncate">{{ currentUser?.username || 'Admin' }}</p>
+          <p class="text-xs text-slate-400">Super Administrateur</p>
+        </div>
+      </div>
+      <button (click)="logout()"
+              class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-lg transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+        Déconnexion
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- =====================================================
+       MAIN CONTENT
+       ===================================================== -->
+  <div class="flex-1 flex flex-col transition-all duration-300 min-w-0"
+       [ngClass]="sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'">
+
+    <!-- Top Navbar -->
+    <header class="sticky top-0 z-30 bg-white border-b border-gray-100">
+      <div class="flex items-center justify-between h-14 px-4 lg:px-6 relative overflow-visible">
+
+        <!-- Left (masqué sur mobile quand recherche active) -->
+        <div class="flex items-center gap-3 transition-all duration-300"
+             [ngClass]="showMobileSearch ? 'opacity-0 pointer-events-none md:opacity-100 md:pointer-events-auto' : 'opacity-100'">
+          <button (click)="toggleSidebarMobile()" class="lg:hidden p-2 text-gray-500 hover:text-primary-500 hover:bg-gray-100 rounded-lg transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <div class="hidden sm:flex items-center gap-2">
+            <div class="w-1 h-4 bg-primary-500 rounded-full"></div>
+            <span class="text-sm font-semibold text-gray-700">Administration SONABHY Portail</span>
+          </div>
+        </div>
+
+        <!-- Right -->
+        <div class="flex items-center gap-2">
+          <!-- Search desktop (inchangé) -->
+          <div class="hidden md:block relative">
+            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input type="text"
+                   [(ngModel)]="globalSearchTerm"
+                   (input)="onGlobalSearch()"
+                   (keyup.enter)="onGlobalSearch()"
+                   placeholder="Rechercher..."
+                   class="w-56 pl-9 pr-8 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 focus:bg-white transition-all outline-none">
+            <button *ngIf="globalSearchTerm"
+                    (click)="clearSearch()"
+                    class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-gray-400 hover:text-gray-600">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Icône loupe mobile (masquée quand recherche ouverte) -->
+          <button (click)="toggleMobileSearch()"
+                  class="md:hidden p-2 text-gray-500 hover:text-primary-500 hover:bg-gray-100 rounded-lg transition-all duration-300"
+                  [ngClass]="showMobileSearch ? 'opacity-0 pointer-events-none scale-75' : 'opacity-100 scale-100'">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+          </button>
+
+          <!-- Icônes droite (masquées sur mobile quand recherche active) -->
+          <div class="flex items-center gap-2 transition-all duration-300"
+               [ngClass]="showMobileSearch ? 'opacity-0 pointer-events-none md:opacity-100 md:pointer-events-auto' : 'opacity-100'">
+
+          <!-- Notifications in-app -->
+          <app-notification-bell theme="red" variant="light"></app-notification-bell>
+
+          <!-- Activités récentes (journal d'activité admin) -->
+          <div class="relative" data-notif-panel>
+            <button (click)="toggleNotifPanel()"
+                    class="relative p-2 text-gray-500 hover:text-red-600 hover:bg-gray-100 rounded-lg transition-colors"
+                    title="Activité récente">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span *ngIf="recentActivities.length > 0"
+                    class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white"></span>
+            </button>
+
+            <!-- Panneau activités récentes -->
+            <div *ngIf="notifOpen"
+                 class="absolute right-0 mt-2 w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50"
+                 style="box-shadow:0 20px 60px -10px rgba(0,0,0,0.18)">
+
+              <!-- Header -->
+              <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                <div class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                  </svg>
+                  <h3 class="text-sm font-bold text-gray-900">Activité récente</h3>
+                </div>
+                <button (click)="loadRecentActivities()"
+                        class="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="Actualiser">
+                  <svg class="w-3.5 h-3.5" [class.animate-spin]="notifLoading" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Chargement -->
+              <div *ngIf="notifLoading" class="flex flex-col items-center gap-2 py-10 text-gray-400">
+                <svg class="w-6 h-6 animate-spin text-red-400" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+                <p class="text-xs">Chargement…</p>
+              </div>
+
+              <!-- Vide -->
+              <div *ngIf="!notifLoading && recentActivities.length === 0"
+                   class="flex flex-col items-center gap-3 py-10 text-gray-400">
+                <svg class="w-8 h-8 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0H4"/>
+                </svg>
+                <p class="text-xs">Aucune activité ces 3 derniers jours</p>
+              </div>
+
+              <!-- Liste -->
+              <ul *ngIf="!notifLoading && recentActivities.length > 0"
+                  class="max-h-[420px] overflow-y-auto divide-y divide-gray-50">
+                <li *ngFor="let act of recentActivities"
+                    class="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
+                  <div class="flex-shrink-0 mt-0.5 w-8 h-8 rounded-xl flex items-center justify-center"
+                       [ngClass]="getActivityColor(act.type)">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                            [attr.d]="getActivityIcon(act.type)"/>
+                    </svg>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-xs font-semibold text-gray-800 truncate">{{ act.description }}</p>
+                    <div class="flex items-center gap-2 mt-0.5 flex-wrap">
+                      <span class="text-[10px] text-gray-400">{{ act.action }}</span>
+                      <ng-container *ngIf="act.status">
+                        <span class="w-1 h-1 rounded-full bg-gray-300 flex-shrink-0"></span>
+                        <span class="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
+                              [ngClass]="getStatusColor(act.status)">{{ act.status }}</span>
+                      </ng-container>
+                    </div>
+                    <p *ngIf="act.user" class="text-[10px] text-gray-400 truncate mt-0.5">{{ act.user }}</p>
+                  </div>
+                  <span class="flex-shrink-0 text-[10px] text-gray-400 whitespace-nowrap mt-0.5">
+                    {{ timeAgo(act.date) }}
+                  </span>
+                </li>
+              </ul>
+
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <div class="h-5 w-px bg-gray-200"></div>
+
+          <!-- User Dropdown -->
+          <div class="relative" data-user-menu>
+            <button (click)="toggleUserMenu()"
+                    class="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-100 rounded-lg transition-colors">
+              <div class="w-7 h-7 bg-primary-500 rounded-lg flex items-center justify-center text-white font-semibold text-xs">
+                {{ currentUser?.username?.charAt(0).toUpperCase() || 'A' }}
+              </div>
+              <span class="hidden lg:block text-sm font-medium text-gray-700">
+                {{ currentUser?.username || 'Admin' }}
+              </span>
+              <svg class="hidden lg:block w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            <!-- Dropdown -->
+            <div *ngIf="userMenuOpen"
+                 class="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-gray-100 py-1.5 z-50">
+              <div class="px-4 py-2.5 border-b border-gray-100 mb-1">
+                <p class="text-sm font-semibold text-gray-900">{{ currentUser?.username || 'Admin' }}</p>
+                <p class="text-xs text-gray-400 mt-0.5">{{ currentUser?.email || 'bationor10@gmail.com' }}</p>
+              </div>
+              <a routerLink="/admin/profil"
+                 class="flex items-center gap-3 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                Mon profil
+              </a>
+              <a routerLink="/admin/parametres"
+                 class="flex items-center gap-3 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Paramètres
+              </a>
+              <div class="border-t border-gray-100 my-1"></div>
+              <button (click)="logout()"
+                      class="flex items-center gap-3 w-full px-4 py-2 text-sm text-primary-600 hover:bg-primary-50 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Déconnexion
+              </button>
+            </div>
+          </div>
+
+          </div><!-- /icônes droite -->
+        </div>
+
+        <!-- Overlay recherche mobile (s'étend dans le header avec animation) -->
+        <div class="md:hidden absolute inset-0 flex items-center px-4 gap-3 bg-white transition-all duration-300 ease-in-out"
+             [ngClass]="showMobileSearch
+               ? 'opacity-100 translate-x-0 pointer-events-auto'
+               : 'opacity-0 translate-x-8 pointer-events-none'">
+          <svg class="w-4 h-4 text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <input type="text"
+                 [(ngModel)]="globalSearchTerm"
+                 (input)="onGlobalSearch()"
+                 (keyup.enter)="onGlobalSearch()"
+                 placeholder="Rechercher..."
+                 class="flex-1 text-sm text-gray-800 placeholder-gray-400 bg-transparent outline-none border-none">
+          <button (click)="clearSearch()"
+                  class="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <main class="flex-1 p-4 lg:p-6 overflow-x-hidden">
+      <router-outlet></router-outlet>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-100 py-3 px-6">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-1 text-xs text-gray-400">
+        <p>© 2026 SONABHY Portail. Tous droits réservés.</p>
+        <p>Version {{ appVersion }}</p>
+      </div>
+    </footer>
+
+  </div>
+
+</div>

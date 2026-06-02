@@ -1,0 +1,1006 @@
+<!-- recrutements.html — Design unifié profil SONABHY -->
+<div class="min-h-screen bg-slate-50">
+
+  <!-- ══════════════════════════════════════════════════════
+       HERO
+       ══════════════════════════════════════════════════════ -->
+  <div class="relative bg-slate-900 overflow-hidden">
+    <div class="absolute inset-0 opacity-[0.04]"
+         style="background-image: radial-gradient(circle, #ffffff 1px, transparent 1px); background-size: 28px 28px;"></div>
+    <div class="absolute inset-0 flex items-start justify-center pointer-events-none pt-8">
+      <div class="w-[500px] h-[200px] bg-primary-500/10 rounded-full blur-3xl"></div>
+    </div>
+    <div class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary-500/40 to-transparent"></div>
+
+    <div class="container-custom relative z-10 py-10 md:py-14">
+
+      <div class="flex flex-row items-center gap-4 md:gap-6">
+
+        <!-- Icône -->
+        <div class="w-14 h-14 md:w-20 md:h-20 bg-primary-500 rounded-2xl flex items-center justify-center
+                    text-white shadow-2xl ring-4 ring-white/10 flex-shrink-0">
+          <svg class="w-7 h-7 md:w-10 md:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+        </div>
+
+        <!-- Identité -->
+        <div class="flex-1 min-w-0 text-left">
+          <p class="text-primary-400 text-xs font-semibold uppercase tracking-widest">Dashboard candidat</p>
+          <h1 class="text-xl md:text-3xl font-bold text-white mt-0.5 tracking-tight">Recrutements</h1>
+          <p class="text-xs md:text-sm text-gray-400 mt-1">Découvrez les campagnes actives et suivez vos candidatures</p>
+        </div>
+
+        <!-- Bouton CTA -->
+        <button (click)="setActiveTab('historique')"
+                class="flex items-center gap-1.5 md:gap-2 px-3 md:px-5 py-2 md:py-2.5 bg-primary-500 hover:bg-primary-600 text-white
+                       text-xs md:text-sm font-medium rounded-xl transition-all shadow-lg shadow-primary-500/25 flex-shrink-0">
+          <svg class="w-3.5 h-3.5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span class="hidden sm:inline">Mes candidatures</span>
+          <span class="sm:hidden">Candidatures</span>
+        </button>
+
+      </div>
+
+      <!-- Stats row -->
+      <div class="grid grid-cols-3 gap-0 mt-8 pt-8 border-t border-white/10">
+        <div class="text-center px-2 sm:px-4">
+          <p class="text-xl sm:text-2xl md:text-3xl font-bold text-white">{{ campagnes.length }}</p>
+          <p class="text-[10px] sm:text-xs text-gray-400 mt-1 uppercase tracking-wide">Campagnes</p>
+        </div>
+        <div class="text-center px-2 sm:px-4 border-x border-white/10">
+          <p class="text-xl sm:text-2xl md:text-3xl font-bold text-blue-400">{{ mesCandidatures.length }}</p>
+          <p class="text-[10px] sm:text-xs text-gray-400 mt-1 uppercase tracking-wide">Candidatures</p>
+        </div>
+        <div class="text-center px-2 sm:px-4">
+          <p class="text-xl sm:text-2xl md:text-3xl font-bold text-amber-400">{{ getCountByStatut('SOUMISE') }}</p>
+          <p class="text-[10px] sm:text-xs text-gray-400 mt-1 uppercase tracking-wide">Soumises</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Container principal -->
+  <div class="container-custom py-8 md:py-12">
+
+    <!-- ══════════════════════════════════════════════════════
+         ONGLETS — pill style
+         ══════════════════════════════════════════════════════ -->
+    <div class="flex gap-1.5 bg-white border border-gray-100 rounded-2xl p-1.5 mb-8 shadow-sm">
+      <button (click)="setActiveTab('campagnes')"
+              class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
+              [ngClass]="activeTab === 'campagnes'
+                ? 'bg-primary-500 text-white shadow-sm'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+        </svg>
+        <span class="hidden sm:inline">Campagnes actives</span>
+        <span class="sm:hidden">Campagnes</span>
+        <span class="px-1.5 py-0.5 text-[10px] rounded-full font-bold"
+              [ngClass]="activeTab === 'campagnes' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'">
+          {{ campagnes.length }}
+        </span>
+      </button>
+      <button (click)="setActiveTab('historique')"
+              class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
+              [ngClass]="activeTab === 'historique'
+                ? 'bg-primary-500 text-white shadow-sm'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span class="hidden sm:inline">Mes candidatures</span>
+        <span class="sm:hidden">Candidatures</span>
+        <span class="px-1.5 py-0.5 text-[10px] rounded-full font-bold"
+              [ngClass]="activeTab === 'historique' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'">
+          {{ mesCandidatures.length }}
+        </span>
+      </button>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         ONGLET : CAMPAGNES ACTIVES
+         ══════════════════════════════════════════════════════ -->
+    <div *ngIf="activeTab === 'campagnes'" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+      <!-- Colonne principale -->
+      <div class="lg:col-span-2 space-y-6">
+
+        <!-- Section header -->
+        <div>
+          <span class="text-primary-500 text-xs font-semibold uppercase tracking-widest">Opportunités</span>
+          <h2 class="text-xl font-bold text-gray-900 mt-1">Campagnes actives</h2>
+          <div class="w-12 h-0.5 bg-primary-500 mt-3 rounded-full"></div>
+        </div>
+
+        <!-- Barre de recherche -->
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
+            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+          </div>
+          <input type="text"
+                 class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-900 text-sm
+                        focus:border-primary-500 focus:outline-none transition-all shadow-sm"
+                 placeholder="Rechercher une campagne..."
+                 [(ngModel)]="searchTerm"
+                 (input)="filtrerCampagnes()">
+        </div>
+
+        <!-- Loader -->
+        <div *ngIf="isLoading" class="flex justify-center py-10">
+          <div class="animate-spin rounded-full h-10 w-10 border-[3px] border-primary-100" style="border-top-color:#c0392b;"></div>
+        </div>
+
+        <!-- Erreur -->
+        <div *ngIf="errorMessage && !isLoading"
+             class="flex items-center gap-3 bg-red-50 border border-red-100 text-red-700 px-5 py-4 rounded-2xl">
+          <svg class="w-5 h-5 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span class="text-sm font-medium">{{ errorMessage }}</span>
+        </div>
+
+        <!-- Liste des campagnes -->
+        <div *ngIf="!isLoading && campagnesFiltrees.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div *ngFor="let campagne of campagnesFiltrees"
+               class="group bg-white rounded-2xl border border-gray-100 hover:border-primary-200 hover:shadow-md transition-all overflow-hidden cursor-pointer"
+               (click)="voirDetails(campagne)">
+
+            <!-- Bandeau top -->
+            <div class="bg-primary-500 px-4 py-2 flex items-center justify-between">
+              <span class="text-white text-xs font-semibold uppercase tracking-wide">Campagne active</span>
+              <span class="text-white/80 text-xs">{{ getJoursRestants(campagne.dateFin) }}j restants</span>
+            </div>
+
+            <div class="p-5">
+              <h3 class="text-base font-bold text-gray-900 group-hover:text-primary-600 transition-colors mb-2 line-clamp-2">
+                {{ campagne.titreCampagne }}
+              </h3>
+              <p class="text-xs text-gray-500 mb-4 line-clamp-2">
+                {{ campagne.description || 'Aucune description disponible' }}
+              </p>
+              <div class="flex items-center gap-2 text-xs text-gray-500 mb-4">
+                <svg class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <span>{{ campagne.dateDebut | date:'dd/MM/yyyy' }} – {{ campagne.dateFin | date:'dd/MM/yyyy' }}</span>
+              </div>
+              <button class="w-full py-2.5 bg-primary-50 text-primary-600 text-sm font-semibold rounded-xl
+                             group-hover:bg-primary-500 group-hover:text-white transition-all flex items-center justify-center gap-2">
+                Voir les profils
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- État vide -->
+        <div *ngIf="!isLoading && campagnesFiltrees.length === 0"
+             class="bg-white rounded-2xl border border-gray-100 text-center py-14 px-6">
+          <div class="w-14 h-14 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-3">
+            <svg class="w-7 h-7 text-primary-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <h3 class="text-sm font-semibold text-gray-800 mb-1">Aucune campagne disponible</h3>
+          <p class="text-xs text-gray-400 max-w-xs mx-auto">
+            {{ searchTerm ? 'Aucune campagne ne correspond à votre recherche.' : 'Il n\'y a pas de campagne de recrutement active pour le moment.' }}
+          </p>
+        </div>
+
+      </div><!-- /col principale -->
+
+      <!-- Sidebar campagnes -->
+      <div class="hidden lg:flex flex-col gap-6">
+
+        <div class="bg-white border border-gray-100 rounded-2xl p-6">
+          <span class="text-primary-500 text-xs font-semibold uppercase tracking-widest">Conseils</span>
+          <h3 class="text-base font-bold text-gray-900 mt-1">Comment postuler ?</h3>
+          <div class="w-8 h-0.5 bg-primary-500 mt-3 mb-5 rounded-full"></div>
+          <ol class="space-y-4">
+            <li class="flex items-start gap-3">
+              <span class="w-6 h-6 rounded-full bg-primary-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">1</span>
+              <div>
+                <p class="text-sm font-semibold text-gray-800">Choisissez une campagne</p>
+                <p class="text-xs text-gray-500 mt-0.5">Cliquez sur une campagne active</p>
+              </div>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="w-6 h-6 rounded-full bg-primary-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">2</span>
+              <div>
+                <p class="text-sm font-semibold text-gray-800">Sélectionnez un profil</p>
+                <p class="text-xs text-gray-500 mt-0.5">Choisissez le poste qui correspond</p>
+              </div>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="w-6 h-6 rounded-full bg-primary-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">3</span>
+              <div>
+                <p class="text-sm font-semibold text-gray-800">Joignez vos documents</p>
+                <p class="text-xs text-gray-500 mt-0.5">CV + demande manuscrite (PDF)</p>
+              </div>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="w-6 h-6 rounded-full bg-primary-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">4</span>
+              <div>
+                <p class="text-sm font-semibold text-gray-800">Soumettez</p>
+                <p class="text-xs text-gray-500 mt-0.5">Suivez le statut dans l'onglet candidatures</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+
+        <!-- Accès rapide -->
+        <div class="bg-white border border-gray-100 rounded-2xl p-6">
+          <span class="text-primary-500 text-xs font-semibold uppercase tracking-widest">Navigation</span>
+          <h3 class="text-base font-bold text-gray-900 mt-1">Accès rapide</h3>
+          <div class="w-8 h-0.5 bg-primary-500 mt-3 mb-5 rounded-full"></div>
+          <div class="space-y-1.5">
+            <a routerLink="/dashboard/candidat"
+               class="group flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-primary-50 transition-colors">
+              <div class="w-8 h-8 bg-primary-50 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-primary-500 transition-all duration-200">
+                <svg class="w-4 h-4 text-primary-500 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+              </div>
+              <span class="text-sm font-medium text-gray-700 group-hover:text-primary-600 transition-colors flex-1">Tableau de bord</span>
+              <svg class="w-4 h-4 text-gray-300 group-hover:text-primary-400 group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+              </svg>
+            </a>
+            <a routerLink="/dashboard/candidat/candidatures"
+               class="group flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-primary-50 transition-colors">
+              <div class="w-8 h-8 bg-primary-50 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-primary-500 transition-all duration-200">
+                <svg class="w-4 h-4 text-primary-500 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+              </div>
+              <span class="text-sm font-medium text-gray-700 group-hover:text-primary-600 transition-colors flex-1">Mes candidatures</span>
+              <svg class="w-4 h-4 text-gray-300 group-hover:text-primary-400 group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+
+      </div><!-- /sidebar campagnes -->
+
+    </div><!-- /grid campagnes -->
+
+    <!-- ══════════════════════════════════════════════════════
+         ONGLET : MES CANDIDATURES
+         ══════════════════════════════════════════════════════ -->
+    <div *ngIf="activeTab === 'historique'" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+      <!-- Colonne principale -->
+      <div class="lg:col-span-2 space-y-6">
+
+        <!-- Section header -->
+        <div>
+          <span class="text-primary-500 text-xs font-semibold uppercase tracking-widest">Suivi</span>
+          <h2 class="text-xl font-bold text-gray-900 mt-1">Mes candidatures</h2>
+          <div class="w-12 h-0.5 bg-primary-500 mt-3 rounded-full"></div>
+        </div>
+
+        <!-- Filtres -->
+        <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row gap-3">
+          <!-- Filtre statut -->
+          <div class="relative flex-1 sm:max-w-xs">
+            <select class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 text-sm
+                           focus:border-primary-500 focus:bg-white focus:outline-none transition-all appearance-none cursor-pointer"
+                    [(ngModel)]="filtreStatutHistorique" (change)="filtrerHistorique()">
+              <option value="">Tous les statuts</option>
+              <option *ngFor="let statut of getStatutsUniques()" [value]="statut">{{ getStatutLabel(statut) }}</option>
+            </select>
+            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </div>
+          </div>
+          <!-- Recherche -->
+          <div class="relative flex-1">
+            <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
+              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+            </div>
+            <input type="text"
+                   class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 text-sm
+                          focus:border-primary-500 focus:bg-white focus:outline-none transition-all"
+                   placeholder="Rechercher..."
+                   [(ngModel)]="searchTerm"
+                   (input)="filtrerHistorique()">
+          </div>
+        </div>
+
+        <!-- Loader historique -->
+        <div *ngIf="isLoadingHistorique" class="flex justify-center py-10">
+          <div class="animate-spin rounded-full h-10 w-10 border-[3px] border-primary-100" style="border-top-color:#c0392b;"></div>
+        </div>
+
+        <!-- Erreur historique -->
+        <div *ngIf="errorHistorique && !isLoadingHistorique"
+             class="flex items-center gap-3 bg-red-50 border border-red-100 text-red-700 px-5 py-4 rounded-2xl">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span class="text-sm font-medium">{{ errorHistorique }}</span>
+        </div>
+
+        <!-- Liste des candidatures -->
+        <div *ngIf="!isLoadingHistorique && mesCandidaturesFiltrees.length > 0" class="space-y-3">
+          <div *ngFor="let candidature of mesCandidaturesFiltrees"
+               class="group bg-white rounded-2xl border border-gray-100 hover:border-primary-200 hover:shadow-md transition-all overflow-hidden cursor-pointer"
+               (click)="voirDetailsCandidature(candidature)">
+            <div class="flex">
+              <!-- Barre de statut latérale -->
+              <div class="w-1 flex-shrink-0"
+                   [ngClass]="{
+                     'bg-amber-400': candidature.statusCandidature === 'SOUMISE',
+                     'bg-blue-500': candidature.statusCandidature === 'EN_EXAMEN',
+                     'bg-green-500': candidature.statusCandidature === 'RETENUE',
+                     'bg-red-500': candidature.statusCandidature === 'REJETEE',
+                     'bg-orange-400': candidature.statusCandidature === 'LISTE_ATTENTE'
+                   }"></div>
+
+              <div class="flex-1 p-4 md:p-5">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                  <div class="flex items-start gap-3 flex-1">
+                    <div class="w-9 h-9 bg-primary-50 rounded-xl flex items-center justify-center flex-shrink-0
+                                group-hover:bg-primary-500 transition-all duration-200">
+                      <svg class="w-4 h-4 text-primary-500 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                      </svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <h3 class="text-sm font-bold text-gray-900 group-hover:text-primary-600 transition-colors line-clamp-1">
+                        {{ candidature.profil.titreProfil }}
+                      </h3>
+                      <p class="text-xs text-gray-500 mt-0.5">{{ candidature.campagne.titreCampagne }}</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-3 flex-shrink-0">
+                    <div class="text-right">
+                      <p class="text-[10px] text-gray-400 uppercase tracking-wide">Postulé le</p>
+                      <p class="text-xs font-semibold text-gray-700">{{ candidature.dateCandidature | date:'dd/MM/yyyy' }}</p>
+                    </div>
+                    <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap"
+                          [ngClass]="getStatutClass(candidature.statusCandidature)">
+                      {{ getStatutLabel(candidature.statusCandidature) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- État vide historique -->
+        <div *ngIf="!isLoadingHistorique && mesCandidaturesFiltrees.length === 0"
+             class="bg-white rounded-2xl border border-gray-100 text-center py-14 px-6">
+          <div class="w-14 h-14 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-3">
+            <svg class="w-7 h-7 text-primary-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <h3 class="text-sm font-semibold text-gray-800 mb-1">Aucune candidature</h3>
+          <p class="text-xs text-gray-400 mb-5 max-w-xs mx-auto">
+            {{ searchTerm || filtreStatutHistorique
+              ? 'Aucune candidature ne correspond à vos critères.'
+              : 'Vous n\'avez pas encore postulé à une campagne.' }}
+          </p>
+          <button (click)="setActiveTab('campagnes')"
+                  class="inline-flex items-center gap-2 px-5 py-2 bg-primary-500 text-white text-sm font-semibold rounded-xl hover:bg-primary-600 transition-colors shadow-sm shadow-primary-500/20">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+            Voir les campagnes
+          </button>
+        </div>
+
+      </div><!-- /col principale historique -->
+
+      <!-- Sidebar historique -->
+      <div class="hidden lg:flex flex-col gap-6">
+
+        <div class="bg-white border border-gray-100 rounded-2xl p-6">
+          <span class="text-primary-500 text-xs font-semibold uppercase tracking-widest">Référence</span>
+          <h3 class="text-base font-bold text-gray-900 mt-1">Statuts</h3>
+          <div class="w-8 h-0.5 bg-primary-500 mt-3 mb-5 rounded-full"></div>
+          <ul class="space-y-3.5">
+            <li class="flex items-start gap-2.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-400 flex-shrink-0 mt-1.5"></span>
+              <div>
+                <p class="text-sm font-semibold text-gray-800">Soumise</p>
+                <p class="text-xs text-gray-500 mt-0.5">En attente de traitement</p>
+              </div>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-blue-500 flex-shrink-0 mt-1.5"></span>
+              <div>
+                <p class="text-sm font-semibold text-gray-800">En examen</p>
+                <p class="text-xs text-gray-500 mt-0.5">Dossier en cours d'étude</p>
+              </div>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-green-500 flex-shrink-0 mt-1.5"></span>
+              <div>
+                <p class="text-sm font-semibold text-gray-800">Retenue</p>
+                <p class="text-xs text-gray-500 mt-0.5">Félicitations !</p>
+              </div>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-orange-400 flex-shrink-0 mt-1.5"></span>
+              <div>
+                <p class="text-sm font-semibold text-gray-800">Liste d'attente</p>
+                <p class="text-xs text-gray-500 mt-0.5">Candidature en réserve</p>
+              </div>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-red-500 flex-shrink-0 mt-1.5"></span>
+              <div>
+                <p class="text-sm font-semibold text-gray-800">Rejetée</p>
+                <p class="text-xs text-gray-500 mt-0.5">Non retenue pour ce profil</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="bg-white border border-gray-100 rounded-2xl p-6">
+          <span class="text-primary-500 text-xs font-semibold uppercase tracking-widest">Navigation</span>
+          <h3 class="text-base font-bold text-gray-900 mt-1">Accès rapide</h3>
+          <div class="w-8 h-0.5 bg-primary-500 mt-3 mb-5 rounded-full"></div>
+          <div class="space-y-1.5">
+            <a routerLink="/dashboard/candidat"
+               class="group flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-primary-50 transition-colors">
+              <div class="w-8 h-8 bg-primary-50 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-primary-500 transition-all duration-200">
+                <svg class="w-4 h-4 text-primary-500 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+              </div>
+              <span class="text-sm font-medium text-gray-700 group-hover:text-primary-600 transition-colors flex-1">Tableau de bord</span>
+              <svg class="w-4 h-4 text-gray-300 group-hover:text-primary-400 group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+              </svg>
+            </a>
+            <a routerLink="/dashboard/candidat/candidatures"
+               class="group flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-primary-50 transition-colors">
+              <div class="w-8 h-8 bg-primary-50 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-primary-500 transition-all duration-200">
+                <svg class="w-4 h-4 text-primary-500 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+              </div>
+              <span class="text-sm font-medium text-gray-700 group-hover:text-primary-600 transition-colors flex-1">Mes candidatures</span>
+              <svg class="w-4 h-4 text-gray-300 group-hover:text-primary-400 group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+
+      </div><!-- /sidebar historique -->
+
+    </div><!-- /grid historique -->
+
+    <!-- ── Mobile nav ── -->
+    <div class="lg:hidden mt-8">
+      <span class="text-primary-500 text-xs font-semibold uppercase tracking-widest">Navigation</span>
+      <h3 class="text-base font-bold text-gray-900 mt-1 mb-1">Accès rapide</h3>
+      <div class="w-8 h-0.5 bg-primary-500 mb-5 rounded-full"></div>
+      <div class="grid grid-cols-3 gap-3">
+        <a routerLink="/dashboard/candidat"
+           class="group flex flex-col items-center p-4 bg-white border border-gray-100 rounded-2xl hover:border-primary-100 hover:shadow-md transition-all duration-300 text-center">
+          <div class="w-12 h-12 bg-primary-50 rounded-xl flex items-center justify-center mb-3 group-hover:bg-primary-500 transition-all duration-300">
+            <svg class="w-6 h-6 text-primary-500 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+            </svg>
+          </div>
+          <p class="text-xs font-medium text-gray-700 group-hover:text-primary-600 transition-colors">Dashboard</p>
+        </a>
+        <a routerLink="/dashboard/candidat/candidatures"
+           class="group flex flex-col items-center p-4 bg-white border border-gray-100 rounded-2xl hover:border-primary-100 hover:shadow-md transition-all duration-300 text-center">
+          <div class="w-12 h-12 bg-primary-50 rounded-xl flex items-center justify-center mb-3 group-hover:bg-primary-500 transition-all duration-300">
+            <svg class="w-6 h-6 text-primary-500 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+          </div>
+          <p class="text-xs font-medium text-gray-700 group-hover:text-primary-600 transition-colors">Candidatures</p>
+        </a>
+        <a routerLink="/dashboard/candidat/profil"
+           class="group flex flex-col items-center p-4 bg-white border border-gray-100 rounded-2xl hover:border-primary-100 hover:shadow-md transition-all duration-300 text-center">
+          <div class="w-12 h-12 bg-primary-50 rounded-xl flex items-center justify-center mb-3 group-hover:bg-primary-500 transition-all duration-300">
+            <svg class="w-6 h-6 text-primary-500 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+          </div>
+          <p class="text-xs font-medium text-gray-700 group-hover:text-primary-600 transition-colors">Mon profil</p>
+        </a>
+      </div>
+    </div>
+
+  </div><!-- /container -->
+</div>
+
+<!-- =====================================================
+     MODAL DÉTAILS CAMPAGNE
+     ===================================================== -->
+<div *ngIf="showDetailModal" class="fixed inset-0 z-50 overflow-y-auto">
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" (click)="fermerDetailModal()"></div>
+
+  <div class="flex min-h-full items-center justify-center p-4">
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden"
+         (click)="$event.stopPropagation()">
+
+      <!-- Header -->
+      <div class="sticky top-0 bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-4">
+        <div class="flex items-start justify-between">
+          <div class="flex-1 pr-4">
+            <h2 class="text-lg font-bold text-white">{{ selectedCampagne?.titreCampagne }}</h2>
+            <p class="text-primary-100 text-sm mt-1">Campagne de recrutement</p>
+          </div>
+          <button (click)="fermerDetailModal()" class="p-1.5 hover:bg-white/20 rounded-lg transition-colors">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+        <!-- Infos campagne -->
+        <div class="mb-6 p-4 bg-gray-50 rounded-xl">
+          <p class="text-gray-700 mb-3">{{ selectedCampagne?.description }}</p>
+          <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span>{{ selectedCampagne?.dateDebut | date:'dd/MM/yyyy' }} - {{ selectedCampagne?.dateFin | date:'dd/MM/yyyy' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Liste des profils -->
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Profils recherchés</h3>
+
+        <div *ngIf="loadingProfils" class="flex justify-center py-8">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+        </div>
+
+        <div *ngIf="!loadingProfils && (!selectedCampagne?.profils || selectedCampagne?.profils?.length === 0)" class="text-center py-8 text-gray-500">
+          Aucun profil disponible pour cette campagne.
+        </div>
+
+        <div *ngIf="!loadingProfils && selectedCampagne?.profils && selectedCampagne?.profils?.length! > 0" class="space-y-4">
+          <div *ngFor="let profil of selectedCampagne?.profils"
+               class="p-4 border-2 border-gray-100 rounded-xl hover:border-primary-200 transition-colors">
+            <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+              <div class="flex-1">
+                <h4 class="font-bold text-gray-900 mb-1">{{ profil.titreProfil }}</h4>
+                <p class="text-sm text-gray-500 mb-3 line-clamp-2">{{ profil.description }}</p>
+
+                <!-- Infos du profil -->
+                <div class="flex flex-wrap gap-2 text-xs mb-3">
+                  <span class="inline-flex items-center gap-1 px-2 py-1 bg-primary-100 text-primary-700 rounded-full">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    {{ profil.nombrePostes }} poste(s) vacant(s)
+                  </span>
+                  <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full"
+                        [ngClass]="getCandidaturesRestantesClass(profil)">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    {{ getCandidaturesRestantes(profil) }} place(s) restante(s)
+                  </span>
+                </div>
+
+                <!-- Barre de progression des candidatures -->
+                <div class="max-w-xs">
+                  <div class="flex items-center justify-between text-xs text-gray-500 mb-1">
+                    <span>Candidatures</span>
+                    <span>{{ profil.nombreCandidaturesActuelles }} / {{ profil.nombreCandidaturesMax }}</span>
+                  </div>
+                  <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full transition-all duration-300"
+                         [ngClass]="getProgressBarClass(profil)"
+                         [style.width.%]="getProgressPercentage(profil)"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bouton Postuler -->
+              <div class="flex-shrink-0">
+                <button *ngIf="canPostuler(profil)"
+                        (click)="selectProfil(profil)"
+                        class="w-full sm:w-auto px-4 py-2.5 bg-gradient-to-r from-secondary-500 to-secondary-600 text-white font-semibold rounded-xl hover:from-secondary-600 hover:to-secondary-700 transition-all shadow-md shadow-secondary-500/20 active:scale-95 whitespace-nowrap flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                  Postuler
+                </button>
+                <span *ngIf="!canPostuler(profil) && hasAlreadyApplied(profil.idprofil)"
+                      class="block w-full sm:w-auto px-4 py-2.5 bg-green-100 text-green-700 font-medium rounded-xl text-center whitespace-nowrap flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  Déjà postulé
+                </span>
+                <span *ngIf="!canPostuler(profil) && !hasAlreadyApplied(profil.idprofil)"
+                      class="block w-full sm:w-auto px-4 py-2.5 bg-gray-100 text-gray-500 font-medium rounded-xl text-center whitespace-nowrap">
+                  {{ getProfilIndisponibleMessage(profil) }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="sticky bottom-0 bg-gray-50 px-6 py-4 border-t">
+        <button (click)="fermerDetailModal()"
+                class="w-full px-4 py-3 bg-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-300 transition-colors">
+          Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =====================================================
+     MODAL POSTULER AVEC DOCUMENTS - DESIGN MOBILE FIRST
+     ===================================================== -->
+<div *ngIf="showPostulerModal" class="fixed inset-0 z-50 overflow-hidden">
+  <!-- Backdrop -->
+  <div class="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity" (click)="fermerPostulerModal()"></div>
+
+  <!-- Modal Container - Bottom sheet sur mobile, centré sur desktop -->
+  <div class="fixed inset-0 flex items-end sm:items-center justify-center">
+    <div class="relative bg-white w-full sm:max-w-lg sm:mx-4 sm:rounded-2xl rounded-t-3xl shadow-2xl max-h-[95vh] sm:max-h-[90vh] flex flex-col overflow-hidden transform transition-all"
+         (click)="$event.stopPropagation()">
+
+      <!-- Handle bar pour mobile (drag indicator) -->
+      <div class="sm:hidden flex justify-center pt-3 pb-1">
+        <div class="w-12 h-1.5 bg-gray-300 rounded-full"></div>
+      </div>
+
+      <!-- Header avec gradient -->
+      <div class="bg-gradient-to-br from-secondary-500 via-secondary-600 to-secondary-700 px-4 sm:px-6 py-4 sm:py-5 relative overflow-hidden">
+        <!-- Pattern décoratif -->
+        <div class="absolute inset-0 opacity-10">
+          <div class="absolute -top-10 -right-10 w-32 h-32 bg-white rounded-full"></div>
+          <div class="absolute -bottom-8 -left-8 w-24 h-24 bg-white rounded-full"></div>
+        </div>
+
+        <div class="relative flex items-start justify-between gap-3">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+              <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <h2 class="text-lg sm:text-xl font-bold text-white">Postuler</h2>
+            </div>
+            <p class="text-secondary-100 text-sm truncate">{{ selectedProfil?.titreProfil }}</p>
+          </div>
+          <button (click)="fermerPostulerModal()"
+                  class="flex-shrink-0 w-10 h-10 flex items-center justify-center hover:bg-white/20 rounded-xl transition-colors">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Progress bar des documents -->
+      <div class="bg-gray-100 px-4 sm:px-6 py-2">
+        <div class="flex items-center justify-between text-xs text-gray-600 mb-1">
+          <span>Documents ajoutés</span>
+          <span class="font-semibold">{{ getUploadedDocumentsCount() }}/{{ getTotalRequiredDocuments() }}</span>
+        </div>
+        <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div class="h-full rounded-full transition-all duration-300"
+               [ngClass]="canSubmitCandidature() ? 'bg-green-500' : 'bg-secondary-500'"
+               [style.width.%]="getUploadProgress()"></div>
+        </div>
+      </div>
+
+      <!-- Body - Scrollable -->
+      <div class="flex-1 overflow-y-auto overscroll-contain px-4 sm:px-6 py-4">
+        <!-- Infos profil condensé -->
+        <div class="mb-4 p-3 bg-gradient-to-r from-secondary-50 to-primary-50 rounded-xl border border-secondary-100">
+          <p class="text-sm text-gray-700 line-clamp-2">{{ selectedProfil?.description }}</p>
+        </div>
+
+        <!-- Section Documents requis -->
+        <div class="mb-4">
+          <h3 class="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2 uppercase tracking-wide">
+            <svg class="w-4 h-4 text-secondary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Documents obligatoires
+          </h3>
+
+          <!-- Liste des documents à uploader -->
+          <div class="space-y-2">
+            <!-- Document CV (obligatoire) -->
+            <div class="group relative p-3 border-2 rounded-xl transition-all duration-200"
+                 [ngClass]="documentsUploades['CV'] ? 'border-green-400 bg-green-50 shadow-sm shadow-green-100' : 'border-gray-200 bg-white hover:border-secondary-300 hover:bg-secondary-50/30'">
+              <div class="flex items-center gap-3">
+                <div class="relative flex-shrink-0">
+                  <div class="w-11 h-11 rounded-xl flex items-center justify-center transition-colors"
+                       [ngClass]="documentsUploades['CV'] ? 'bg-green-500' : 'bg-gray-100 group-hover:bg-secondary-100'">
+                    <svg *ngIf="!documentsUploades['CV']" class="w-5 h-5 text-gray-500 group-hover:text-secondary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <svg *ngIf="documentsUploades['CV']" class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-semibold text-gray-900 text-sm">CV <span class="text-red-500">*</span></p>
+                  <p class="text-xs truncate" [ngClass]="documentsUploades['CV'] ? 'text-green-600 font-medium' : 'text-gray-500'">
+                    {{ documentsUploades['CV'] ? documentsUploades['CV'].name : 'PDF uniquement (max 5Mo)' }}
+                  </p>
+                </div>
+                <div class="flex-shrink-0">
+                  <label *ngIf="!documentsUploades['CV']"
+                         class="inline-flex items-center gap-1.5 cursor-pointer px-3 py-2 bg-secondary-500 text-white text-xs font-semibold rounded-lg hover:bg-secondary-600 active:scale-95 transition-all shadow-sm">
+                    <input type="file" accept=".pdf" class="hidden" (change)="onFileSelected($event, 'CV')">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    <span class="hidden sm:inline">Choisir</span>
+                  </label>
+                  <button *ngIf="documentsUploades['CV']" (click)="removeDocument('CV')"
+                          class="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-colors active:scale-95">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Document Demande manuscrite (obligatoire - remplace la lettre de motivation) -->
+            <div class="group relative p-3 border-2 rounded-xl transition-all duration-200"
+                 [ngClass]="documentsUploades['DEMANDE_MANUSCRITE'] ? 'border-green-400 bg-green-50 shadow-sm shadow-green-100' : 'border-gray-200 bg-white hover:border-secondary-300 hover:bg-secondary-50/30'">
+              <div class="flex items-center gap-3">
+                <div class="relative flex-shrink-0">
+                  <div class="w-11 h-11 rounded-xl flex items-center justify-center transition-colors"
+                       [ngClass]="documentsUploades['DEMANDE_MANUSCRITE'] ? 'bg-green-500' : 'bg-gray-100 group-hover:bg-secondary-100'">
+                    <svg *ngIf="!documentsUploades['DEMANDE_MANUSCRITE']" class="w-5 h-5 text-gray-500 group-hover:text-secondary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <svg *ngIf="documentsUploades['DEMANDE_MANUSCRITE']" class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-semibold text-gray-900 text-sm">Demande manuscrite adressée au DG <span class="text-red-500">*</span></p>
+                  <p class="text-xs truncate" [ngClass]="documentsUploades['DEMANDE_MANUSCRITE'] ? 'text-green-600 font-medium' : 'text-gray-500'">
+                    {{ documentsUploades['DEMANDE_MANUSCRITE'] ? documentsUploades['DEMANDE_MANUSCRITE'].name : 'PDF uniquement (max 5Mo)' }}
+                  </p>
+                </div>
+                <div class="flex-shrink-0">
+                  <label *ngIf="!documentsUploades['DEMANDE_MANUSCRITE']"
+                         class="inline-flex items-center gap-1.5 cursor-pointer px-3 py-2 bg-secondary-500 text-white text-xs font-semibold rounded-lg hover:bg-secondary-600 active:scale-95 transition-all shadow-sm">
+                    <input type="file" accept=".pdf" class="hidden" (change)="onFileSelected($event, 'DEMANDE_MANUSCRITE')">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    <span class="hidden sm:inline">Choisir</span>
+                  </label>
+                  <button *ngIf="documentsUploades['DEMANDE_MANUSCRITE']" (click)="removeDocument('DEMANDE_MANUSCRITE')"
+                          class="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-colors active:scale-95">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Documents additionnels selon le profil (sans DEMANDE_MANUSCRITE qui est déjà dans les obligatoires) -->
+        <div *ngIf="getDocumentsRequisProfilFiltres().length > 0" class="mb-4">
+          <h3 class="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2 uppercase tracking-wide">
+            <svg class="w-4 h-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Documents complémentaires
+          </h3>
+
+          <div class="space-y-2">
+            <ng-container *ngFor="let docType of getDocumentsRequisProfilFiltres(); let i = index; trackBy: trackByDocCode">
+              <div class="group relative p-3 border-2 rounded-xl transition-all duration-200"
+                   [ngClass]="documentsUploades[docType.code] ? 'border-green-400 bg-green-50 shadow-sm shadow-green-100' : 'border-gray-200 bg-white hover:border-primary-300 hover:bg-primary-50/30'">
+                <div class="flex items-center gap-3">
+                  <div class="relative flex-shrink-0">
+                    <div class="w-11 h-11 rounded-xl flex items-center justify-center transition-colors"
+                         [ngClass]="documentsUploades[docType.code] ? 'bg-green-500' : 'bg-gray-100 group-hover:bg-primary-100'">
+                      <svg *ngIf="!documentsUploades[docType.code]" class="w-5 h-5 text-gray-500 group-hover:text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <svg *ngIf="documentsUploades[docType.code]" class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="font-semibold text-gray-900 text-sm">
+                      {{ docType.label }}
+                      <span *ngIf="docType.required" class="text-red-500">*</span>
+                    </p>
+                    <p class="text-xs truncate" [ngClass]="documentsUploades[docType.code] ? 'text-green-600 font-medium' : 'text-gray-500'">
+                      {{ documentsUploades[docType.code] ? documentsUploades[docType.code].name : 'PDF uniquement (max 5Mo)' }}
+                    </p>
+                  </div>
+                  <div class="flex-shrink-0">
+                    <!-- Utiliser un label avec for pour les documents complémentaires -->
+                    <input type="file"
+                           [id]="'doc-input-' + docType.code"
+                           accept="application/pdf,.pdf"
+                           class="sr-only"
+                           (change)="onDocumentFileChange($event, docType.code)">
+                    <!-- Label comme bouton pour déclencher l'input -->
+                    <label *ngIf="!documentsUploades[docType.code]"
+                           [for]="'doc-input-' + docType.code"
+                           class="inline-flex items-center gap-1.5 cursor-pointer px-3 py-2 bg-primary-500 text-white text-xs font-semibold rounded-lg hover:bg-primary-600 active:scale-95 transition-all shadow-sm">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                      </svg>
+                      <span class="hidden sm:inline">Choisir</span>
+                    </label>
+                    <button *ngIf="documentsUploades[docType.code]"
+                            type="button"
+                            (click)="removeDocument(docType.code)"
+                            class="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-colors active:scale-95">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+          </div>
+        </div>
+
+        <!-- Message d'erreur documents -->
+        <div *ngIf="errorDocuments" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl">
+          <div class="flex items-start gap-2">
+            <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p class="text-sm text-red-700">{{ errorDocuments }}</p>
+          </div>
+        </div>
+
+        <!-- Note explicative -->
+        <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl">
+          <div class="flex items-start gap-2">
+            <svg class="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div class="text-xs text-amber-800">
+              <p class="font-semibold mb-0.5">Important</p>
+              <p>Les champs marqués <span class="text-red-500 font-bold">*</span> sont obligatoires. Vous ne pouvez postuler qu'une seule fois à ce profil.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer sticky avec safe area -->
+      <div class="bg-white border-t border-gray-200 px-4 sm:px-6 py-3 sm:py-4 pb-safe">
+        <div class="flex gap-3">
+          <button (click)="fermerPostulerModal()"
+                  class="flex-1 px-4 py-3.5 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 active:scale-[0.98] transition-all"
+                  [disabled]="isPostulating">
+            Annuler
+          </button>
+          <button (click)="postuler()"
+                  class="flex-1 px-4 py-3.5 bg-gradient-to-r from-secondary-500 to-secondary-600 text-white font-semibold rounded-xl hover:from-secondary-600 hover:to-secondary-700 active:scale-[0.98] transition-all shadow-lg shadow-secondary-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center gap-2"
+                  [disabled]="isPostulating || !canSubmitCandidature()">
+            <svg *ngIf="isPostulating" class="w-5 h-5 animate-spin" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <svg *ngIf="!isPostulating" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
+            {{ isPostulating ? 'Envoi...' : 'Soumettre' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =====================================================
+     MODAL DÉTAILS CANDIDATURE
+     ===================================================== -->
+<div *ngIf="showCandidatureDetailModal" class="fixed inset-0 z-50 overflow-y-auto">
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" (click)="fermerCandidatureDetailModal()"></div>
+
+  <div class="flex min-h-full items-center justify-center p-4">
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
+         (click)="$event.stopPropagation()">
+
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-4">
+        <div class="flex items-start justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-white">Détails de la candidature</h2>
+            <p class="text-primary-100 text-sm">{{ selectedCandidature?.campagne?.titreCampagne }}</p>
+          </div>
+          <button (click)="fermerCandidatureDetailModal()" class="p-1.5 hover:bg-white/20 rounded-lg transition-colors">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="p-6">
+        <!-- Profil -->
+        <div class="mb-6">
+          <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Profil</h3>
+          <div class="p-4 bg-gray-50 rounded-xl">
+            <h4 class="font-bold text-gray-900 mb-1">{{ selectedCandidature?.profil?.titreProfil }}</h4>
+            <p class="text-sm text-gray-600">{{ selectedCandidature?.profil?.description }}</p>
+          </div>
+        </div>
+
+        <!-- Statut -->
+        <div class="mb-6">
+          <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Statut</h3>
+          <span class="inline-flex items-center px-4 py-2 text-sm font-semibold rounded-xl"
+                [ngClass]="getStatutClass(selectedCandidature?.statusCandidature || '')">
+            {{ getStatutLabel(selectedCandidature?.statusCandidature || '') }}
+          </span>
+        </div>
+
+        <!-- Dates -->
+        <div class="grid grid-cols-2 gap-4">
+          <div class="p-4 bg-primary-50 rounded-xl">
+            <p class="text-sm text-primary-600 font-medium mb-1">Date de candidature</p>
+            <p class="text-lg font-bold text-primary-700">{{ selectedCandidature?.dateCandidature | date:'dd/MM/yyyy' }}</p>
+          </div>
+          <div class="p-4 bg-gray-50 rounded-xl" *ngIf="selectedCandidature?.dateModification">
+            <p class="text-sm text-gray-600 font-medium mb-1">Dernière mise à jour</p>
+            <p class="text-lg font-bold text-gray-700">{{ selectedCandidature?.dateModification | date:'dd/MM/yyyy' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="bg-gray-50 px-6 py-4 border-t">
+        <button (click)="fermerCandidatureDetailModal()"
+                class="w-full px-4 py-3 bg-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-300 transition-colors">
+          Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

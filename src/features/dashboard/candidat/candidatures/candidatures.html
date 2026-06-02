@@ -1,0 +1,635 @@
+<!-- candidatures.html — Design unifié profil SONABHY -->
+<div class="min-h-screen bg-slate-50">
+
+  <!-- ══════════════════════════════════════════════════════
+       HERO
+       ══════════════════════════════════════════════════════ -->
+  <div class="relative bg-slate-900 overflow-hidden">
+    <div class="absolute inset-0 opacity-[0.04]"
+         style="background-image: radial-gradient(circle, #ffffff 1px, transparent 1px); background-size: 28px 28px;"></div>
+    <div class="absolute inset-0 flex items-start justify-center pointer-events-none pt-8">
+      <div class="w-[500px] h-[200px] bg-primary-500/10 rounded-full blur-3xl"></div>
+    </div>
+    <div class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary-500/40 to-transparent"></div>
+
+    <div class="container-custom relative z-10 py-10 md:py-14">
+
+      <div class="flex flex-row items-center gap-4 md:gap-6">
+
+        <!-- Icône -->
+        <div class="w-14 h-14 md:w-20 md:h-20 bg-primary-500 rounded-2xl flex items-center justify-center
+                    text-white shadow-2xl ring-4 ring-white/10 flex-shrink-0">
+          <svg class="w-7 h-7 md:w-10 md:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+        </div>
+
+        <!-- Identité -->
+        <div class="flex-1 min-w-0 text-left">
+          <p class="text-primary-400 text-xs font-semibold uppercase tracking-widest">Dashboard candidat</p>
+          <h1 class="text-xl md:text-3xl font-bold text-white mt-0.5 tracking-tight">Mes Candidatures</h1>
+          <p class="text-xs md:text-sm text-gray-400 mt-1">Suivez l'état de toutes vos candidatures sur SONABHY Portail</p>
+        </div>
+
+        <!-- Bouton CTA -->
+        <a routerLink="/dashboard/candidat/opportunites/recrutements"
+           class="flex items-center gap-1.5 md:gap-2 px-3 md:px-5 py-2 md:py-2.5 bg-primary-500 hover:bg-primary-600 text-white
+                  text-xs md:text-sm font-medium rounded-xl transition-all shadow-lg shadow-primary-500/25 flex-shrink-0">
+          <svg class="w-3.5 h-3.5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <span class="hidden sm:inline">Voir les offres</span>
+          <span class="sm:hidden">Offres</span>
+        </a>
+
+      </div>
+
+      <!-- Stats row -->
+      <div class="grid grid-cols-4 gap-0 mt-8 pt-8 border-t border-white/10">
+        <div class="text-center px-2 sm:px-4">
+          <p class="text-xl sm:text-2xl md:text-3xl font-bold text-white">{{ candidatures.length }}</p>
+          <p class="text-[10px] sm:text-xs text-gray-400 mt-1 uppercase tracking-wide">Total</p>
+        </div>
+        <div class="text-center px-2 sm:px-4 border-x border-white/10">
+          <p class="text-xl sm:text-2xl md:text-3xl font-bold text-green-400">{{ getCountValidees() }}</p>
+          <p class="text-[10px] sm:text-xs text-gray-400 mt-1 uppercase tracking-wide">Validées</p>
+        </div>
+        <div class="text-center px-2 sm:px-4 border-r border-white/10">
+          <p class="text-xl sm:text-2xl md:text-3xl font-bold text-amber-400">{{ getCountEnCours() }}</p>
+          <p class="text-[10px] sm:text-xs text-gray-400 mt-1 uppercase tracking-wide">En cours</p>
+        </div>
+        <div class="text-center px-2 sm:px-4">
+          <p class="text-xl sm:text-2xl md:text-3xl font-bold text-red-400">{{ getCountRejetees() }}</p>
+          <p class="text-[10px] sm:text-xs text-gray-400 mt-1 uppercase tracking-wide">Rejetées</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       CONTENU
+       ══════════════════════════════════════════════════════ -->
+  <div class="container-custom py-8 md:py-12">
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+      <!-- ── Colonne principale (2/3) ── -->
+      <div class="lg:col-span-2 space-y-6">
+
+        <!-- Section header -->
+        <div>
+          <span class="text-primary-500 text-xs font-semibold uppercase tracking-widest">Suivi en temps réel</span>
+          <h2 class="text-xl font-bold text-gray-900 mt-1">Liste des candidatures</h2>
+          <div class="w-12 h-0.5 bg-primary-500 mt-3 rounded-full"></div>
+        </div>
+
+        <!-- Filtres -->
+        <div class="bg-white border border-gray-100 rounded-2xl p-4 md:p-5 shadow-sm">
+          <div class="flex flex-row gap-3">
+
+            <!-- Filtre statut -->
+            <div class="relative flex-1 min-w-0">
+              <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                </svg>
+              </div>
+              <select class="w-full pl-10 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 text-sm
+                             focus:border-primary-500 focus:bg-white focus:outline-none transition-all appearance-none cursor-pointer"
+                      [(ngModel)]="filtreStatut" (change)="filtrerCandidatures()">
+                <option value="">Tous les statuts</option>
+                <option value="SOUMISE">Soumise</option>
+                <option value="EN_VERIFICATION">En vérification</option>
+                <option value="EN_EXAMEN">En examen</option>
+                <option value="ACCEPTEE">Acceptée</option>
+                <option value="REJETEE">Rejetée</option>
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- Recherche -->
+            <div class="relative flex-1 min-w-0">
+              <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+              </div>
+              <input type="text"
+                     class="w-full pl-10 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 text-sm
+                            focus:border-primary-500 focus:bg-white focus:outline-none transition-all"
+                     placeholder="Rechercher un poste..."
+                     [(ngModel)]="searchTerm"
+                     (input)="filtrerCandidatures()">
+              <button *ngIf="searchTerm"
+                      (click)="searchTerm = ''; filtrerCandidatures()"
+                      class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+
+          </div>
+
+          <!-- Tags filtres actifs -->
+          <div *ngIf="filtreStatut || searchTerm" class="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+            <span class="text-xs text-gray-500 font-medium">Filtres actifs :</span>
+            <span *ngIf="filtreStatut"
+                  class="inline-flex items-center gap-1.5 px-3 py-1 bg-primary-50 text-primary-700 text-xs font-semibold rounded-full border border-primary-100">
+              {{ filtreStatut }}
+              <button (click)="filtreStatut = ''; filtrerCandidatures()">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </span>
+            <span *ngIf="searchTerm"
+                  class="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 text-gray-700 text-xs font-semibold rounded-full">
+              "{{ searchTerm }}"
+              <button (click)="searchTerm = ''; filtrerCandidatures()">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </span>
+            <button (click)="filtreStatut = ''; searchTerm = ''; filtrerCandidatures()"
+                    class="ml-auto text-xs text-red-500 hover:text-red-700 font-semibold transition-colors">
+              Effacer tout
+            </button>
+          </div>
+        </div>
+
+        <!-- Loader -->
+        <div *ngIf="isLoading" class="flex justify-center py-10">
+          <div class="animate-spin rounded-full h-10 w-10 border-[3px] border-primary-100" style="border-top-color:#c0392b;"></div>
+        </div>
+
+        <!-- Message d'erreur -->
+        <div *ngIf="errorMessage && !isLoading"
+             class="flex items-center gap-3 bg-red-50 border border-red-100 text-red-700 px-5 py-4 rounded-2xl">
+          <svg class="w-5 h-5 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span class="text-sm font-medium">{{ errorMessage }}</span>
+        </div>
+
+        <!-- Liste des candidatures -->
+        <div *ngIf="!isLoading && candidaturesFiltrees.length > 0" class="space-y-3">
+
+          <div *ngFor="let candidature of candidaturesFiltrees; let i = index"
+               class="group bg-white rounded-2xl border border-gray-100 hover:border-primary-200 hover:shadow-md transition-all duration-300 cursor-pointer overflow-hidden"
+               (click)="voirDetails(candidature.idcandidatures)">
+
+            <!-- Barre de couleur statut -->
+            <div class="h-1 rounded-t-2xl" [ngClass]="getStatusBarClass(candidature.statut)"></div>
+
+            <div class="p-4 md:p-5">
+              <div class="flex items-start md:items-center gap-3 md:gap-4">
+
+                <!-- Numéro (desktop) -->
+                <div class="hidden md:flex w-10 h-10 rounded-xl bg-gray-100 items-center justify-center text-sm font-bold text-gray-400
+                            group-hover:bg-primary-500 group-hover:text-white transition-all duration-300 flex-shrink-0">
+                  {{ i + 1 }}
+                </div>
+
+                <div class="flex-1 min-w-0 flex flex-col gap-2">
+
+                  <!-- Titre + Badge -->
+                  <div class="flex items-start justify-between gap-2">
+                    <h3 class="text-sm md:text-base font-bold text-gray-900 group-hover:text-primary-600 transition-colors leading-snug">
+                      {{ candidature.poste }}
+                    </h3>
+                    <span class="flex-shrink-0 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold"
+                          [ngClass]="getStatutBadgeClass(candidature.statut)">
+                      {{ getStatutLabel(candidature.statut) }}
+                    </span>
+                  </div>
+
+                  <!-- Campagne -->
+                  <div class="flex items-center gap-2 text-xs text-gray-500">
+                    <svg class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                    <span class="truncate">{{ candidature.campagne }}</span>
+                  </div>
+
+                  <!-- Dates + Actions -->
+                  <div class="flex flex-wrap items-center justify-between gap-2">
+
+                    <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-gray-400">
+                      <span class="flex items-center gap-1">
+                        <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        Postulé le {{ candidature.dateCreation | date:'dd MMM yyyy' }}
+                      </span>
+                      <span *ngIf="candidature.dateModification" class="flex items-center gap-1">
+                        <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Maj {{ candidature.dateModification | date:'dd MMM yyyy' }}
+                      </span>
+                    </div>
+
+                    <div class="flex items-center gap-1.5 flex-shrink-0">
+                      <button (click)="voirDetails(candidature.idcandidatures); $event.stopPropagation()"
+                              class="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border
+                                     border-gray-200 bg-white text-gray-500
+                                     hover:border-primary-200 hover:bg-primary-50 hover:text-primary-600 transition-all">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                        Détails
+                      </button>
+                      <button *ngIf="candidature.statut === 'SOUMISE'"
+                              (click)="annulerCandidature(candidature.idcandidatures); $event.stopPropagation()"
+                              class="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border
+                                     border-red-200 bg-red-50 text-red-600
+                                     hover:bg-red-500 hover:text-white hover:border-red-500 transition-all">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        Annuler
+                      </button>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- État vide -->
+        <div *ngIf="!isLoading && candidaturesFiltrees.length === 0"
+             class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <div class="text-center py-14 px-6">
+            <div class="w-14 h-14 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-3">
+              <svg class="w-7 h-7 text-primary-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+            </div>
+            <h3 class="text-sm font-semibold text-gray-800 mb-1">Aucune candidature trouvée</h3>
+            <p class="text-xs text-gray-400 mb-5 max-w-md mx-auto">
+              {{ filtreStatut || searchTerm
+                ? 'Aucune candidature ne correspond à vos critères.'
+                : 'Vous n\'avez pas encore postulé à une offre.' }}
+            </p>
+            <div class="flex flex-wrap gap-3 justify-center">
+              <button *ngIf="filtreStatut || searchTerm"
+                      (click)="filtreStatut = ''; searchTerm = ''; filtrerCandidatures()"
+                      class="inline-flex items-center gap-2 px-5 py-2 bg-gray-100 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-200 transition-colors">
+                Réinitialiser
+              </button>
+              <a routerLink="/dashboard/candidat/opportunites/recrutements"
+                 class="inline-flex items-center gap-2 px-5 py-2 bg-primary-500 text-white text-sm font-semibold rounded-xl
+                        hover:bg-primary-600 transition-colors shadow-sm shadow-primary-500/20">
+                Voir les offres
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div *ngIf="!isLoading && candidaturesFiltrees.length > 0 && totalPages > 1"
+             class="flex flex-col sm:flex-row items-center justify-between gap-4
+                    bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-5">
+          <p class="text-xs text-gray-500">
+            <span class="font-semibold text-gray-900">{{ (currentPage - 1) * itemsPerPage + 1 }}</span>
+            –
+            <span class="font-semibold text-gray-900">{{ Math.min(currentPage * itemsPerPage, candidaturesFiltrees.length) }}</span>
+            sur
+            <span class="font-semibold text-gray-900">{{ candidaturesFiltrees.length }}</span>
+          </p>
+          <nav class="flex items-center gap-1.5">
+            <button (click)="currentPage = currentPage - 1" [disabled]="currentPage === 1"
+                    class="px-3 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              </svg>
+            </button>
+            <button *ngFor="let page of getPageNumbers()"
+                    (click)="currentPage = page"
+                    class="w-9 h-9 rounded-xl text-sm font-medium transition-all"
+                    [ngClass]="page === currentPage ? 'bg-primary-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'">
+              {{ page }}
+            </button>
+            <button (click)="currentPage = currentPage + 1" [disabled]="currentPage === totalPages"
+                    class="px-3 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
+          </nav>
+        </div>
+
+      </div><!-- /colonne principale -->
+
+      <!-- ── Sidebar Desktop (1/3) ── -->
+      <div class="hidden lg:flex flex-col gap-6">
+
+        <!-- Guide des statuts -->
+        <div class="bg-white border border-gray-100 rounded-2xl p-6">
+          <span class="text-primary-500 text-xs font-semibold uppercase tracking-widest">Référence</span>
+          <h3 class="text-base font-bold text-gray-900 mt-1">Guide des statuts</h3>
+          <div class="w-8 h-0.5 bg-primary-500 mt-3 mb-5 rounded-full"></div>
+
+          <ul class="space-y-3.5">
+            <li class="flex items-start gap-2.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-yellow-400 flex-shrink-0 mt-1.5"></span>
+              <div>
+                <p class="text-sm font-semibold text-gray-800">Soumise</p>
+                <p class="text-xs text-gray-500 mt-0.5">Candidature envoyée, en attente de traitement</p>
+              </div>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-blue-500 flex-shrink-0 mt-1.5"></span>
+              <div>
+                <p class="text-sm font-semibold text-gray-800">En vérification</p>
+                <p class="text-xs text-gray-500 mt-0.5">L'équipe RH étudie votre dossier</p>
+              </div>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-green-500 flex-shrink-0 mt-1.5"></span>
+              <div>
+                <p class="text-sm font-semibold text-gray-800">Acceptée</p>
+                <p class="text-xs text-gray-500 mt-0.5">Félicitations, vous êtes retenu(e)</p>
+              </div>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-red-500 flex-shrink-0 mt-1.5"></span>
+              <div>
+                <p class="text-sm font-semibold text-gray-800">Rejetée</p>
+                <p class="text-xs text-gray-500 mt-0.5">Candidature non retenue pour ce poste</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Navigation rapide -->
+        <div class="bg-white border border-gray-100 rounded-2xl p-6">
+          <span class="text-primary-500 text-xs font-semibold uppercase tracking-widest">Navigation</span>
+          <h3 class="text-base font-bold text-gray-900 mt-1">Accès rapide</h3>
+          <div class="w-8 h-0.5 bg-primary-500 mt-3 mb-5 rounded-full"></div>
+
+          <div class="space-y-1.5">
+            <a routerLink="/dashboard/candidat"
+               class="group flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-primary-50 transition-colors">
+              <div class="w-8 h-8 bg-primary-50 rounded-lg flex items-center justify-center flex-shrink-0
+                          group-hover:bg-primary-500 transition-all duration-200">
+                <svg class="w-4 h-4 text-primary-500 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+              </div>
+              <span class="text-sm font-medium text-gray-700 group-hover:text-primary-600 transition-colors flex-1">Tableau de bord</span>
+              <svg class="w-4 h-4 text-gray-300 group-hover:text-primary-400 group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+              </svg>
+            </a>
+
+            <a routerLink="/dashboard/candidat/opportunites/recrutements"
+               class="group flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-primary-50 transition-colors">
+              <div class="w-8 h-8 bg-primary-50 rounded-lg flex items-center justify-center flex-shrink-0
+                          group-hover:bg-primary-500 transition-all duration-200">
+                <svg class="w-4 h-4 text-primary-500 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+              </div>
+              <span class="text-sm font-medium text-gray-700 group-hover:text-primary-600 transition-colors flex-1">Recrutements</span>
+              <svg class="w-4 h-4 text-gray-300 group-hover:text-primary-400 group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+              </svg>
+            </a>
+
+            <a routerLink="/dashboard/candidat/profil"
+               class="group flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-primary-50 transition-colors">
+              <div class="w-8 h-8 bg-primary-50 rounded-lg flex items-center justify-center flex-shrink-0
+                          group-hover:bg-primary-500 transition-all duration-200">
+                <svg class="w-4 h-4 text-primary-500 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                </svg>
+              </div>
+              <span class="text-sm font-medium text-gray-700 group-hover:text-primary-600 transition-colors flex-1">Mon profil</span>
+              <svg class="w-4 h-4 text-gray-300 group-hover:text-primary-400 group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+
+      </div><!-- /sidebar -->
+
+    </div><!-- /grid -->
+
+    <!-- ── Accès rapide Mobile ── -->
+    <div class="lg:hidden mt-8">
+      <span class="text-primary-500 text-xs font-semibold uppercase tracking-widest">Navigation</span>
+      <h3 class="text-base font-bold text-gray-900 mt-1 mb-1">Accès rapide</h3>
+      <div class="w-8 h-0.5 bg-primary-500 mb-5 rounded-full"></div>
+
+      <div class="grid grid-cols-3 gap-3">
+        <a routerLink="/dashboard/candidat"
+           class="group flex flex-col items-center p-4 bg-white border border-gray-100 rounded-2xl
+                  hover:border-primary-100 hover:shadow-md transition-all duration-300 text-center">
+          <div class="w-12 h-12 bg-primary-50 rounded-xl flex items-center justify-center mb-3 group-hover:bg-primary-500 transition-all duration-300">
+            <svg class="w-6 h-6 text-primary-500 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+            </svg>
+          </div>
+          <p class="text-xs font-medium text-gray-700 group-hover:text-primary-600 transition-colors">Dashboard</p>
+        </a>
+
+        <a routerLink="/dashboard/candidat/opportunites/recrutements"
+           class="group flex flex-col items-center p-4 bg-white border border-gray-100 rounded-2xl
+                  hover:border-primary-100 hover:shadow-md transition-all duration-300 text-center">
+          <div class="w-12 h-12 bg-primary-50 rounded-xl flex items-center justify-center mb-3 group-hover:bg-primary-500 transition-all duration-300">
+            <svg class="w-6 h-6 text-primary-500 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <p class="text-xs font-medium text-gray-700 group-hover:text-primary-600 transition-colors">Recrutements</p>
+        </a>
+
+        <a routerLink="/dashboard/candidat/profil"
+           class="group flex flex-col items-center p-4 bg-white border border-gray-100 rounded-2xl
+                  hover:border-primary-100 hover:shadow-md transition-all duration-300 text-center">
+          <div class="w-12 h-12 bg-primary-50 rounded-xl flex items-center justify-center mb-3 group-hover:bg-primary-500 transition-all duration-300">
+            <svg class="w-6 h-6 text-primary-500 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+          </div>
+          <p class="text-xs font-medium text-gray-700 group-hover:text-primary-600 transition-colors">Mon profil</p>
+        </a>
+      </div>
+    </div>
+
+  </div><!-- /container -->
+
+  <!-- ══════════════════════════════════════════════════════
+       MODAL DÉTAILS CANDIDATURE
+       ══════════════════════════════════════════════════════ -->
+  <div *ngIf="showDetailsModal"
+       class="fixed inset-0 z-[80] flex items-center justify-center p-4">
+
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"
+         (click)="fermerDetailsModal()"></div>
+
+    <!-- Carte modale -->
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
+
+      <!-- Barre couleur statut -->
+      <div class="h-1.5 flex-shrink-0"
+           [ngClass]="getStatusBarClass(selectedCandidature?.statut || '')"></div>
+
+      <!-- En-tête -->
+      <div class="flex items-start justify-between px-6 pt-5 pb-4 border-b border-gray-100 flex-shrink-0">
+        <div class="flex-1 min-w-0 pr-4">
+          <h2 class="text-base font-bold text-gray-900 leading-snug truncate">
+            {{ selectedCandidature?.poste }}
+          </h2>
+          <p class="text-xs text-gray-500 mt-0.5 truncate">{{ selectedCandidature?.campagne }}</p>
+        </div>
+        <div class="flex items-center gap-3 flex-shrink-0">
+          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold"
+                [ngClass]="getStatutBadgeClass(selectedCandidature?.statut || '')">
+            {{ getStatutLabel(selectedCandidature?.statut || '') }}
+          </span>
+          <button (click)="fermerDetailsModal()"
+                  class="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Corps scrollable -->
+      <div class="flex-1 overflow-y-auto px-6 py-4 space-y-5">
+
+        <!-- Infos dates -->
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-gray-50 rounded-xl p-3">
+            <p class="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Date de candidature</p>
+            <p class="text-sm font-semibold text-gray-800 mt-0.5">
+              {{ selectedCandidature?.dateCreation | date:'dd MMM yyyy' }}
+            </p>
+          </div>
+          <div *ngIf="selectedCandidature?.dateModification" class="bg-gray-50 rounded-xl p-3">
+            <p class="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Dernière mise à jour</p>
+            <p class="text-sm font-semibold text-gray-800 mt-0.5">
+              {{ selectedCandidature?.dateModification | date:'dd MMM yyyy' }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Motif de refus -->
+        <div *ngIf="isRejete(selectedCandidature?.statut || '') && selectedCandidature?.motifRefus"
+             class="bg-red-50 border border-red-100 rounded-xl p-4">
+          <p class="text-xs font-semibold text-red-700 uppercase tracking-wide mb-1">Motif du refus</p>
+          <p class="text-sm text-red-800">{{ selectedCandidature?.motifRefus }}</p>
+        </div>
+
+        <!-- Documents -->
+        <div>
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+            Documents joints
+            <span *ngIf="!loadingDetails" class="ml-1 text-gray-400">({{ detailDocuments.length }})</span>
+          </p>
+
+          <!-- Chargement -->
+          <div *ngIf="loadingDetails" class="flex justify-center py-6">
+            <div class="animate-spin rounded-full h-7 w-7 border-[3px] border-primary-100"
+                 style="border-top-color:#c0392b;"></div>
+          </div>
+
+          <!-- Erreur document -->
+          <p *ngIf="errorDocument" class="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">
+            {{ errorDocument }}
+          </p>
+
+          <!-- Aucun document -->
+          <div *ngIf="!loadingDetails && detailDocuments.length === 0"
+               class="text-center py-6 bg-gray-50 rounded-xl">
+            <svg class="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <p class="text-xs text-gray-400">Aucun document joint</p>
+          </div>
+
+          <!-- Liste documents -->
+          <div *ngIf="!loadingDetails && detailDocuments.length > 0" class="space-y-2">
+            <div *ngFor="let doc of detailDocuments"
+                 class="flex items-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors">
+              <!-- Icône -->
+              <div class="w-9 h-9 bg-white border border-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
+                <svg class="w-4 h-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        [attr.d]="getDocumentIcon(doc.document_filename || doc.nom || '')"/>
+                </svg>
+              </div>
+              <!-- Nom -->
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-gray-800 truncate">
+                  {{ doc.typeDocument || doc.type || doc.nom || doc.document_filename || 'Document' }}
+                </p>
+                <p *ngIf="doc.document_filename" class="text-[10px] text-gray-400 truncate">
+                  {{ doc.document_filename }}
+                </p>
+              </div>
+              <!-- Actions -->
+              <div class="flex items-center gap-1.5 flex-shrink-0">
+                <button (click)="voirDocumentModal(doc)"
+                        class="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg
+                               bg-white border border-gray-200 text-gray-600
+                               hover:bg-primary-50 hover:border-primary-200 hover:text-primary-600 transition-all">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                  Voir
+                </button>
+                <button (click)="telechargerDocumentModal(doc)"
+                        class="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg
+                               bg-white border border-gray-200 text-gray-600
+                               hover:bg-gray-100 transition-all">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /corps scrollable -->
+
+      <!-- Pied de page -->
+      <div class="flex-shrink-0 px-6 py-4 border-t border-gray-100 bg-gray-50">
+        <button (click)="fermerDetailsModal()"
+                class="w-full py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200
+                       rounded-xl hover:bg-gray-100 transition-colors">
+          Fermer
+        </button>
+      </div>
+
+    </div><!-- /carte modale -->
+  </div><!-- /modal -->
+
+</div>
