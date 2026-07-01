@@ -34,6 +34,7 @@ interface DemandeStage {
   lettreRecommandation_filename: string | null;
   dernierDiplome_filename: string | null;
   demandeModifEnCours: { id: number; type: 'SUSPENSION' | 'ANNULATION'; dateDebut: string | null; createdDate: string } | null;
+  autorisationRenouvellement: { id: number; expiresAt: string } | null;
 }
 
 interface ConventionRenouvellement {
@@ -1102,19 +1103,36 @@ export class Stages implements OnInit {
     this.accederConvention(stageId, 'telecharger');
   }
 
+  /** Stage actuellement sélectionné pour le modal de renouvellement */
+  get stageRenouvellementEnCours(): DemandeStage | null {
+    if (!this.renouvellementStageId) return null;
+    return this.mesDemandesStage.find(s => s.idstage === this.renouvellementStageId) || null;
+  }
+
   /**
-   * Vérifier si le renouvellement est possible (2 semaines avant la fin)
+   * Vérifier si le renouvellement est possible :
+   * - EN_COURS : dans la fenêtre des 2 semaines avant la fin
+   * - TERMINE / EXPIRE : si une autorisation admin active existe
    */
   peutRenouveler(stage: DemandeStage): boolean {
+    // Cas TERMINE / EXPIRE : autorisation admin requise
+    if (stage.statusStage === 'TERMINE' || stage.statusStage === 'EXPIRE') {
+      if (!stage.autorisationRenouvellement) return false;
+      return new Date(stage.autorisationRenouvellement.expiresAt) > new Date();
+    }
+
+    // Cas EN_COURS : fenêtre des 2 semaines
     if (stage.statusStage !== 'EN_COURS' || !stage.dateFinEffective) {
       return false;
     }
     const dateFin = new Date(stage.dateFinEffective);
+    dateFin.setHours(0, 0, 0, 0);
     const aujourdhui = new Date();
+    aujourdhui.setHours(0, 0, 0, 0);
     const deuxSemainesAvant = new Date(dateFin);
     deuxSemainesAvant.setDate(deuxSemainesAvant.getDate() - 14);
 
-    return aujourdhui >= deuxSemainesAvant && aujourdhui < dateFin;
+    return aujourdhui >= deuxSemainesAvant && aujourdhui <= dateFin;
   }
 
   /**

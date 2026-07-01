@@ -22,10 +22,16 @@ interface StageDocument {
   typeDocument: string;
 }
 
+interface AutorisationRenouvellement {
+  id: number;
+  expiresAt: string;
+}
+
 interface Stage {
   idstage: number;
   typeStage: string;
-  statusStage: 'EN_ATTENTE' | 'PROGRAMMATION_EN_COURS' | 'ACCEPTE' | 'EN_COURS' | 'RAPPORT_SOUMIS' | 'TERMINE' | 'REJETE' | 'ANNULE' | 'SUSPENDU';
+  statusStage: 'EN_ATTENTE' | 'PROGRAMMATION_EN_COURS' | 'ACCEPTE' | 'EN_COURS' | 'RAPPORT_SOUMIS' | 'TERMINE' | 'EXPIRE' | 'REJETE' | 'ANNULE' | 'SUSPENDU';
+  autorisationsRenouvellement?: AutorisationRenouvellement[];
   // Calculé côté backend : false si ce stage n'est visible que via un rôle "lecture globale"
   // et n'appartient pas à la direction de l'agent connecté (actions alors masquées).
   peutAgir?: boolean;
@@ -189,6 +195,48 @@ export class AgentStage implements OnInit {
   // "Imprimer tout"
   printingAllDocs = false;
   private agentNomComplet = '';
+
+  // ── Autorisation de renouvellement ────────────────────────
+  soumissionAutorisation = false;
+  errorAutorisation = '';
+
+  get peutAutoriserRenouvellement(): boolean {
+    return this.authService.hasRole('ADMIN');
+  }
+
+  getAutorisationActive(s: Stage): AutorisationRenouvellement | null {
+    const a = s.autorisationsRenouvellement;
+    if (!a || a.length === 0) return null;
+    const now = new Date();
+    const valid = a.find(x => new Date(x.expiresAt) > now);
+    return valid || null;
+  }
+
+  autoriserRenouvellement(s: Stage): void {
+    if (this.soumissionAutorisation) return;
+    this.soumissionAutorisation = true;
+    this.errorAutorisation = '';
+    this.http.put<any>(`${this.apiUrl}/stages/${s.idstage}/autoriser-renouvellement`, {}).subscribe({
+      next: (res) => {
+        this.soumissionAutorisation = false;
+        // Mettre à jour le stage dans le détail et dans la liste
+        const autorisation: AutorisationRenouvellement = {
+          id: res.data?.id,
+          expiresAt: res.data?.expiresAt,
+        };
+        if (this.detailStage && this.detailStage.idstage === s.idstage) {
+          this.detailStage = { ...this.detailStage, autorisationsRenouvellement: [autorisation] };
+        }
+        this.showSuccessMessage('Autorisation accordée — valide 7 jours. Le candidat a été notifié.');
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.errorAutorisation = err.error?.message || 'Erreur lors de l\'autorisation';
+        this.soumissionAutorisation = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
 
   // ── Modal ÉVALUER rapport de stage ─────────────────────────
   showEvalRapportModal = false;
