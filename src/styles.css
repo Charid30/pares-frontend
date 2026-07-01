@@ -28,12 +28,17 @@
        position:sticky (overflow-x seul implique overflow-y:auto, ce qui
        transforme body en conteneur de scroll sans hauteur fixe). */
     /* Safe area pour iPhone X+ : padding autour du contenu */
-    padding-left:   env(safe-area-inset-left);
-    padding-right:  env(safe-area-inset-right);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
     /* NE PAS ajouter padding-top/bottom ici — géré par les navbars fixées */
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-bold text-gray-900;
   }
 
@@ -67,23 +72,28 @@
    Utilisation : ajouter safe-top, safe-bottom aux éléments fixes
 /* ================================== */
 @layer utilities {
+
   /* Navbar fixe en haut : compenser le notch */
   .safe-top {
     padding-top: env(safe-area-inset-top);
   }
+
   /* Barre fixe en bas : compenser le home indicator */
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
+
   /* Marges latérales en mode paysage (iPhone X landscape) */
   .safe-x {
-    padding-left:  env(safe-area-inset-left);
+    padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
   }
+
   /* Pour les navbars fixed : hauteur = h-16 + safe-area-top */
   .h-safe-navbar {
     height: calc(4rem + env(safe-area-inset-top));
   }
+
   /* Marge de compensation sous une navbar safe */
   .pt-safe-navbar {
     padding-top: calc(4rem + env(safe-area-inset-top));
@@ -94,48 +104,39 @@
 /* CUSTOM COMPONENTS */
 /* ================================== */
 @layer components {
+
   /* Buttons */
   .btn {
-    @apply px-6 py-3 rounded-lg font-medium transition-all duration-200 ease-in-out
-           focus:outline-none focus:ring-2 focus:ring-offset-2
-           disabled:opacity-50 disabled:cursor-not-allowed
-           inline-flex items-center justify-center gap-2;
+    @apply px-6 py-3 rounded-lg font-medium transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2;
   }
 
   .btn-primary {
-    @apply btn bg-primary-500 text-white hover:bg-primary-600 
-           focus:ring-primary-500 shadow-md hover:shadow-lg;
+    @apply btn bg-primary-500 text-white hover:bg-primary-600 focus:ring-primary-500 shadow-md hover:shadow-lg;
   }
 
   .btn-secondary {
-    @apply btn bg-secondary-500 text-white hover:bg-secondary-600 
-           focus:ring-secondary-500 shadow-md hover:shadow-lg;
+    @apply btn bg-secondary-500 text-white hover:bg-secondary-600 focus:ring-secondary-500 shadow-md hover:shadow-lg;
   }
 
   .btn-outline {
-    @apply btn bg-transparent border-2 border-primary-500 text-primary-500 
-           hover:bg-primary-500 hover:text-white focus:ring-primary-500;
+    @apply btn bg-transparent border-2 border-primary-500 text-primary-500 hover:bg-primary-500 hover:text-white focus:ring-primary-500;
   }
 
   .btn-success {
-    @apply btn bg-success text-white hover:bg-success-dark 
-           focus:ring-success shadow-md hover:shadow-lg;
+    @apply btn bg-success text-white hover:bg-success-dark focus:ring-success shadow-md hover:shadow-lg;
   }
 
   .btn-danger {
-    @apply btn bg-danger text-white hover:bg-danger-dark 
-           focus:ring-danger shadow-md hover:shadow-lg;
+    @apply btn bg-danger text-white hover:bg-danger-dark focus:ring-danger shadow-md hover:shadow-lg;
   }
 
   .btn-ghost {
-    @apply btn bg-transparent hover:bg-gray-100 text-gray-700 
-           focus:ring-gray-300;
+    @apply btn bg-transparent hover:bg-gray-100 text-gray-700 focus:ring-gray-300;
   }
 
   /* Cards */
   .card {
-    @apply bg-white rounded-xl shadow-soft hover:shadow-medium 
-           transition-all duration-300 overflow-hidden;
+    @apply bg-white rounded-xl shadow-soft hover:shadow-medium transition-all duration-300 overflow-hidden;
   }
 
   .card-body {
@@ -177,9 +178,7 @@
 
   /* Form Inputs */
   .input {
-    @apply w-full px-4 py-3 rounded-lg border border-gray-300 
-           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-           placeholder-gray-400 transition-all duration-200;
+    @apply w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder-gray-400 transition-all duration-200;
   }
 
   .input-error {
@@ -221,8 +220,7 @@
 
   /* Loading Spinner */
   .spinner {
-    @apply inline-block w-6 h-6 border-2 border-current border-t-transparent 
-           rounded-full animate-spin;
+    @apply inline-block w-6 h-6 border-2 border-current border-t-transparent rounded-full animate-spin;
   }
 
   /* Page Headers */
@@ -285,6 +283,7 @@
 /* CUSTOM UTILITIES */
 /* ================================== */
 @layer utilities {
+
   /* Text Gradients */
   .text-gradient-primary {
     @apply bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent;
@@ -316,6 +315,7 @@
   0% {
     background-position: -1000px 0;
   }
+
   100% {
     background-position: 1000px 0;
   }
@@ -344,6 +344,7 @@
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -355,6 +356,7 @@
     transform: translateX(-100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -383,12 +385,13 @@
     opacity: 0;
     transform: translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-router-outlet + * {
+router-outlet+* {
   animation: routeEnter 0.22s ease-out;
 }
