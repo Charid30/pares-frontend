@@ -93,6 +93,15 @@
               {{ role.description }}
               <span class="ml-1 text-xs font-normal text-gray-400">({{ role.accronyme }})</span>
             </h3>
+            <span *ngIf="role.lectureGlobale"
+                  class="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                  style="background:#eaf2fb; color:#2563eb;">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              </svg>
+              Lecture globale
+            </span>
           </div>
         </div>
 
@@ -246,6 +255,22 @@
                  (focus)="$event.target.style.boxShadow='0 0 0 2px #c0392b40'"
                  (blur)="$event.target.style.boxShadow='none'">
         </div>
+
+        <!-- Lecture globale (sous-admin) -->
+        <label class="flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors"
+               [style]="formLectureGlobale ? 'background:#eaf2fb; border-color:#93c5fd;' : 'background:#f9fafb; border-color:#e5e7eb;'">
+          <input type="checkbox"
+                 [(ngModel)]="formLectureGlobale"
+                 (change)="onToggleLectureGlobale()"
+                 class="mt-0.5 w-4 h-4 rounded flex-shrink-0"
+                 style="accent-color:#2563eb;">
+          <span>
+            <span class="block text-sm font-medium text-gray-800">Lecture globale (sous-admin)</span>
+            <span class="block text-xs text-gray-500 mt-0.5">
+              Ce rôle pourra uniquement consulter (lecture seule) les modules sélectionnés, sur l'ensemble de la plateforme, sans aucune action ni restriction par direction.
+            </span>
+          </span>
+        </label>
       </div>
 
       <!-- ── Étape 2 : matrice permissions ── -->
@@ -255,6 +280,15 @@
           <span class="font-semibold" style="color:#c0392b;">{{ formDescription }}</span>.
           Vous pourrez les modifier plus tard.
         </p>
+
+        <div *ngIf="isLectureGlobaleContext()"
+             class="flex items-start gap-2 p-3 mb-3 rounded-xl text-xs"
+             style="background:#eaf2fb; color:#1d4ed8;">
+          <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          Rôle "lecture globale" : Consulter s'applique sans restriction de direction. Les autres permissions cochées ci-dessous s'appliqueront elles aussi sans restriction de direction (à utiliser via des écrans dédiés).
+        </div>
 
         <div class="overflow-x-auto rounded-xl border border-gray-100">
           <table class="text-xs w-full" style="min-width:420px;">
@@ -371,6 +405,15 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
           </svg>
         </button>
+      </div>
+
+      <div *ngIf="isLectureGlobaleContext()"
+           class="flex items-start gap-2 p-3 m-4 mb-0 rounded-xl text-xs"
+           style="background:#eaf2fb; color:#1d4ed8;">
+        <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Rôle "lecture globale" : Consulter s'applique sans restriction de direction. Les autres permissions cochées ci-dessous s'appliqueront elles aussi sans restriction de direction (à utiliser via des écrans dédiés).
       </div>
 
       <!-- Matrice -->

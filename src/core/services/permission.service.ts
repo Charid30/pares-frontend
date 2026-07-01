@@ -22,12 +22,12 @@ export class PermissionService {
     return this.http.get<ApiResponse<RoleWithPermissions[]>>(`${this.apiUrl}/roles`);
   }
 
-  createRole(accronyme: string, description: string): Observable<ApiResponse<RoleWithPermissions>> {
-    return this.http.post<ApiResponse<RoleWithPermissions>>(`${this.apiUrl}/roles`, { accronyme, description });
+  createRole(accronyme: string, description: string, lectureGlobale = false): Observable<ApiResponse<RoleWithPermissions>> {
+    return this.http.post<ApiResponse<RoleWithPermissions>>(`${this.apiUrl}/roles`, { accronyme, description, lectureGlobale });
   }
 
-  updateRole(roleId: number, accronyme: string, description: string): Observable<ApiResponse<RoleWithPermissions>> {
-    return this.http.put<ApiResponse<RoleWithPermissions>>(`${this.apiUrl}/roles/${roleId}`, { accronyme, description });
+  updateRole(roleId: number, accronyme: string, description: string, lectureGlobale?: boolean): Observable<ApiResponse<RoleWithPermissions>> {
+    return this.http.put<ApiResponse<RoleWithPermissions>>(`${this.apiUrl}/roles/${roleId}`, { accronyme, description, lectureGlobale });
   }
 
   deleteRole(roleId: number): Observable<ApiResponse<void>> {

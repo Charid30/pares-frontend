@@ -1,7 +1,7 @@
 import { Component, OnInit, AfterViewInit, ElementRef, ViewChild, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { DashboardService, RecentActivity, PendingItem } from '../../../../core/services/dashboard.service';
+import { DashboardService, RecentActivity, PendingItem, StagesDonut, AudiencesStats } from '../../../../core/services/dashboard.service';
 import { Chart, registerables } from 'chart.js';
 
 // Enregistrer tous les composants Chart.js
@@ -28,10 +28,19 @@ interface StatCard {
 })
 export class AdminDashboard implements OnInit, AfterViewInit {
   @ViewChild('chartCanvas') chartCanvas!: ElementRef<HTMLCanvasElement>;
-  // isLoading = true;
+  @ViewChild('donutCanvas') donutCanvas!: ElementRef<HTMLCanvasElement>;
 
   currentDate = new Date();
   chart: Chart | null = null;
+  donutChart: Chart | null = null;
+
+  // Données donut + audiences
+  stagesDonut: StagesDonut = {
+    labels: ['En attente', 'En traitement', 'Acceptés', 'En cours', 'Terminés', 'Rejetés'],
+    values: [0, 0, 0, 0, 0, 0],
+    colors: ['#F59E0B', '#6366F1', '#10B981', '#3B82F6', '#8B5CF6', '#EF4444'],
+  };
+  audiencesStats: AudiencesStats = { total: 0, enAttente: 0, acceptees: 0, rejetees: 0 };
 
   // Statistiques principales - initialisées avec des valeurs par défaut
   stats: StatCard[] = [
@@ -58,15 +67,15 @@ export class AdminDashboard implements OnInit, AfterViewInit {
       route: '/admin/stages'
     },
     {
-      label: 'Campagnes actives',
+      label: 'Audiences',
       value: 0,
       change: 0,
       changeType: 'neutral',
-      icon: 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
+      icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
       color: 'text-primary-600',
       bgColor: 'bg-primary-50',
       accentClass: 'bg-primary-500',
-      route: '/admin/recrutements'
+      route: '/admin/audiences'
     },
     {
       label: 'Offres commerciales',
@@ -85,7 +94,7 @@ export class AdminDashboard implements OnInit, AfterViewInit {
   secondaryStats = {
     aidesSociales: { active: 0, demandes: 0 },
     utilisateurs: { total: 0, admins: 0 },
-    candidaturesEnAttente: 0,
+    stagesEnAttente: 0,
     tauxValidation: 0
   };
 
@@ -99,7 +108,8 @@ export class AdminDashboard implements OnInit, AfterViewInit {
   chartData = {
     labels: [] as string[],
     candidats: [] as number[],
-    stagesValides: [] as number[]
+    stagesValides: [] as number[],
+    stagesSoumis: [] as number[]
   };
 
   constructor(
@@ -113,8 +123,11 @@ export class AdminDashboard implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    // Initialiser le graphique après le chargement de la vue
-    setTimeout(() => this.initChart(), 100);
+    // Initialiser les graphiques après le chargement de la vue
+    setTimeout(() => {
+      this.initChart();
+      this.initDonutChart();
+    }, 100);
   }
 
   loadDashboardData(): void {
@@ -150,15 +163,15 @@ export class AdminDashboard implements OnInit, AfterViewInit {
                 route: '/admin/stages'
               },
               {
-                label: 'Campagnes actives',
-                value: data.mainStats.recrutements.campagnesActives,
+                label: 'Audiences',
+                value: data.mainStats.audiences.total,
                 change: 0,
                 changeType: 'neutral',
-                icon: 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
+                icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
                 color: 'text-primary-600',
                 bgColor: 'bg-primary-50',
                 accentClass: 'bg-primary-500',
-                route: '/admin/recrutements'
+                route: '/admin/audiences'
               },
               {
                 label: 'Offres commerciales',
@@ -192,6 +205,17 @@ export class AdminDashboard implements OnInit, AfterViewInit {
             if (data.chartData) {
               this.chartData = data.chartData;
               this.updateChart();
+            }
+
+            // Donut chart stages
+            if (data.stagesDonut) {
+              this.stagesDonut = data.stagesDonut;
+              this.updateDonutChart();
+            }
+
+            // Audiences stats
+            if (data.audiencesStats) {
+              this.audiencesStats = data.audiencesStats;
             }
           }
 
@@ -244,6 +268,19 @@ export class AdminDashboard implements OnInit, AfterViewInit {
             pointRadius: 4,
             pointHoverRadius: 6,
             pointBackgroundColor: '#10B981',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2
+          },
+          {
+            label: 'Stages soumis',
+            data: this.chartData.stagesSoumis.length > 0 ? this.chartData.stagesSoumis : [0, 0, 0, 0, 0, 0],
+            borderColor: '#F59E0B',
+            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            pointBackgroundColor: '#F59E0B',
             pointBorderColor: '#fff',
             pointBorderWidth: 2
           }
@@ -322,8 +359,92 @@ export class AdminDashboard implements OnInit, AfterViewInit {
       this.chart.data.labels = this.chartData.labels;
       this.chart.data.datasets[0].data = this.chartData.candidats;
       this.chart.data.datasets[1].data = this.chartData.stagesValides;
+      this.chart.data.datasets[2].data = this.chartData.stagesSoumis;
       this.chart.update();
     }
+  }
+
+  initDonutChart(): void {
+    if (!this.donutCanvas) return;
+    const ctx = this.donutCanvas.nativeElement.getContext('2d');
+    if (!ctx) return;
+
+    this.donutChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: this.stagesDonut.labels,
+        datasets: [{
+          data: this.stagesDonut.values,
+          backgroundColor: this.stagesDonut.colors,
+          borderWidth: 2,
+          borderColor: '#fff',
+          hoverBorderWidth: 3,
+          hoverOffset: 6,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '68%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(17, 24, 39, 0.92)',
+            titleColor: '#fff',
+            bodyColor: '#fff',
+            padding: 10,
+            cornerRadius: 8,
+            displayColors: true,
+            boxWidth: 10,
+            boxHeight: 10,
+            callbacks: {
+              label: (ctx) => ` ${ctx.label}: ${ctx.parsed}`,
+            }
+          }
+        }
+      }
+    });
+  }
+
+  updateDonutChart(): void {
+    if (!this.donutChart) return;
+    this.donutChart.data.datasets[0].data = this.stagesDonut.values;
+    this.donutChart.update();
+  }
+
+  /** Calcul du total pour affichage au centre du donut */
+  get donutTotal(): number {
+    return this.stagesDonut.values.reduce((sum, v) => sum + v, 0);
+  }
+
+  exporterCSV(): void {
+    // Export récapitulatif du tableau de bord en CSV
+    const BOM = '﻿';
+    const today = new Date().toLocaleDateString('fr-FR');
+    const rows: string[][] = [
+      ['Tableau de bord PARES — Export du ' + today],
+      [],
+      ['=== CANDIDATS ==='],
+      ['Total', String(this.stats[0]?.value ?? 0)],
+      [],
+      ['=== STAGES PAR STATUT ==='],
+      ...this.stagesDonut.labels.map((label, i) => [label, String(this.stagesDonut.values[i])]),
+      [],
+      ['=== AUDIENCES ==='],
+      ['Total',       String(this.audiencesStats.total)],
+      ['En attente',  String(this.audiencesStats.enAttente)],
+      ['Acceptées',   String(this.audiencesStats.acceptees)],
+      ['Rejetées',    String(this.audiencesStats.rejetees)],
+    ];
+    const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
+    const csv = BOM + rows.map(r => r.map(esc).join(';')).join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `dashboard_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   getLastMonths(count: number): string[] {
@@ -381,7 +502,6 @@ export class AdminDashboard implements OnInit, AfterViewInit {
     const icons: { [key: string]: string } = {
       candidat: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
       stage: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253',
-      recrutement: 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
       offre: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
       aide: 'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z'
     };
@@ -392,7 +512,6 @@ export class AdminDashboard implements OnInit, AfterViewInit {
     const colors: { [key: string]: string } = {
       candidat: 'bg-blue-100 text-blue-600',
       stage: 'bg-yellow-100 text-yellow-600',
-      recrutement: 'bg-primary-100 text-primary-600',
       offre: 'bg-secondary-100 text-secondary-600',
       aide: 'bg-purple-100 text-purple-600'
     };

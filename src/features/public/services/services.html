@@ -19,49 +19,50 @@
     </div>
   </section>
 
-  <!-- Navigation ancres (barre sticky) -->
-  <div class="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-gray-100 shadow-sm">
+  <!-- Navigation ancres -->
+  <div class="bg-white border-b border-gray-100 shadow-sm">
     <div class="container-custom">
       <div class="flex items-center gap-6 overflow-x-auto py-3.5 text-sm font-medium">
-        <a href="#stages"
-           class="whitespace-nowrap transition-colors duration-200 pb-0.5"
+        <button (click)="scrollTo('stages')"
+           class="whitespace-nowrap transition-colors duration-200 pb-0.5 cursor-pointer bg-transparent border-0 p-0"
            [ngClass]="activeSection === 'stages' ? 'text-primary-500 font-semibold border-b-2 border-primary-500' : 'text-gray-500 hover:text-primary-500 border-b-2 border-transparent'">
           Stages
-        </a>
+        </button>
         <span class="text-gray-200">|</span>
-        <a href="#audience"
-           class="whitespace-nowrap transition-colors duration-200 pb-0.5"
+        <button (click)="scrollTo('audience')"
+           class="whitespace-nowrap transition-colors duration-200 pb-0.5 cursor-pointer bg-transparent border-0 p-0"
            [ngClass]="activeSection === 'audience' ? 'text-primary-500 font-semibold border-b-2 border-primary-500' : 'text-gray-500 hover:text-primary-500 border-b-2 border-transparent'">
           Demande d'audience
-        </a>
+        </button>
         <span class="text-gray-200">|</span>
-        <a href="#offres"
-           class="whitespace-nowrap transition-colors duration-200 pb-0.5"
+        <button (click)="scrollTo('offres')"
+           class="whitespace-nowrap transition-colors duration-200 pb-0.5 cursor-pointer bg-transparent border-0 p-0"
            [ngClass]="activeSection === 'offres' ? 'text-primary-500 font-semibold border-b-2 border-primary-500' : 'text-gray-500 hover:text-primary-500 border-b-2 border-transparent'">
           Offres de services
-        </a>
+        </button>
         <span class="text-gray-200">|</span>
-        <a href="#aides"
-           class="whitespace-nowrap transition-colors duration-200 pb-0.5"
+        <button (click)="scrollTo('aides')"
+           class="whitespace-nowrap transition-colors duration-200 pb-0.5 cursor-pointer bg-transparent border-0 p-0"
            [ngClass]="activeSection === 'aides' ? 'text-primary-500 font-semibold border-b-2 border-primary-500' : 'text-gray-500 hover:text-primary-500 border-b-2 border-transparent'">
           Aides & Partenariat
-        </a>
+        </button>
         <span class="text-gray-200">|</span>
-        <a href="#terrain"
-           class="whitespace-nowrap transition-colors duration-200 pb-0.5"
+        <button (click)="scrollTo('terrain')"
+           class="whitespace-nowrap transition-colors duration-200 pb-0.5 cursor-pointer bg-transparent border-0 p-0"
            [ngClass]="activeSection === 'terrain' ? 'text-primary-500 font-semibold border-b-2 border-primary-500' : 'text-gray-500 hover:text-primary-500 border-b-2 border-transparent'">
           Visite de terrain
-        </a>
+        </button>
         <span class="text-gray-200">|</span>
-        <a href="#collecte"
-           class="whitespace-nowrap transition-colors duration-200 pb-0.5"
+        <button (click)="scrollTo('collecte')"
+           class="whitespace-nowrap transition-colors duration-200 pb-0.5 cursor-pointer bg-transparent border-0 p-0"
            [ngClass]="activeSection === 'collecte' ? 'text-primary-500 font-semibold border-b-2 border-primary-500' : 'text-gray-500 hover:text-primary-500 border-b-2 border-transparent'">
           Collecte de données
-        </a>
+        </button>
       </div>
     </div>
   </div>
 
+  <!-- ===== SERVICES ===== -->
   <!-- ===== SERVICES ===== -->
   <section class="py-16">
     <div class="container-custom">

@@ -9,6 +9,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { AdminCandidatService, Candidat, CandidatDetails, CandidatStats, CandidatFilters } from '../../../../core/services/admin-candidat.service';
 import { SearchService } from '../../../../core/services/search.service';
 import { environment } from '../../../../environments/environment';
+import { StatCard } from '../../../../shared/components/stat-card/stat-card';
 
 interface Toast {
   id: number;
@@ -20,7 +21,7 @@ interface Toast {
 @Component({
   selector: 'app-candidats-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, StatCard],
   templateUrl: './candidats-list.html',
   styles: [`
     .toast-enter {
@@ -68,6 +69,11 @@ export class CandidatsList implements OnInit, OnDestroy {
   // Modal suppression
   showDeleteModal = false;
   candidatToDelete: Candidat | null = null;
+
+  // Modal reset mot de passe
+  showResetPasswordModal = false;
+  candidatToReset: Candidat | null = null;
+  resetPasswordForm = { newPassword: '', confirmPassword: '', showPassword: false };
 
   // Formulaire d'édition
   editForm = {
@@ -372,6 +378,56 @@ export class CandidatsList implements OnInit, OnDestroy {
       error: (err) => {
         this.ngZone.run(() => {
           this.showToast('error', 'Erreur', err.error?.message || 'Erreur lors de la suppression');
+          this.submitting = false;
+          this.cdr.detectChanges();
+        });
+      }
+    });
+  }
+
+  // ==================== RESET PASSWORD ====================
+  openResetPasswordModal(candidat: Candidat): void {
+    this.candidatToReset = candidat;
+    this.resetPasswordForm = { newPassword: '', confirmPassword: '', showPassword: false };
+    this.showResetPasswordModal = true;
+  }
+
+  closeResetPasswordModal(): void {
+    this.candidatToReset = null;
+    this.resetPasswordForm = { newPassword: '', confirmPassword: '', showPassword: false };
+    this.showResetPasswordModal = false;
+  }
+
+  confirmResetPassword(): void {
+    if (!this.candidatToReset) return;
+
+    const { newPassword, confirmPassword } = this.resetPasswordForm;
+    if (!newPassword || newPassword.length < 8) {
+      this.showToast('error', 'Erreur', 'Le mot de passe doit contenir au moins 8 caractères');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      this.showToast('error', 'Erreur', 'Les mots de passe ne correspondent pas');
+      return;
+    }
+
+    this.submitting = true;
+    const candidatName = `${this.candidatToReset.prenom} ${this.candidatToReset.nom}`;
+
+    this.adminCandidatService.resetPassword(this.candidatToReset.idcandidats, newPassword).subscribe({
+      next: (response) => {
+        this.ngZone.run(() => {
+          if (response.success) {
+            this.closeResetPasswordModal();
+            this.showToast('success', 'Mot de passe réinitialisé', `Le mot de passe de ${candidatName} a été modifié avec succès`);
+          }
+          this.submitting = false;
+          this.cdr.detectChanges();
+        });
+      },
+      error: (err) => {
+        this.ngZone.run(() => {
+          this.showToast('error', 'Erreur', err.error?.message || 'Erreur lors de la réinitialisation');
           this.submitting = false;
           this.cdr.detectChanges();
         });

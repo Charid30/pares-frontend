@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { environment } from '../../../../../environments/environment';
+import { StatCard } from '../../../../../shared/components/stat-card/stat-card';
 
 interface Offre {
   idoffres: number;
@@ -29,7 +30,7 @@ interface Offre {
 @Component({
   selector: 'app-agent-offre',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, StatCard],
   templateUrl: './agent-offre.html',
 })
 export class AgentOffre implements OnInit {
@@ -52,10 +53,10 @@ export class AgentOffre implements OnInit {
 
   // Statistiques statuts
   statsStatuts = [
-    { value: 'EN_ATTENTE',    label: 'En attente',    dot: 'bg-red-500',    ringClass: 'ring-red-400',    count: 0 },
-    { value: 'EN_TRAITEMENT', label: 'En traitement', dot: 'bg-amber-400',  ringClass: 'ring-amber-400',  count: 0 },
-    { value: 'VALIDEE',       label: 'Validées',       dot: 'bg-green-500',  ringClass: 'ring-green-400',  count: 0 },
-    { value: 'REJETEE',       label: 'Rejetées',       dot: 'bg-red-500',    ringClass: 'ring-red-400',    count: 0 },
+    { value: 'EN_ATTENTE',    label: 'En attente',    dot: 'bg-red-500',    ringClass: 'ring-red-400',    count: 0, accent: 'red',     icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+    { value: 'EN_TRAITEMENT', label: 'En traitement', dot: 'bg-amber-400',  ringClass: 'ring-amber-400',  count: 0, accent: 'amber',   icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15' },
+    { value: 'VALIDEE',       label: 'Validées',       dot: 'bg-green-500',  ringClass: 'ring-green-400',  count: 0, accent: 'emerald', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+    { value: 'REJETEE',       label: 'Rejetées',       dot: 'bg-red-500',    ringClass: 'ring-red-400',    count: 0, accent: 'slate',   icon: 'M6 18L18 6M6 6l12 12' },
   ];
 
   // Modal créer

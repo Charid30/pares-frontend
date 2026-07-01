@@ -1,10 +1,30 @@
 // src/features/dashboard/agent/agent-dashboard/agent-dashboard.ts
-import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
+import {
+  Component, OnInit, OnDestroy, AfterViewInit,
+  ViewChild, ElementRef, ChangeDetectorRef, NgZone,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../../core/services/auth.service';
 import { environment } from '../../../../environments/environment';
+import { StatCard as StatCardComponent } from '../../../../shared/components/stat-card/stat-card';
+import { Chart, registerables } from 'chart.js';
+
+Chart.register(...registerables);
+
+// ── Couleurs hex par module ───────────────────────────────────────────────────
+const MODULE_HEX: Record<string, string> = {
+  CANDIDATURES:     '#ea580c',
+  CANDIDATS:        '#4f46e5',
+  STAGE:            '#059669',
+  SUIVI_STAGE:      '#0d9488',
+  OFFRE:            '#d97706',
+  AIDE:             '#e11d48',
+  DEMANDE_AUDIENCE: '#9333ea',
+  AGENTS:           '#4b5563',
+  SERVICES:         '#0891b2',
+};
 
 // ── Métadonnées par module ────────────────────────────────────────────────────
 interface ModuleMeta {
@@ -17,17 +37,11 @@ interface ModuleMeta {
 }
 
 const MODULE_META: Record<string, ModuleMeta> = {
-  RECRUTEMENT: {
-    label: 'Recrutements',
-    icon: 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
-    route: '/dashboard/agent/recrutements',
-    color: 'text-blue-600', bgColor: 'bg-blue-50', accentClass: 'bg-blue-500',
-  },
   CANDIDATURES: {
     label: 'Candidatures',
     icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
     route: '/dashboard/agent/candidatures',
-    color: 'text-orange-600', bgColor: 'bg-orange-50', accentClass: 'bg-orange-400',
+    color: 'text-orange-600', bgColor: 'bg-orange-50', accentClass: 'bg-orange-500',
   },
   CANDIDATS: {
     label: 'Candidats',
@@ -47,285 +61,335 @@ const MODULE_META: Record<string, ModuleMeta> = {
     route: '/dashboard/agent/suivi-stages',
     color: 'text-teal-600', bgColor: 'bg-teal-50', accentClass: 'bg-teal-500',
   },
+  SUSPENSION_STAGE: {
+    label: 'Suspensions / Annulations',
+    icon: 'M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z',
+    route: '/dashboard/agent/suspensions',
+    color: 'text-orange-600', bgColor: 'bg-orange-50', accentClass: 'bg-orange-500',
+  },
   OFFRE: {
     label: 'Offres Commerciales',
     icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
     route: '/dashboard/agent/offres',
-    color: 'text-amber-600', bgColor: 'bg-amber-50', accentClass: 'bg-amber-400',
+    color: 'text-amber-600', bgColor: 'bg-amber-50', accentClass: 'bg-amber-500',
   },
   AIDE: {
     label: 'Aides Sociales',
     icon: 'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z',
     route: '/dashboard/agent/aides',
-    color: 'text-rose-600', bgColor: 'bg-rose-50', accentClass: 'bg-rose-400',
+    color: 'text-rose-600', bgColor: 'bg-rose-50', accentClass: 'bg-rose-500',
   },
   DEMANDE_AUDIENCE: {
     label: "Demandes d'Audience",
     icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
     route: '/dashboard/agent/audiences',
-    color: 'text-purple-600', bgColor: 'bg-purple-50', accentClass: 'bg-purple-400',
+    color: 'text-purple-600', bgColor: 'bg-purple-50', accentClass: 'bg-purple-500',
   },
   AGENTS: {
     label: 'Agents',
     icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
     route: '/dashboard/agent/agents',
-    color: 'text-gray-600', bgColor: 'bg-gray-50', accentClass: 'bg-gray-400',
+    color: 'text-gray-600', bgColor: 'bg-gray-100', accentClass: 'bg-gray-500',
   },
   SERVICES: {
     label: 'Services',
     icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
     route: '/dashboard/agent/services',
-    color: 'text-cyan-600', bgColor: 'bg-cyan-50', accentClass: 'bg-cyan-400',
+    color: 'text-cyan-600', bgColor: 'bg-cyan-50', accentClass: 'bg-cyan-500',
   },
 };
 
-// ── Interfaces ───────────────────────────────────────────────────────────────
+// ── Interfaces ────────────────────────────────────────────────────────────────
 interface StatCard {
-  module: string;
-  label: string;
-  value: number;
-  subText: string;
-  icon: string;
-  color: string;
-  bgColor: string;
-  accentClass: string;
-  route: string;
+  module:        string;
+  label:         string;
+  value:         number;
+  subText:       string;
+  icon:          string;
+  color:         string;
+  bgColor:       string;
+  accentClass:   string;
+  route:         string;
+  trend:         number | null;
+  sparklineData: number[];
+  sparklinePath: string;
+  sparklineFill: string;
 }
 
+// Carte KPI affichée (répartition par statut), style unifié app-stat-card
+interface KpiCard {
+  label:    string;
+  value:    number;
+  sublabel: string;
+  accent:   string;
+  icon:     string;
+  route:    string;
+}
+
+// Accent (couleur) principal par module pour la carte « Total »
+const MODULE_ACCENT: Record<string, string> = {
+  STAGE: 'emerald', SUIVI_STAGE: 'teal', SUSPENSION_STAGE: 'orange', CANDIDATURES: 'orange',
+  CANDIDATS: 'indigo', OFFRE: 'violet', AIDE: 'rose', DEMANDE_AUDIENCE: 'blue',
+};
+
+// Icônes génériques par statut
+const ICON_CLOCK = 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z';
+const ICON_CHECK = 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z';
+const ICON_PLAY  = 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4';
+
 interface PendingItem {
-  module: string;
-  label: string;
-  count: number;
-  route: string;
+  module:   string;
+  label:    string;
+  count:    number;
+  route:    string;
   priority: 'high' | 'medium' | 'low';
 }
 
 interface QuickLink {
-  label: string;
+  label:       string;
   description: string;
-  icon: string;
-  route: string;
-  color: string;
-  bgColor: string;
+  icon:        string;
+  route:       string;
+  color:       string;
+  bgColor:     string;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 @Component({
   selector: 'app-agent-dashboard',
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, StatCardComponent],
   template: `
-    <div class="space-y-5 pb-4">
+    <div class="space-y-4 pb-6">
 
-      <!-- ── En-tête ──────────────────────────────────────────────────────── -->
-      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div class="h-0.5 bg-gradient-to-r from-red-600 via-red-500 to-red-400"></div>
-        <div class="p-5 sm:p-6 flex items-center justify-between gap-4">
-          <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl bg-slate-900 flex items-center justify-center
-                        text-white font-bold text-lg flex-shrink-0 shadow">
-              {{ initial }}
-            </div>
-            <div>
-              <h2 class="text-lg font-bold text-gray-900 leading-tight">Bonjour, {{ username }}</h2>
-              <div class="flex items-center gap-2 mt-1 flex-wrap">
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-red-50 text-red-700
-                             text-xs font-semibold rounded-md border border-red-100">
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  {{ roleDescription }}
-                </span>
-                <span *ngIf="!isLoading" class="text-xs text-gray-400">
-                  {{ statCards.length }} module(s) avec données
-                </span>
-              </div>
+      <!-- ══════════════════════════════════════════════════════════════════ -->
+      <!-- EN-TÊTE                                                             -->
+      <!-- ══════════════════════════════════════════════════════════════════ -->
+      <div class="flex items-center justify-between gap-4 flex-wrap">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl flex-shrink-0 shadow-sm
+                      bg-gradient-to-br from-red-500 to-red-700
+                      flex items-center justify-center
+                      text-white font-extrabold text-lg select-none">
+            {{ initial }}
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-gray-900 leading-tight">Bonjour, {{ username }}</h1>
+            <div class="flex items-center gap-2 mt-1 flex-wrap">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5
+                           bg-red-50 border border-red-100 rounded-full
+                           text-[11px] font-semibold text-red-600">
+                <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd"
+                        d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                        clip-rule="evenodd"/>
+                </svg>
+                {{ roleDescription }}
+              </span>
+              <span *ngIf="!isLoading && statCards.length > 0"
+                    class="text-[11px] text-gray-400 font-medium">
+                {{ statCards.length }} module(s) actif(s)
+              </span>
             </div>
           </div>
-          <div class="hidden sm:flex flex-col items-end text-right flex-shrink-0">
-            <p class="text-sm font-semibold text-gray-800">{{ todayDate }}</p>
-            <p class="text-xs text-gray-400 mt-0.5">SONABHY Portail</p>
-          </div>
+        </div>
+        <div class="hidden sm:flex flex-col items-end text-right flex-shrink-0">
+          <p class="text-sm font-semibold text-gray-700 capitalize">{{ todayDate }}</p>
+          <p class="text-[11px] text-gray-400 mt-0.5">SONABHY Portail</p>
         </div>
       </div>
 
-      <!-- ── Skeleton de chargement ────────────────────────────────────────── -->
+      <!-- ══════════════════════════════════════════════════════════════════ -->
+      <!-- SKELETON                                                            -->
+      <!-- ══════════════════════════════════════════════════════════════════ -->
       <div *ngIf="isLoading" class="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div *ngFor="let i of [1,2,3,4]"
-             class="bg-white rounded-2xl border border-gray-100 shadow-sm h-36 animate-pulse">
-          <div class="h-full p-5 space-y-3">
-            <div class="flex justify-between">
-              <div class="w-10 h-10 bg-gray-100 rounded-xl"></div>
-            </div>
-            <div class="w-14 h-8 bg-gray-100 rounded"></div>
-            <div class="w-28 h-3 bg-gray-50 rounded"></div>
-            <div class="w-20 h-2 bg-gray-50 rounded"></div>
+             class="bg-white rounded-2xl border border-gray-100 animate-pulse p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="w-10 h-10 bg-gray-100 rounded-xl"></div>
+            <div class="w-12 h-5 bg-gray-100 rounded-full"></div>
           </div>
+          <div class="w-16 h-9 bg-gray-100 rounded-lg"></div>
+          <div class="w-full h-8 bg-gray-50 rounded-lg"></div>
+          <div class="w-24 h-2.5 bg-gray-50 rounded"></div>
         </div>
       </div>
 
-      <!-- ── Cartes de statistiques par module ─────────────────────────── -->
-      <div *ngIf="!isLoading && statCards.length > 0"
-           class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-        <a *ngFor="let card of statCards"
-           [routerLink]="card.route"
-           class="group relative bg-white rounded-2xl shadow-sm border border-gray-100
-                  hover:shadow-md hover:-translate-y-0.5 transition-all duration-200
-                  cursor-pointer overflow-hidden">
-
-          <!-- Bandeau coloré à gauche -->
-          <div class="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl"
-               [ngClass]="card.accentClass"></div>
-
-          <div class="p-4 sm:p-5 pl-5 sm:pl-6">
-            <div class="flex items-start justify-between mb-4">
-              <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                   [ngClass]="card.bgColor">
-                <svg class="w-[18px] h-[18px]" [ngClass]="card.color"
-                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
-                        [attr.d]="card.icon" />
-                </svg>
-              </div>
-            </div>
-
-            <!-- Valeur principale -->
-            <p class="text-3xl sm:text-4xl font-bold text-gray-900 tabular-nums leading-none">
-              {{ card.value | number }}
-            </p>
-            <p class="text-xs sm:text-sm text-gray-500 font-medium mt-2 leading-snug">
-              {{ card.label }}
-            </p>
-
-            <!-- Sous-texte -->
-            <div class="mt-3 pt-3 border-t border-gray-50">
-              <span class="text-xs text-gray-400">{{ card.subText }}</span>
-            </div>
-          </div>
+      <!-- ══════════════════════════════════════════════════════════════════ -->
+      <!-- KPI CARDS — répartition par statut (style unifié)                  -->
+      <!-- ══════════════════════════════════════════════════════════════════ -->
+      <div *ngIf="!isLoading && kpis.length > 0"
+           class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+        <a *ngFor="let k of kpis" [routerLink]="k.route"
+           class="block focus:outline-none hover:-translate-y-0.5 transition-transform duration-200">
+          <app-stat-card [accent]="$any(k.accent)" [iconPath]="k.icon" [label]="k.label"
+            [value]="k.value" [sublabel]="k.sublabel"></app-stat-card>
         </a>
       </div>
 
-      <!-- ── Section inférieure ────────────────────────────────────────────── -->
-      <div *ngIf="!isLoading" class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <!-- ══════════════════════════════════════════════════════════════════ -->
+      <!-- ÉTAT VIDE                                                           -->
+      <!-- ══════════════════════════════════════════════════════════════════ -->
+      <div *ngIf="!isLoading && statCards.length === 0 && quickLinks.length === 0"
+           class="bg-white rounded-2xl border border-gray-100 shadow-sm p-14 text-center">
+        <div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <svg class="w-7 h-7 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+        </div>
+        <p class="text-sm font-bold text-gray-500">Aucun module accessible</p>
+        <p class="text-xs text-gray-300 mt-1">
+          Contactez l'administrateur pour obtenir des permissions
+        </p>
+      </div>
 
-        <!-- À traiter (1/3) -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-          <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+      <!-- ══════════════════════════════════════════════════════════════════ -->
+      <!-- GRAPHIQUE + À TRAITER                                               -->
+      <!-- ══════════════════════════════════════════════════════════════════ -->
+      <div *ngIf="!isLoading && statCards.length > 0"
+           class="grid grid-cols-1 lg:grid-cols-5 gap-4">
+
+        <!-- Graphique d'évolution — 3/5 -->
+        <div class="lg:col-span-3 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div class="flex items-center justify-between px-5 py-3.5 bg-gray-50/70 border-b border-gray-100">
             <div class="flex items-center gap-2">
-              <span class="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block"></span>
-              <h2 class="text-sm font-semibold text-gray-800">À traiter</h2>
+              <span class="w-2 h-2 rounded-full bg-slate-700 flex-shrink-0"></span>
+              <h2 class="text-sm font-bold text-gray-800">Activité — 7 derniers jours</h2>
             </div>
-            <span class="inline-flex items-center justify-center min-w-[22px] h-5 px-1.5
-                         text-xs font-bold rounded-full"
-                  [ngClass]="pendingItems.length > 0
-                              ? 'bg-red-100 text-red-700'
-                              : 'bg-gray-100 text-gray-400'">
+          </div>
+          <div class="p-4 h-52">
+            <canvas #evolutionChart></canvas>
+          </div>
+        </div>
+
+        <!-- À traiter — 2/5 -->
+        <div class="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm
+                    overflow-hidden flex flex-col">
+          <div class="flex items-center justify-between px-5 py-3.5 bg-gray-50/70 border-b border-gray-100">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full flex-shrink-0"
+                    [ngClass]="pendingItems.length > 0 ? 'bg-amber-400 animate-pulse' : 'bg-gray-300'"></span>
+              <h2 class="text-sm font-bold text-gray-800">À traiter</h2>
+            </div>
+            <span class="min-w-[28px] h-6 px-2 inline-flex items-center justify-center
+                         rounded-full text-xs font-extrabold"
+                  [ngClass]="pendingItems.length > 0 ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-400'">
               {{ pendingItems.length }}
             </span>
           </div>
 
-          <div class="flex-1 divide-y divide-gray-50 overflow-y-auto">
+          <div class="flex-1 overflow-y-auto divide-y divide-gray-50/80">
             <a *ngFor="let item of pendingItems"
                [routerLink]="item.route"
-               class="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50/60 transition-colors cursor-pointer">
-              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+               class="flex items-center gap-3 px-5 py-3.5
+                      hover:bg-gray-50/70 transition-colors cursor-pointer group">
+              <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                    [ngClass]="getModuleBg(item.module)">
                 <svg class="w-4 h-4" [ngClass]="getModuleColor(item.module)"
                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
-                        [attr.d]="getModuleIcon(item.module)" />
+                        [attr.d]="getModuleIcon(item.module)"/>
                 </svg>
               </div>
               <div class="flex-1 min-w-0">
-                <p class="text-sm font-semibold text-gray-900 truncate">{{ item.label }}</p>
-                <span class="inline-flex mt-1 px-1.5 py-0.5 text-xs font-semibold rounded-md border"
+                <p class="text-sm font-semibold text-gray-800 group-hover:text-gray-900 truncate">
+                  {{ item.label }}
+                </p>
+                <span class="inline-flex items-center mt-0.5 px-1.5 py-0.5
+                             text-[11px] font-bold rounded border"
                       [ngClass]="getPriorityClass(item.priority)">
                   {{ getPriorityLabel(item.priority) }}
                 </span>
               </div>
-              <span class="text-sm font-bold tabular-nums flex-shrink-0"
-                    [ngClass]="getModuleColor(item.module)">
-                {{ item.count }}
-              </span>
+              <div class="flex items-center gap-1 flex-shrink-0">
+                <span class="text-xl font-extrabold tabular-nums"
+                      [ngClass]="getModuleColor(item.module)">{{ item.count }}</span>
+                <svg class="w-3.5 h-3.5 text-gray-200 group-hover:text-gray-500 transition-colors"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 5l7 7-7 7"/>
+                </svg>
+              </div>
             </a>
 
             <!-- Vide -->
             <div *ngIf="pendingItems.length === 0"
-                 class="flex flex-col items-center justify-center py-10 text-center">
-              <div class="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center mb-3">
-                <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                 class="flex flex-col items-center justify-center py-12 px-5 text-center">
+              <div class="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center mb-3">
+                <svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>
               </div>
-              <p class="text-sm font-medium text-gray-500">Tout est à jour !</p>
+              <p class="text-sm font-bold text-gray-500">Tout est à jour !</p>
               <p class="text-xs text-gray-300 mt-1">Aucun élément en attente</p>
             </div>
           </div>
         </div>
 
-        <!-- Accès rapide (2/3) -->
-        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-          <div class="flex items-center gap-2 mb-4">
-            <span class="w-1.5 h-1.5 rounded-full bg-red-500 inline-block"></span>
-            <h2 class="text-sm font-semibold text-gray-800">Accès rapide</h2>
-            <span class="ml-auto text-xs text-gray-400">{{ quickLinks.length }} modules</span>
-          </div>
+      </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1">
-            <a *ngFor="let link of quickLinks"
-               [routerLink]="link.route"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-transparent
-                      hover:border-gray-100 hover:bg-gray-50 transition-all group cursor-pointer">
-              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                   [ngClass]="link.bgColor">
-                <svg class="w-4 h-4" [ngClass]="link.color"
-                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
-                        [attr.d]="link.icon" />
-                </svg>
-              </div>
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-semibold text-gray-800 group-hover:text-gray-900 truncate">
-                  {{ link.label }}
-                </p>
-                <p class="text-xs text-gray-400 truncate">{{ link.description }}</p>
-              </div>
-              <svg class="w-4 h-4 text-gray-200 group-hover:text-gray-400 flex-shrink-0 transition-colors"
-                   fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-              </svg>
-            </a>
-
-            <!-- Vide -->
-            <div *ngIf="quickLinks.length === 0"
-                 class="col-span-2 flex flex-col items-center justify-center py-10 text-center">
-              <div class="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center mb-3">
-                <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-              </div>
-              <p class="text-sm font-medium text-gray-400">Aucun module accessible</p>
-              <p class="text-xs text-gray-300 mt-1">Contactez l'administrateur</p>
-            </div>
+      <!-- ══════════════════════════════════════════════════════════════════ -->
+      <!-- MODULES DISPONIBLES — tuiles pleine largeur                        -->
+      <!-- ══════════════════════════════════════════════════════════════════ -->
+      <div *ngIf="!isLoading && quickLinks.length > 0"
+           class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-3.5 bg-gray-50/70 border-b border-gray-100">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-red-500 flex-shrink-0"></span>
+            <h2 class="text-sm font-bold text-gray-800">Modules disponibles</h2>
           </div>
+          <span class="text-[11px] font-semibold text-gray-400">{{ quickLinks.length }} accès</span>
         </div>
 
+        <div class="p-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5">
+          <a *ngFor="let link of quickLinks"
+             [routerLink]="link.route"
+             class="group flex flex-col items-center gap-3 p-4 rounded-xl
+                    border border-gray-100 hover:border-gray-200
+                    hover:shadow-lg hover:-translate-y-1
+                    transition-all duration-200 cursor-pointer text-center">
+            <div class="w-12 h-12 rounded-2xl flex items-center justify-center
+                        shadow-sm group-hover:shadow-md transition-shadow duration-200"
+                 [ngClass]="link.bgColor">
+              <svg class="w-5 h-5" [ngClass]="link.color"
+                   fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                      [attr.d]="link.icon"/>
+              </svg>
+            </div>
+            <div class="w-full">
+              <p class="text-xs font-bold text-gray-800 group-hover:text-gray-900 leading-snug">
+                {{ link.label }}
+              </p>
+              <p class="text-[11px] text-gray-400 mt-0.5 leading-snug line-clamp-2">
+                {{ link.description }}
+              </p>
+            </div>
+          </a>
+        </div>
       </div>
 
     </div>
   `,
 })
-export class AgentDashboard implements OnInit {
+export class AgentDashboard implements OnInit, AfterViewInit, OnDestroy {
 
-  username      = '';
-  initial       = '';
+  @ViewChild('evolutionChart') chartCanvas!: ElementRef<HTMLCanvasElement>;
+
+  username        = '';
+  initial         = '';
   roleDescription = '';
-  todayDate     = '';
-  isLoading     = true;
+  todayDate       = '';
+  isLoading       = true;
 
-  statCards:    StatCard[]    = [];
+  statCards:    StatCard[]    = []; // série par module (pour le graphique)
+  kpis:         KpiCard[]     = []; // cartes affichées (répartition par statut)
   pendingItems: PendingItem[] = [];
   quickLinks:   QuickLink[]   = [];
+
+  private evolutionChart: Chart | null = null;
+  private chartReady = false;
 
   private readonly apiUrl = `${environment.apiUrl}/agent-dashboard`;
 
@@ -351,24 +415,40 @@ export class AgentDashboard implements OnInit {
     this.loadStats();
   }
 
+  ngAfterViewInit(): void {
+    this.chartReady = true;
+    if (!this.isLoading && this.statCards.length > 0) {
+      this.initEvolutionChart();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.evolutionChart?.destroy();
+    this.evolutionChart = null;
+  }
+
+  // ── Chargement des données ─────────────────────────────────────────────────
+
   loadStats(): void {
     this.isLoading = true;
     this.http.get<any>(`${this.apiUrl}/stats`, { withCredentials: true }).subscribe({
       next: (response) => {
         this.ngZone.run(() => {
           if (response.success) {
-            const { stats, accessibleModules, pendingItems } = response.data;
-            this.buildStatCards(stats, accessibleModules);
+            const { stats, accessibleModules, pendingItems, evolution } = response.data;
+            this.buildStatCards(stats, accessibleModules, evolution || {});
+            this.buildKpis(stats, accessibleModules);
             this.buildQuickLinks(accessibleModules);
             this.pendingItems = pendingItems || [];
           }
           this.isLoading = false;
           this.cdr.detectChanges();
+          // Initialiser le graphique après que le canvas soit rendu
+          setTimeout(() => this.initEvolutionChart(), 0);
         });
       },
       error: () => {
         this.ngZone.run(() => {
-          // Fallback : afficher les liens depuis le token sans stats
           const modules = this.authService.getAccessibleModules();
           this.buildQuickLinks(modules);
           this.isLoading = false;
@@ -378,28 +458,32 @@ export class AgentDashboard implements OnInit {
     });
   }
 
-  // ── Builders ──────────────────────────────────────────────────────────────
+  // ── Construction des cartes KPI ───────────────────────────────────────────
 
-  private buildStatCards(stats: any, modules: string[]): void {
+  private buildStatCards(stats: any, modules: string[], evolution: Record<string, number[]>): void {
     this.statCards = [];
 
     const add = (module: string, value: number, subText: string) => {
       const m = MODULE_META[module];
       if (!m) return;
+      // Utiliser les données réelles du backend (historique 7 jours)
+      // Fallback : tableau de 0 si le backend ne renvoie pas encore l'historique
+      const sparklineData = (evolution[module] && evolution[module].length === 7)
+        ? evolution[module]
+        : Array(7).fill(0);
+      const { line, fill } = this.buildSparklinePaths(sparklineData);
+      const trend = this.computeTrend(sparklineData);
       this.statCards.push({
         module, label: m.label, value, subText,
         icon: m.icon, color: m.color, bgColor: m.bgColor,
         accentClass: m.accentClass, route: m.route,
+        trend, sparklineData, sparklinePath: line, sparklineFill: fill,
       });
     };
 
     if ((modules.includes('STAGE') || modules.includes('SUIVI_STAGE')) && stats.stages) {
       add('STAGE', stats.stages.total,
         `${stats.stages.enAttente} en attente · ${stats.stages.enCours} en cours`);
-    }
-    if (modules.includes('RECRUTEMENT') && stats.recrutements) {
-      add('RECRUTEMENT', stats.recrutements.campagnesActives,
-        `campagnes actives · ${stats.recrutements.totalCampagnes} au total`);
     }
     if (modules.includes('CANDIDATURES') && stats.candidatures) {
       add('CANDIDATURES', stats.candidatures.total,
@@ -422,9 +506,52 @@ export class AgentDashboard implements OnInit {
     }
   }
 
+  /** Construit les cartes KPI affichées (répartition par statut, style unifié). */
+  private buildKpis(stats: any, modules: string[]): void {
+    this.kpis = [];
+    const push = (label: string, value: number, sublabel: string, accent: string, icon: string, route: string) =>
+      this.kpis.push({ label, value: value ?? 0, sublabel, accent, icon, route });
+
+    if ((modules.includes('STAGE') || modules.includes('SUIVI_STAGE')) && stats.stages) {
+      const r = MODULE_META['STAGE'].route;
+      push('Stages', stats.stages.total, 'Total des demandes', MODULE_ACCENT['STAGE'], MODULE_META['STAGE'].icon, r);
+      push('En attente', stats.stages.enAttente, 'Stages à traiter', 'amber', ICON_CLOCK, r);
+      push('En cours', stats.stages.enCours, 'Stages actifs', 'blue', ICON_PLAY, r);
+    }
+    if (modules.includes('SUSPENSION_STAGE') && stats.suspensions) {
+      const m = MODULE_META['SUSPENSION_STAGE'];
+      push('Suspension / Annulation', stats.suspensions.enAttente, 'Demandes à traiter', 'orange', m.icon, m.route);
+    }
+    if (modules.includes('CANDIDATURES') && stats.candidatures) {
+      const r = MODULE_META['CANDIDATURES'].route;
+      push('Candidatures', stats.candidatures.total, 'Total reçues', MODULE_ACCENT['CANDIDATURES'], MODULE_META['CANDIDATURES'].icon, r);
+      push('En attente', stats.candidatures.enAttente, 'Candidatures à traiter', 'amber', ICON_CLOCK, r);
+    }
+    if (modules.includes('CANDIDATS') && stats.candidats) {
+      const r = MODULE_META['CANDIDATS'].route;
+      push('Candidats', stats.candidats.total, 'Inscrits', MODULE_ACCENT['CANDIDATS'], MODULE_META['CANDIDATS'].icon, r);
+    }
+    if (modules.includes('OFFRE') && stats.offres) {
+      const r = MODULE_META['OFFRE'].route;
+      push('Offres', stats.offres.total, 'Total', MODULE_ACCENT['OFFRE'], MODULE_META['OFFRE'].icon, r);
+      push('En attente', stats.offres.enAttente, 'Offres à traiter', 'amber', ICON_CLOCK, r);
+      push('Validées', stats.offres.validees, 'Offres validées', 'emerald', ICON_CHECK, r);
+    }
+    if (modules.includes('AIDE') && stats.aides) {
+      const r = MODULE_META['AIDE'].route;
+      push('Aides', stats.aides.total, 'Total', MODULE_ACCENT['AIDE'], MODULE_META['AIDE'].icon, r);
+      push('En attente', stats.aides.enAttente, 'Aides à traiter', 'amber', ICON_CLOCK, r);
+      push('Validées', stats.aides.validees, 'Aides validées', 'emerald', ICON_CHECK, r);
+    }
+    if (modules.includes('DEMANDE_AUDIENCE') && stats.audiences) {
+      const r = MODULE_META['DEMANDE_AUDIENCE'].route;
+      push('Audiences', stats.audiences.total, 'Total', MODULE_ACCENT['DEMANDE_AUDIENCE'], MODULE_META['DEMANDE_AUDIENCE'].icon, r);
+      push('En attente', stats.audiences.enAttente, 'Audiences à traiter', 'amber', ICON_CLOCK, r);
+    }
+  }
+
   private buildQuickLinks(modules: string[]): void {
     const descriptions: Record<string, string> = {
-      RECRUTEMENT:      'Gérer les campagnes de recrutement',
       CANDIDATURES:     'Traiter les candidatures reçues',
       CANDIDATS:        'Consulter et gérer les profils',
       STAGE:            'Gérer les demandes de stage',
@@ -448,7 +575,125 @@ export class AgentDashboard implements OnInit {
       }));
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+  // ── Sparklines (données réelles issues du backend) ───────────────────────
+
+  /** Calcule les points SVG (viewBox 0 0 80 32) pour la ligne et l'aire. */
+  private buildSparklinePaths(data: number[]): { line: string; fill: string } {
+    if (!data || data.length < 2) return { line: '', fill: '' };
+    const W = 80, H = 28, PAD = 2;
+    const max = Math.max(...data);
+    const min = Math.min(...data);
+    const range = max - min || 1;
+
+    const pts = data.map((v, i) => ({
+      x: +((i / (data.length - 1)) * W).toFixed(1),
+      y: +(H - ((v - min) / range) * (H - PAD * 2) - PAD).toFixed(1),
+    }));
+
+    const line = pts.map(p => `${p.x},${p.y}`).join(' ');
+    const fill = `${line} ${W},${H + PAD} 0,${H + PAD}`;
+    return { line, fill };
+  }
+
+  /** % d'évolution entre le 1er et le dernier point. Null si tous à 0. */
+  private computeTrend(data: number[]): number | null {
+    if (data.length < 2) return null;
+    const first = data[0];
+    const last  = data[data.length - 1];
+    if (first === 0 && last === 0) return null; // Pas de données, pas de tendance
+    if (first === 0) return null;
+    return Math.round(((last - first) / first) * 100);
+  }
+
+  // ── Graphique Chart.js (données réelles 7 jours) ─────────────────────────
+
+  private initEvolutionChart(): void {
+    if (!this.chartCanvas?.nativeElement || this.evolutionChart || !this.statCards.length) return;
+
+    const ctx = this.chartCanvas.nativeElement.getContext('2d');
+    if (!ctx) return;
+
+    // Labels : 7 derniers jours
+    const labels = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (6 - i));
+      return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
+    });
+
+    // Un dataset par module (max 5 pour lisibilité)
+    const datasets = this.statCards.slice(0, 5).map(card => ({
+      label:                card.label,
+      data:                 card.sparklineData,
+      borderColor:          this.getModuleHex(card.module),
+      backgroundColor:      this.getModuleHex(card.module) + '15',
+      borderWidth:          2,
+      pointRadius:          3,
+      pointHoverRadius:     5,
+      pointBackgroundColor: this.getModuleHex(card.module),
+      tension:              0.4,
+      fill:                 false,
+    }));
+
+    this.evolutionChart = new Chart(ctx, {
+      type: 'line',
+      data: { labels, datasets },
+      options: {
+        responsive:          true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display:  true,
+            position: 'top',
+            align:    'start',
+            labels: {
+              boxWidth:      8,
+              boxHeight:     8,
+              borderRadius:  4,
+              usePointStyle: true,
+              pointStyle:    'circle',
+              font:          { size: 11, weight: 'bold' },
+              color:         '#6b7280',
+              padding:       16,
+            },
+          },
+          tooltip: {
+            mode:            'index',
+            intersect:       false,
+            backgroundColor: '#0f172a',
+            titleColor:      '#f1f5f9',
+            bodyColor:       '#94a3b8',
+            borderColor:     '#334155',
+            borderWidth:     1,
+            padding:         10,
+            titleFont:       { size: 12, weight: 'bold' },
+            bodyFont:        { size: 11 },
+            cornerRadius:    8,
+          },
+        },
+        scales: {
+          x: {
+            grid:   { display: false },
+            ticks:  { font: { size: 11 }, color: '#9ca3af', maxRotation: 0 },
+            border: { display: false },
+          },
+          y: {
+            grid:        { color: '#f3f4f6', drawTicks: false },
+            ticks:       { font: { size: 11 }, color: '#9ca3af', stepSize: 1 },
+            border:      { display: false },
+            beginAtZero: true,
+          },
+        },
+        interaction: { mode: 'nearest', axis: 'x', intersect: false },
+        animation:   { duration: 600, easing: 'easeInOutQuart' },
+      },
+    });
+  }
+
+  // ── Helpers publics (template) ────────────────────────────────────────────
+
+  getModuleHex(module: string): string {
+    return MODULE_HEX[module] ?? '#6b7280';
+  }
 
   getModuleIcon(module: string): string {
     return MODULE_META[module]?.icon ?? '';
@@ -464,13 +709,15 @@ export class AgentDashboard implements OnInit {
 
   getPriorityClass(priority: string): string {
     return ({
-      high:   'bg-red-100 text-red-700 border-red-200',
-      medium: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-      low:    'bg-green-100 text-green-700 border-green-200',
+      high:   'bg-red-50 text-red-700 border-red-200',
+      medium: 'bg-amber-50 text-amber-700 border-amber-200',
+      low:    'bg-emerald-50 text-emerald-700 border-emerald-200',
     } as Record<string, string>)[priority] ?? 'bg-gray-100 text-gray-500 border-gray-200';
   }
 
   getPriorityLabel(priority: string): string {
-    return ({ high: 'Urgent', medium: 'Normal', low: 'Faible' } as Record<string, string>)[priority] ?? 'Normal';
+    return ({
+      high: 'Urgent', medium: 'Normal', low: 'Faible',
+    } as Record<string, string>)[priority] ?? 'Normal';
   }
 }

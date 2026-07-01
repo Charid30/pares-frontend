@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { environment } from '../../../../environments/environment';
 import { Loader } from '../../../../shared/components/loader/loader';
+import { StatCard } from '../../../../shared/components/stat-card/stat-card';
 
 interface BannedIp {
   id: number;
@@ -33,7 +34,7 @@ interface SecurityStats {
 @Component({
   selector: 'app-securite',
   standalone: true,
-  imports: [CommonModule, DatePipe, Loader],
+  imports: [CommonModule, DatePipe, Loader, StatCard],
   templateUrl: './securite.html',
 })
 export class Securite implements OnInit {

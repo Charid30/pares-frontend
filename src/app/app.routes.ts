@@ -6,10 +6,8 @@ import { authGuard } from '../core/guards/auth-guard';
 import { roleGuard } from '../core/guards/role-guard';
 import { noAuthGuard } from '../core/guards/no-auth-guard';
 import { permissionGuard } from '../core/guards/permission-guard';
-import { DashboardLayout } from '../layouts/dashboard-layout/dashboard-layout';
 import { CandidatLayout } from '../layouts/candidat-layout/candidat-layout';
 import { AdminLayout } from '../layouts/admin-layout/admin-layout';
-import { RhLayout } from '../layouts/rh-layout/rh-layout';
 import { AgentLayout } from '../layouts/agent-layout/agent-layout';
 
 export const routes: Routes = [
@@ -81,10 +79,6 @@ export const routes: Routes = [
                 loadComponent: () => import('../features/dashboard/candidat/candidat-dashboard/candidat-dashboard').then(m => m.CandidatDashboard)
             },
             {
-                path: 'candidatures',
-                loadComponent: () => import('../features/dashboard/candidat/candidatures/candidatures').then(m => m.Candidatures)
-            },
-            {
                 path: 'profil',
                 loadComponent: () => import('../features/dashboard/candidat/profil/profil').then(m => m.Profil)
             },
@@ -97,10 +91,6 @@ export const routes: Routes = [
                 loadComponent: () => import('../features/dashboard/candidat/stages/stages').then(m => m.Stages)
             },
             // Opportunités
-            {
-                path: 'opportunites/recrutements',
-                loadComponent: () => import('../features/dashboard/candidat/opportunites/recrutements/recrutements').then(m => m.Recrutements)
-            },
             {
                 path: 'opportunites/offres-commerciales',
                 loadComponent: () => import('../features/dashboard/candidat/opportunites/offres-commerciales/offres-commerciales').then(m => m.OffresCommerciales)
@@ -145,15 +135,10 @@ export const routes: Routes = [
                 path: 'suivi-stages',
                 loadComponent: () => import('../features/dashboard/admin/stages/stages-suivi').then(m => m.StagesSuivi)
             },
-            // Gestion des recrutements
+            // Demandes de suspension / annulation de stage
             {
-                path: 'recrutements',
-                loadComponent: () => import('../features/dashboard/admin/recrutements/recrutements-list').then(m => m.RecrutementsList)
-            },
-            // Candidatures reçues (recrutement)
-            {
-                path: 'candidatures-recrutement',
-                loadComponent: () => import('../features/dashboard/admin/candidatures-recrutement/candidatures-recrutement').then(m => m.CandidaturesRecrutement)
+                path: 'suspensions',
+                loadComponent: () => import('../features/dashboard/admin/suspensions/suspensions-list').then(m => m.SuspensionsList)
             },
             // Gestion des offres commerciales
             {
@@ -180,6 +165,11 @@ export const routes: Routes = [
                 path: 'services',
                 loadComponent: () => import('../features/dashboard/admin/services/services-list').then(m => m.ServicesList)
             },
+            // Gestion des directions
+            {
+                path: 'directions',
+                loadComponent: () => import('../features/dashboard/admin/directions/directions-list').then(m => m.DirectionsList)
+            },
             // Gestion des permissions par rôle
             {
                 path: 'permissions',
@@ -194,6 +184,16 @@ export const routes: Routes = [
             {
                 path: 'profil',
                 loadComponent: () => import('../features/dashboard/admin/profil/admin-profil').then(m => m.AdminProfil)
+            },
+            // Page Activités récentes (Voir tout depuis le dashboard)
+            {
+                path: 'activites',
+                loadComponent: () => import('../features/dashboard/admin/activites/activites').then(m => m.Activites)
+            },
+            // Page Tâches à traiter (Toutes les tâches depuis le dashboard)
+            {
+                path: 'taches',
+                loadComponent: () => import('../features/dashboard/admin/taches/taches').then(m => m.Taches)
             },
             // Journal d'activité (audit logs)
             {
@@ -215,111 +215,6 @@ export const routes: Routes = [
     },
 
     // =====================================================
-    // Routes AGENT RH (avec layout RH couleurs SONABHY)
-    // =====================================================
-    {
-        path: 'dashboard/rh',
-        component: RhLayout,
-        canActivate: [authGuard, roleGuard],
-        data: { roles: ['AGENT_RH'] },
-        children: [
-            // Dashboard principal
-            {
-                path: '',
-                loadComponent: () => import('../features/dashboard/rh/rh-dashboard/rh-dashboard').then(m => m.RhDashboard)
-            },
-            // Campagnes de recrutement + candidatures
-            {
-                path: 'recrutements',
-                loadComponent: () => import('../features/dashboard/rh/rh-recrutements/rh-recrutements').then(m => m.RhRecrutements)
-            },
-            // Liste des candidats
-            {
-                path: 'candidats',
-                loadComponent: () => import('../features/dashboard/rh/rh-candidats/rh-candidats').then(m => m.RhCandidats)
-            },
-            // Offres d'emploi (profils par campagne)
-            {
-                path: 'offres',
-                loadComponent: () => import('../features/dashboard/rh/rh-offres/rh-offres').then(m => m.RhOffres)
-            },
-            // Aides sociales
-            {
-                path: 'aides-sociales',
-                loadComponent: () => import('../features/dashboard/rh/rh-aides-sociales/rh-aides-sociales').then(m => m.RhAidesSociales)
-            },
-            // Rapports et statistiques
-            {
-                path: 'rapports',
-                loadComponent: () => import('../features/dashboard/rh/rh-rapports/rh-rapports').then(m => m.RhRapports)
-            },
-            // Redirection par défaut
-            {
-                path: '**',
-                redirectTo: '',
-                pathMatch: 'full'
-            }
-        ]
-    },
-
-    // Routes des autres dashboards (Financier — generic layout)
-    {
-        path: 'dashboard',
-        component: DashboardLayout,
-        canActivate: [authGuard],
-        children: [
-            // Dashboard AGENT RH (legacy - redirige vers layout dédié)
-            {
-                path: 'rh',
-                redirectTo: '/dashboard/rh',
-                pathMatch: 'full'
-            },
-
-            //Dashboard AGENT FINANCIER
-            {
-                path: 'financier',
-                canActivate: [roleGuard],
-                data: { roles: ['AGENT_FINANCIER'] },
-                loadComponent: () => import('../features/dashboard/financier/financier-dashboard/financier-dashboard').then(m => m.FinancierDashboard)
-            },
-            // Aides sociales — AGENT_FINANCIER
-            {
-                path: 'financier/aides-sociales',
-                canActivate: [roleGuard],
-                data: { roles: ['AGENT_FINANCIER'] },
-                loadComponent: () => import('../features/dashboard/financier/aides-sociales/aides-sociales').then(m => m.FinancierAidesSociales)
-            },
-            // Candidatures aux aides — AGENT_FINANCIER
-            {
-                path: 'financier/candidatures',
-                canActivate: [roleGuard],
-                data: { roles: ['AGENT_FINANCIER'] },
-                loadComponent: () => import('../features/dashboard/financier/candidatures/candidatures').then(m => m.FinancierCandidatures)
-            },
-            // Activités & suivi — AGENT_FINANCIER
-            {
-                path: 'financier/activites',
-                canActivate: [roleGuard],
-                data: { roles: ['AGENT_FINANCIER'] },
-                loadComponent: () => import('../features/dashboard/financier/activites/activites').then(m => m.FinancierActivites)
-            },
-
-            // Redirection par défaut - vers admin
-            {
-                path: 'admin',
-                redirectTo: '/admin/dashboard',
-                pathMatch: 'full'
-            },
-
-            // Redirection par défaut
-            {
-                path: '',
-                redirectTo: '/admin/dashboard',
-                pathMatch: 'full'
-            }
-        ]
-    },
-    // =====================================================
     // Routes AGENT GÉNÉRIQUE (rôles personnalisés)
     // Menu et accès construits dynamiquement selon permissions
     // =====================================================
@@ -333,18 +228,36 @@ export const routes: Routes = [
                 path: '',
                 loadComponent: () => import('../features/dashboard/agent/agent-dashboard/agent-dashboard').then(m => m.AgentDashboard),
             },
-            // Module Recrutement
-            {
-                path: 'recrutements',
-                canActivate: [permissionGuard],
-                data: { module: 'RECRUTEMENT' },
-                loadComponent: () => import('../features/dashboard/agent/modules/recrutement/agent-recrutement').then(m => m.AgentRecrutement),
-            },
-            // Module Stage
+            // Module Stage — menu d'action, limité à la direction de l'agent
             {
                 path: 'stages',
                 canActivate: [permissionGuard],
-                data: { module: 'STAGE' },
+                data: { module: 'STAGE', scope: 'direction' },
+                loadComponent: () => import('../features/dashboard/agent/modules/stage/agent-stage').then(m => m.AgentStage),
+            },
+            // Module Stage — vue globale (rôle "lecture globale" / sous-admin), 3 écrans dédiés
+            {
+                path: 'stages-global/en-attente',
+                canActivate: [permissionGuard],
+                data: { module: 'STAGE', scope: 'global', readOnly: true, statusFilter: 'EN_ATTENTE' },
+                loadComponent: () => import('../features/dashboard/agent/modules/stage/agent-stage').then(m => m.AgentStage),
+            },
+            {
+                path: 'stages-global/approuve',
+                canActivate: [permissionGuard],
+                data: { module: 'STAGE', scope: 'global', readOnly: false, statusFilter: 'PROGRAMMATION_EN_COURS', allowedTransitions: ['ACCEPTE'] },
+                loadComponent: () => import('../features/dashboard/agent/modules/stage/agent-stage').then(m => m.AgentStage),
+            },
+            {
+                path: 'stages-global/en-cours',
+                canActivate: [permissionGuard],
+                data: { module: 'STAGE', scope: 'global', readOnly: true, statusFilter: 'ACCEPTE,EN_COURS' },
+                loadComponent: () => import('../features/dashboard/agent/modules/stage/agent-stage').then(m => m.AgentStage),
+            },
+            {
+                path: 'stages-global/termine',
+                canActivate: [permissionGuard],
+                data: { module: 'STAGE', scope: 'global', readOnly: false, statusFilter: 'RAPPORT_SOUMIS,TERMINE' },
                 loadComponent: () => import('../features/dashboard/agent/modules/stage/agent-stage').then(m => m.AgentStage),
             },
             // Module Offres Commerciales
@@ -381,6 +294,13 @@ export const routes: Routes = [
                 canActivate: [permissionGuard],
                 data: { module: 'SUIVI_STAGE' },
                 loadComponent: () => import('../features/dashboard/agent/modules/suivi-stage/agent-suivi-stage').then(m => m.AgentSuiviStage),
+            },
+            // Module Suspensions / Annulations
+            {
+                path: 'suspensions',
+                canActivate: [permissionGuard],
+                data: { module: 'SUSPENSION_STAGE' },
+                loadComponent: () => import('../features/dashboard/agent/modules/suspensions/agent-suspensions').then(m => m.AgentSuspensions),
             },
             // Module Demandes d'Audience
             {

@@ -13,13 +13,22 @@
         </span>
       </p>
     </div>
-    <button (click)="loadDemandes()"
-            class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 text-sm font-medium rounded-xl hover:bg-gray-50 active:scale-95 transition-all shadow-sm self-start lg:self-center">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-      </svg>
-      Actualiser
-    </button>
+    <div class="flex items-center gap-2 self-start lg:self-center">
+      <button (click)="exporterCSV()"
+              class="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white text-sm font-semibold rounded-xl hover:bg-primary-600 active:scale-95 transition-all shadow-sm cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+        </svg>
+        Exporter CSV
+      </button>
+      <button (click)="loadDemandes()"
+              class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 text-sm font-medium rounded-xl hover:bg-gray-50 active:scale-95 transition-all shadow-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        Actualiser
+      </button>
+    </div>
   </div>
 
   <!-- ── Message succès ──────────────────────────────────────────────────── -->
@@ -33,24 +42,16 @@
   }
 
   <!-- ── Compteurs statuts ────────────────────────────────────────────────── -->
-  <div class="grid grid-cols-3 gap-2 sm:gap-3">
+  <div class="grid grid-cols-3 gap-3 sm:gap-4">
     @for (s of [
-      { statut: 'EN_ATTENTE', label: 'En attente', iconBg: 'bg-blue-50',    iconDot: 'bg-blue-500',    border: 'border-blue-100',    ring: 'ring-blue-400'    },
-      { statut: 'ACCEPTE',    label: 'Acceptées',  iconBg: 'bg-emerald-50', iconDot: 'bg-emerald-500', border: 'border-emerald-100', ring: 'ring-emerald-400' },
-      { statut: 'REJETE',     label: 'Rejetées',   iconBg: 'bg-red-50',     iconDot: 'bg-red-500',     border: 'border-red-100',     ring: 'ring-red-400'     }
+      { statut: 'EN_ATTENTE', label: 'En attente', accent: 'blue',    icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+      { statut: 'ACCEPTE',    label: 'Acceptées',  accent: 'emerald', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+      { statut: 'REJETE',     label: 'Rejetées',   accent: 'rose',    icon: 'M6 18L18 6M6 6l12 12' }
     ]; track s.statut) {
-      <button
-        type="button"
-        class="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow w-full text-left flex items-center gap-2 p-3 sm:p-4 border"
-        [ngClass]="[s.border, filtreStatut === s.statut ? 'ring-2 ' + s.ring : '']"
+      <button type="button" class="text-left w-full focus:outline-none"
         (click)="filtreStatut = filtreStatut === s.statut ? '' : s.statut; appliquerFiltres()">
-        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center flex-shrink-0" [ngClass]="s.iconBg">
-          <span class="w-2.5 h-2.5 rounded-full" [ngClass]="s.iconDot"></span>
-        </div>
-        <div class="min-w-0">
-          <p class="text-lg sm:text-2xl font-bold text-gray-900 leading-none">{{ getCountByStatut(s.statut) }}</p>
-          <p class="text-xs text-gray-400 mt-0.5 truncate">{{ s.label }}</p>
-        </div>
+        <app-stat-card [accent]="$any(s.accent)" [iconPath]="s.icon" [label]="s.label"
+          [value]="getCountByStatut(s.statut)" [active]="filtreStatut === s.statut"></app-stat-card>
       </button>
     }
   </div>
@@ -98,8 +99,34 @@
       </div>
     </div>
 
+    <!-- Filtres date -->
+    <div class="grid grid-cols-2 gap-2">
+      <div class="relative">
+        <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none text-gray-400"
+             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        <input type="date" [(ngModel)]="filtreDateDebut" (change)="appliquerFiltres()"
+               placeholder="Date début"
+               class="w-full pl-8 pr-3 py-2 rounded-xl text-xs font-medium border bg-gray-50 border-gray-200 text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all"
+               [ngClass]="filtreDateDebut ? 'bg-indigo-50 border-indigo-300 text-indigo-800' : ''"/>
+      </div>
+      <div class="relative">
+        <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none text-gray-400"
+             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        <input type="date" [(ngModel)]="filtreDateFin" (change)="appliquerFiltres()"
+               placeholder="Date fin"
+               class="w-full pl-8 pr-3 py-2 rounded-xl text-xs font-medium border bg-gray-50 border-gray-200 text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all"
+               [ngClass]="filtreDateFin ? 'bg-indigo-50 border-indigo-300 text-indigo-800' : ''"/>
+      </div>
+    </div>
+
     <!-- Reset -->
-    @if (searchTerm || filtreStatut || filtreMode) {
+    @if (searchTerm || filtreStatut || filtreMode || filtreDateDebut || filtreDateFin) {
       <div class="flex items-center justify-between pt-1 border-t border-gray-100">
         <span class="text-xs text-gray-400">{{ demandesFiltrees.length }} résultat(s)</span>
         <button (click)="effacerFiltres()"
@@ -577,6 +604,84 @@
             <p>{{ detailDemande.lastModifiedDate | date:'dd/MM/yyyy HH:mm' }}</p>
           </div>
         </div>
+
+        <!-- ══ Affectation direction (admin) ══ -->
+        <div class="rounded-xl border-2 overflow-hidden"
+          style="border-color:#e8c9c9; background:linear-gradient(135deg,#fff5f5,#fff);">
+
+          <!-- En-tête -->
+          <div class="px-3 py-2 border-b flex items-center justify-between" style="border-color:#f5d0d0; background:#fef2f2;">
+            <div class="flex items-center gap-2">
+              <div class="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0" style="background:#c0392b;">
+                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+              </div>
+              <p class="text-[11px] font-bold uppercase tracking-wide" style="color:#7b1515;">Affectation administrative</p>
+            </div>
+            <span class="text-[9px] font-bold px-2 py-0.5 rounded-full"
+              [ngClass]="detailDemande.direction_iddirection ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'">
+              {{ detailDemande.direction_iddirection ? 'Affectée' : 'Non affectée' }}
+            </span>
+          </div>
+
+          <div class="p-3 space-y-3">
+
+            <!-- Direction actuelle si déjà affectée -->
+            @if (detailDemande.direction_iddirection) {
+              <div class="flex items-start gap-2 p-2 rounded-lg bg-green-50 border border-green-100">
+                <svg class="w-3.5 h-3.5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p class="text-[10px] text-green-700">
+                  Affectée à <strong>{{ getDirectionLabel(detailDemande.direction_iddirection) }}</strong>
+                </p>
+              </div>
+            }
+
+            <!-- Dropdown Direction -->
+            <div>
+              <label class="block text-[10px] font-semibold text-gray-600 mb-1">Direction</label>
+              <div class="relative">
+                <select [(ngModel)]="affectationForm.direction_iddirection"
+                  class="w-full px-2.5 py-2 bg-white border border-gray-200 rounded-lg text-xs text-gray-800
+                         focus:border-red-400 focus:ring-0 appearance-none cursor-pointer transition-all">
+                  <option [ngValue]="null">— Aucune direction —</option>
+                  @for (dir of directions; track dir.iddirection) {
+                    <option [ngValue]="dir.iddirection">{{ dir.accronyme }} — {{ dir.nom }}</option>
+                  }
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center">
+                  <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bouton enregistrer -->
+            <button type="button" (click)="sauvegarderAffectation()"
+              [disabled]="savingAffectation"
+              class="w-full py-2 text-white text-xs font-semibold rounded-lg transition-all active:scale-95
+                     disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+              style="background:#c0392b;">
+              @if (savingAffectation) {
+                <svg class="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+              } @else {
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+              }
+              {{ savingAffectation ? 'Enregistrement…' : 'Enregistrer l\'affectation' }}
+            </button>
+
+          </div>
+        </div>
+
       </div>
 
       <!-- Footer -->

@@ -17,54 +17,15 @@
   </div>
 
   <!-- Statistiques -->
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3" *ngIf="stats">
-    <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-indigo-100 hover:shadow-md transition-shadow flex items-center gap-2 sm:gap-3">
-      <div class="w-8 h-8 sm:w-11 sm:h-11 bg-indigo-50 rounded-xl flex items-center justify-center flex-shrink-0">
-        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-      </div>
-      <div class="min-w-0">
-        <p class="text-lg sm:text-2xl font-bold text-gray-900 leading-none">{{ stats.totalAgents }}</p>
-        <p class="text-xs text-gray-400 mt-0.5 truncate">Total</p>
-      </div>
-    </div>
-
-    <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-blue-100 hover:shadow-md transition-shadow flex items-center gap-2 sm:gap-3">
-      <div class="w-8 h-8 sm:w-11 sm:h-11 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
-        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-        </svg>
-      </div>
-      <div class="min-w-0">
-        <p class="text-lg sm:text-2xl font-bold text-gray-900 leading-none">{{ stats.agentsRH }}</p>
-        <p class="text-xs text-gray-400 mt-0.5 truncate">Agents RH</p>
-      </div>
-    </div>
-
-    <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-green-100 hover:shadow-md transition-shadow flex items-center gap-2 sm:gap-3">
-      <div class="w-8 h-8 sm:w-11 sm:h-11 bg-green-50 rounded-xl flex items-center justify-center flex-shrink-0">
-        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      </div>
-      <div class="min-w-0">
-        <p class="text-lg sm:text-2xl font-bold text-gray-900 leading-none">{{ stats.agentsFinanciers }}</p>
-        <p class="text-xs text-gray-400 mt-0.5 truncate">Agents Fin.</p>
-      </div>
-    </div>
-
-    <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-yellow-100 hover:shadow-md transition-shadow flex items-center gap-2 sm:gap-3">
-      <div class="w-8 h-8 sm:w-11 sm:h-11 bg-yellow-50 rounded-xl flex items-center justify-center flex-shrink-0">
-        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-        </svg>
-      </div>
-      <div class="min-w-0">
-        <p class="text-lg sm:text-2xl font-bold text-gray-900 leading-none">{{ stats.agentsCommerciaux }}</p>
-        <p class="text-xs text-gray-400 mt-0.5 truncate">Agents Com.</p>
-      </div>
-    </div>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4" *ngIf="stats">
+    <app-stat-card accent="indigo" label="Total" [value]="stats.totalAgents"
+      iconPath="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></app-stat-card>
+    <app-stat-card accent="blue" label="Agents RH" [value]="stats.agentsRH"
+      iconPath="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></app-stat-card>
+    <app-stat-card accent="emerald" label="Agents Fin." [value]="stats.agentsFinanciers"
+      iconPath="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></app-stat-card>
+    <app-stat-card accent="amber" label="Agents Com." [value]="stats.agentsCommerciaux"
+      iconPath="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></app-stat-card>
   </div>
 
   <!-- Filtres -->
@@ -130,13 +91,16 @@
               <span class="text-sm text-gray-600 font-mono">{{ agent.matricule }}</span>
             </td>
             <td class="px-6 py-4">
-              <span class="text-sm text-gray-600">{{ agent.service?.accronyme || 'N/A' }}</span>
+              <span class="text-sm text-gray-600">{{ agent.service?.accronyme || agent.directionDirecte?.accronyme || 'N/A' }}</span>
             </td>
             <td class="px-6 py-4">
-              <span class="px-2.5 py-1 text-xs font-semibold rounded-full"
-                    [ngClass]="getRoleBadgeClass(getAgentRole(agent))">
-                {{ getRoleLabel(getAgentRole(agent)) }}
-              </span>
+              <div class="flex flex-wrap gap-1">
+                <span *ngFor="let r of getAgentRoles(agent)"
+                      class="px-2.5 py-1 text-xs font-semibold rounded-full"
+                      [ngClass]="getRoleBadgeClass(r.accronyme)">
+                  {{ getRoleLabel(r.accronyme) }}
+                </span>
+              </div>
             </td>
             <td class="px-6 py-4">
               <span class="text-sm text-gray-600">{{ agent.users?.[0]?.username || 'N/A' }}</span>
@@ -194,10 +158,13 @@
               <p class="font-bold text-gray-900 text-sm leading-tight truncate">{{ agent.prenom }} {{ agent.nom }}</p>
               <p class="text-xs text-gray-400 mt-0.5 font-mono">{{ agent.matricule }}</p>
             </div>
-            <span class="px-2 py-0.5 text-[10px] font-semibold rounded-full flex-shrink-0"
-                  [ngClass]="getRoleBadgeClass(getAgentRole(agent))">
-              {{ getRoleLabel(getAgentRole(agent)) }}
-            </span>
+            <div class="flex flex-wrap gap-1 justify-end flex-shrink-0 max-w-[55%]">
+              <span *ngFor="let r of getAgentRoles(agent)"
+                    class="px-2 py-0.5 text-[10px] font-semibold rounded-full"
+                    [ngClass]="getRoleBadgeClass(r.accronyme)">
+                {{ getRoleLabel(r.accronyme) }}
+              </span>
+            </div>
           </div>
 
           <!-- Ligne 2 : Meta-infos -->
@@ -206,7 +173,7 @@
               <svg class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"/>
               </svg>
-              <p class="text-xs text-gray-600 truncate">{{ agent.service?.accronyme || 'Aucun service' }}</p>
+              <p class="text-xs text-gray-600 truncate">{{ agent.service?.accronyme || agent.directionDirecte?.accronyme || 'Aucun service' }}</p>
             </div>
             <div class="flex items-center gap-2">
               <svg class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -469,15 +436,18 @@
             <p class="text-sm font-semibold text-gray-900 truncate">{{ selectedAgent.email || 'N/A' }}</p>
           </div>
           <div class="p-3.5 bg-gray-50 rounded-2xl">
-            <p class="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Service</p>
-            <p class="text-sm font-semibold text-gray-900 truncate">{{ selectedAgent.service?.description || 'N/A' }}</p>
+            <p class="text-[10px] text-gray-400 uppercase tracking-wide mb-1">{{ selectedAgent.directionDirecte ? 'Direction' : 'Service' }}</p>
+            <p class="text-sm font-semibold text-gray-900 truncate">{{ selectedAgent.service?.description || selectedAgent.directionDirecte?.nom || 'N/A' }}</p>
           </div>
           <div class="p-3.5 bg-gray-50 rounded-2xl">
-            <p class="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Rôle</p>
-            <span class="inline-block px-2 py-0.5 text-xs font-bold rounded-full"
-                  [ngClass]="getRoleBadgeClass(getAgentRole(selectedAgent))">
-              {{ getRoleLabel(getAgentRole(selectedAgent)) }}
-            </span>
+            <p class="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Rôle(s)</p>
+            <div class="flex flex-wrap gap-1">
+              <span *ngFor="let r of getAgentRoles(selectedAgent)"
+                    class="inline-block px-2 py-0.5 text-xs font-bold rounded-full"
+                    [ngClass]="getRoleBadgeClass(r.accronyme)">
+                {{ getRoleLabel(r.accronyme) }}
+              </span>
+            </div>
           </div>
           <div class="p-3.5 bg-gray-50 rounded-2xl">
             <p class="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Nom d'utilisateur</p>
@@ -534,11 +504,35 @@
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Service <span class="text-red-500">*</span></label>
-          <select [(ngModel)]="agentInfo.service_idservice"
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Rattachement <span class="text-red-500">*</span></label>
+          <div class="grid grid-cols-2 gap-2 mb-2">
+            <button type="button" (click)="agentInfo.rattachementType = 'service'"
+                    class="px-4 py-2.5 rounded-xl text-sm font-medium border transition-all"
+                    [class]="agentInfo.rattachementType === 'service'
+                      ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
+                      : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'">
+              Service
+            </button>
+            <button type="button" (click)="agentInfo.rattachementType = 'direction'"
+                    class="px-4 py-2.5 rounded-xl text-sm font-medium border transition-all"
+                    [class]="agentInfo.rattachementType === 'direction'
+                      ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
+                      : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'">
+              Direction
+            </button>
+          </div>
+          <p class="text-[11px] text-gray-400 mb-2">Choisissez "Direction" pour un agent qui n'appartient à aucun service.</p>
+
+          <select *ngIf="agentInfo.rattachementType === 'service'" [(ngModel)]="agentInfo.service_idservice"
                   class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-all">
             <option [ngValue]="0" disabled>Sélectionnez un service...</option>
             <option *ngFor="let service of services" [ngValue]="service.idservice">{{ service.description }} ({{ service.accronyme }})</option>
+          </select>
+
+          <select *ngIf="agentInfo.rattachementType === 'direction'" [(ngModel)]="agentInfo.direction_iddirection"
+                  class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-all">
+            <option [ngValue]="0" disabled>Sélectionnez une direction...</option>
+            <option *ngFor="let direction of directions" [ngValue]="direction.iddirection">{{ direction.nom }} ({{ direction.accronyme }})</option>
           </select>
         </div>
       </div>
@@ -601,13 +595,24 @@
         </div>
       </div>
 
-      <!-- ══ STEP 3 : Rôle & Permissions ══════════════════════════════════ -->
+      <!-- ══ STEP 3 : Rôles & Permissions (multi-sélection) ════════════════ -->
       <div *ngIf="(modalMode === 'create' || modalMode === 'edit') && currentStep === 3" class="space-y-3">
 
+        <!-- Aide -->
+        <div class="flex items-start gap-2 p-3 bg-indigo-50 border border-indigo-100 rounded-xl">
+          <svg class="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <p class="text-xs text-indigo-700">
+            Cochez un ou plusieurs rôles. Les permissions sont cumulées.
+            Le <strong>premier rôle coché</strong> devient le rôle principal.
+          </p>
+        </div>
+
         <div *ngFor="let role of roles"
-             (click)="roleInfo.role_idrole = role.idrole"
+             (click)="toggleRole(role.idrole)"
              class="relative flex items-center gap-4 p-4 border-2 rounded-2xl cursor-pointer transition-all active:scale-[0.98]"
-             [ngClass]="roleInfo.role_idrole === role.idrole
+             [ngClass]="isRoleSelected(role.idrole)
                ? 'border-indigo-500 bg-indigo-50 shadow-sm shadow-indigo-100'
                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'">
 
@@ -621,16 +626,22 @@
 
           <!-- Texte -->
           <div class="flex-1 min-w-0">
-            <p class="text-sm font-semibold text-gray-900">{{ getRoleLabel(role.accronyme) }}</p>
+            <div class="flex items-center gap-2">
+              <p class="text-sm font-semibold text-gray-900">{{ getRoleLabel(role.accronyme) }}</p>
+              <span *ngIf="isPrincipalRole(role.idrole)"
+                    class="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-indigo-600 text-white">
+                Principal
+              </span>
+            </div>
             <p class="text-xs text-gray-500 mt-0.5 truncate">{{ role.description }}</p>
           </div>
 
-          <!-- Indicateur sélection -->
-          <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all"
-               [ngClass]="roleInfo.role_idrole === role.idrole
+          <!-- Indicateur sélection (case à cocher) -->
+          <div class="w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all"
+               [ngClass]="isRoleSelected(role.idrole)
                  ? 'border-indigo-500 bg-indigo-500'
                  : 'border-gray-300'">
-            <svg *ngIf="roleInfo.role_idrole === role.idrole" class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg *ngIf="isRoleSelected(role.idrole)" class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
             </svg>
           </div>

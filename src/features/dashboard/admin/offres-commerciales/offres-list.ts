@@ -4,11 +4,15 @@
 //   PUT  /api/offres/:id/evaluer   → évaluer (body: { statusOffre, motifRefus })
 import { CommonModule, DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, ChangeDetectorRef, OnInit, NgZone } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit, OnDestroy, NgZone } from '@angular/core';
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import { Loader } from '../../../../shared/components/loader/loader';
+import { StatCard } from '../../../../shared/components/stat-card/stat-card';
+import { SearchService } from '../../../../core/services/search.service';
 
 // Offre soumise par un candidat
 interface OffreCandidat {
@@ -35,11 +39,13 @@ interface OffreCandidat {
 @Component({
   selector: 'app-offres-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, DatePipe, Loader],
+  imports: [CommonModule, RouterModule, FormsModule, DatePipe, Loader, StatCard],
   templateUrl: './offres-list.html',
   styleUrl: './offres-list.css',
 })
-export class OffresList implements OnInit {
+export class OffresList implements OnInit, OnDestroy {
+
+  private searchSub?: Subscription;
 
   // ── Données ────────────────────────────────────────────────────────────────
   offres: OffreCandidat[] = [];          // toutes les offres chargées
@@ -80,10 +86,24 @@ export class OffresList implements OnInit {
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone,
     private route: ActivatedRoute,
+    private searchService: SearchService,
   ) {}
 
   ngOnInit(): void {
     this.loadOffres();
+    // Recherche globale (barre du haut)
+    this.searchSub = this.searchService.term$.pipe(
+      debounceTime(200),
+      distinctUntilChanged(),
+    ).subscribe(term => {
+      this.searchTerm = term;
+      this.appliquerFiltres();
+      this.cdr.detectChanges();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.searchSub?.unsubscribe();
   }
 
   private openFromQueryParam(): void {
@@ -363,5 +383,26 @@ export class OffresList implements OnInit {
       'AUTRE':        'bg-gray-100 text-gray-700',
     };
     return classes[type] || 'bg-gray-100 text-gray-700';
+  }
+
+  // ─── Export CSV ───────────────────────────────────────────────────────────
+  exporterCSV(): void {
+    this.http.get(`${this.apiUrl}/offres/export`, { responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `offres_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.ngZone.run(() => {
+          this.errorMessage = 'Erreur lors de l\'export CSV.';
+          setTimeout(() => this.errorMessage = '', 4000);
+          this.cdr.detectChanges();
+        });
+      },
+    });
   }
 }

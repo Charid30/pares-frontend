@@ -7,9 +7,11 @@ import { environment } from '../../environments/environment';
 export interface MenuBadges {
   stagesEnAttente: number;
   rapportsEnAttente: number;
-  candidaturesEnAttente: number;
   stagesEnCours: number;
   audiencesEnAttente: number;
+  aidesEnAttente: number;
+  offresEnAttente: number;
+  demandesModifEnAttente: number;
 }
 
 export interface DashboardStats {
@@ -17,18 +19,12 @@ export interface DashboardStats {
     total: number;
     thisMonth: number;
     withStages: number;
-    withCandidatures: number;
   };
   stages: {
     total: number;
     enAttente: number;
     enCours: number;
     termines: number;
-  };
-  recrutements: {
-    campagnesActives: number;
-    candidaturesEnAttente: number;
-    totalCandidatures: number;
   };
   rapports: {
     total: number;

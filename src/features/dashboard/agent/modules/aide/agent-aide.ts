@@ -6,6 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { environment } from '../../../../../environments/environment';
+import { StatCard } from '../../../../../shared/components/stat-card/stat-card';
 
 interface Aide {
   idaide: number;
@@ -28,7 +29,7 @@ interface Aide {
 @Component({
   selector: 'app-agent-aide',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, StatCard],
   templateUrl: './agent-aide.html',
 })
 export class AgentAide implements OnInit {
@@ -50,10 +51,10 @@ export class AgentAide implements OnInit {
   get peutSupprimer(): boolean { return this.authService.hasPermission('AIDE', 'SUPPRIMER'); }
 
   statsStatuts = [
-    { value: 'EN_ATTENTE', label: 'En attente', dot: 'bg-amber-400', ringClass: 'ring-amber-400', count: 0 },
-    { value: 'VALIDEE', label: 'Validées', dot: 'bg-green-500', ringClass: 'ring-green-400', count: 0 },
-    { value: 'REJETEE', label: 'Rejetées', dot: 'bg-red-500', ringClass: 'ring-red-400', count: 0 },
-    { value: 'EXPIREE', label: 'Expirées', dot: 'bg-gray-400', ringClass: 'ring-gray-400', count: 0 },
+    { value: 'EN_ATTENTE', label: 'En attente', dot: 'bg-amber-400', ringClass: 'ring-amber-400', count: 0, accent: 'amber',   icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+    { value: 'VALIDEE', label: 'Validées', dot: 'bg-green-500', ringClass: 'ring-green-400', count: 0, accent: 'emerald', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+    { value: 'REJETEE', label: 'Rejetées', dot: 'bg-red-500', ringClass: 'ring-red-400', count: 0, accent: 'rose',    icon: 'M6 18L18 6M6 6l12 12' },
+    { value: 'EXPIREE', label: 'Expirées', dot: 'bg-gray-400', ringClass: 'ring-gray-400', count: 0, accent: 'slate',   icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
   ];
 
   // Modal détail

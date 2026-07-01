@@ -107,6 +107,7 @@ export class Parametres implements OnInit {
     { id: 'stages', label: 'Stages', icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' },
     { id: 'recrutement', label: 'Recrutement', icon: 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
     { id: 'securite', label: 'Sécurité', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' },
+    { id: 'notifications', label: 'Notifications', icon: 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9' },
     { id: 'systeme', label: 'Système', icon: 'M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01' }
   ];
 
@@ -179,8 +180,17 @@ export class Parametres implements OnInit {
     confirmPassword: ''
   };
 
+  // ── Formulaire notification broadcast ─────────────────────────
+  notifForm = {
+    cible:   'candidats' as 'candidats' | 'tous',
+    sujet:   '',
+    message: '',
+  };
+  sendingNotif = false;
+  notifResult: { success: boolean; sent: number; failed: number; total: number; status?: string } | null = null;
+
   systemInfo: SystemInfo = {
-    version: '1.0.1',
+    version: environment.appVersion,
     lastUpdate: '13/02/2026',
     apiStatus: 'OK',
     dbStatus: 'OK',
@@ -304,6 +314,39 @@ export class Parametres implements OnInit {
         this.cdr.detectChanges();
       },
     });
+  }
+
+  sendNotification(): void {
+    if (!this.notifForm.sujet.trim() || !this.notifForm.message.trim()) {
+      this.showToast('error', 'Erreur', 'Le sujet et le message sont obligatoires');
+      return;
+    }
+    this.sendingNotif = true;
+    this.notifResult = null;
+    this.http.post<any>(`${this.apiUrl}/admin/settings/notify`, this.notifForm, {
+      // Timeout long pour les grandes listes
+    }).subscribe({
+      next: (r) => {
+        this.sendingNotif = false;
+        this.notifResult = { success: true, ...r.data };
+        const msg = r.data?.status === 'en_cours'
+          ? `Envoi démarré pour ${r.data.total} destinataire(s) — les emails partent en arrière-plan.`
+          : r.message;
+        this.showToast('success', 'Envoi lancé !', msg);
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.sendingNotif = false;
+        this.notifResult = null;
+        this.showToast('error', 'Erreur', err.error?.message || 'Erreur lors de l\'envoi');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  resetNotifForm(): void {
+    this.notifForm = { cible: 'candidats', sujet: '', message: '' };
+    this.notifResult = null;
   }
 
   // === Toast notifications ===

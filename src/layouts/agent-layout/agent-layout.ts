@@ -13,17 +13,13 @@ import { environment } from '../../environments/environment';
 interface MenuItem {
   label: string;
   icon: string;
-  route: string;
+  route?: string;
   module?: string; // module DB correspondant
+  children?: MenuItem[]; // sous-menu (ex. "Stage (Vue globale)" → En attente / Approuvé / En cours)
 }
 
 // Mapping module DB → item de menu
 const MODULE_MENU_MAP: Record<string, Omit<MenuItem, 'route'>> = {
-  RECRUTEMENT: {
-    label: 'Recrutements',
-    icon: 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
-    module: 'RECRUTEMENT',
-  },
   CANDIDATURES: {
     label: 'Candidatures Reçues',
     icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
@@ -43,6 +39,11 @@ const MODULE_MENU_MAP: Record<string, Omit<MenuItem, 'route'>> = {
     label: 'Suivi des Stages',
     icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
     module: 'SUIVI_STAGE',
+  },
+  SUSPENSION_STAGE: {
+    label: 'Suspensions / Annulations',
+    icon: 'M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z',
+    module: 'SUSPENSION_STAGE',
   },
   OFFRE: {
     label: 'Offres Commerciales',
@@ -73,11 +74,11 @@ const MODULE_MENU_MAP: Record<string, Omit<MenuItem, 'route'>> = {
 
 // Mapping module → route enfant sous /dashboard/agent/
 const MODULE_ROUTE_MAP: Record<string, string> = {
-  RECRUTEMENT:      '/dashboard/agent/recrutements',
   CANDIDATURES:     '/dashboard/agent/candidatures',
   CANDIDATS:        '/dashboard/agent/candidats',
   STAGE:            '/dashboard/agent/stages',
   SUIVI_STAGE:      '/dashboard/agent/suivi-stages',
+  SUSPENSION_STAGE: '/dashboard/agent/suspensions',
   OFFRE:            '/dashboard/agent/offres',
   AIDE:             '/dashboard/agent/aides',
   DEMANDE_AUDIENCE: '/dashboard/agent/audiences',
@@ -97,6 +98,11 @@ export class AgentLayout implements OnInit, OnDestroy {
   sidebarMobileOpen = false;
   userMenuOpen = false;
   menuItems: MenuItem[] = [];
+  expandedMenuLabel: string | null = null;
+
+  toggleSubmenu(item: MenuItem): void {
+    this.expandedMenuLabel = this.expandedMenuLabel === item.label ? null : item.label;
+  }
 
   // ── Centre de notifications (cloche) ─────────────────────
   notifOpen = false;
@@ -109,14 +115,13 @@ export class AgentLayout implements OnInit, OnDestroy {
   savingPrefs = false;
   savedOk = false;
   notifPrefs: Record<string, boolean> = {
-    STAGE: true, RECRUTEMENT: true, OFFRE: true, AIDE: true, AUDIENCE: true,
+    STAGE: true, OFFRE: true, AIDE: true, AUDIENCE: true,
   };
   readonly notifLabels: { key: string; label: string; description: string }[] = [
-    { key: 'STAGE',       label: 'Demandes de stage',       description: 'Notifié à chaque nouvelle demande de stage soumise' },
-    { key: 'RECRUTEMENT', label: 'Candidatures recrutement', description: 'Notifié à chaque nouvelle candidature reçue' },
-    { key: 'OFFRE',       label: 'Demandes d\'offre',        description: 'Notifié à chaque nouvelle demande d\'offre soumise' },
-    { key: 'AIDE',        label: 'Demandes d\'aide',         description: 'Notifié à chaque nouvelle demande d\'aide soumise' },
-    { key: 'AUDIENCE',    label: 'Demandes d\'audience',     description: 'Notifié à chaque nouvelle demande d\'audience soumise' },
+    { key: 'STAGE',    label: 'Demandes de stage',   description: 'Notifié à chaque nouvelle demande de stage soumise' },
+    { key: 'OFFRE',    label: 'Demandes d\'offre',    description: 'Notifié à chaque nouvelle demande d\'offre soumise' },
+    { key: 'AIDE',     label: 'Demandes d\'aide',     description: 'Notifié à chaque nouvelle demande d\'aide soumise' },
+    { key: 'AUDIENCE', label: 'Demandes d\'audience', description: 'Notifié à chaque nouvelle demande d\'audience soumise' },
   ];
 
   // Couleur thème (orange/primary pour les rôles personnalisés)
@@ -182,14 +187,56 @@ export class AgentLayout implements OnInit, OnDestroy {
     ];
 
     // Ajouter les modules selon les permissions
-    const moduleOrder = ['RECRUTEMENT', 'CANDIDATURES', 'CANDIDATS', 'STAGE', 'SUIVI_STAGE', 'OFFRE', 'AIDE', 'DEMANDE_AUDIENCE', 'AGENTS', 'SERVICES'];
+    const moduleOrder = ['CANDIDATURES', 'CANDIDATS', 'STAGE', 'SUIVI_STAGE', 'SUSPENSION_STAGE', 'OFFRE', 'AIDE', 'DEMANDE_AUDIENCE', 'AGENTS', 'SERVICES'];
     for (const mod of moduleOrder) {
-      if (modules.includes(mod) && MODULE_MENU_MAP[mod]) {
-        this.menuItems.push({
-          ...MODULE_MENU_MAP[mod],
-          route: MODULE_ROUTE_MAP[mod],
-        });
+      if (!modules.includes(mod) || !MODULE_MENU_MAP[mod]) continue;
+      if (mod === 'STAGE') {
+        this.pushStageMenuItems();
+        continue;
       }
+      this.menuItems.push({
+        ...MODULE_MENU_MAP[mod],
+        route: MODULE_ROUTE_MAP[mod],
+      });
+    }
+  }
+
+  /**
+   * Le module STAGE peut donner lieu à DEUX entrées de menu distinctes pour ne jamais
+   * mélanger les deux usages :
+   * - "Stage [ACCRONYME]" : menu d'action, limité à la direction de l'agent (rôle
+   *   type Approbateur), même si l'agent a par ailleurs un rôle "lecture globale".
+   * - "Stage" : vue globale en lecture seule, visible uniquement si l'agent a un rôle
+   *   "lecture globale" (sous-admin) sur STAGE — aucune action possible.
+   */
+  private pushStageMenuItems(): void {
+    const hasActionRole = ['APPROUVER', 'VALIDER', 'REJETER'].some(a => this.authService.hasPermission('STAGE', a));
+    const hasGlobalReadOnly = this.authService.hasLectureGlobale('STAGE');
+    const accronyme = this.authService.getUserDirectionAccronyme();
+    const base = MODULE_MENU_MAP['STAGE'];
+
+    if (hasActionRole) {
+      this.menuItems.push({
+        ...base,
+        label: accronyme ? `Stage ${accronyme}` : base.label,
+        route: MODULE_ROUTE_MAP['STAGE'],
+      });
+    }
+    if (hasGlobalReadOnly) {
+      this.menuItems.push({
+        ...base,
+        label: 'Stage (Vue globale)',
+        children: [
+          { label: 'Stage En attente', icon: base.icon, route: '/dashboard/agent/stages-global/en-attente' },
+          { label: 'Stage Approuvé',   icon: base.icon, route: '/dashboard/agent/stages-global/approuve' },
+          { label: 'Stage En cours',   icon: base.icon, route: '/dashboard/agent/stages-global/en-cours' },
+          { label: 'Stage Terminé',    icon: base.icon, route: '/dashboard/agent/stages-global/termine' },
+        ],
+      });
+    }
+    if (!hasActionRole && !hasGlobalReadOnly) {
+      // Accès simple (ex. CONSULTER seul, sans rôle d'action ni lecture globale)
+      this.menuItems.push({ ...base, route: MODULE_ROUTE_MAP['STAGE'] });
     }
   }
 
@@ -254,7 +301,6 @@ export class AgentLayout implements OnInit, OnDestroy {
   /** Couleur du badge selon le type de module */
   getEventColor(type: string): string {
     const map: Record<string, string> = {
-      RECRUTEMENT:      'bg-blue-100 text-blue-700',
       CANDIDATURES:     'bg-indigo-100 text-indigo-700',
       CANDIDATS:        'bg-violet-100 text-violet-700',
       STAGE:            'bg-emerald-100 text-emerald-700',
@@ -271,7 +317,6 @@ export class AgentLayout implements OnInit, OnDestroy {
   /** Icône SVG path selon le type */
   getEventIcon(type: string): string {
     const map: Record<string, string> = {
-      RECRUTEMENT:      'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
       CANDIDATURES:     'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
       CANDIDATS:        'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z',
       STAGE:            'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253',

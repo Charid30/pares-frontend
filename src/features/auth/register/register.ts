@@ -23,9 +23,12 @@ export class Register implements OnInit, OnDestroy {
   successMessage: string | null = null;
   showPassword = false;
 
-  // ── OCR / scanner ────────────────────────────────────────────────────────
-  /** 'idle' | 'choosing' | 'camera' | 'scanning' | 'error' */
-  showIfuField = false;
+  // ── Document fiscal (IFU ou Récépissé) ───────────────────────────────────
+  showDocumentFiscal = false;
+  documentFiscalType: 'ifu' | 'recipisse' = 'ifu';
+
+  /** @deprecated conservé pour rétrocompatibilité du template */
+  get showIfuField(): boolean { return this.showDocumentFiscal; }
 
   // ── OCR / scanner ────────────────────────────────────────────────────────
   /** 'idle' | 'choosing' | 'camera' | 'scanning' | 'error' */
@@ -57,9 +60,11 @@ export class Register implements OnInit, OnDestroy {
       confirmPassword: ['', [Validators.required]],
       prenom: ['', [Validators.required]],
       nom: ['', [Validators.required]],
+      genre: ['', [Validators.required]],
       telephone: ['', [Validators.required, Validators.pattern(/^[0-9]{8}$/)]],
       nip: ['', [Validators.required, Validators.pattern(/^[0-9]{17}$/)]],
       ifu: ['', [Validators.pattern(/^\d{8}[A-Za-z]$/)]],
+      recipisse: ['', [Validators.minLength(3), Validators.maxLength(50)]],
       acceptTerms: [false, [Validators.requiredTrue]],
     }, { validators: this.passwordMatchValidator });
   }
@@ -524,9 +529,11 @@ onSubmit(): void {
     confirmPassword: this.registerForm.value.confirmPassword,
     nom: this.registerForm.value.nom,
     prenom: this.registerForm.value.prenom,
+    genre: this.registerForm.value.genre,
     telephone: this.registerForm.value.telephone,
     nip: this.registerForm.value.nip,
-    ifu: this.registerForm.value.ifu || undefined,
+    ifu: this.documentFiscalType === 'ifu' ? (this.registerForm.value.ifu || undefined) : undefined,
+    recipisse: this.documentFiscalType === 'recipisse' ? (this.registerForm.value.recipisse || undefined) : undefined,
   };
 
   this.authService.register(formData).subscribe({
@@ -569,10 +576,23 @@ togglePasswordVisibility(): void {
 }
 
 toggleIfuField(): void {
-  this.showIfuField = !this.showIfuField;
-  if(!this.showIfuField) {
-  this.registerForm.get('ifu')?.setValue('');
-  this.registerForm.get('ifu')?.markAsUntouched();
-}
+  this.showDocumentFiscal = !this.showDocumentFiscal;
+  if (!this.showDocumentFiscal) {
+    this.registerForm.get('ifu')?.setValue('');
+    this.registerForm.get('ifu')?.markAsUntouched();
+    this.registerForm.get('recipisse')?.setValue('');
+    this.registerForm.get('recipisse')?.markAsUntouched();
   }
+}
+
+setDocumentFiscalType(type: 'ifu' | 'recipisse'): void {
+  this.documentFiscalType = type;
+  if (type === 'ifu') {
+    this.registerForm.get('recipisse')?.setValue('');
+    this.registerForm.get('recipisse')?.markAsUntouched();
+  } else {
+    this.registerForm.get('ifu')?.setValue('');
+    this.registerForm.get('ifu')?.markAsUntouched();
+  }
+}
 }

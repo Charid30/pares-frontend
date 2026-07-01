@@ -13,6 +13,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import { SearchService } from '../../../../core/services/search.service';
 import { Loader } from '../../../../shared/components/loader/loader';
+import { StatCard } from '../../../../shared/components/stat-card/stat-card';
 
 interface CandidatInfo {
   idcandidats: number;
@@ -20,6 +21,12 @@ interface CandidatInfo {
   prenom: string;
   email: string;
   telephone?: string;
+}
+
+interface DirectionInfo {
+  iddirection: number;
+  nom: string;
+  accronyme: string;
 }
 
 interface DemandeAudience {
@@ -43,12 +50,15 @@ interface DemandeAudience {
   createdDate: string;
   lastModifiedDate: string;
   candidat?: CandidatInfo;
+  // Affectation administrative
+  direction_iddirection?: number | null;
+  direction?: DirectionInfo;
 }
 
 @Component({
   selector: 'app-audiences-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe, Loader],
+  imports: [CommonModule, FormsModule, DatePipe, Loader, StatCard],
   templateUrl: './audiences-list.html',
 })
 export class AudiencesList implements OnInit, OnDestroy {
@@ -64,6 +74,8 @@ export class AudiencesList implements OnInit, OnDestroy {
   searchTerm = '';
   filtreStatut = '';
   filtreMode = '';
+  filtreDateDebut = '';
+  filtreDateFin = '';
 
   // ── Compteurs ─────────────────────────────────────────────────────────────
   countEnAttente = 0;
@@ -91,6 +103,11 @@ export class AudiencesList implements OnInit, OnDestroy {
   showDetailModal = false;
   detailDemande: DemandeAudience | null = null;
 
+  // ── Affectation direction (admin) ─────────────────────────────────────────
+  directions: DirectionInfo[] = [];
+  affectationForm = { direction_iddirection: null as number | null };
+  savingAffectation = false;
+
   private apiUrl = environment.apiUrl;
 
   private searchSub?: Subscription;
@@ -105,6 +122,7 @@ export class AudiencesList implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadDemandes();
+    this.loadDirections();
     this.searchSub = this.searchService.term$.pipe(
       debounceTime(200),
       distinctUntilChanged(),
@@ -167,6 +185,9 @@ export class AudiencesList implements OnInit, OnDestroy {
 
   // ─── Filtres locaux ───────────────────────────────────────────────────────
   appliquerFiltres(): void {
+    const debut = this.filtreDateDebut ? new Date(this.filtreDateDebut) : null;
+    const fin   = this.filtreDateFin   ? new Date(this.filtreDateFin + 'T23:59:59') : null;
+
     this.demandesFiltrees = this.demandes.filter(d => {
       const nom = this.getNomCandidat(d).toLowerCase();
       const matchSearch = !this.searchTerm ||
@@ -175,14 +196,28 @@ export class AudiencesList implements OnInit, OnDestroy {
         (d.motif && d.motif.toLowerCase().includes(this.searchTerm.toLowerCase()));
       const matchStatut = !this.filtreStatut || d.status === this.filtreStatut;
       const matchMode   = !this.filtreMode   || d.modeSoumission === this.filtreMode;
-      return matchSearch && matchStatut && matchMode;
+
+      let matchDate = true;
+      if (debut || fin) {
+        const dateAudience = d.dateAudience ? new Date(d.dateAudience) : null;
+        if (dateAudience) {
+          if (debut && dateAudience < debut) matchDate = false;
+          if (fin   && dateAudience > fin)   matchDate = false;
+        } else {
+          matchDate = false;
+        }
+      }
+
+      return matchSearch && matchStatut && matchMode && matchDate;
     });
   }
 
   effacerFiltres(): void {
-    this.searchTerm   = '';
-    this.filtreStatut = '';
-    this.filtreMode   = '';
+    this.searchTerm      = '';
+    this.filtreStatut    = '';
+    this.filtreMode      = '';
+    this.filtreDateDebut = '';
+    this.filtreDateFin   = '';
     this.demandesFiltrees = [...this.demandes];
   }
 
@@ -268,12 +303,68 @@ export class AudiencesList implements OnInit, OnDestroy {
   voirDetail(demande: DemandeAudience, event?: Event): void {
     event?.stopPropagation();
     this.detailDemande = demande;
+    this.initAffectationForm();
     this.showDetailModal = true;
   }
 
   fermerDetail(): void {
     this.showDetailModal = false;
     this.detailDemande = null;
+  }
+
+  // ─── Affectation direction ────────────────────────────────────────────────
+  loadDirections(): void {
+    this.http.get<any>(`${this.apiUrl}/stages/directions`).subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.directions = res.data;
+          this.cdr.detectChanges();
+        }
+      },
+      error: (err) => console.error('Erreur chargement directions:', err),
+    });
+  }
+
+  initAffectationForm(): void {
+    const dirId = this.detailDemande?.direction_iddirection ?? null;
+    this.affectationForm = { direction_iddirection: dirId ? +dirId : null };
+  }
+
+  getDirectionLabel(dirId: any): string {
+    const dir = this.directions.find(d => d.iddirection === +dirId);
+    return dir ? `${dir.accronyme} — ${dir.nom}` : '—';
+  }
+
+  sauvegarderAffectation(): void {
+    if (!this.detailDemande) return;
+    this.savingAffectation = true;
+    this.http.put<any>(
+      `${this.apiUrl}/demandes-audience/${this.detailDemande.iddemande}`,
+      { direction_iddirection: this.affectationForm.direction_iddirection }
+    ).subscribe({
+      next: (res) => {
+        this.ngZone.run(() => {
+          if (res.success) {
+            this.detailDemande!.direction_iddirection = this.affectationForm.direction_iddirection;
+            const dir = this.directions.find(d => d.iddirection === this.affectationForm.direction_iddirection);
+            if (dir) this.detailDemande!.direction = dir;
+            this.successMessage = 'Direction affectée avec succès !';
+            setTimeout(() => this.successMessage = '', 4000);
+            this.loadDemandes();
+          }
+          this.savingAffectation = false;
+          this.cdr.detectChanges();
+        });
+      },
+      error: (err) => {
+        this.ngZone.run(() => {
+          this.errorMessage = err.error?.message || 'Impossible de mettre à jour l\'affectation.';
+          setTimeout(() => this.errorMessage = '', 4000);
+          this.savingAffectation = false;
+          this.cdr.detectChanges();
+        });
+      },
+    });
   }
 
   // ─── Téléchargement fichier (mode FICHIER) ────────────────────────────────
@@ -373,5 +464,26 @@ export class AudiencesList implements OnInit, OnDestroy {
       ANNULE:     'Annulée',
     };
     return labels[status] || status;
+  }
+
+  // ─── Export CSV ───────────────────────────────────────────────────────────
+  exporterCSV(): void {
+    this.http.get(`${this.apiUrl}/demandes-audience/export`, { responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `audiences_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.ngZone.run(() => {
+          this.errorMessage = 'Erreur lors de l\'export CSV.';
+          setTimeout(() => this.errorMessage = '', 4000);
+          this.cdr.detectChanges();
+        });
+      },
+    });
   }
 }

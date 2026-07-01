@@ -48,12 +48,17 @@ export class Documents {
   }
 
   // ── Computed getters pour le hero ──────────────────────────────
+  /** Stages affichés : on masque les stages rejetés/annulés */
+  get stagesAffiches(): StageRapport[] {
+    return this.stagesRapports.filter(s => s.statusStage !== 'REJETE' && s.statusStage !== 'ANNULE');
+  }
+
   get countRapportsSoumis(): number {
-    return this.stagesRapports.filter(s => s.rapportSoumis).length;
+    return this.stagesAffiches.filter(s => s.rapportSoumis).length;
   }
 
   get countAttestations(): number {
-    return this.stagesRapports.filter(s => s.attestationDisponible).length;
+    return this.stagesAffiches.filter(s => s.attestationDisponible).length;
   }
 
   // ── Chargement ─────────────────────────────────────────────────

@@ -6,6 +6,7 @@ import { RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { environment } from '../../../../../environments/environment';
+import { StatCard } from '../../../../../shared/components/stat-card/stat-card';
 
 interface SuiviStage {
   idstage: number;
@@ -27,7 +28,7 @@ interface SuiviStage {
 @Component({
   selector: 'app-agent-suivi-stage',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, StatCard],
   templateUrl: './agent-suivi-stage.html',
 })
 export class AgentSuiviStage implements OnInit {

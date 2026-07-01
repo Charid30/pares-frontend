@@ -4,11 +4,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { AdminStageService, StageSuivi } from '../../../../core/services/admin-stage.service';
+import { StatCard } from '../../../../shared/components/stat-card/stat-card';
 
 @Component({
   selector: 'app-stages-suivi',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, StatCard],
   templateUrl: './stages-suivi.html',
   styleUrl: './stages-suivi.css',
 })

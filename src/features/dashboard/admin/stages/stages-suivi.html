@@ -26,64 +26,15 @@
   <!-- ══════════════════════════════════════════════════
        CARTES STATISTIQUES — 2 colonnes sur mobile, 4 sur desktop
        ══════════════════════════════════════════════════ -->
-  <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
-
-    <!-- En cours -->
-    <div class="bg-white rounded-2xl border border-gray-100 p-3 sm:p-4 shadow-sm flex items-center gap-3">
-      <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
-        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      </div>
-      <div class="min-w-0">
-        <p class="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{{ totalEnCours }}</p>
-        <p class="text-xs text-gray-400 mt-0.5 truncate">En cours</p>
-      </div>
-    </div>
-
-    <!-- À la limite -->
-    <div class="bg-white rounded-2xl border border-red-100 p-3 sm:p-4 shadow-sm flex items-center gap-3">
-      <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0">
-        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.07 16.5c-.77.833.193 2.5 1.732 2.5z" />
-        </svg>
-      </div>
-      <div class="min-w-0">
-        <p class="text-xl sm:text-2xl font-bold text-red-600 leading-none">{{ totalAtLimite }}</p>
-        <p class="text-xs text-gray-400 mt-0.5 truncate">Limite 6 mois</p>
-      </div>
-    </div>
-
-    <!-- En alerte -->
-    <div class="bg-white rounded-2xl border border-orange-100 p-3 sm:p-4 shadow-sm flex items-center gap-3">
-      <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0">
-        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-        </svg>
-      </div>
-      <div class="min-w-0">
-        <p class="text-xl sm:text-2xl font-bold text-orange-500 leading-none">{{ totalEnAlerte }}</p>
-        <p class="text-xs text-gray-400 mt-0.5 truncate">En alerte</p>
-      </div>
-    </div>
-
-    <!-- Renouvellements -->
-    <div class="bg-white rounded-2xl border border-purple-100 p-3 sm:p-4 shadow-sm flex items-center gap-3">
-      <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
-        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-        </svg>
-      </div>
-      <div class="min-w-0">
-        <p class="text-xl sm:text-2xl font-bold text-purple-600 leading-none">{{ totalRenouvellement }}</p>
-        <p class="text-xs text-gray-400 mt-0.5 truncate">Renouvellem.</p>
-      </div>
-    </div>
-
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+    <app-stat-card accent="indigo" label="En cours" [value]="totalEnCours"
+      iconPath="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></app-stat-card>
+    <app-stat-card accent="red" label="Limite 6 mois" [value]="totalAtLimite"
+      iconPath="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.07 16.5c-.77.833.193 2.5 1.732 2.5z"></app-stat-card>
+    <app-stat-card accent="orange" label="En alerte" [value]="totalEnAlerte"
+      iconPath="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></app-stat-card>
+    <app-stat-card accent="violet" label="Renouvellem." [value]="totalRenouvellement"
+      iconPath="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></app-stat-card>
   </div>
 
   <!-- ══════════════════════════════════════════════════

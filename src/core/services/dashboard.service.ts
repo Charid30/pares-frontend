@@ -17,9 +17,9 @@ export interface MainStats {
     change: number;
     changeType: 'increase' | 'decrease' | 'neutral';
   };
-  recrutements: {
-    campagnesActives: number;
-    totalCandidatures: number;
+  audiences: {
+    total: number;
+    enAttente: number;
   };
   offres: {
     actives: number;
@@ -37,6 +37,7 @@ export interface SecondaryStats {
     admins: number;
   };
   candidaturesEnAttente: number;
+  stagesEnAttente: number;
   tauxValidation: number;
 }
 
@@ -62,6 +63,20 @@ export interface ChartData {
   labels: string[];
   candidats: number[];
   stagesValides: number[];
+  stagesSoumis: number[];
+}
+
+export interface StagesDonut {
+  labels: string[];
+  values: number[];
+  colors: string[];
+}
+
+export interface AudiencesStats {
+  total: number;
+  enAttente: number;
+  acceptees: number;
+  rejetees: number;
 }
 
 export interface DashboardData {
@@ -70,6 +85,8 @@ export interface DashboardData {
   recentActivities: RecentActivity[];
   pendingItems: PendingItem[];
   chartData?: ChartData;
+  stagesDonut?: StagesDonut;
+  audiencesStats?: AudiencesStats;
 }
 
 export interface ApiResponse<T> {
@@ -110,8 +127,8 @@ export class DashboardService {
   /**
    * Récupérer les activités récentes
    */
-  getRecentActivities(limit: number = 10): Observable<ApiResponse<RecentActivity[]>> {
-    return this.http.get<ApiResponse<RecentActivity[]>>(`${this.apiUrl}/activities?limit=${limit}`);
+  getRecentActivities(limit: number = 10, days: number = 3): Observable<ApiResponse<RecentActivity[]>> {
+    return this.http.get<ApiResponse<RecentActivity[]>>(`${this.apiUrl}/activities?limit=${limit}&days=${days}`);
   }
 
   /**

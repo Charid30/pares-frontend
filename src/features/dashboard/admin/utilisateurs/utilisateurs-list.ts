@@ -6,8 +6,9 @@ import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { UserService, AgentFilters } from '../../../../core/services/user.service';
-import { Agent, Role, Service, UserStats } from '../../../../core/models/user.model';
+import { Agent, Role, Service, Direction, UserStats } from '../../../../core/models/user.model';
 import { SearchService } from '../../../../core/services/search.service';
+import { StatCard } from '../../../../shared/components/stat-card/stat-card';
 
 interface Toast {
   id: number;
@@ -19,7 +20,7 @@ interface Toast {
 @Component({
   selector: 'app-utilisateurs-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, StatCard],
   templateUrl: './utilisateurs-list.html',
   styles: [`
     .toast-enter {
@@ -52,6 +53,7 @@ export class UtilisateursList implements OnInit, OnDestroy {
   agents: Agent[] = [];
   roles: Role[] = [];
   services: Service[] = [];
+  directions: Direction[] = [];
   stats: UserStats | null = null;
 
   // Pagination
@@ -83,12 +85,16 @@ export class UtilisateursList implements OnInit, OnDestroy {
   totalSteps = 3;
 
   // Formulaire - Step 1: Informations Agent
+  // rattachementType : un agent est lié SOIT à un service, SOIT directement à une direction
+  // (certains agents n'appartiennent à aucun service).
   agentInfo = {
     nom: '',
     prenom: '',
     matricule: '',
     email: '',
-    service_idservice: 0
+    rattachementType: 'service' as 'service' | 'direction',
+    service_idservice: 0,
+    direction_iddirection: 0,
   };
 
   // Formulaire - Step 2: Compte Utilisateur
@@ -98,10 +104,8 @@ export class UtilisateursList implements OnInit, OnDestroy {
     confirmPassword: ''
   };
 
-  // Formulaire - Step 3: Rôle
-  roleInfo = {
-    role_idrole: 0
-  };
+  // Formulaire - Step 3: Rôles (multi-sélection — 1er = principal)
+  selectedRoleIds: number[] = [];
 
   // Validation des étapes
   stepErrors: { [key: number]: string[] } = {
@@ -126,6 +130,7 @@ export class UtilisateursList implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadRoles();
     this.loadServices();
+    this.loadDirections();
     this.loadStats();
     this.loadAgents();
     this.searchSub = this.searchService.term$.pipe(
@@ -219,6 +224,23 @@ export class UtilisateursList implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Erreur chargement services:', err);
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  loadDirections(): void {
+    this.userService.getDirections().subscribe({
+      next: (response) => {
+        this.ngZone.run(() => {
+          if (response.success) {
+            this.directions = response.data;
+          }
+          this.cdr.detectChanges();
+        });
+      },
+      error: (err) => {
+        console.error('Erreur chargement directions:', err);
         this.cdr.detectChanges();
       }
     });
@@ -326,7 +348,9 @@ export class UtilisateursList implements OnInit, OnDestroy {
       prenom: agent.prenom,
       matricule: agent.matricule,
       email: agent.email,
-      service_idservice: agent.service_idservice
+      rattachementType: agent.direction_iddirection ? 'direction' : 'service',
+      service_idservice: agent.service_idservice || 0,
+      direction_iddirection: agent.direction_iddirection || 0,
     };
 
     this.userInfo = {
@@ -335,9 +359,14 @@ export class UtilisateursList implements OnInit, OnDestroy {
       confirmPassword: ''
     };
 
-    this.roleInfo = {
-      role_idrole: agent.users?.[0]?.role_idrole || 0
-    };
+    // Rôles : principal d'abord, puis les additionnels (dédupliqués)
+    const principal = agent.users?.[0]?.role_idrole;
+    const additional = (agent.users?.[0]?.additionalRoles || []).map(r => r.idrole);
+    const ids: number[] = [];
+    for (const id of [principal, ...additional]) {
+      if (id && !ids.includes(id)) ids.push(id);
+    }
+    this.selectedRoleIds = ids;
 
     this.showModal = true;
   }
@@ -370,7 +399,9 @@ export class UtilisateursList implements OnInit, OnDestroy {
       prenom: '',
       matricule: '',
       email: '',
-      service_idservice: 0
+      rattachementType: 'service',
+      service_idservice: 0,
+      direction_iddirection: 0,
     };
 
     this.userInfo = {
@@ -379,9 +410,26 @@ export class UtilisateursList implements OnInit, OnDestroy {
       confirmPassword: ''
     };
 
-    this.roleInfo = {
-      role_idrole: 0
-    };
+    this.selectedRoleIds = [];
+  }
+
+  /** Bascule la sélection d'un rôle (multi-sélection). Le 1er coché = principal. */
+  toggleRole(roleId: number): void {
+    const idx = this.selectedRoleIds.indexOf(roleId);
+    if (idx > -1) {
+      this.selectedRoleIds.splice(idx, 1);
+    } else {
+      this.selectedRoleIds.push(roleId);
+    }
+  }
+
+  isRoleSelected(roleId: number): boolean {
+    return this.selectedRoleIds.includes(roleId);
+  }
+
+  /** Le rôle principal est le premier sélectionné. */
+  isPrincipalRole(roleId: number): boolean {
+    return this.selectedRoleIds[0] === roleId;
   }
 
   // ==================== MULTI-STEP NAVIGATION ====================
@@ -404,8 +452,12 @@ export class UtilisateursList implements OnInit, OnDestroy {
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.agentInfo.email.trim())) {
           this.stepErrors[step].push("L'adresse email n'est pas valide");
         }
-        if (!this.agentInfo.service_idservice) {
-          this.stepErrors[step].push('Le service est requis');
+        if (this.agentInfo.rattachementType === 'service') {
+          if (!this.agentInfo.service_idservice) {
+            this.stepErrors[step].push('Le service est requis');
+          }
+        } else if (!this.agentInfo.direction_iddirection) {
+          this.stepErrors[step].push('La direction est requise');
         }
         break;
 
@@ -426,8 +478,8 @@ export class UtilisateursList implements OnInit, OnDestroy {
         break;
 
       case 3:
-        if (!this.roleInfo.role_idrole) {
-          this.stepErrors[step].push('Le rôle est requis');
+        if (this.selectedRoleIds.length === 0) {
+          this.stepErrors[step].push('Au moins un rôle est requis');
         }
         break;
     }
@@ -510,8 +562,10 @@ export class UtilisateursList implements OnInit, OnDestroy {
       prenom: this.agentInfo.prenom,
       matricule: this.agentInfo.matricule,
       email: this.agentInfo.email,
-      service_idservice: this.agentInfo.service_idservice,
-      role_idrole: this.roleInfo.role_idrole,
+      ...(this.agentInfo.rattachementType === 'service'
+        ? { service_idservice: this.agentInfo.service_idservice }
+        : { direction_iddirection: this.agentInfo.direction_iddirection }),
+      roleIds: this.selectedRoleIds,
       username: this.userInfo.username,
       password: this.userInfo.password,
       confirmPassword: this.userInfo.confirmPassword
@@ -549,8 +603,10 @@ export class UtilisateursList implements OnInit, OnDestroy {
       prenom: this.agentInfo.prenom,
       matricule: this.agentInfo.matricule,
       email: this.agentInfo.email,
-      service_idservice: this.agentInfo.service_idservice,
-      role_idrole: this.roleInfo.role_idrole
+      ...(this.agentInfo.rattachementType === 'service'
+        ? { service_idservice: this.agentInfo.service_idservice }
+        : { direction_iddirection: this.agentInfo.direction_iddirection }),
+      roleIds: this.selectedRoleIds
     }).subscribe({
       next: (response) => {
         this.ngZone.run(() => {
@@ -675,8 +731,32 @@ export class UtilisateursList implements OnInit, OnDestroy {
     return agent.users?.[0]?.role?.accronyme || 'N/A';
   }
 
+  /** Tous les rôles d'un agent : principal d'abord, puis additionnels (dédupliqués). */
+  getAgentRoles(agent: Agent): Role[] {
+    const user = agent.users?.[0];
+    if (!user) return [];
+    const list: Role[] = [];
+    const seen = new Set<number>();
+    if (user.role) { list.push(user.role); seen.add(user.role.idrole); }
+    for (const r of user.additionalRoles || []) {
+      if (!seen.has(r.idrole)) { list.push(r); seen.add(r.idrole); }
+    }
+    return list;
+  }
+
   getServiceName(serviceId: number): string {
     const service = this.services.find(s => s.idservice === serviceId);
     return service?.description || service?.accronyme || 'N/A';
+  }
+
+  /** Libellé du rattachement d'un agent : son service, ou sa direction directe. */
+  getRattachementLabel(agent: Agent): string {
+    if (agent.directionDirecte) {
+      return `${agent.directionDirecte.nom} (${agent.directionDirecte.accronyme})`;
+    }
+    if (agent.service_idservice) {
+      return this.getServiceName(agent.service_idservice);
+    }
+    return 'N/A';
   }
 }

@@ -43,6 +43,30 @@ export interface CreateAttestationData {
   dateEmission: string;
 }
 
+export interface Direction {
+  iddirection: number;
+  nom: string;
+  accronyme: string;
+}
+
+export interface DemandeModificationStage {
+  id: number;
+  stage_idstage: number;
+  candidat_id: number;
+  type: 'SUSPENSION' | 'ANNULATION';
+  motif: string;
+  dateDebut: string | null;
+  justification_filename: string | null;
+  lettreManuscrite_filename: string | null;
+  status: 'EN_ATTENTE' | 'APPROUVEE' | 'REJETEE';
+  reponse_drh: string | null;
+  createdDate: string;
+  processedDate: string | null;
+  processedBy: string | null;
+  stage?: Stage;
+  candidat?: CandidatInfo;
+}
+
 export interface Stage {
   idstage: number;
   typeStage: 'SOUTENANCE' | 'PERFECTIONNEMENT';
@@ -50,15 +74,20 @@ export interface Stage {
   dernierDiplome_filename: string | null;
   domaineStage: string;
   dureeStage: number;
+  dureeStageSouhaitee?: number | null;
   dateDebutSouhaitee: string;
   dateDebutEffective: string | null;
   dateFinEffective: string | null;
-  statusStage: 'EN_ATTENTE' | 'EN_COURS_DE_TRAITEMENT' | 'ACCEPTE' | 'REJETE' | 'EN_COURS' | 'TERMINE' | 'EXPIRE' | 'RAPPORT_SOUMIS';
+  statusStage: 'EN_ATTENTE' | 'EN_COURS_DE_TRAITEMENT' | 'ACCEPTE' | 'REJETE' | 'EN_COURS' | 'TERMINE' | 'EXPIRE' | 'RAPPORT_SOUMIS' | 'PROGRAMMATION_EN_COURS' | 'SUSPENDU' | 'ANNULE';
   motifRefus: string | null;
+  documentsRejetes?: string | null;
   estRenouvellement: number;
   createdDate: string;
   candidat: CandidatInfo;
   rapport?: RapportStage;
+  direction_iddirection?: number | null;
+  service_idservice?: number | null;
+  direction?: { iddirection: number; nom: string; accronyme: string };
 }
 
 export interface RenouvellementInfo {
@@ -88,6 +117,9 @@ export interface StageDetails extends Stage {
   stageParent?: Stage;
   /** Infos de renouvellement (peuplé uniquement si estRenouvellement = 1) */
   renouvellementInfo?: RenouvellementInfo | null;
+  // Champs d'affectation (aussi présents dans Stage, redéclarés ici pour le strict template checker)
+  direction_iddirection?: number | null;
+  service_idservice?: number | null;
 }
 
 export interface StageStats {
@@ -100,6 +132,9 @@ export interface StageStats {
   expires: number;
   rejetes: number;
   rapportsSoumis: number;
+  programmationEnCours: number;
+  suspendus: number;
+  annules: number;
 }
 
 export interface StageFilters {
@@ -146,7 +181,9 @@ export interface ApiResponse<T> {
 export interface UpdateStatusData {
   statusStage: string;
   dateDebutEffective?: string;
+  dureeAccordee?: number;
   motifRefus?: string;
+  documentsRejetes?: string;
 }
 
 @Injectable({
@@ -202,6 +239,9 @@ export class AdminStageService {
       formData.append('statusStage', data.statusStage);
       if (data.dateDebutEffective) {
         formData.append('dateDebutEffective', data.dateDebutEffective);
+      }
+      if (data.dureeAccordee) {
+        formData.append('dureeAccordee', String(data.dureeAccordee));
       }
       formData.append('conventionStage', conventionFile, conventionFile.name);
       return this.http.put<ApiResponse<Stage>>(`${this.apiUrl}/${id}/statut`, formData);
@@ -280,6 +320,45 @@ export class AdminStageService {
     return this.http.get(`${this.apiUrl}/documents/${documentId}/download`, {
       responseType: 'blob'
     });
+  }
+
+  // =====================================================
+  // NOUVEAU WORKFLOW STAGES
+  // =====================================================
+
+  /**
+   * Mettre à jour les champs administratifs d'un stage (direction, service…)
+   */
+  updateStage(id: number, data: { direction_iddirection?: number | null; service_idservice?: number | null }): Observable<ApiResponse<Stage>> {
+    return this.http.put<ApiResponse<Stage>>(`${this.apiUrl}/${id}`, data);
+  }
+
+  /**
+   * Approuver un stage (EN_ATTENTE → PROGRAMMATION_EN_COURS)
+   */
+  approuverStage(id: number): Observable<ApiResponse<Stage>> {
+    return this.http.put<ApiResponse<Stage>>(`${this.apiUrl}/${id}/approuver`, {});
+  }
+
+  /**
+   * Récupérer les demandes de modification (suspension/annulation)
+   */
+  getDemandesModification(filters: { status?: string } = {}): Observable<ApiResponse<DemandeModificationStage[]>> {
+    let params = new HttpParams();
+    if (filters.status) params = params.set('status', filters.status);
+    return this.http.get<ApiResponse<DemandeModificationStage[]>>(`${this.apiUrl}/demandes-modification`, { params });
+  }
+
+  /**
+   * Évaluer une demande de modification (approuver ou rejeter)
+   */
+  evaluerDemandeModification(id: number, data: { status: 'APPROUVEE' | 'REJETEE'; reponse_drh?: string }): Observable<ApiResponse<DemandeModificationStage>> {
+    return this.http.put<ApiResponse<DemandeModificationStage>>(`${this.apiUrl}/demandes-modification/${id}/evaluer`, data);
+  }
+
+  /** Télécharger un fichier joint d'une demande de modification (justification | lettre) */
+  downloadDemandeModificationFichier(id: number, champ: 'justification' | 'lettre'): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/demandes-modification/${id}/${champ}`, { responseType: 'blob' });
   }
 
   // =====================================================

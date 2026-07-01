@@ -6,6 +6,13 @@ import { HttpClient } from '@angular/common/http';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { environment } from '../../../../../environments/environment';
+import { StatCard } from '../../../../../shared/components/stat-card/stat-card';
+
+interface DirectionInfo {
+  iddirection: number;
+  nom: string;
+  accronyme: string;
+}
 
 interface DemandeAudience {
   iddemande: number;
@@ -23,12 +30,14 @@ interface DemandeAudience {
   fichier_filename?: string;
   fichier_size?: number;
   candidat?: { idcandidats: number; nom: string; prenom: string; email: string; telephone?: string };
+  direction_iddirection?: number | null;
+  direction?: DirectionInfo;
 }
 
 @Component({
   selector: 'app-agent-audience',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, StatCard],
   templateUrl: './agent-audience.html',
 })
 export class AgentAudience implements OnInit {
@@ -58,16 +67,22 @@ export class AgentAudience implements OnInit {
   get peutConsulter(): boolean { return this.authService.hasPermission('DEMANDE_AUDIENCE', 'CONSULTER'); }
   get peutValider():   boolean { return this.authService.hasPermission('DEMANDE_AUDIENCE', 'VALIDER'); }
   get peutRejeter():   boolean { return this.authService.hasPermission('DEMANDE_AUDIENCE', 'REJETER'); }
+  get peutAffecter():  boolean { return this.authService.hasPermission('DEMANDE_AUDIENCE', 'MODIFIER'); }
+
+  // Affectation direction
+  directions: DirectionInfo[] = [];
+  affectationForm = { direction_iddirection: null as number | null };
+  savingAffectation = false;
 
   // Toasts
   toasts: { id: number; title: string; message: string; type: 'success' | 'error' | 'warning' }[] = [];
   private toastIdCounter = 0;
 
   statsStatuts = [
-    { value: 'EN_ATTENTE', label: 'En attente', dot: 'bg-amber-400', ringClass: 'ring-amber-400', count: 0 },
-    { value: 'ACCEPTE',    label: 'Acceptées',  dot: 'bg-green-500', ringClass: 'ring-green-400', count: 0 },
-    { value: 'REJETE',     label: 'Rejetées',   dot: 'bg-red-500',   ringClass: 'ring-red-400',   count: 0 },
-    { value: 'ANNULE',     label: 'Annulées',   dot: 'bg-gray-400',  ringClass: 'ring-gray-400',  count: 0 },
+    { value: 'EN_ATTENTE', label: 'En attente', dot: 'bg-amber-400', ringClass: 'ring-amber-400', count: 0, accent: 'amber',   icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+    { value: 'ACCEPTE',    label: 'Acceptées',  dot: 'bg-green-500', ringClass: 'ring-green-400', count: 0, accent: 'emerald', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+    { value: 'REJETE',     label: 'Rejetées',   dot: 'bg-red-500',   ringClass: 'ring-red-400',   count: 0, accent: 'rose',    icon: 'M6 18L18 6M6 6l12 12' },
+    { value: 'ANNULE',     label: 'Annulées',   dot: 'bg-gray-400',  ringClass: 'ring-gray-400',  count: 0, accent: 'slate',   icon: 'M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636' },
   ];
 
   private apiUrl = environment.apiUrl;
@@ -82,6 +97,19 @@ export class AgentAudience implements OnInit {
   ngOnInit(): void {
     if (!this.peutConsulter) return;
     this.charger();
+    if (this.peutAffecter) this.loadDirections();
+  }
+
+  loadDirections(): void {
+    this.http.get<any>(`${this.apiUrl}/stages/directions`).subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.directions = res.data;
+          this.cdr.detectChanges();
+        }
+      },
+      error: (err) => console.error('Erreur chargement directions:', err),
+    });
   }
 
   charger(): void {
@@ -133,6 +161,7 @@ export class AgentAudience implements OnInit {
 
   voirDetail(d: DemandeAudience): void {
     this.detailDemande = d;
+    this.affectationForm = { direction_iddirection: d.direction_iddirection ?? null };
     this.showDetailModal = true;
     this.cdr.detectChanges();
   }
@@ -140,6 +169,36 @@ export class AgentAudience implements OnInit {
   fermerDetail(): void {
     this.showDetailModal = false;
     this.detailDemande = null;
+  }
+
+  getDirectionLabel(dirId: any): string {
+    const dir = this.directions.find(d => d.iddirection === +dirId);
+    return dir ? `${dir.accronyme} — ${dir.nom}` : '—';
+  }
+
+  sauvegarderAffectation(): void {
+    if (!this.detailDemande) return;
+    this.savingAffectation = true;
+    this.http.put<any>(
+      `${this.apiUrl}/demandes-audience/${this.detailDemande.iddemande}`,
+      { direction_iddirection: this.affectationForm.direction_iddirection }
+    ).subscribe({
+      next: (res) => {
+        if (res.success && this.detailDemande) {
+          this.detailDemande.direction_iddirection = this.affectationForm.direction_iddirection;
+          const dir = this.directions.find(d => d.iddirection === this.affectationForm.direction_iddirection);
+          this.detailDemande.direction = dir;
+        }
+        this.showToast('Succès', 'Direction affectée avec succès');
+        this.savingAffectation = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.showToast('Erreur', err.error?.message || 'Impossible d\'affecter la direction', 'error');
+        this.savingAffectation = false;
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   ouvrirDecision(d: DemandeAudience, type: 'ACCEPTE' | 'REJETE'): void {

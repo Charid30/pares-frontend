@@ -50,9 +50,11 @@ export class AdminLayout implements OnInit, OnDestroy {
   menuBadges: MenuBadges = {
     stagesEnAttente: 0,
     rapportsEnAttente: 0,
-    candidaturesEnAttente: 0,
     stagesEnCours: 0,
-    audiencesEnAttente: 0
+    audiencesEnAttente: 0,
+    aidesEnAttente: 0,
+    offresEnAttente: 0,
+    demandesModifEnAttente: 0
   };
 
   menuItems: MenuItem[] = [
@@ -81,28 +83,25 @@ export class AdminLayout implements OnInit, OnDestroy {
       badgeColor: 'bg-indigo-500'
     },
     {
-      label: 'Recrutements',
-      icon: 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
-      route: '/admin/recrutements',
-      badgeKey: 'candidaturesEnAttente',
-      badgeColor: 'bg-red-500'
-    },
-    {
-      label: 'Candidatures reçues',
-      icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z',
-      route: '/admin/candidatures-recrutement',
-      badgeKey: 'candidaturesEnAttente',
-      badgeColor: 'bg-red-500'
+      label: 'Suspensions / Annulations',
+      icon: 'M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z',
+      route: '/admin/suspensions',
+      badgeKey: 'demandesModifEnAttente',
+      badgeColor: 'bg-amber-500'
     },
     {
       label: 'Offres Commerciales',
       icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
-      route: '/admin/offres-commerciales'
+      route: '/admin/offres-commerciales',
+      badgeKey: 'offresEnAttente',
+      badgeColor: 'bg-secondary-500'
     },
     {
       label: 'Aides Sociales',
       icon: 'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z',
-      route: '/admin/aides-sociales'
+      route: '/admin/aides-sociales',
+      badgeKey: 'aidesEnAttente',
+      badgeColor: 'bg-purple-500'
     },
     {
       label: 'Audiences',
@@ -120,6 +119,11 @@ export class AdminLayout implements OnInit, OnDestroy {
       label: 'Services',
       icon: 'M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18',
       route: '/admin/services'
+    },
+    {
+      label: 'Directions',
+      icon: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z',
+      route: '/admin/directions'
     },
     {
       label: 'Permissions',

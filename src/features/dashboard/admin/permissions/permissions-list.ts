@@ -41,6 +41,7 @@ export class PermissionsList implements OnInit {
   // Étape 1
   formAccronyme = '';
   formDescription = '';
+  formLectureGlobale = false;
   formError = '';
   submitting = false;
 
@@ -146,6 +147,14 @@ export class PermissionsList implements OnInit {
     for (const mod of this.modules) this.permMatrix[mod.key][actionKey] = !allOn;
   }
 
+  // Un rôle "lecture globale" donne CONSULTER sans restriction de direction sur ses modules ;
+  // il peut en plus recevoir des permissions d'action (ex. Valider), qui s'appliqueront alors
+  // elles aussi sans restriction de direction — utilisées via des écrans dédiés (ex. "Vue globale").
+  isLectureGlobaleContext(): boolean {
+    if (this.showPermsModal) return !!this.permsRole?.lectureGlobale;
+    return this.formLectureGlobale;
+  }
+
   isRowAll(moduleKey: string): boolean {
     return this.actions.every(a => this.permMatrix[moduleKey]?.[a.key]);
   }
@@ -183,6 +192,7 @@ export class PermissionsList implements OnInit {
     this.modalStep = 1;
     this.formAccronyme = '';
     this.formDescription = '';
+    this.formLectureGlobale = false;
     this.formError = '';
     this.emptyMatrix();
     this.showModal = true;
@@ -194,8 +204,14 @@ export class PermissionsList implements OnInit {
     this.modalStep = 1;
     this.formAccronyme = role.accronyme;
     this.formDescription = role.description;
+    this.formLectureGlobale = !!role.lectureGlobale;
     this.formError = '';
     this.showModal = true;
+  }
+
+  onToggleLectureGlobale(): void {
+    // Plus de restriction automatique : un rôle "lecture globale" peut aussi
+    // recevoir des permissions d'action (ex. Valider), utilisées via des écrans dédiés.
   }
 
   closeModal(): void {
@@ -217,7 +233,7 @@ export class PermissionsList implements OnInit {
     } else {
       // Édition : enregistrer directement
       this.submitting = true;
-      this.permService.updateRole(this.editingRole!.idrole, this.formAccronyme, this.formDescription).subscribe({
+      this.permService.updateRole(this.editingRole!.idrole, this.formAccronyme, this.formDescription, this.formLectureGlobale).subscribe({
         next: (res) => {
           this.ngZone.run(() => {
             if (res.success) {
@@ -246,7 +262,7 @@ export class PermissionsList implements OnInit {
     this.savingPerms = true;
     const permissions = this.collectPermissions();
 
-    this.permService.createRole(this.formAccronyme, this.formDescription).subscribe({
+    this.permService.createRole(this.formAccronyme, this.formDescription, this.formLectureGlobale).subscribe({
       next: (resRole) => {
         if (!resRole.success) {
           this.ngZone.run(() => {

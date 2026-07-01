@@ -1,97 +1,72 @@
-<!-- offres-list.html — Admin : Gestion des offres commerciales candidats -->
+<!-- offres-list.html — Admin : Gestion des offres commerciales candidats (v2 redesign) -->
 <div class="space-y-6">
 
   <!-- ── En-tête ─────────────────────────────────────────────────────────── -->
-  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-    <div>
-      <h1 class="text-2xl lg:text-3xl font-bold text-gray-900">Offres Commerciales</h1>
-      <p class="text-gray-500 mt-1">
-        Traitement des demandes soumises par les candidats
-        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium" style="background:#fde8e8; color:#c0392b;">
-          {{ offres.length }} demande{{ offres.length > 1 ? 's' : '' }}
-        </span>
-      </p>
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background:#fde8e8;">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:#c0392b;">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold text-gray-900">Offres Commerciales</h1>
+        <p class="text-sm text-gray-500 mt-0.5">
+          Traitement des demandes soumises
+          @if (offres.length > 0) {
+            <span class="ml-1.5 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold" style="background:#fde8e8; color:#c0392b;">
+              {{ offres.length }} demande{{ offres.length > 1 ? 's' : '' }}
+            </span>
+          }
+        </p>
+      </div>
     </div>
+    <button (click)="exporterCSV()"
+            class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white rounded-xl active:scale-95 transition-all shadow-sm cursor-pointer self-start sm:self-center"
+            style="background:#c0392b;">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+      </svg>
+      Exporter CSV
+    </button>
   </div>
 
   <!-- ── Message succès ──────────────────────────────────────────────────── -->
   @if (successMessage) {
-    <div class="flex items-center gap-3 px-4 py-3 rounded-xl" style="background:#e8f5e9; border:1px solid #27ae60; color:#1e8449;">
-      <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div class="flex items-center gap-3 px-4 py-3 bg-green-50 border border-green-200 rounded-xl text-green-700">
+      <svg class="w-5 h-5 shrink-0 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
       </svg>
       <span class="text-sm font-medium">{{ successMessage }}</span>
     </div>
   }
 
-  <!-- ── Compteurs statuts ────────────────────────────────────────────────── -->
-  <div class="grid grid-cols-3 gap-2 sm:gap-3">
+  <!-- ── 4 Compteurs statuts ──────────────────────────────────────────────── -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
     @for (s of [
-      { statut: 'EN_ATTENTE', label: 'En attente', iconBg: 'bg-red-50',   iconDot: 'bg-red-500',   border: 'border-red-100',   ring: 'ring-red-400'   },
-      { statut: 'VALIDEE',    label: 'Validées',   iconBg: 'bg-green-50', iconDot: 'bg-green-500', border: 'border-green-100', ring: 'ring-green-400' },
-      { statut: 'REJETEE',    label: 'Rejetées',   iconBg: 'bg-rose-50',  iconDot: 'bg-rose-500',  border: 'border-rose-100',  ring: 'ring-rose-400'  }
+      { statut: 'EN_ATTENTE',    label: 'En attente',    accent: 'red',     icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+      { statut: 'EN_TRAITEMENT', label: 'En traitement', accent: 'amber',   icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15' },
+      { statut: 'VALIDEE',       label: 'Validées',      accent: 'emerald', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+      { statut: 'REJETEE',       label: 'Rejetées',      accent: 'slate',   icon: 'M6 18L18 6M6 6l12 12' }
     ]; track s.statut) {
-      <button
-        type="button"
-        class="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow w-full text-left flex items-center gap-2 p-3 sm:p-4 border"
-        [ngClass]="[s.border, filtreStatut === s.statut ? 'ring-2 ' + s.ring : '']"
+      <button type="button" class="text-left w-full focus:outline-none"
         (click)="filtreStatut = filtreStatut === s.statut ? '' : s.statut; appliquerFiltres()">
-        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center flex-shrink-0" [ngClass]="s.iconBg">
-          <span class="w-2.5 h-2.5 rounded-full" [ngClass]="s.iconDot"></span>
-        </div>
-        <div class="min-w-0">
-          <p class="text-lg sm:text-2xl font-bold text-gray-900 leading-none">{{ getCountByStatut(s.statut) }}</p>
-          <p class="text-xs text-gray-400 mt-0.5 truncate">{{ s.label }}</p>
-        </div>
+        <app-stat-card [accent]="$any(s.accent)" [iconPath]="s.icon" [label]="s.label"
+          [value]="getCountByStatut(s.statut)" [active]="filtreStatut === s.statut"></app-stat-card>
       </button>
     }
   </div>
 
   <!-- ── Filtres ──────────────────────────────────────────────────────────── -->
-  <div class="bg-white rounded-2xl border border-gray-100 px-3 py-3 sm:px-4 shadow-sm">
-    <div class="flex flex-col gap-2">
-      <!-- Ligne 1 : Recherche + bouton Filtrer -->
-      <div class="flex gap-2">
-        <div class="relative flex-1">
-          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-          </svg>
-          <input
-            type="text"
-            [(ngModel)]="searchTerm"
-            (input)="appliquerFiltres()"
-            placeholder="Titre, type, candidat…"
-            class="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:bg-white focus:border-transparent transition-all"
-          />
-        </div>
-        @if (searchTerm || filtreStatut || filtreType) {
-          <button
-            (click)="effacerFiltres()"
-            class="px-3 sm:px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 active:scale-95 transition-all flex-shrink-0">
-            <svg class="w-4 h-4 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-            <span class="hidden sm:inline">Effacer</span>
-          </button>
-        } @else {
-          <button
-            (click)="appliquerFiltres()"
-            class="px-3 sm:px-4 py-2.5 rounded-xl text-sm font-medium active:scale-95 transition-all flex-shrink-0"
-            style="background:#fde8e8; color:#c0392b;">
-            <svg class="w-4 h-4 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-            <span class="hidden sm:inline">Filtrer</span>
-          </button>
-        }
-      </div>
-      <!-- Ligne 2 : Selects côte à côte -->
-      <div class="grid grid-cols-2 gap-2">
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 sm:p-4">
+    <div class="flex flex-col sm:flex-row gap-2">
+      <!-- Selects + bouton clear (la recherche se fait via la barre du haut) -->
+      <div class="flex gap-2 flex-1">
         <select
           [(ngModel)]="filtreStatut"
           (change)="appliquerFiltres()"
-          class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:bg-white transition-all">
-          <option value="">Tous les statuts</option>
+          class="flex-1 sm:w-40 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-300 focus:bg-white transition-all cursor-pointer">
+          <option value="">Tous statuts</option>
           <option value="EN_ATTENTE">En attente</option>
           <option value="EN_TRAITEMENT">En traitement</option>
           <option value="VALIDEE">Validée</option>
@@ -101,16 +76,38 @@
         <select
           [(ngModel)]="filtreType"
           (change)="appliquerFiltres()"
-          class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:bg-white transition-all">
-          <option value="">Tous les types</option>
+          class="flex-1 sm:w-40 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-300 focus:bg-white transition-all cursor-pointer">
+          <option value="">Tous types</option>
           <option value="VENTE">Vente</option>
           <option value="PARTENARIAT">Partenariat</option>
           <option value="DISTRIBUTION">Distribution</option>
           <option value="SERVICE">Service</option>
           <option value="AUTRE">Autre</option>
         </select>
+        @if (searchTerm || filtreStatut || filtreType) {
+          <button
+            (click)="effacerFiltres()"
+            class="px-3 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-sm active:scale-95 transition-all cursor-pointer shrink-0"
+            title="Effacer les filtres">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        }
       </div>
     </div>
+
+    <!-- Résultats filtrés -->
+    @if (searchTerm || filtreStatut || filtreType) {
+      <div class="flex items-center gap-1.5 mt-2 pt-2 border-t border-gray-100">
+        <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+        </svg>
+        <span class="text-xs text-gray-500">
+          {{ offresFiltrees.length }} résultat{{ offresFiltrees.length > 1 ? 's' : '' }} sur {{ offres.length }}
+        </span>
+      </div>
+    }
   </div>
 
   <!-- ── Loader ────────────────────────────────────────────────────────────── -->
@@ -133,15 +130,22 @@
   <!-- ── État vide ──────────────────────────────────────────────────────────── -->
   @if (!isLoading && !errorMessage && offresFiltrees.length === 0) {
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
-      <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
         <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
         </svg>
       </div>
-      <h3 class="text-lg font-semibold text-gray-800 mb-1">Aucune offre trouvée</h3>
-      <p class="text-sm text-gray-500">
-        {{ searchTerm || filtreStatut || filtreType ? 'Aucun résultat pour ces filtres.' : 'Aucune demande d\'offre n\'a encore été soumise.' }}
+      <h3 class="text-base font-semibold text-gray-800 mb-1">Aucune offre trouvée</h3>
+      <p class="text-sm text-gray-500 max-w-xs mx-auto">
+        {{ searchTerm || filtreStatut || filtreType ? 'Essayez de modifier vos critères de recherche.' : 'Aucune demande d\'offre n\'a encore été soumise.' }}
       </p>
+      @if (searchTerm || filtreStatut || filtreType) {
+        <button (click)="effacerFiltres()"
+          class="mt-4 px-4 py-2 text-sm font-semibold rounded-xl transition-colors cursor-pointer"
+          style="background:#fde8e8; color:#c0392b;">
+          Effacer les filtres
+        </button>
+      }
     </div>
   }
 
@@ -149,39 +153,40 @@
   @if (!isLoading && offresFiltrees.length > 0) {
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
       @for (offre of offresFiltrees; track offre.idoffres) {
+
         <div
-          class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden cursor-pointer group"
+          class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden cursor-pointer group flex flex-col"
           (click)="voirDetail(offre)">
 
-          <!-- Barre statut -->
-          <div class="h-1 w-full" [ngClass]="getStatutBarClass(offre.statusOffre)"></div>
+          <!-- Barre de statut (haut) -->
+          <div class="h-1 w-full shrink-0" [ngClass]="getStatutBarClass(offre.statusOffre)"></div>
 
-          <div class="p-5">
-            <!-- En-tête carte -->
-            <div class="flex items-start justify-between gap-3 mb-3">
-              <!-- Avatar + Nom candidat -->
-              <div class="flex items-center gap-3 min-w-0">
-                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0" style="background:#fde8e8; color:#c0392b;">
+          <div class="p-5 flex flex-col flex-1">
+
+            <!-- En-tête : Avatar + Candidat | Badge statut -->
+            <div class="flex items-start justify-between gap-3 mb-4">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm shrink-0"
+                     style="background:#fde8e8; color:#c0392b;">
                   {{ getInitiales(offre) }}
                 </div>
                 <div class="min-w-0">
-                  <p class="text-sm font-semibold text-gray-900 truncate">{{ getNomCandidat(offre) }}</p>
+                  <p class="text-sm font-semibold text-gray-900 truncate leading-tight">{{ getNomCandidat(offre) }}</p>
                   @if (offre.candidatCreateur?.email) {
-                    <p class="text-xs text-gray-500 truncate">{{ offre.candidatCreateur!.email }}</p>
+                    <p class="text-xs text-gray-400 truncate">{{ offre.candidatCreateur!.email }}</p>
                   }
                 </div>
               </div>
-              <!-- Badge statut -->
-              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium shrink-0"
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold shrink-0"
                 [ngClass]="getStatutClass(offre.statusOffre)">
                 {{ getStatutLabel(offre.statusOffre) }}
               </span>
             </div>
 
-            <!-- Titre & Type -->
+            <!-- Titre + Badge type -->
             <div class="mb-3">
-              <p class="text-sm font-semibold text-gray-800 truncate mb-1.5">{{ offre.titre }}</p>
-              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+              <p class="text-sm font-semibold text-gray-800 leading-snug mb-2 line-clamp-2">{{ offre.titre }}</p>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium"
                 [ngClass]="getTypeClass(offre.typeOffre)">
                 {{ offre.typeOffre }}
               </span>
@@ -189,48 +194,56 @@
 
             <!-- Description -->
             @if (offre.description) {
-              <p class="text-xs text-gray-500 line-clamp-2 mb-3">{{ offre.description }}</p>
+              <p class="text-xs text-gray-500 line-clamp-2 mb-3 leading-relaxed">{{ offre.description }}</p>
             }
 
             <!-- Motif refus -->
             @if (offre.statusOffre === 'REJETEE' && offre.motifRefus) {
-              <div class="flex items-start gap-2 bg-red-50 border border-red-100 rounded-lg p-2.5 mb-3">
-                <svg class="w-3.5 h-3.5 text-red-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="flex items-start gap-2 bg-red-50 border border-red-100 rounded-xl p-2.5 mb-3">
+                <svg class="w-3.5 h-3.5 text-red-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
                 <p class="text-xs text-red-600 line-clamp-2">{{ offre.motifRefus }}</p>
               </div>
             }
 
-            <!-- Date + Fichiers -->
-            <div class="flex items-center justify-between text-xs text-gray-400 mb-4">
-              <span>{{ offre.createdDate | date:'dd/MM/yyyy' }}</span>
-              <div class="flex items-center gap-2">
+            <!-- Spacer pour aligner le footer -->
+            <div class="flex-1"></div>
+
+            <!-- Méta : Date + Indicateurs fichiers -->
+            <div class="flex items-center justify-between text-xs text-gray-400 mt-2 mb-3">
+              <div class="flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <span>{{ offre.createdDate | date:'dd/MM/yyyy' }}</span>
+              </div>
+              <div class="flex items-center gap-1.5">
                 @if (offre.cnib_filename) {
-                  <span class="flex items-center gap-1">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  <span class="inline-flex items-center gap-0.5 bg-gray-100 text-gray-500 rounded-md px-1.5 py-0.5 font-medium">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
                     </svg>
                     CNIB
                   </span>
                 }
                 @if (offre.demandeOffre_filename) {
-                  <span class="flex items-center gap-1">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  <span class="inline-flex items-center gap-0.5 bg-gray-100 text-gray-500 rounded-md px-1.5 py-0.5 font-medium">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
                     </svg>
-                    Offre
+                    PDF
                   </span>
                 }
               </div>
             </div>
 
-            <!-- Boutons actions -->
-            <div class="flex items-center gap-2 pt-3 border-t border-gray-50">
-              <!-- Voir détail -->
+            <!-- Boutons d'actions -->
+            <div class="flex items-center gap-2 pt-3 border-t border-gray-100">
               <button
                 (click)="voirDetail(offre, $event)"
-                class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
+                class="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors duration-150 cursor-pointer shrink-0"
+                title="Voir le détail">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
@@ -239,31 +252,27 @@
               </button>
 
               @if (peutEvaluer(offre)) {
-                <!-- Valider -->
                 <button
                   (click)="validerRapide(offre, $event)"
-                  class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg transition-colors"
-                  style="background:#e8f5e9; color:#1e8449;">
+                  class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-green-700 bg-green-50 hover:bg-green-100 rounded-xl transition-colors duration-150 cursor-pointer">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                   </svg>
                   Valider
                 </button>
-                <!-- Rejeter -->
                 <button
                   (click)="rejeterRapide(offre, $event)"
-                  class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-colors">
+                  class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 rounded-xl transition-colors duration-150 cursor-pointer">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                   </svg>
                   Rejeter
                 </button>
               } @else {
-                <!-- Traiter (pour ouvrir modal décision complète) -->
                 <button
                   (click)="ouvrirTraitement(offre, $event)"
-                  class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg transition-colors"
-                  style="background:#fde8e8; color:#c0392b;">
+                  class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-white rounded-xl transition-colors duration-150 cursor-pointer hover:opacity-90"
+                  style="background:#c0392b;">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                   </svg>
@@ -271,12 +280,14 @@
                 </button>
               }
             </div>
+
           </div>
         </div>
+
       }
     </div>
-
   }
+
 </div>
 
 <!-- ════════════════════════════════════════════════════════════════════════ -->
@@ -287,22 +298,28 @@
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
     (click)="fermerTraitement()">
     <div
-      class="bg-white rounded-2xl shadow-2xl w-full max-w-lg"
+      class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
       (click)="$event.stopPropagation()">
 
       <!-- Header modal -->
-      <div class="flex items-center justify-between px-6 py-4" style="background:linear-gradient(135deg,#c0392b,#96281b); border-bottom:2px solid #27ae60;">
-        <div>
-          <h2 class="text-lg font-bold" style="color:#ffffff;">Traitement de l'offre</h2>
-          <p class="text-sm truncate max-w-xs" style="color:#ffffff;">{{ selectedOffre.titre }}</p>
+      <div class="flex items-center justify-between px-6 py-4" style="background:linear-gradient(135deg,#c0392b,#96281b);">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm shrink-0"
+               style="background:rgba(255,255,255,0.2); color:#fff;">
+            {{ getInitiales(selectedOffre) }}
+          </div>
+          <div class="min-w-0">
+            <h2 class="text-base font-bold text-white leading-tight">Traitement de l'offre</h2>
+            <p class="text-xs text-red-100 truncate max-w-xs">{{ selectedOffre.titre }}</p>
+          </div>
         </div>
         <button
           (click)="fermerTraitement()"
-          class="w-8 h-8 flex items-center justify-center rounded-full transition-colors"
+          class="w-8 h-8 flex items-center justify-center rounded-xl cursor-pointer transition-colors shrink-0"
           style="background:rgba(255,255,255,0.15); color:#ffffff;"
-          onmouseover="this.style.background='rgba(255,255,255,0.30)'"
+          onmouseover="this.style.background='rgba(255,255,255,0.25)'"
           onmouseout="this.style.background='rgba(255,255,255,0.15)'">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
           </svg>
         </button>
@@ -312,9 +329,10 @@
       <div class="px-6 py-5 space-y-5">
 
         <!-- Info candidat -->
-        <div class="bg-gray-50 rounded-xl p-3">
+        <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0" style="background:#fde8e8; color:#c0392b;">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0"
+                 style="background:#fde8e8; color:#c0392b;">
               {{ getInitiales(selectedOffre) }}
             </div>
             <div class="flex-1 min-w-0">
@@ -323,24 +341,23 @@
                 <p class="text-xs text-gray-500 truncate">{{ selectedOffre.candidatCreateur!.email }}</p>
               }
             </div>
-            <div class="ml-auto shrink-0">
-              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium"
-                [ngClass]="getStatutClass(selectedOffre.statusOffre)">
-                {{ getStatutLabel(selectedOffre.statusOffre) }}
-              </span>
-            </div>
+            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold shrink-0"
+              [ngClass]="getStatutClass(selectedOffre.statusOffre)">
+              {{ getStatutLabel(selectedOffre.statusOffre) }}
+            </span>
           </div>
+
           <!-- IFU -->
           @if (selectedOffre.candidatCreateur?.ifu) {
-            <div class="mt-2 pt-2 border-t border-gray-200 flex items-center gap-2">
-              <span class="text-xs text-gray-400 font-semibold">IFU :</span>
+            <div class="mt-3 pt-3 border-t border-gray-200 flex items-center gap-2">
+              <span class="text-xs text-gray-400 font-semibold uppercase tracking-wide">IFU</span>
               <span class="font-mono text-xs font-bold text-gray-800 bg-white border border-gray-200 px-2 py-0.5 rounded-lg">
                 {{ selectedOffre.candidatCreateur!.ifu }}
               </span>
             </div>
           } @else {
-            <div class="mt-2 pt-2 border-t border-gray-200 flex items-center gap-1.5">
-              <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+            <div class="mt-3 pt-3 border-t border-gray-200 flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0"></span>
               <span class="text-xs text-amber-600">IFU non renseigné par le candidat</span>
             </div>
           }
@@ -360,7 +377,7 @@
               <button
                 type="button"
                 (click)="evaluation.statusOffre = d.value"
-                class="px-3 py-2.5 rounded-xl text-sm font-medium border-2 transition-all"
+                class="px-3 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all duration-150 cursor-pointer"
                 [class.border-amber-400]="evaluation.statusOffre === d.value && d.color === 'amber'"
                 [class.bg-amber-50]="evaluation.statusOffre === d.value && d.color === 'amber'"
                 [class.text-amber-700]="d.color === 'amber'"
@@ -371,8 +388,8 @@
                 [class.bg-red-50]="evaluation.statusOffre === d.value && d.color === 'red'"
                 [class.text-red-700]="d.color === 'red'"
                 [class.border-gray-200]="evaluation.statusOffre !== d.value"
-                [class.text-gray-500]="evaluation.statusOffre !== d.value && d.color !== 'amber' && d.color !== 'green'"
-                >
+                [class.bg-white]="evaluation.statusOffre !== d.value"
+                [class.text-gray-500]="evaluation.statusOffre !== d.value && d.color !== 'amber' && d.color !== 'green'">
                 {{ d.label }}
               </button>
             }
@@ -389,7 +406,7 @@
               [(ngModel)]="evaluation.motifRefus"
               rows="3"
               placeholder="Expliquer le motif du refus au candidat…"
-              class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-red-400">
+              class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-transparent transition-all">
             </textarea>
           </div>
         }
@@ -406,16 +423,16 @@
       </div>
 
       <!-- Footer modal -->
-      <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100">
+      <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50">
         <button
           (click)="fermerTraitement()"
-          class="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
+          class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition-colors cursor-pointer">
           Annuler
         </button>
         <button
           (click)="enregistrerDecision()"
           [disabled]="isSubmitting || !evaluation.statusOffre"
-          class="px-5 py-2 text-sm font-semibold text-white rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          class="px-5 py-2 text-sm font-semibold text-white rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
           style="background:#c0392b;">
           @if (isSubmitting) {
             <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -442,34 +459,36 @@
       (click)="$event.stopPropagation()">
 
       <!-- Header -->
-      <div class="flex items-center justify-between px-6 py-4 sticky top-0 z-10" style="background:linear-gradient(135deg,#c0392b,#96281b); border-bottom:2px solid #27ae60;">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm" style="background:#fde8e8; color:#c0392b;">
+      <div class="flex items-center justify-between px-6 py-4 sticky top-0 z-10"
+           style="background:linear-gradient(135deg,#c0392b,#96281b);">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm shrink-0"
+               style="background:rgba(255,255,255,0.2); color:#fff;">
             {{ getInitiales(detailOffre) }}
           </div>
-          <div>
-            <h2 class="text-base font-bold" style="color:#ffffff;">Détail de l'offre</h2>
-            <p class="text-xs" style="color:#ffffff;">{{ detailOffre.createdDate | date:'dd MMMM yyyy' }}</p>
+          <div class="min-w-0">
+            <h2 class="text-base font-bold text-white leading-tight">Détail de l'offre</h2>
+            <p class="text-xs text-red-100">{{ detailOffre.createdDate | date:'dd MMMM yyyy' }}</p>
           </div>
         </div>
         <button
           (click)="fermerDetail()"
-          class="w-8 h-8 flex items-center justify-center rounded-full transition-colors"
+          class="w-8 h-8 flex items-center justify-center rounded-xl cursor-pointer transition-colors shrink-0"
           style="background:rgba(255,255,255,0.15); color:#ffffff;"
-          onmouseover="this.style.background='rgba(255,255,255,0.30)'"
+          onmouseover="this.style.background='rgba(255,255,255,0.25)'"
           onmouseout="this.style.background='rgba(255,255,255,0.15)'">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
           </svg>
         </button>
       </div>
 
       <!-- Corps détail -->
-      <div class="px-6 py-5 space-y-4">
+      <div class="px-6 py-5 space-y-5">
 
         <!-- Statut + Type -->
         <div class="flex items-center gap-2 flex-wrap">
-          <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+          <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold"
             [ngClass]="getStatutClass(detailOffre.statusOffre)">
             {{ getStatutLabel(detailOffre.statusOffre) }}
           </span>
@@ -480,25 +499,25 @@
         </div>
 
         <!-- Candidat -->
-        <div class="bg-gray-50 rounded-xl p-4">
-          <p class="text-xs text-gray-400 uppercase font-semibold mb-2">Candidat</p>
+        <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+          <p class="text-xs text-gray-400 uppercase font-semibold tracking-wide mb-2">Candidat</p>
           <p class="text-sm font-semibold text-gray-900">{{ getNomCandidat(detailOffre) }}</p>
           @if (detailOffre.candidatCreateur?.email) {
-            <p class="text-sm text-gray-600">{{ detailOffre.candidatCreateur!.email }}</p>
+            <p class="text-sm text-gray-500 mt-0.5">{{ detailOffre.candidatCreateur!.email }}</p>
           }
           @if (detailOffre.candidatCreateur?.telephone) {
-            <p class="text-sm text-gray-600">{{ detailOffre.candidatCreateur!.telephone }}</p>
+            <p class="text-sm text-gray-500 mt-0.5">{{ detailOffre.candidatCreateur!.telephone }}</p>
           }
           @if (detailOffre.candidatCreateur?.ifu) {
             <div class="mt-2 flex items-center gap-2">
-              <span class="text-xs text-gray-400 uppercase font-semibold">IFU</span>
+              <span class="text-xs text-gray-400 uppercase font-semibold tracking-wide">IFU</span>
               <span class="font-mono text-sm font-semibold text-gray-800 bg-white border border-gray-200 px-2 py-0.5 rounded-lg">
                 {{ detailOffre.candidatCreateur!.ifu }}
               </span>
             </div>
           } @else {
             <div class="mt-2 flex items-center gap-1.5">
-              <span class="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0"></span>
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0"></span>
               <span class="text-xs text-amber-600">IFU non renseigné</span>
             </div>
           }
@@ -506,30 +525,32 @@
 
         <!-- Objet -->
         <div>
-          <p class="text-xs text-gray-400 uppercase font-semibold mb-1">Objet de l'offre</p>
-          <p class="text-sm text-gray-800 font-medium">{{ detailOffre.titre }}</p>
+          <p class="text-xs text-gray-400 uppercase font-semibold tracking-wide mb-1">Objet de l'offre</p>
+          <p class="text-sm text-gray-800 font-medium leading-relaxed">{{ detailOffre.titre }}</p>
         </div>
 
         <!-- Description -->
         @if (detailOffre.description) {
           <div>
-            <p class="text-xs text-gray-400 uppercase font-semibold mb-1">Description</p>
-            <p class="text-sm text-gray-700 whitespace-pre-line">{{ detailOffre.description }}</p>
+            <p class="text-xs text-gray-400 uppercase font-semibold tracking-wide mb-1">Description</p>
+            <p class="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{{ detailOffre.description }}</p>
           </div>
         }
 
         <!-- Fichiers joints -->
         <div>
-          <p class="text-xs text-gray-400 uppercase font-semibold mb-2">Fichiers joints</p>
+          <p class="text-xs text-gray-400 uppercase font-semibold tracking-wide mb-2">Fichiers joints</p>
           <div class="grid grid-cols-2 gap-3">
 
             <!-- CNIB -->
             @if (detailOffre.cnib_filename) {
-              <div class="bg-gray-50 border border-gray-200 rounded-xl p-3">
-                <div class="flex items-center gap-2 mb-2">
-                  <svg class="w-5 h-5 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                  </svg>
+              <div class="bg-gray-50 border border-gray-200 rounded-xl p-3 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-2 mb-2.5">
+                  <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style="background:#fde8e8;">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:#c0392b;">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                  </div>
                   <div class="min-w-0">
                     <p class="text-xs font-semibold text-gray-700">CNIB</p>
                     <p class="text-xs text-gray-400 truncate">{{ detailOffre.cnib_filename }}</p>
@@ -538,26 +559,26 @@
                 <div class="flex gap-1.5">
                   <button type="button"
                     (click)="ouvrirFichier(detailOffre.idoffres, 'cnib', detailOffre.cnib_filename!, 'view')"
-                    class="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                    class="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
                     style="background:#fde8e8; color:#c0392b;">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                     </svg>
-                    <span>Voir</span>
+                    Voir
                   </button>
                   <button type="button"
                     (click)="ouvrirFichier(detailOffre.idoffres, 'cnib', detailOffre.cnib_filename!, 'download')"
-                    class="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors">
+                    class="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-medium transition-colors cursor-pointer">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                     </svg>
-                    <span>DL</span>
+                    DL
                   </button>
                 </div>
               </div>
             } @else {
-              <div class="bg-gray-50 rounded-xl p-3 flex items-center gap-2 opacity-60">
+              <div class="bg-gray-50 rounded-xl p-3 flex items-center gap-2 opacity-50 border border-dashed border-gray-200">
                 <svg class="w-5 h-5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
@@ -570,11 +591,13 @@
 
             <!-- Offre PDF -->
             @if (detailOffre.demandeOffre_filename) {
-              <div class="bg-gray-50 border border-gray-200 rounded-xl p-3">
-                <div class="flex items-center gap-2 mb-2">
-                  <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:#c0392b;">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                  </svg>
+              <div class="bg-gray-50 border border-gray-200 rounded-xl p-3 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-2 mb-2.5">
+                  <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style="background:#fde8e8;">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:#c0392b;">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                  </div>
                   <div class="min-w-0">
                     <p class="text-xs font-semibold text-gray-700">Offre PDF</p>
                     <p class="text-xs text-gray-400 truncate">{{ detailOffre.demandeOffre_filename }}</p>
@@ -583,26 +606,26 @@
                 <div class="flex gap-1.5">
                   <button type="button"
                     (click)="ouvrirFichier(detailOffre.idoffres, 'demandeOffre', detailOffre.demandeOffre_filename!, 'view')"
-                    class="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                    class="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
                     style="background:#fde8e8; color:#c0392b;">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                     </svg>
-                    <span>Voir</span>
+                    Voir
                   </button>
                   <button type="button"
                     (click)="ouvrirFichier(detailOffre.idoffres, 'demandeOffre', detailOffre.demandeOffre_filename!, 'download')"
-                    class="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors">
+                    class="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-medium transition-colors cursor-pointer">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                     </svg>
-                    <span>DL</span>
+                    DL
                   </button>
                 </div>
               </div>
             } @else {
-              <div class="bg-gray-50 rounded-xl p-3 flex items-center gap-2 opacity-60">
+              <div class="bg-gray-50 rounded-xl p-3 flex items-center gap-2 opacity-50 border border-dashed border-gray-200">
                 <svg class="w-5 h-5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
@@ -619,30 +642,33 @@
         <!-- Motif refus -->
         @if (detailOffre.statusOffre === 'REJETEE' && detailOffre.motifRefus) {
           <div class="bg-red-50 border border-red-100 rounded-xl p-4">
-            <p class="text-xs text-red-400 uppercase font-semibold mb-1">Motif du refus</p>
-            <p class="text-sm text-red-700">{{ detailOffre.motifRefus }}</p>
+            <p class="text-xs text-red-400 uppercase font-semibold tracking-wide mb-1.5">Motif du refus</p>
+            <p class="text-sm text-red-700 leading-relaxed">{{ detailOffre.motifRefus }}</p>
           </div>
         }
 
         <!-- Dates -->
-        <div class="grid grid-cols-2 gap-3 text-xs text-gray-500">
-          <div>
-            <p class="font-semibold">Soumise le</p>
-            <p>{{ detailOffre.createdDate | date:'dd/MM/yyyy HH:mm' }}</p>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-gray-50 rounded-xl p-3">
+            <p class="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Soumise le</p>
+            <p class="text-sm font-medium text-gray-700">{{ detailOffre.createdDate | date:'dd/MM/yyyy' }}</p>
+            <p class="text-xs text-gray-400">{{ detailOffre.createdDate | date:'HH:mm' }}</p>
           </div>
-          <div>
-            <p class="font-semibold">Dernière mise à jour</p>
-            <p>{{ detailOffre.lastModifiedDate | date:'dd/MM/yyyy HH:mm' }}</p>
+          <div class="bg-gray-50 rounded-xl p-3">
+            <p class="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Mise à jour</p>
+            <p class="text-sm font-medium text-gray-700">{{ detailOffre.lastModifiedDate | date:'dd/MM/yyyy' }}</p>
+            <p class="text-xs text-gray-400">{{ detailOffre.lastModifiedDate | date:'HH:mm' }}</p>
           </div>
         </div>
+
       </div>
 
       <!-- Footer détail -->
-      <div class="flex items-center justify-between gap-3 px-6 py-4 border-t border-gray-100">
+      <div class="flex items-center justify-between gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50">
         @if (peutEvaluer(detailOffre)) {
           <button
             (click)="ouvrirTraitement(detailOffre); fermerDetail()"
-            class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white rounded-xl transition-colors"
+            class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white rounded-xl transition-all cursor-pointer hover:opacity-90"
             style="background:#c0392b;">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
@@ -652,7 +678,7 @@
         }
         <button
           (click)="fermerDetail()"
-          class="px-4 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
+          class="px-4 py-2.5 text-sm font-medium text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition-colors cursor-pointer">
           Fermer
         </button>
       </div>

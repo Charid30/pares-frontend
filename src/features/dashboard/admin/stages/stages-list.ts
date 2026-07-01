@@ -9,8 +9,10 @@ import { firstValueFrom } from 'rxjs';
 import { saveAs } from 'file-saver';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { AdminStageService, Stage, StageDetails, StageStats, StageFilters, RapportStage } from '../../../../core/services/admin-stage.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { SearchService } from '../../../../core/services/search.service';
 import { environment } from '../../../../environments/environment';
+import { StatCard } from '../../../../shared/components/stat-card/stat-card';
 
 interface Toast {
   id: number;
@@ -22,7 +24,7 @@ interface Toast {
 @Component({
   selector: 'app-stages-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, StatCard],
   templateUrl: './stages-list.html',
   styles: [`
     .toast-enter {
@@ -110,11 +112,38 @@ export class StagesList implements OnInit, OnDestroy {
   // Formulaire d'acceptation/rejet
   acceptForm = {
     dateDebutEffective: '',
+    dureeAccordee: null as number | null,
     conventionFile: null as File | null
   };
   rejectForm = {
     motifRefus: ''
   };
+
+  // Documents non conformes (rejet)
+  documentsRejetesSelection: string[] = [];
+  readonly DOCUMENTS_STAGE: { key: string; label: string }[] = [
+    { key: 'cv', label: 'CV daté et signé' },
+    { key: 'cnib', label: 'CNIB' },
+    { key: 'casierJudiciaire', label: 'Casier judiciaire' },
+    { key: 'lettreMotivation', label: 'Lettre de motivation signée' },
+    { key: 'lettreRecommandation', label: 'Lettre de recommandation' },
+    { key: 'dernierDiplome', label: 'Dernier diplôme légalisé' },
+  ];
+
+  /** La lettre de recommandation n'est exigée que pour les stages de soutenance, pas pour le perfectionnement. */
+  get documentsDisponiblesRejet(): { key: string; label: string }[] {
+    if (!this.selectedStage) return this.DOCUMENTS_STAGE;
+    if (this.selectedStage.typeStage === 'PERFECTIONNEMENT') {
+      return this.DOCUMENTS_STAGE.filter(d => d.key !== 'lettreRecommandation');
+    }
+    return this.DOCUMENTS_STAGE;
+  }
+
+  toggleDocumentRejete(key: string): void {
+    const idx = this.documentsRejetesSelection.indexOf(key);
+    if (idx > -1) this.documentsRejetesSelection.splice(idx, 1);
+    else this.documentsRejetesSelection.push(key);
+  }
 
   // Formulaire d'evaluation du rapport
   evaluateRapportForm = {
@@ -128,6 +157,40 @@ export class StagesList implements OnInit, OnDestroy {
     attestationFile: null as File | null
   };
 
+  // Joindre un document (convention / attestation) sur un stage déjà accepté
+  showDocModal = false;
+  docStageId: number | null = null;
+  docType: 'CONVENTION' | 'ATTESTATION' = 'CONVENTION';
+  docDateEmission = '';
+  docFile: File | null = null;
+  errorDoc = '';
+  soumissionDoc = false;
+  stageHasConvention = false;
+  checkingConvention = false;
+
+  // Permissions
+  canApprouver = false;
+  canValider = false;
+  isAdmin = false;
+
+  // Demandes de modification
+  demandesModification: any[] = [];
+  showDemandesModal = false;
+  selectedDemande: any = null;
+  evaluerDemandeForm = { status: '' as 'APPROUVEE' | 'REJETEE' | '', reponse_drh: '' };
+  submittingDemande = false;
+
+  // Affectation direction / service (admin)
+  directions: { iddirection: number; nom: string; accronyme: string; services?: { idservice: number; accronyme: string; description: string }[] }[] = [];
+  affectationForm = { direction_iddirection: null as number | null, service_idservice: null as number | null };
+  savingAffectation = false;
+
+  get servicesForAffectation(): { idservice: number; accronyme: string; description: string }[] {
+    if (!this.affectationForm.direction_iddirection) return [];
+    const dir = this.directions.find(d => d.iddirection === +this.affectationForm.direction_iddirection!);
+    return dir?.services ?? [];
+  }
+
   // Toast notifications
   toasts: Toast[] = [];
   private toastId = 0;
@@ -135,6 +198,7 @@ export class StagesList implements OnInit, OnDestroy {
 
   constructor(
     private adminStageService: AdminStageService,
+    private authService: AuthService,
     private http: HttpClient,
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone,
@@ -143,9 +207,14 @@ export class StagesList implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.canApprouver = this.authService.hasPermission('STAGE', 'APPROUVER');
+    this.canValider = this.authService.hasPermission('STAGE', 'VALIDER') || this.authService.hasRole('ADMIN');
+    this.isAdmin = this.authService.hasRole('ADMIN');
+    if (this.isAdmin) this.loadDemandesModification();
     this.loadStats();
     this.loadStages();
     this.loadDomaines();
+    this.loadDirections();
     this.searchSub = this.searchService.term$.pipe(
       debounceTime(300),
       distinctUntilChanged(),
@@ -231,6 +300,69 @@ export class StagesList implements OnInit, OnDestroy {
         }
       },
       error: (err) => console.error('Erreur chargement domaines:', err)
+    });
+  }
+
+  loadDirections(): void {
+    this.http.get<any>(`${environment.apiUrl}/stages/directions`).subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.directions = res.data;
+          this.cdr.detectChanges();
+        }
+      },
+      error: (err) => console.error('Erreur chargement directions:', err)
+    });
+  }
+
+  /** Pré-remplir le formulaire d'affectation avec les valeurs existantes du stage */
+  initAffectationForm(): void {
+    if (!this.selectedStage) return;
+    const dirId = (this.selectedStage as any).direction_iddirection ?? null;
+    const svcId = (this.selectedStage as any).service_idservice ?? null;
+    this.affectationForm = {
+      direction_iddirection: dirId ? +dirId : null,
+      service_idservice: svcId ? +svcId : null,
+    };
+    this.cdr.detectChanges();
+  }
+
+  /** Retourne un libellé lisible pour l'affectation actuelle */
+  getAffectationLabel(dirId: any, svcId: any): string {
+    const dir = this.directions.find(d => d.iddirection === +dirId);
+    if (!dir) return '—';
+    if (!svcId) return `${dir.accronyme} — ${dir.nom}`;
+    const svc = dir.services?.find(s => s.idservice === +svcId);
+    return svc ? `${dir.accronyme} › ${svc.accronyme}` : `${dir.accronyme} — ${dir.nom}`;
+  }
+
+  /** Enregistrer l'affectation direction + service */
+  sauvegarderAffectation(): void {
+    if (!this.selectedStage) return;
+    this.savingAffectation = true;
+    this.adminStageService.updateStage(this.selectedStage.idstage, {
+      direction_iddirection: this.affectationForm.direction_iddirection,
+      service_idservice: this.affectationForm.service_idservice,
+    }).subscribe({
+      next: (res) => {
+        if (res.success) {
+          // Mettre à jour les valeurs localement
+          (this.selectedStage as any).direction_iddirection = this.affectationForm.direction_iddirection;
+          (this.selectedStage as any).service_idservice     = this.affectationForm.service_idservice;
+          // Trouver le nom de la direction pour l'afficher
+          const dir = this.directions.find(d => d.iddirection === this.affectationForm.direction_iddirection);
+          if (dir) (this.selectedStage as any).direction = dir;
+          this.showToast('success', 'Affectation enregistrée', 'La direction et le service ont été mis à jour.');
+          this.loadStages(); // Rafraîchir la liste
+        }
+        this.savingAffectation = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.showToast('error', 'Erreur', err.error?.message ?? 'Impossible de mettre à jour l\'affectation.');
+        this.savingAffectation = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 
@@ -340,6 +472,7 @@ export class StagesList implements OnInit, OnDestroy {
         this.ngZone.run(() => {
           if (response.success) {
             this.selectedStage = response.data;
+            this.initAffectationForm();
           }
           this.loading = false;
           this.cdr.detectChanges();
@@ -359,24 +492,122 @@ export class StagesList implements OnInit, OnDestroy {
   openAcceptModal(stage: Stage): void {
     this.modalMode = 'accept';
     this.selectedStage = stage as StageDetails;
-    // Pre-remplir avec la date souhaitee par le candidat
+    // Pre-remplir avec la date souhaitee par le candidat et la duree demandee
     this.acceptForm.dateDebutEffective = stage.dateDebutSouhaitee ? stage.dateDebutSouhaitee.split('T')[0] : '';
+    this.acceptForm.dureeAccordee = stage.dureeStageSouhaitee || stage.dureeStage || null;
     this.showModal = true;
   }
 
   openRejectModal(stage: Stage): void {
     this.modalMode = 'reject';
     this.selectedStage = stage as StageDetails;
-    this.rejectForm.motifRefus = '';
+    // Si le stage est déjà rejeté, on pré-remplit pour permettre une mise à jour
+    this.rejectForm.motifRefus = stage.statusStage === 'REJETE' ? (stage.motifRefus || '') : '';
+    this.documentsRejetesSelection = stage.statusStage === 'REJETE'
+      ? this.parseDocumentsRejetes(stage.documentsRejetes)
+      : [];
     this.showModal = true;
+  }
+
+  parseDocumentsRejetes(raw: string | null | undefined): string[] {
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  // ==================== DOCUMENTS DE STAGE (convention / attestation) ====================
+
+  hasDoc(type: 'CONVENTION' | 'ATTESTATION'): boolean {
+    return ((this.selectedStage as any)?.documents || []).some((d: any) => d.typeDocument === type);
+  }
+
+  ouvrirDocModal(stage: Stage): void {
+    this.docStageId = stage.idstage;
+    this.docType = 'CONVENTION';
+    this.docDateEmission = new Date().toISOString().substring(0, 10);
+    this.docFile = null;
+    this.errorDoc = '';
+    this.stageHasConvention = false;
+    this.checkingConvention = true;
+    this.showDocModal = true;
+    this.cdr.detectChanges();
+
+    this.adminStageService.getStageById(stage.idstage).subscribe({
+      next: (res) => {
+        const docs: any[] = (res.data as any)?.documents || [];
+        this.stageHasConvention = docs.some((d) => d.typeDocument === 'CONVENTION');
+        if (this.stageHasConvention) this.docType = 'ATTESTATION';
+        this.checkingConvention = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.checkingConvention = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  fermerDocModal(): void {
+    this.showDocModal = false;
+    this.docStageId = null;
+    this.soumissionDoc = false;
+    this.stageHasConvention = false;
+    this.errorDoc = '';
+    this.cdr.detectChanges();
+  }
+
+  onDocFileChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.docFile = input.files?.[0] || null;
+  }
+
+  creerDocument(): void {
+    if (!this.docStageId || this.soumissionDoc) return;
+    if (!this.docFile) { this.errorDoc = 'Veuillez sélectionner un fichier PDF'; this.cdr.detectChanges(); return; }
+    if (!this.docDateEmission) { this.errorDoc = "La date d'émission est requise"; this.cdr.detectChanges(); return; }
+
+    this.soumissionDoc = true;
+    this.errorDoc = '';
+
+    const formData = new FormData();
+    formData.append('stage_idstage', String(this.docStageId));
+    formData.append('typeDocument', this.docType);
+    formData.append('dateEmission', this.docDateEmission);
+    formData.append('document', this.docFile);
+    const user = this.authService.getCurrentUser();
+    if (user) formData.append('emetteurNom', `${user.prenom || ''} ${user.nom || ''}`.trim());
+
+    const stageId = this.docStageId;
+    this.http.post<any>(`${environment.apiUrl}/stages/documents`, formData).subscribe({
+      next: () => {
+        this.showToast('success', 'Document créé', 'Le document a été joint avec succès.');
+        this.fermerDocModal();
+        this.loadStages();
+        if (this.selectedStage?.idstage === stageId) {
+          this.adminStageService.getStageById(stageId!).subscribe({
+            next: (res) => { if (res.success) this.selectedStage = res.data; this.cdr.detectChanges(); }
+          });
+        }
+      },
+      error: (err) => {
+        this.errorDoc = err.error?.message || 'Erreur lors de la création du document';
+        this.soumissionDoc = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   closeModal(): void {
     this.showModal = false;
     this.selectedStage = null;
     this.selectedRapport = null;
-    this.acceptForm = { dateDebutEffective: '', conventionFile: null };
+    this.acceptForm = { dateDebutEffective: '', dureeAccordee: null, conventionFile: null };
     this.rejectForm = { motifRefus: '' };
+    this.documentsRejetesSelection = [];
     this.evaluateRapportForm = { statusRapport: '', motifRefus: '' };
     this.attestationForm = { dateEmission: '', attestationFile: null };
   }
@@ -409,6 +640,11 @@ export class StagesList implements OnInit, OnDestroy {
       return;
     }
 
+    if (!this.acceptForm.dureeAccordee || this.acceptForm.dureeAccordee < 1) {
+      this.showToast('error', 'Erreur', 'La durée accordée est obligatoire');
+      return;
+    }
+
     if (!this.acceptForm.conventionFile) {
       this.showToast('error', 'Erreur', 'La convention de stage (PDF) est obligatoire');
       return;
@@ -421,7 +657,8 @@ export class StagesList implements OnInit, OnDestroy {
       this.selectedStage.idstage,
       {
         statusStage: 'ACCEPTE',
-        dateDebutEffective: this.acceptForm.dateDebutEffective
+        dateDebutEffective: this.acceptForm.dateDebutEffective,
+        dureeAccordee: this.acceptForm.dureeAccordee
       },
       this.acceptForm.conventionFile
     ).subscribe({
@@ -455,12 +692,19 @@ export class StagesList implements OnInit, OnDestroy {
       return;
     }
 
+    if (this.documentsRejetesSelection.length === 0) {
+      this.showToast('error', 'Erreur', 'Veuillez sélectionner au moins un document non conforme');
+      return;
+    }
+
     this.submitting = true;
     const stageName = `${this.selectedStage.candidat.prenom} ${this.selectedStage.candidat.nom}`;
+    const dejaRejete = this.selectedStage.statusStage === 'REJETE';
 
     this.adminStageService.updateStatus(this.selectedStage.idstage, {
       statusStage: 'REJETE',
-      motifRefus: this.rejectForm.motifRefus
+      motifRefus: this.rejectForm.motifRefus,
+      documentsRejetes: this.documentsRejetesSelection.join(',')
     }).subscribe({
       next: (response) => {
         this.ngZone.run(() => {
@@ -468,7 +712,10 @@ export class StagesList implements OnInit, OnDestroy {
             this.closeModal();
             this.loadStages();
             this.loadStats();
-            this.showToast('info', 'Refuse', `La demande de stage de ${stageName} a ete refusee`);
+            this.showToast('info', dejaRejete ? 'Mis à jour' : 'Refuse',
+              dejaRejete
+                ? `Le motif de refus de ${stageName} a ete mis a jour`
+                : `La demande de stage de ${stageName} a ete refusee`);
           }
           this.submitting = false;
           this.cdr.detectChanges();
@@ -660,6 +907,48 @@ export class StagesList implements OnInit, OnDestroy {
   downloadLettreRenouvellement(): void { this.accederLettreRenouvellement('telecharger'); }
   downloadConventionRenouvellement(): void { this.accederConventionRenouvellement('telecharger'); }
 
+  /** Imprimer tous les documents soumis — fusion serveur via pdf-lib → un seul PDF natif */
+  async printAllDocuments(): Promise<void> {
+    if (!this.selectedStage) return;
+
+    this.showToast('info', 'Préparation...', 'Fusion des documents en cours...');
+
+    try {
+      const blob = await firstValueFrom(
+        this.http.get(
+          `${environment.apiUrl}/stages/${this.selectedStage.idstage}/documents/print-all`,
+          { responseType: 'blob' }
+        )
+      );
+
+      const url = URL.createObjectURL(blob);
+      const win = window.open(url, '_blank');
+
+      if (!win) {
+        this.showToast('warning', 'Popup bloqué', 'Autorisez les popups pour ce site, puis réessayez.');
+      } else {
+        this.showToast('success', 'Dossier prêt', 'Utilisez Ctrl+P dans le nouvel onglet pour imprimer.');
+      }
+
+      // Libérer la mémoire après 60 s (l'onglet a eu le temps de charger le PDF)
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (err: unknown) {
+      // Quand responseType='blob', Angular encapsule l'erreur dans un Blob — il faut le décoder
+      let errorMsg = 'Impossible de générer le dossier d\'impression.';
+      if (err && typeof err === 'object' && 'error' in err) {
+        const httpErr = err as { error: unknown };
+        if (httpErr.error instanceof Blob) {
+          try {
+            const text = await (httpErr.error as Blob).text();
+            const json = JSON.parse(text) as { message?: string };
+            if (json.message) errorMsg = json.message;
+          } catch { /* ignore parse error */ }
+        }
+      }
+      this.showToast('error', 'Documents manquants', errorMsg);
+    }
+  }
+
   /** Télécharger tous les documents soumis dans un ZIP nommé après le candidat */
   async downloadAllDocuments(): Promise<void> {
     if (!this.selectedStage) return;
@@ -740,7 +1029,10 @@ export class StagesList implements OnInit, OnDestroy {
       'TERMINE': 'bg-teal-100 text-teal-700',
       'REJETE': 'bg-red-100 text-red-700',
       'EXPIRE': 'bg-gray-100 text-gray-700',
-      'RAPPORT_SOUMIS': 'bg-purple-100 text-purple-700'
+      'RAPPORT_SOUMIS': 'bg-purple-100 text-purple-700',
+      'PROGRAMMATION_EN_COURS': 'bg-blue-100 text-blue-700 border-blue-200',
+      'SUSPENDU': 'bg-orange-100 text-orange-700 border-orange-200',
+      'ANNULE': 'bg-gray-100 text-gray-500 border-gray-200',
     };
     return classes[statut] || 'bg-gray-100 text-gray-700';
   }
@@ -754,7 +1046,10 @@ export class StagesList implements OnInit, OnDestroy {
       'TERMINE': 'Termine',
       'REJETE': 'Rejete',
       'EXPIRE': 'Expire',
-      'RAPPORT_SOUMIS': 'Rapport soumis'
+      'RAPPORT_SOUMIS': 'Rapport soumis',
+      'PROGRAMMATION_EN_COURS': 'Programmation en cours',
+      'SUSPENDU': 'Suspendu',
+      'ANNULE': 'Annulé',
     };
     return labels[statut] || statut;
   }
@@ -1067,5 +1362,91 @@ export class StagesList implements OnInit, OnDestroy {
     if (size < 1024) return `${size} o`;
     if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} Ko`;
     return `${(size / (1024 * 1024)).toFixed(1)} Mo`;
+  }
+
+  // ==================== NOUVEAU WORKFLOW ====================
+
+  loadDemandesModification(): void {
+    this.adminStageService.getDemandesModification({ status: 'EN_ATTENTE' }).subscribe({
+      next: (res) => {
+        this.ngZone.run(() => {
+          if (res.success) this.demandesModification = res.data;
+          this.cdr.detectChanges();
+        });
+      },
+      error: () => {}
+    });
+  }
+
+  approuverStage(stage: any): void {
+    this.openConfirmModal({
+      title: 'Approuver la demande',
+      message: `Approuver la demande de ${stage.candidat?.prenom} ${stage.candidat?.nom} ? Le statut passera à "Programmation en cours".`,
+      confirmText: 'Approuver',
+      confirmStyle: 'bg-green-600 hover:bg-green-700 text-white',
+      iconPath: 'M5 13l4 4L19 7',
+      iconColor: 'text-green-600',
+      onConfirm: () => {
+        this.submitting = true;
+        this.adminStageService.approuverStage(stage.idstage).subscribe({
+          next: (res) => {
+            this.ngZone.run(() => {
+              if (res.success) {
+                this.loadStages();
+                this.loadStats();
+                this.showToast('success', 'Approuvée !', 'La demande est maintenant en programmation.');
+              }
+              this.submitting = false;
+              this.cdr.detectChanges();
+            });
+          },
+          error: (err) => {
+            this.ngZone.run(() => {
+              this.showToast('error', 'Erreur', err.error?.message || 'Erreur lors de l\'approbation');
+              this.submitting = false;
+              this.cdr.detectChanges();
+            });
+          }
+        });
+      }
+    });
+  }
+
+  evaluerDemande(): void {
+    if (!this.selectedDemande || !this.evaluerDemandeForm.status) return;
+    this.submittingDemande = true;
+    this.adminStageService.evaluerDemandeModification(this.selectedDemande.id, {
+      status: this.evaluerDemandeForm.status as 'APPROUVEE' | 'REJETEE',
+      reponse_drh: this.evaluerDemandeForm.reponse_drh || undefined
+    }).subscribe({
+      next: (res) => {
+        this.ngZone.run(() => {
+          if (res.success) {
+            this.showDemandesModal = false;
+            this.selectedDemande = null;
+            this.loadDemandesModification();
+            this.loadStages();
+            this.showToast('success', 'Décision enregistrée', 'La demande a été traitée avec succès.');
+          }
+          this.submittingDemande = false;
+          this.cdr.detectChanges();
+        });
+      },
+      error: (err) => {
+        this.ngZone.run(() => {
+          this.showToast('error', 'Erreur', err.error?.message || 'Erreur');
+          this.submittingDemande = false;
+          this.cdr.detectChanges();
+        });
+      }
+    });
+  }
+
+  getDemandeTypeLabel(type: string): string {
+    return type === 'SUSPENSION' ? 'Suspension' : 'Annulation';
+  }
+
+  getDemandeTypeClass(type: string): string {
+    return type === 'SUSPENSION' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700';
   }
 }

@@ -7,7 +7,6 @@
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
-@import "tailwindcss";
 
 /* ================================== */
 /* CUSTOM BASE STYLES */
@@ -19,10 +18,19 @@
 
   html {
     @apply scroll-smooth;
+    /* Eviter le débordement horizontal sur mobile */
+    overflow-x: hidden;
   }
 
   body {
     @apply font-sans antialiased bg-gray-50 text-gray-900;
+    /* overflow-x est géré sur <html> uniquement : le mettre ici casserait
+       position:sticky (overflow-x seul implique overflow-y:auto, ce qui
+       transforme body en conteneur de scroll sans hauteur fixe). */
+    /* Safe area pour iPhone X+ : padding autour du contenu */
+    padding-left:   env(safe-area-inset-left);
+    padding-right:  env(safe-area-inset-right);
+    /* NE PAS ajouter padding-top/bottom ici — géré par les navbars fixées */
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -51,6 +59,34 @@
 
   h6 {
     @apply text-base md:text-lg;
+  }
+}
+
+/* ================================== */
+/* SAFE AREAS — iPhone X / 11 / 12 / 13 / 14 / 15 (notch + Dynamic Island + home bar)
+   Utilisation : ajouter safe-top, safe-bottom aux éléments fixes
+/* ================================== */
+@layer utilities {
+  /* Navbar fixe en haut : compenser le notch */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  /* Barre fixe en bas : compenser le home indicator */
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  /* Marges latérales en mode paysage (iPhone X landscape) */
+  .safe-x {
+    padding-left:  env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  /* Pour les navbars fixed : hauteur = h-16 + safe-area-top */
+  .h-safe-navbar {
+    height: calc(4rem + env(safe-area-inset-top));
+  }
+  /* Marge de compensation sous une navbar safe */
+  .pt-safe-navbar {
+    padding-top: calc(4rem + env(safe-area-inset-top));
   }
 }
 

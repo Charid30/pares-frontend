@@ -10,19 +10,36 @@ export interface UserPermission {
   action: string;
 }
 
+export interface UserRoleInfo {
+  idrole: number;
+  accronyme: string;
+  description: string;
+  lectureGlobale?: boolean;
+}
+
+export interface UserDirectionInfo {
+  iddirection: number;
+  nom: string;
+  accronyme: string;
+}
+
 export interface User {
   idusers: number;
   username: string;
   email?: string;
   nom?: string;
   prenom?: string;
+  genre?: string;
   matricule?: string;
-  role: string;
-  roleId?: number;
+  role: string;        // rôle principal (rétro-compat)
+  roleId?: number;     // id principal (rétro-compat)
   roleDescription?: string;
+  roles?: UserRoleInfo[]; // tous les rôles (principal + additionnels)
   permissions?: UserPermission[];
   candidatId?: number;
   agentId?: number;
+  directions?: UserDirectionInfo[]; // direction(s) de l'agent connecté (via son service)
+  lectureGlobaleModules?: string[]; // modules pour lesquels un rôle lectureGlobale donne CONSULTER
 }
 
 export interface LoginResponse {
@@ -41,13 +58,15 @@ export interface RegisterData {
   confirmPassword: string;
   nom: string;
   prenom: string;
+  genre: string;
   telephone: string;
   nip: string;
   ifu?: string;
+  recipisse?: string;
 }
 
-// Rôles système avec layout dédié
-export const SYSTEM_AGENT_ROLES = ['ADMIN', 'AGENT_RH', 'AGENT_FINANCIER', 'AGENT_COMMERCIAL'];
+// Rôles système avec layout dédié (tous les autres → /dashboard/agent)
+export const SYSTEM_AGENT_ROLES = ['ADMIN'];
 
 @Injectable({
   providedIn: 'root'
@@ -118,7 +137,13 @@ export class AuthService {
         if (response.success && response.data?.permissions) {
           const current = this.currentUserSubject.value;
           if (current) {
-            const updated: User = { ...current, permissions: response.data.permissions };
+            const updated: User = {
+              ...current,
+              permissions: response.data.permissions,
+              roles: response.data.roles ?? current.roles,
+              directions: response.data.directions ?? current.directions,
+              lectureGlobaleModules: response.data.lectureGlobaleModules ?? current.lectureGlobaleModules,
+            };
             localStorage.setItem('user', JSON.stringify(updated));
             this.currentUserSubject.next(updated);
           }
@@ -187,19 +212,38 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
+  updateCurrentUser(user: User): void {
+    localStorage.setItem('user', JSON.stringify(user));
+    this.currentUserSubject.next(user);
+  }
+
+  /** Tous les acronymes de rôle de l'utilisateur (principal + additionnels), avec repli rétro-compat. */
+  getUserRoleAccronymes(user = this.getCurrentUser()): string[] {
+    if (!user) return [];
+    if (Array.isArray(user.roles) && user.roles.length) {
+      return user.roles.map(r => r.accronyme);
+    }
+    return user.role ? [user.role] : [];
+  }
+
+  /** L'utilisateur possède-t-il un rôle ADMIN (principal ou additionnel) ? */
+  private isAdminUser(user = this.getCurrentUser()): boolean {
+    return this.getUserRoleAccronymes(user).includes('ADMIN');
+  }
+
   hasRole(role: string): boolean {
-    return this.getCurrentUser()?.role === role;
+    return this.getUserRoleAccronymes().includes(role);
   }
 
   hasAnyRole(roles: string[]): boolean {
-    const user = this.getCurrentUser();
-    return user ? roles.includes(user.role) : false;
+    const userRoles = this.getUserRoleAccronymes();
+    return userRoles.some(r => roles.includes(r));
   }
 
   hasPermission(module: string, action: string): boolean {
     const user = this.getCurrentUser();
     if (!user) return false;
-    if (user.role === 'ADMIN') return true;
+    if (this.isAdminUser(user)) return true;
     if (!user.permissions) return false;
     return user.permissions.some(p => p.module === module && p.action === action);
   }
@@ -207,7 +251,7 @@ export class AuthService {
   hasModuleAccess(module: string): boolean {
     const user = this.getCurrentUser();
     if (!user) return false;
-    if (user.role === 'ADMIN') return true;
+    if (this.isAdminUser(user)) return true;
     if (!user.permissions) return false;
     return user.permissions.some(p => p.module === module);
   }
@@ -215,15 +259,47 @@ export class AuthService {
   getAccessibleModules(): string[] {
     const user = this.getCurrentUser();
     if (!user) return [];
-    if (user.role === 'ADMIN') return ['RECRUTEMENT', 'CANDIDATURES', 'CANDIDATS', 'STAGE', 'SUIVI_STAGE', 'OFFRE', 'AIDE', 'DEMANDE_AUDIENCE', 'AGENTS', 'SERVICES'];
+    if (this.isAdminUser(user)) return ['CANDIDATURES', 'CANDIDATS', 'STAGE', 'SUIVI_STAGE', 'SUSPENSION_STAGE', 'OFFRE', 'AIDE', 'DEMANDE_AUDIENCE', 'AGENTS', 'SERVICES'];
     if (!user.permissions) return [];
     return Array.from(new Set(user.permissions.map(p => p.module)));
+  }
+
+  /**
+   * Rôle "lecture globale" (sous-admin) sur ce module : reflète exactement
+   * hasGlobalReadAccess() côté backend — utilisé pour distinguer un menu
+   * "vue globale" lecture seule d'un menu d'action limité à la direction de l'agent.
+   */
+  hasLectureGlobale(module: string): boolean {
+    return !!this.getCurrentUser()?.lectureGlobaleModules?.includes(module);
+  }
+
+  /** Direction(s) associée(s) au service de l'agent connecté. */
+  getUserDirections(): UserDirectionInfo[] {
+    return this.getCurrentUser()?.directions || [];
+  }
+
+  /** Accronyme de la première direction de l'agent connecté, s'il y en a une. */
+  getUserDirectionAccronyme(): string | null {
+    return this.getUserDirections()[0]?.accronyme || null;
   }
 
   isSystemRole(): boolean {
     const user = this.getCurrentUser();
     if (!user) return false;
-    return SYSTEM_AGENT_ROLES.includes(user.role) || user.role === 'CANDIDAT';
+    const accronymes = this.getUserRoleAccronymes(user);
+    return accronymes.some(r => SYSTEM_AGENT_ROLES.includes(r)) || accronymes.includes('CANDIDAT');
+  }
+
+  /**
+   * Détermine le rôle déterminant le dashboard/layout, en tenant compte des rôles multiples.
+   * Priorité : ADMIN (si présent) > CANDIDAT > rôle principal (agent générique).
+   */
+  getEffectiveDashboardRole(user = this.getCurrentUser()): string {
+    if (!user) return '';
+    const accronymes = this.getUserRoleAccronymes(user);
+    if (accronymes.includes('ADMIN')) return 'ADMIN';
+    if (accronymes.includes('CANDIDAT')) return 'CANDIDAT';
+    return user.role || accronymes[0] || '';
   }
 
   // ── Session ────────────────────────────────────────────────────────────────

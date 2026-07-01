@@ -21,9 +21,8 @@ export const permissionGuard: CanActivateFn = (route, state) => {
     return true; // Pas de module requis → accès libre
   }
 
-  // ADMIN a accès à tout
-  const user = authService.getCurrentUser();
-  if (user?.role === 'ADMIN') return true;
+  // ADMIN (principal ou additionnel) a accès à tout
+  if (authService.hasRole('ADMIN')) return true;
 
   if (authService.hasModuleAccess(requiredModule)) {
     return true;

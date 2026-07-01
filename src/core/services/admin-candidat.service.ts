@@ -113,4 +113,11 @@ export class AdminCandidatService {
   deleteCandidat(id: number): Observable<ApiResponse<{ message: string }>> {
     return this.http.delete<ApiResponse<{ message: string }>>(`${this.apiUrl}/${id}`);
   }
+
+  /**
+   * Réinitialiser le mot de passe d'un candidat (action admin)
+   */
+  resetPassword(id: number, newPassword: string): Observable<ApiResponse<{ message: string; username: string }>> {
+    return this.http.put<ApiResponse<{ message: string; username: string }>>(`${this.apiUrl}/${id}/reset-password`, { newPassword });
+  }
 }

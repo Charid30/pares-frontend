@@ -13,6 +13,13 @@
         </span>
       </p>
     </div>
+    <button (click)="exporterCSV()"
+            class="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white text-sm font-semibold rounded-xl hover:bg-primary-600 active:scale-95 transition-all shadow-sm cursor-pointer self-start lg:self-center">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+      </svg>
+      Exporter CSV
+    </button>
   </div>
 
   <!-- ── Message succès ──────────────────────────────────────────────────── -->
@@ -26,24 +33,16 @@
   }
 
   <!-- ── Compteurs statuts ────────────────────────────────────────────────── -->
-  <div class="grid grid-cols-3 gap-2 sm:gap-3">
+  <div class="grid grid-cols-3 gap-3 sm:gap-4">
     @for (s of [
-      { statut: 'EN_ATTENTE', label: 'En attente', iconBg: 'bg-red-50',   iconDot: 'bg-red-500',   border: 'border-red-100',   ring: 'ring-red-400'   },
-      { statut: 'VALIDEE',    label: 'Validées',   iconBg: 'bg-green-50', iconDot: 'bg-green-500', border: 'border-green-100', ring: 'ring-green-400' },
-      { statut: 'REJETEE',    label: 'Rejetées',   iconBg: 'bg-rose-50',  iconDot: 'bg-rose-500',  border: 'border-rose-100',  ring: 'ring-rose-400'  }
+      { statut: 'EN_ATTENTE', label: 'En attente', accent: 'red',     icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+      { statut: 'VALIDEE',    label: 'Validées',   accent: 'emerald', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+      { statut: 'REJETEE',    label: 'Rejetées',   accent: 'rose',    icon: 'M6 18L18 6M6 6l12 12' }
     ]; track s.statut) {
-      <button
-        type="button"
-        class="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow w-full text-left flex items-center gap-2 p-3 sm:p-4 border"
-        [ngClass]="[s.border, filtreStatut === s.statut ? 'ring-2 ' + s.ring : '']"
+      <button type="button" class="text-left w-full focus:outline-none"
         (click)="filtreStatut = filtreStatut === s.statut ? '' : s.statut; appliquerFiltres()">
-        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center flex-shrink-0" [ngClass]="s.iconBg">
-          <span class="w-2.5 h-2.5 rounded-full" [ngClass]="s.iconDot"></span>
-        </div>
-        <div class="min-w-0">
-          <p class="text-lg sm:text-2xl font-bold text-gray-900 leading-none">{{ getCountByStatut(s.statut) }}</p>
-          <p class="text-xs text-gray-400 mt-0.5 truncate">{{ s.label }}</p>
-        </div>
+        <app-stat-card [accent]="$any(s.accent)" [iconPath]="s.icon" [label]="s.label"
+          [value]="getCountByStatut(s.statut)" [active]="filtreStatut === s.statut"></app-stat-card>
       </button>
     }
   </div>

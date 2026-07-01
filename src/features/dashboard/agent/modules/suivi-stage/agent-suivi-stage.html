@@ -28,31 +28,22 @@
         </div>
       </div>
 
-      <!-- Stats row -->
-      <div class="grid grid-cols-3 gap-3 lg:gap-4 min-w-0 lg:min-w-[360px]">
-        <!-- Total -->
-        <div class="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-center">
-          <p class="text-2xl font-bold text-white">{{ stages.length }}</p>
-          <p class="text-xs text-gray-400 mt-0.5">Total</p>
-        </div>
-        <!-- Filtrés -->
-        <div class="bg-blue-500/10 border border-blue-500/20 rounded-2xl px-4 py-3 text-center">
-          <p class="text-2xl font-bold text-blue-300">{{ stagesFiltres.length }}</p>
-          <p class="text-xs text-gray-400 mt-0.5">Filtrés</p>
-        </div>
-        <!-- Moyenne durée -->
-        <div class="bg-primary-500/10 border border-primary-500/20 rounded-2xl px-4 py-3 text-center">
-          <p class="text-2xl font-bold text-primary-300">{{ moyenneDuree }}<span class="text-sm font-normal text-primary-400 ml-0.5">j</span></p>
-          <p class="text-xs text-gray-400 mt-0.5">Moy. durée</p>
-        </div>
-      </div>
-
     </div>
   </div>
 </div>
 
 <!-- ══ CONTENU ════════════════════════════════════════════════════════════ -->
 <div class="container-custom py-8 md:py-12">
+
+  <!-- Stats -->
+  <div class="grid grid-cols-3 gap-3 sm:gap-4 mb-6">
+    <app-stat-card accent="slate" label="Total" [value]="stages.length"
+      iconPath="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></app-stat-card>
+    <app-stat-card accent="blue" label="Filtrés" [value]="stagesFiltres.length"
+      iconPath="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L14 13.414V19a1 1 0 01-.293.707l-2 2A1 1 0 0110 21v-7.586L3.293 6.707A1 1 0 013 6V4z"></app-stat-card>
+    <app-stat-card accent="red" label="Moy. durée" [value]="moyenneDuree + ' j'"
+      iconPath="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></app-stat-card>
+  </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 

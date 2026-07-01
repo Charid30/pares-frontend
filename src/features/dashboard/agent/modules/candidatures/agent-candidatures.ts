@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { environment } from '../../../../../environments/environment';
+import { StatCard } from '../../../../../shared/components/stat-card/stat-card';
 
 interface Document {
   iddocument: number;
@@ -29,7 +30,7 @@ interface Candidature {
 @Component({
   selector: 'app-agent-candidatures',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, StatCard],
   templateUrl: './agent-candidatures.html',
 })
 export class AgentCandidatures implements OnInit {
@@ -57,10 +58,10 @@ export class AgentCandidatures implements OnInit {
   get peutRejeter():   boolean { return this.authService.hasPermission('CANDIDATURES', 'REJETER'); }
 
   statsStatuts = [
-    { value: 'SOUMISE',         label: 'Soumises',        dot: 'bg-yellow-400', ringClass: 'ring-yellow-400', count: 0 },
-    { value: 'EN_VERIFICATION', label: 'En vérification', dot: 'bg-blue-500',   ringClass: 'ring-blue-400',   count: 0 },
-    { value: 'ACCEPTEE',        label: 'Acceptées',       dot: 'bg-green-500',  ringClass: 'ring-green-400',  count: 0 },
-    { value: 'REJETEE',         label: 'Rejetées',        dot: 'bg-red-500',    ringClass: 'ring-red-400',    count: 0 },
+    { value: 'SOUMISE',         label: 'Soumises',        dot: 'bg-yellow-400', ringClass: 'ring-yellow-400', count: 0, accent: 'amber',   icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
+    { value: 'EN_VERIFICATION', label: 'En vérification', dot: 'bg-blue-500',   ringClass: 'ring-blue-400',   count: 0, accent: 'blue',    icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15' },
+    { value: 'ACCEPTEE',        label: 'Acceptées',       dot: 'bg-green-500',  ringClass: 'ring-green-400',  count: 0, accent: 'emerald', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+    { value: 'REJETEE',         label: 'Rejetées',        dot: 'bg-red-500',    ringClass: 'ring-red-400',    count: 0, accent: 'rose',    icon: 'M6 18L18 6M6 6l12 12' },
   ];
 
   private apiUrl = environment.apiUrl;

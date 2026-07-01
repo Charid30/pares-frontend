@@ -1,315 +1,290 @@
-<div>
+<!-- Toasts -->
+<div class="fixed top-4 right-4 z-[9999] flex flex-col gap-2" style="pointer-events:none">
+  <div *ngFor="let t of toasts"
+       class="flex items-start gap-3 px-4 py-3 rounded-xl shadow-lg text-white text-sm w-80"
+       [ngClass]="{'bg-green-600': t.type==='success','bg-red-600': t.type==='error','bg-amber-500': t.type==='warning'}"
+       style="pointer-events:auto">
+    <div class="flex-1">
+      <p class="font-semibold">{{ t.title }}</p>
+      <p class="opacity-90">{{ t.message }}</p>
+    </div>
+    <button (click)="dismissToast(t.id)" class="text-white/70 hover:text-white mt-0.5 flex-shrink-0">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+</div>
 
-  <!-- Toasts -->
-  <div class="fixed top-4 right-4 z-[9999] flex flex-col gap-2" style="pointer-events:none">
-    <div *ngFor="let t of toasts"
-         class="flex items-start gap-3 px-4 py-3 rounded-xl shadow-lg text-white text-sm w-80"
-         [ngClass]="{'bg-green-600': t.type==='success','bg-red-600': t.type==='error','bg-amber-500': t.type==='warning'}"
-         style="pointer-events:auto">
-      <div class="flex-1">
-        <p class="font-semibold">{{ t.title }}</p>
-        <p class="opacity-90">{{ t.message }}</p>
-      </div>
-      <button (click)="dismissToast(t.id)" class="text-white/70 hover:text-white mt-0.5 flex-shrink-0">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+<div class="space-y-4 md:space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div>
+      <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Demandes d'Audience</h1>
+      <p class="text-xs sm:text-sm text-gray-500 mt-0.5">{{ demandesFiltrees.length }} demande(s) trouvée(s)</p>
+    </div>
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2" *ngIf="peutConsulter">
+      <div class="relative">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
         </svg>
+        <input type="text" [(ngModel)]="search" (ngModelChange)="filtrer()"
+               placeholder="Rechercher un candidat..."
+               class="w-full sm:w-56 pl-9 pr-3 py-2 text-sm bg-white border border-gray-200 rounded-xl
+                      focus:outline-none focus:ring-2 focus:ring-primary-400 transition-all text-gray-700 placeholder:text-gray-400"/>
+      </div>
+
+      <select [(ngModel)]="filtreStatut" (ngModelChange)="filtrer()"
+              class="px-3 py-2 text-sm bg-white border border-gray-200 rounded-xl
+                     focus:outline-none focus:ring-2 focus:ring-primary-400 transition-all text-gray-700 cursor-pointer flex-shrink-0">
+        <option value="">Tous les statuts</option>
+        <option value="EN_ATTENTE">En attente</option>
+        <option value="ACCEPTE">Acceptée</option>
+        <option value="REJETE">Rejetée</option>
+        <option value="ANNULE">Annulée</option>
+      </select>
+
+      <select [(ngModel)]="filtreMode" (ngModelChange)="filtrer()"
+              class="px-3 py-2 text-sm bg-white border border-gray-200 rounded-xl
+                     focus:outline-none focus:ring-2 focus:ring-primary-400 transition-all text-gray-700 cursor-pointer flex-shrink-0">
+        <option value="">Tous les modes</option>
+        <option value="FICHIER">Fichier PDF</option>
+        <option value="FORMULAIRE">Formulaire</option>
+      </select>
+
+      <button *ngIf="search || filtreStatut || filtreMode" (click)="effacerFiltres()"
+              class="px-3 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors flex-shrink-0">
+        Effacer
+      </button>
+
+      <button (click)="charger()"
+              class="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 active:scale-95 transition-all text-sm shadow-sm flex-shrink-0">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        <span class="hidden sm:inline">Actualiser</span>
       </button>
     </div>
   </div>
 
-  <!-- Hero -->
-  <div class="bg-slate-900 relative overflow-hidden">
-    <div class="absolute inset-0 opacity-20"
-         style="background-image:radial-gradient(circle,#94a3b8 1px,transparent 1px);background-size:24px 24px"></div>
-    <div class="absolute top-0 right-0 w-96 h-64 rounded-full opacity-10"
-         style="background:#ef4444;filter:blur(80px)"></div>
-
-    <div class="container-custom py-10 md:py-14 relative z-10">
-      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-
-        <!-- LEFT -->
-        <div class="flex items-center gap-5">
-          <div class="w-14 h-14 bg-primary-500 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
-            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-            </svg>
-          </div>
-          <div>
-            <p class="text-primary-400 text-xs font-semibold uppercase tracking-widest mb-1">Agent — Tableau de bord</p>
-            <h1 class="text-2xl md:text-3xl font-bold text-white">Demandes d'Audience</h1>
-            <p class="text-slate-400 text-sm mt-1 hidden md:block">Traitement des demandes d'audience des candidats</p>
-            <div class="flex items-center gap-3 mt-3">
-              <button (click)="charger()"
-                      class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-300 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                </svg>
-                Actualiser
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- RIGHT: stats -->
-        <div class="grid grid-cols-4 gap-3 lg:min-w-[440px]">
-          <button *ngFor="let s of statsStatuts"
-                  (click)="filtreStatut = (filtreStatut === s.value ? '' : s.value); filtrer()"
-                  class="rounded-xl p-3 text-center transition-all border focus:outline-none"
-                  [ngClass]="filtreStatut === s.value
-                    ? 'bg-white/10 border-white/20'
-                    : 'bg-white/5 border-white/10 hover:bg-white/8'">
-            <div class="flex items-center justify-center gap-1.5 mb-1">
-              <span class="inline-block w-2 h-2 rounded-full flex-shrink-0" [ngClass]="s.dot"></span>
-              <p class="text-xs text-slate-300 truncate">{{ s.label }}</p>
-            </div>
-            <p class="text-2xl font-bold text-white">{{ s.count }}</p>
-          </button>
-        </div>
-
-      </div>
-    </div>
-    <div class="h-px w-full" style="background:linear-gradient(to right,transparent,rgba(239,68,68,0.4),transparent)"></div>
+  <!-- Stats (cartes cliquables = filtres) -->
+  <div *ngIf="peutConsulter" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+    <button *ngFor="let s of statsStatuts" type="button" class="text-left w-full focus:outline-none"
+            (click)="filtreStatut = (filtreStatut === s.value ? '' : s.value); filtrer()">
+      <app-stat-card [accent]="$any(s.accent)" [iconPath]="s.icon" [label]="s.label"
+        [value]="s.count" [active]="filtreStatut === s.value"></app-stat-card>
+    </button>
   </div>
 
-  <!-- Content -->
-  <div class="container-custom py-8 md:py-12">
+  <!-- Accès refusé -->
+  <div *ngIf="!peutConsulter" class="bg-white border border-gray-100 rounded-2xl p-12 text-center shadow-sm">
+    <div class="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+      <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+      </svg>
+    </div>
+    <p class="text-base font-semibold text-gray-700 mb-1">Accès non autorisé</p>
+    <p class="text-sm text-gray-400">Vous n'avez pas la permission de consulter les demandes d'audience.</p>
+  </div>
 
-    <!-- Accès refusé -->
-    <div *ngIf="!peutConsulter" class="bg-white border border-gray-100 rounded-2xl p-12 text-center shadow-sm">
-      <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-        <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-        </svg>
-      </div>
-      <h3 class="text-lg font-semibold text-gray-900 mb-1">Accès non autorisé</h3>
-      <p class="text-sm text-gray-500">Vous n'avez pas la permission de consulter les demandes d'audience.</p>
+  <div *ngIf="peutConsulter">
+
+    <!-- Chargement -->
+    <div *ngIf="loading" class="flex flex-col items-center justify-center py-16 gap-3">
+      <div class="w-10 h-10 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+      <p class="text-sm text-gray-400">Chargement des demandes...</p>
     </div>
 
-    <!-- Grid -->
-    <div *ngIf="peutConsulter" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Erreur -->
+    <div *ngIf="erreur && !loading"
+         class="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl">
+      <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <span class="text-sm flex-1">{{ erreur }}</span>
+      <button (click)="charger()" class="text-xs text-red-600 hover:underline font-medium">Réessayer</button>
+    </div>
 
-      <!-- Main (2/3) -->
-      <div class="lg:col-span-2 space-y-4">
+    <!-- Contenu chargé -->
+    <div *ngIf="!loading && !erreur">
 
-        <!-- Filtres -->
-        <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm space-y-3">
-          <div class="flex gap-2">
-            <div class="relative flex-1">
-              <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
-              </svg>
-              <input type="text" [(ngModel)]="search" (ngModelChange)="filtrer()"
-                     placeholder="Rechercher un candidat..."
-                     class="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 rounded-xl focus:ring-2 focus:ring-red-400 outline-none"/>
-            </div>
-            <button (click)="effacerFiltres()"
-                    class="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-200 hover:border-gray-300 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors flex items-center gap-1.5">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-              </svg>
-              <span class="hidden sm:inline">Effacer</span>
-            </button>
-          </div>
-          <div class="grid grid-cols-2 gap-3">
-            <select [(ngModel)]="filtreStatut" (ngModelChange)="filtrer()"
-                    class="px-3 py-2 text-sm bg-gray-50 border border-gray-200 text-gray-700 rounded-xl focus:ring-2 focus:ring-red-400 outline-none">
-              <option value="">Tous les statuts</option>
-              <option value="EN_ATTENTE">En attente</option>
-              <option value="ACCEPTE">Acceptée</option>
-              <option value="REJETE">Rejetée</option>
-              <option value="ANNULE">Annulée</option>
-            </select>
-            <select [(ngModel)]="filtreMode" (ngModelChange)="filtrer()"
-                    class="px-3 py-2 text-sm bg-gray-50 border border-gray-200 text-gray-700 rounded-xl focus:ring-2 focus:ring-red-400 outline-none">
-              <option value="">Tous les modes</option>
-              <option value="FICHIER">Fichier PDF</option>
-              <option value="FORMULAIRE">Formulaire</option>
-            </select>
-          </div>
+      <!-- Vide -->
+      <div *ngIf="demandesFiltrees.length === 0"
+           class="bg-white border border-gray-100 rounded-2xl p-12 text-center shadow-sm">
+        <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
         </div>
+        <p class="text-base font-semibold text-gray-500 mb-1">Aucune demande d'audience trouvée</p>
+        <p class="text-sm text-gray-400">
+          {{ (search || filtreStatut || filtreMode) ? 'Aucun résultat pour ces filtres.' : 'Aucune demande n\'a encore été soumise.' }}
+        </p>
+      </div>
 
-        <!-- Chargement -->
-        <div *ngIf="loading" class="flex justify-center py-12">
-          <div class="w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin"></div>
-        </div>
-
-        <!-- Erreur -->
-        <div *ngIf="erreur && !loading" class="bg-red-50 border border-red-200 rounded-2xl p-4 text-red-700 text-sm">
-          {{ erreur }}
-        </div>
-
-        <!-- Cards -->
-        <div *ngIf="!loading && !erreur">
-          <div *ngIf="demandesFiltrees.length === 0" class="bg-white border border-gray-100 rounded-2xl p-12 text-center shadow-sm">
-            <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-            </svg>
-            <p class="text-sm text-gray-400">Aucune demande d'audience trouvée</p>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div *ngFor="let d of demandesFiltrees"
-                 class="bg-white border border-gray-100 rounded-2xl overflow-hidden flex flex-col hover:border-gray-200 hover:shadow-sm transition-all shadow-sm">
-              <div class="h-1 w-full" [ngClass]="getStatutBarClass(d.status)"></div>
-
-              <div class="p-4 flex-1 flex flex-col gap-3">
-                <!-- Avatar + identité -->
-                <div class="flex items-start gap-3">
-                  <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-bold text-white"
-                       style="background:linear-gradient(135deg,#c0392b,#96281b)">
-                    {{ getInitiales(d) }}
+      <!-- Table Desktop -->
+      <div *ngIf="demandesFiltrees.length > 0" class="hidden md:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50/70 border-b border-gray-100">
+              <tr>
+                <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-400">Candidat</th>
+                <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-400">Mode</th>
+                <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-400">Date / Heure</th>
+                <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-400">Statut</th>
+                <th class="px-5 py-3.5 text-right text-xs font-semibold text-gray-400">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+              <tr *ngFor="let d of demandesFiltrees" class="group hover:bg-primary-50/30 transition-colors duration-150 cursor-pointer" (click)="voirDetail(d)">
+                <td class="px-5 py-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-sm"
+                         style="background:linear-gradient(135deg,#c0392b,#96281b)">
+                      {{ getInitiales(d) }}
+                    </div>
+                    <div class="min-w-0">
+                      <p class="font-semibold text-gray-900 truncate">{{ d.candidat?.nom || 'Inconnu' }} {{ d.candidat?.prenom || '' }}</p>
+                      <p class="text-xs text-gray-400 truncate">{{ d.candidat?.email }}</p>
+                    </div>
                   </div>
-                  <div class="flex-1 min-w-0">
-                    <p class="font-semibold text-gray-900 text-sm leading-tight">
-                      {{ d.candidat?.nom || 'Inconnu' }} {{ d.candidat?.prenom || '' }}
-                    </p>
-                    <p class="text-xs text-gray-400 truncate">{{ d.candidat?.email }}</p>
-                  </div>
-                  <span class="px-2 py-0.5 text-xs font-semibold rounded-full flex-shrink-0"
-                        [ngClass]="getStatutClass(d.status)">
-                    {{ getStatutLabel(d.status) }}
-                  </span>
-                </div>
-
-                <!-- Mode + date -->
-                <div class="flex items-center gap-2 flex-wrap">
+                </td>
+                <td class="px-5 py-4">
                   <span class="text-xs px-2 py-0.5 rounded-full font-medium border"
                         [ngClass]="d.modeSoumission === 'FICHIER'
                           ? 'bg-purple-50 text-purple-600 border-purple-100'
                           : 'bg-cyan-50 text-cyan-600 border-cyan-100'">
                     {{ d.modeSoumission === 'FICHIER' ? '📄 PDF' : '📝 Formulaire' }}
                   </span>
-                  <span class="flex items-center gap-1 text-xs text-gray-500">
-                    <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                    </svg>
-                    {{ d.dateAudience | date:'dd/MM/yyyy' }} à {{ d.heureAudience }}
+                </td>
+                <td class="px-5 py-4">
+                  <p class="text-sm text-gray-600">{{ d.dateAudience | date:'dd/MM/yyyy' }} à {{ d.heureAudience }}</p>
+                </td>
+                <td class="px-5 py-4">
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium"
+                        [ngClass]="getStatutClass(d.status)">
+                    {{ getStatutLabel(d.status) }}
                   </span>
-                </div>
-
-                <div *ngIf="d.pourM" class="text-xs text-gray-600">
-                  <span class="font-medium text-gray-400">Pour M./Mme:</span> {{ d.pourM }}
-                </div>
-
-                <p *ngIf="d.motif" class="text-xs text-gray-500 bg-gray-50 rounded-lg p-2 line-clamp-2">{{ d.motif }}</p>
-
-                <div *ngIf="d.commentaireAdmin" class="bg-blue-50 border border-blue-100 rounded-lg p-2 text-xs text-blue-600">
-                  <span class="font-medium">Note: </span>{{ d.commentaireAdmin }}
-                </div>
-              </div>
-
-              <!-- Actions -->
-              <div class="px-4 py-3 border-t border-gray-100 flex gap-2">
-                <button (click)="voirDetail(d)"
-                        class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                  </svg>
-                  Voir
-                </button>
-                <button *ngIf="peutValider && d.status === 'EN_ATTENTE'"
-                        (click)="ouvrirDecision(d, 'ACCEPTE')"
-                        class="flex-1 py-1.5 text-xs font-medium text-green-600 bg-green-50 hover:bg-green-100 border border-green-100 rounded-lg transition-colors">
-                  ✓ Accepter
-                </button>
-                <button *ngIf="peutRejeter && d.status === 'EN_ATTENTE'"
-                        (click)="ouvrirDecision(d, 'REJETE')"
-                        class="flex-1 py-1.5 text-xs font-medium text-red-500 bg-red-50 hover:bg-red-100 border border-red-100 rounded-lg transition-colors">
-                  ✕ Rejeter
-                </button>
-                <button *ngIf="d.modeSoumission === 'FICHIER'"
-                        (click)="previewFichier(d)"
-                        class="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 border border-gray-100 rounded-lg transition-colors" title="Aperçu PDF">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                  </svg>
-                </button>
-                <button *ngIf="d.modeSoumission === 'FICHIER'"
-                        (click)="telechargerFichier(d)"
-                        class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 border border-gray-100 rounded-lg transition-colors" title="Télécharger PDF">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
+                </td>
+                <td class="px-5 py-4 text-right" (click)="$event.stopPropagation()">
+                  <div class="flex items-center justify-end gap-1">
+                    <button (click)="voirDetail(d)"
+                            class="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all duration-150"
+                            title="Voir le détail">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                      </svg>
+                    </button>
+                    <button *ngIf="peutValider && d.status === 'EN_ATTENTE'" (click)="ouvrirDecision(d, 'ACCEPTE')"
+                            class="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all duration-150"
+                            title="Accepter">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                      </svg>
+                    </button>
+                    <button *ngIf="peutRejeter && d.status === 'EN_ATTENTE'" (click)="ouvrirDecision(d, 'REJETE')"
+                            class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-150"
+                            title="Rejeter">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                      </svg>
+                    </button>
+                    <button *ngIf="d.modeSoumission === 'FICHIER'" (click)="previewFichier(d)"
+                            class="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all duration-150"
+                            title="Aperçu PDF">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                      </svg>
+                    </button>
+                    <button *ngIf="d.modeSoumission === 'FICHIER'" (click)="telechargerFichier(d)"
+                            class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-150"
+                            title="Télécharger PDF">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-
       </div>
 
-      <!-- Sidebar (1/3) -->
-      <div class="space-y-4">
+      <!-- Cards Mobile -->
+      <div *ngIf="demandesFiltrees.length > 0" class="md:hidden space-y-3">
+        <div *ngFor="let d of demandesFiltrees"
+             class="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all"
+             (click)="voirDetail(d)">
 
-        <!-- Permissions -->
-        <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-          <h3 class="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-            </svg>
-            Mes permissions
-          </h3>
-          <div class="space-y-2">
-            <div *ngFor="let perm of [
-              {label:'Consulter', ok: peutConsulter},
-              {label:'Valider / Accepter', ok: peutValider},
-              {label:'Rejeter', ok: peutRejeter}
-            ]" class="flex items-center justify-between px-3 py-2 rounded-xl"
-               [ngClass]="perm.ok ? 'bg-green-50' : 'bg-gray-50'">
-              <span class="text-sm font-medium" [ngClass]="perm.ok ? 'text-green-700' : 'text-gray-400'">{{ perm.label }}</span>
-              <div class="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                   [ngClass]="perm.ok ? 'bg-green-100' : 'bg-gray-200'">
-                <svg *ngIf="perm.ok" class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
-                </svg>
-                <svg *ngIf="!perm.ok" class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
+          <div class="h-1 w-full" [ngClass]="getStatutBarClass(d.status)"></div>
+
+          <div class="p-4 space-y-3">
+            <div class="flex items-center gap-3 w-full">
+              <div class="w-11 h-11 rounded-2xl flex items-center justify-center font-bold text-sm flex-shrink-0 shadow-sm text-white"
+                   style="background:linear-gradient(135deg,#c0392b,#96281b)">
+                {{ getInitiales(d) }}
               </div>
+              <div class="flex-1 min-w-0">
+                <p class="font-bold text-gray-900 text-sm leading-tight truncate">{{ d.candidat?.nom || 'Inconnu' }} {{ d.candidat?.prenom || '' }}</p>
+                <p class="text-xs text-gray-400 mt-0.5 truncate">{{ d.candidat?.email }}</p>
+              </div>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold flex-shrink-0"
+                    [ngClass]="getStatutClass(d.status)">
+                {{ getStatutLabel(d.status) }}
+              </span>
+            </div>
+
+            <div class="bg-gray-50 rounded-xl p-3 space-y-1.5">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-xs px-2 py-0.5 rounded-full font-medium border bg-white"
+                      [ngClass]="d.modeSoumission === 'FICHIER' ? 'text-purple-600 border-purple-100' : 'text-cyan-600 border-cyan-100'">
+                  {{ d.modeSoumission === 'FICHIER' ? '📄 PDF' : '📝 Formulaire' }}
+                </span>
+                <span class="text-xs text-gray-400">{{ d.dateAudience | date:'dd/MM/yyyy' }} à {{ d.heureAudience }}</span>
+              </div>
+              <p *ngIf="d.motif" class="text-xs text-gray-500 line-clamp-2">{{ d.motif }}</p>
+            </div>
+
+            <div class="flex items-center gap-2 pt-1" (click)="$event.stopPropagation()">
+              <button (click)="voirDetail(d)"
+                      class="flex items-center gap-1.5 py-2 px-3 text-xs font-semibold text-primary-600 bg-primary-50 rounded-xl hover:bg-primary-100 active:scale-95 transition-all">
+                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+                Voir
+              </button>
+              <button *ngIf="peutValider && d.status === 'EN_ATTENTE'" (click)="ouvrirDecision(d, 'ACCEPTE')"
+                      class="flex items-center gap-1.5 py-2 px-3 text-xs font-semibold text-green-600 bg-green-50 rounded-xl hover:bg-green-100 active:scale-95 transition-all">
+                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                Accepter
+              </button>
+              <button *ngIf="peutRejeter && d.status === 'EN_ATTENTE'" (click)="ouvrirDecision(d, 'REJETE')"
+                      class="flex items-center gap-1.5 py-2 px-3 text-xs font-semibold text-red-600 bg-red-50 rounded-xl hover:bg-red-100 active:scale-95 transition-all">
+                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+                Rejeter
+              </button>
+              <button *ngIf="d.modeSoumission === 'FICHIER'" (click)="previewFichier(d)"
+                      class="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all" title="Aperçu PDF">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+              </button>
             </div>
           </div>
         </div>
-
-        <!-- Filtres actifs -->
-        <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-          <h3 class="text-sm font-semibold text-gray-900 mb-3">Filtres actifs</h3>
-          <div *ngIf="!filtreStatut && !filtreMode && !search" class="text-xs text-gray-400">Aucun filtre appliqué</div>
-          <div class="space-y-2">
-            <div *ngIf="filtreStatut" class="flex items-center justify-between">
-              <span class="text-xs text-gray-500">Statut</span>
-              <span class="text-xs font-medium text-gray-700 bg-gray-100 px-2 py-0.5 rounded-full">{{ getStatutLabel(filtreStatut) }}</span>
-            </div>
-            <div *ngIf="filtreMode" class="flex items-center justify-between">
-              <span class="text-xs text-gray-500">Mode</span>
-              <span class="text-xs font-medium text-gray-700 bg-gray-100 px-2 py-0.5 rounded-full">{{ filtreMode === 'FICHIER' ? 'PDF' : 'Formulaire' }}</span>
-            </div>
-            <div *ngIf="search" class="flex items-center justify-between">
-              <span class="text-xs text-gray-500">Recherche</span>
-              <span class="text-xs font-medium text-gray-700 bg-gray-100 px-2 py-0.5 rounded-full truncate max-w-[120px]">{{ search }}</span>
-            </div>
-          </div>
-          <p class="text-xs text-gray-500 mt-3">
-            <span class="font-semibold text-gray-700">{{ demandesFiltrees.length }}</span> demande(s) affichée(s)
-          </p>
-        </div>
-
-        <!-- Info -->
-        <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-          <h3 class="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
-            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            Information
-          </h3>
-          <p class="text-xs text-gray-500 leading-relaxed">
-            Les candidats peuvent soumettre leurs demandes d'audience via formulaire ou en joignant un fichier PDF. Utilisez les boutons d'action pour accepter ou rejeter chaque demande.
-          </p>
-        </div>
-
       </div>
+
     </div>
   </div>
 
@@ -379,6 +354,59 @@
         <div *ngIf="detailDemande.candidat?.telephone">
           <p class="text-xs text-gray-500 mb-1">Téléphone</p>
           <p class="text-sm font-medium text-gray-800">{{ detailDemande.candidat!.telephone }}</p>
+        </div>
+
+        <!-- ══ Affectation direction (permission MODIFIER) ══ -->
+        <div *ngIf="peutAffecter" class="rounded-xl border-2 overflow-hidden"
+          style="border-color:#e8c9c9; background:linear-gradient(135deg,#fff5f5,#fff);">
+          <div class="px-3 py-2 border-b flex items-center justify-between" style="border-color:#f5d0d0; background:#fef2f2;">
+            <p class="text-[11px] font-bold uppercase tracking-wide" style="color:#7b1515;">Affectation à une direction</p>
+            <span class="text-[9px] font-bold px-2 py-0.5 rounded-full"
+              [ngClass]="detailDemande.direction_iddirection ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'">
+              {{ detailDemande.direction_iddirection ? 'Affectée' : 'Non affectée' }}
+            </span>
+          </div>
+          <div class="p-3 space-y-3">
+            <div *ngIf="detailDemande.direction_iddirection"
+              class="flex items-start gap-2 p-2 rounded-lg bg-green-50 border border-green-100">
+              <svg class="w-3.5 h-3.5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <p class="text-[10px] text-green-700">
+                Affectée à <strong>{{ getDirectionLabel(detailDemande.direction_iddirection) }}</strong>
+              </p>
+            </div>
+            <div>
+              <label class="block text-[10px] font-semibold text-gray-600 mb-1">Direction</label>
+              <div class="relative">
+                <select [(ngModel)]="affectationForm.direction_iddirection"
+                  class="w-full px-2.5 py-2 bg-white border border-gray-200 rounded-lg text-xs text-gray-800
+                         focus:border-red-400 focus:ring-0 appearance-none cursor-pointer transition-all">
+                  <option [ngValue]="null">— Aucune direction —</option>
+                  <option *ngFor="let dir of directions" [ngValue]="dir.iddirection">{{ dir.accronyme }} — {{ dir.nom }}</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center">
+                  <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <button type="button" (click)="sauvegarderAffectation()"
+              [disabled]="savingAffectation"
+              class="w-full py-2 text-white text-xs font-semibold rounded-lg transition-all active:scale-95
+                     disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+              style="background:#c0392b;">
+              <svg *ngIf="savingAffectation" class="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+              </svg>
+              <svg *ngIf="!savingAffectation" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              {{ savingAffectation ? 'Enregistrement…' : 'Enregistrer l\'affectation' }}
+            </button>
+          </div>
         </div>
       </div>
       <div class="px-6 py-4 border-t border-gray-100 flex items-center gap-3">

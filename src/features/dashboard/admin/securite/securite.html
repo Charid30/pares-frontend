@@ -29,47 +29,13 @@
 
   <!-- ── Stats ────────────────────────────────────────────────────────────── -->
   @if (stats) {
-    <div class="grid grid-cols-3 gap-2 sm:gap-3">
-
-      <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-red-100 hover:shadow-md transition-shadow flex items-center gap-2 sm:gap-3">
-        <div class="w-8 h-8 sm:w-11 sm:h-11 bg-red-50 rounded-xl flex items-center justify-center flex-shrink-0">
-          <svg class="w-4 h-4 sm:w-5 sm:h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                  d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
-          </svg>
-        </div>
-        <div class="min-w-0">
-          <p class="text-lg sm:text-2xl font-bold text-gray-900 leading-none">{{ stats.activeBans }}</p>
-          <p class="text-xs text-gray-400 mt-0.5 truncate">IPs bannies</p>
-        </div>
-      </div>
-
-      <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-amber-100 hover:shadow-md transition-shadow flex items-center gap-2 sm:gap-3">
-        <div class="w-8 h-8 sm:w-11 sm:h-11 bg-amber-50 rounded-xl flex items-center justify-center flex-shrink-0">
-          <svg class="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-          </svg>
-        </div>
-        <div class="min-w-0">
-          <p class="text-lg sm:text-2xl font-bold text-gray-900 leading-none">{{ stats.totalSuspects }}</p>
-          <p class="text-xs text-gray-400 mt-0.5 truncate">IPs suspectes</p>
-        </div>
-      </div>
-
-      <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-slate-100 hover:shadow-md transition-shadow flex items-center gap-2 sm:gap-3">
-        <div class="w-8 h-8 sm:w-11 sm:h-11 bg-slate-50 rounded-xl flex items-center justify-center flex-shrink-0">
-          <svg class="w-4 h-4 sm:w-5 sm:h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                  d="M13 10V3L4 14h7v7l9-11h-7z"/>
-          </svg>
-        </div>
-        <div class="min-w-0">
-          <p class="text-lg sm:text-2xl font-bold text-gray-900 leading-none">{{ stats.totalAttempts }}</p>
-          <p class="text-xs text-gray-400 mt-0.5 truncate">Total tentatives</p>
-        </div>
-      </div>
-
+    <div class="grid grid-cols-3 gap-3 sm:gap-4">
+      <app-stat-card accent="red" label="IPs bannies" [value]="stats.activeBans"
+        iconPath="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></app-stat-card>
+      <app-stat-card accent="amber" label="IPs suspectes" [value]="stats.totalSuspects"
+        iconPath="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></app-stat-card>
+      <app-stat-card accent="slate" label="Total tentatives" [value]="stats.totalAttempts"
+        iconPath="M13 10V3L4 14h7v7l9-11h-7z"></app-stat-card>
     </div>
   }
 

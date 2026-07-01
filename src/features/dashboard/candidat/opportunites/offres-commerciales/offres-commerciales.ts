@@ -84,9 +84,15 @@ export class OffresCommerciales implements OnInit {
     demandeOffre: null as File | null,  // lettre manuscrite + offre PDF fusionnés ou offre seule
   };
 
-  // ── IFU candidat ──────────────────────────────────────────────────────────
+  // ── Identifiant fiscal candidat (IFU ou récépissé) ────────────────────────
   candidatIfu: string | null = null;
+  candidatRecipisse: string | null = null;
   ifuLoaded = false;
+
+  /** Vrai si le candidat possède un IFU ou un récépissé */
+  get hasDocumentFiscal(): boolean {
+    return !!(this.candidatIfu || this.candidatRecipisse);
+  }
 
   // ── Modal détail ──────────────────────────────────────────────────────────
   showDetailModal = false;
@@ -112,7 +118,8 @@ export class OffresCommerciales implements OnInit {
       next: (res) => {
         this.ngZone.run(() => {
           if (res.success) {
-            this.candidatIfu = res.data?.candidat?.ifu ?? null;
+            this.candidatIfu      = res.data?.candidat?.ifu       ?? null;
+            this.candidatRecipisse = res.data?.candidat?.recipisse ?? null;
           }
           this.ifuLoaded = true;
           this.cdr.detectChanges();

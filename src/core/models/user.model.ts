@@ -4,6 +4,7 @@ export interface Role {
   idrole: number;
   accronyme: string;
   description: string;
+  lectureGlobale?: boolean;
 }
 
 export interface Permission {
@@ -33,18 +34,23 @@ export interface User {
   password?: string;
   role_idrole: number;
   role?: Role;
+  /** Rôles additionnels (table users_roles) — le rôle principal reste role/role_idrole */
+  additionalRoles?: Role[];
   createdDate?: Date;
   del: number;
 }
 
 export interface Agent {
   idagents: number;
-  service_idservice: number;
+  /** Rattachement : exactement un des deux (service_idservice OU direction_iddirection) */
+  service_idservice: number | null;
+  direction_iddirection?: number | null;
   nom: string;
   prenom: string;
   matricule: string;
   email: string;
   service?: Service;
+  directionDirecte?: Direction;
   users?: User[];
   createdDate?: Date;
   createdBy?: string;
@@ -71,8 +77,11 @@ export interface CreateAgentDTO {
   prenom: string;
   matricule: string;
   email: string;
-  service_idservice: number;
-  role_idrole: number;
+  /** Exactement un des deux doit être fourni */
+  service_idservice?: number;
+  direction_iddirection?: number;
+  /** 1er = rôle principal, suivants = rôles additionnels */
+  roleIds: number[];
   username: string;
   password: string;
   confirmPassword: string;
@@ -83,8 +92,11 @@ export interface UpdateAgentDTO {
   prenom?: string;
   matricule?: string;
   email?: string;
+  /** Si l'un des deux est fourni, il remplace le rattachement existant en entier */
   service_idservice?: number;
-  role_idrole?: number;
+  direction_iddirection?: number;
+  /** 1er = rôle principal, suivants = rôles additionnels */
+  roleIds?: number[];
 }
 
 // Réponse API

@@ -2,9 +2,9 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { environment } from '../../../../../environments/environment';
+import { StatCard } from '../../../../../shared/components/stat-card/stat-card';
 
 interface Candidat {
   idcandidats: number;
@@ -42,7 +42,7 @@ interface Stats {
 @Component({
   selector: 'app-agent-candidats',
   standalone: true,
-  imports: [CommonModule, DatePipe, FormsModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, DatePipe, FormsModule, ReactiveFormsModule, StatCard],
   templateUrl: './agent-candidats.html',
 })
 export class AgentCandidats implements OnInit {
@@ -161,6 +161,14 @@ export class AgentCandidats implements OnInit {
     if (p < 1 || p > this.totalPages) return;
     this.page = p;
     this.chargerCandidats();
+  }
+
+  get visiblePages(): number[] {
+    const pages: number[] = [];
+    const start = Math.max(1, this.page - 2);
+    const end = Math.min(this.totalPages, this.page + 2);
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
   }
 
   // ── Détail ────────────────────────────────────────────────────

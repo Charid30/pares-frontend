@@ -14,12 +14,6 @@ export interface ProfilCandidat {
   createdDate: string;
 }
 
-export interface StatsCandidat {
-  totalCandidatures: number;
-  candidaturesValidees: number;
-  candidaturesEnAttente: number;
-}
-
 export interface ApiResponse<T> {
   success: boolean;
   message?: string;
@@ -46,29 +40,6 @@ export class CandidatService {
    */
   updateProfil(data: Partial<ProfilCandidat>): Observable<ApiResponse<ProfilCandidat>> {
     return this.http.put<ApiResponse<ProfilCandidat>>(`${this.apiUrl}/profil`, data);
-  }
-
-  /**
-   * Récupérer les statistiques du candidat
-   */
-  getStats(): Observable<ApiResponse<StatsCandidat>> {
-    return this.http.get<ApiResponse<StatsCandidat>>(`${this.apiUrl}/stats`);
-  }
-
-
-
-  /**
-   * Récupérer une candidature spécifique
-   */
-  getCandidatureDetails(id: number): Observable<ApiResponse<any>> {
-    return this.http.get<ApiResponse<any>>(`${this.apiUrl}/candidatures/${id}`);
-  }
-
-  /**
-   * Postuler à une campagne
-   */
-  postuler(profilId: number): Observable<ApiResponse<any>> {
-    return this.http.post<ApiResponse<any>>(`${this.apiUrl}/postuler`, { profilId });
   }
 
   /**

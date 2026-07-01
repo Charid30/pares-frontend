@@ -44,6 +44,11 @@ export class Services implements OnInit, OnDestroy {
     this.observer?.disconnect();
   }
 
+  scrollTo(id: string): void {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   go(authPath: string, guestPath: string = '/auth/login'): void {
     if (this.authService.isLoggedIn()) {
       this.router.navigate([authPath]);

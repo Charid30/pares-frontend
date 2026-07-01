@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
@@ -10,7 +10,7 @@ import { AuthService } from '../../../core/services/auth.service';
   templateUrl: './forgot-password.html',
   styleUrl: './forgot-password.css',
 })
-export class ForgotPassword implements OnInit {
+export class ForgotPassword implements OnInit, OnDestroy {
   // step 1 = saisie email, step 2 = email envoyé OU formulaire nouveau mot de passe (via lien), step 3 = succès
   step: 1 | 2 | 3 = 1;
   isTokenMode = false;   // true quand l'utilisateur arrive via le lien email (?token=...)
@@ -22,6 +22,10 @@ export class ForgotPassword implements OnInit {
   errorMessage: string | null = null;
   showPassword = false;
   showConfirmPassword = false;
+
+  // Cooldown entre deux demandes de reset
+  cooldownSeconds = 0;
+  private _cooldownTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -67,9 +71,20 @@ export class ForgotPassword implements OnInit {
       const email = this.emailForm.get('email')?.value;
 
       this.authService.checkEmailForReset(email).subscribe({
-        next: () => {
+        next: (response: any) => {
           this.isLoading = false;
-          this.step = 2; // Afficher "email envoyé"
+
+          // Email introuvable → afficher l'erreur sur le formulaire, ne pas changer d'étape
+          if (response?.data?.notFound) {
+            this.errorMessage = 'Aucun compte n\'est associé à cette adresse email.';
+            this.cdr.detectChanges();
+            return;
+          }
+
+          // Email trouvé → passer à l'étape 2 avec countdown
+          this.step = 2;
+          const wait = response?.data?.waitSeconds ?? 240;
+          this._startCooldown(wait);
           this.cdr.detectChanges();
         },
         error: (error) => {
@@ -83,6 +98,28 @@ export class ForgotPassword implements OnInit {
         }
       });
     }
+  }
+
+  private _startCooldown(seconds: number): void {
+    this._clearCooldown();
+    this.cooldownSeconds = seconds;
+    this._cooldownTimer = setInterval(() => {
+      this.cooldownSeconds--;
+      this.cdr.detectChanges();
+      if (this.cooldownSeconds <= 0) this._clearCooldown();
+    }, 1000);
+  }
+
+  private _clearCooldown(): void {
+    if (this._cooldownTimer) {
+      clearInterval(this._cooldownTimer);
+      this._cooldownTimer = null;
+    }
+    this.cooldownSeconds = 0;
+  }
+
+  ngOnDestroy(): void {
+    this._clearCooldown();
   }
 
   onResetPassword(): void {

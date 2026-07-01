@@ -1,0 +1,400 @@
+<!-- directions-list.html -->
+<div class="space-y-4 md:space-y-5">
+
+  <!-- Toast Notifications -->
+  <div class="fixed top-4 right-4 z-50 space-y-2 max-w-[90vw] sm:max-w-[350px]">
+    <div *ngFor="let toast of toasts"
+         class="toast-enter flex items-center gap-3 px-4 py-3 rounded-2xl shadow-lg text-white"
+         [ngClass]="toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path *ngIf="toast.type === 'success'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        <path *ngIf="toast.type === 'error'"   stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+      <div class="flex-1 min-w-0">
+        <p class="font-semibold text-sm">{{ toast.title }}</p>
+        <p class="text-xs opacity-90 truncate">{{ toast.message }}</p>
+      </div>
+      <button (click)="removeToast(toast.id)" class="p-1 hover:bg-white/20 rounded-lg transition-colors flex-shrink-0 cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl lg:text-3xl font-bold text-gray-900">Directions</h1>
+      <p class="text-gray-500 mt-1">
+        Gestion des directions et services associés
+        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+              style="background:#fde8e8; color:#c0392b;">
+          {{ totalItems }}
+        </span>
+      </p>
+    </div>
+    <button (click)="openCreateModal()"
+            class="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white text-sm font-semibold rounded-xl hover:bg-slate-700 active:scale-95 transition-all shadow-sm self-start lg:self-center cursor-pointer">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+      </svg>
+      Nouvelle direction
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+    <div class="w-10 h-10 border-4 border-red-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+    <p class="text-gray-400 text-sm">Chargement des directions...</p>
+  </div>
+
+  <!-- Empty state -->
+  <div *ngIf="!loading && directions.length === 0"
+       class="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+    <div class="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+      <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+      </svg>
+    </div>
+    <h3 class="text-base font-semibold text-gray-900 mb-1">Aucune direction trouvée</h3>
+    <p class="text-gray-400 text-sm mb-5">
+      {{ searchTerm ? 'Aucun résultat pour "' + searchTerm + '"' : 'Créez votre première direction pour commencer' }}
+    </p>
+    <button *ngIf="!searchTerm" (click)="openCreateModal()"
+            class="inline-flex items-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 active:scale-95 transition-all text-sm font-semibold shadow-sm cursor-pointer">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+      </svg>
+      Créer une direction
+    </button>
+  </div>
+
+  <!-- Contenu -->
+  <div *ngIf="!loading && directions.length > 0"
+       class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+
+    <!-- Tableau Desktop -->
+    <div class="hidden md:block overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gray-50 border-b border-gray-100">
+          <tr>
+            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Direction</th>
+            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Intitulé complet</th>
+            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Services associés</th>
+            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Créé le</th>
+            <th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          <tr *ngFor="let dir of directions; trackBy: trackByDirectionId"
+              class="hover:bg-gray-50/60 transition-colors group">
+
+            <!-- Acronyme + Avatar -->
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                     style="background:linear-gradient(135deg,#fde8e8,#fca5a5);">
+                  <span class="text-xs font-bold" style="color:#c0392b;">{{ getInitials(dir.accronyme) }}</span>
+                </div>
+                <div>
+                  <p class="text-sm font-bold text-gray-900 font-mono">{{ dir.accronyme }}</p>
+                  <p class="text-[11px] text-gray-400 mt-0.5">ID #{{ dir.iddirection }}</p>
+                </div>
+              </div>
+            </td>
+
+            <!-- Nom complet -->
+            <td class="px-6 py-4 max-w-xs">
+              <p class="text-sm text-gray-700 font-medium">{{ dir.nom }}</p>
+            </td>
+
+            <!-- Services chips -->
+            <td class="px-6 py-4">
+              <div class="flex flex-wrap gap-1.5">
+                <ng-container *ngIf="dir.services && dir.services.length > 0; else noServices">
+                  <span *ngFor="let svc of dir.services" class="service-chip">
+                    {{ svc.accronyme }}
+                  </span>
+                </ng-container>
+                <ng-template #noServices>
+                  <span class="text-xs text-gray-400 italic">Aucun service</span>
+                </ng-template>
+              </div>
+            </td>
+
+            <!-- Date -->
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="text-xs text-gray-400 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100">
+                {{ formatDate(dir.createdDate || '') }}
+              </span>
+            </td>
+
+            <!-- Actions -->
+            <td class="px-6 py-4">
+              <div class="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button (click)="openEditModal(dir)"
+                        class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 active:scale-95 transition-all cursor-pointer">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                  </svg>
+                  Modifier
+                </button>
+                <button (click)="openDeleteModal(dir)"
+                        class="p-1.5 text-red-500 bg-red-50 rounded-lg hover:bg-red-100 active:scale-95 transition-all cursor-pointer">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Cards Mobile -->
+    <div class="md:hidden p-3 space-y-3">
+      <div *ngFor="let dir of directions; trackBy: trackByDirectionId"
+           class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100">
+        <div class="p-4 space-y-3">
+
+          <!-- Avatar + Acronyme + Date -->
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-2xl text-white flex items-center justify-center font-bold text-sm flex-shrink-0 shadow-sm"
+                 style="background:linear-gradient(135deg,#dc2626,#b91c1c);">
+              {{ getInitials(dir.accronyme) }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="font-bold text-gray-900 text-sm font-mono truncate">{{ dir.accronyme }}</p>
+              <p class="text-xs text-gray-500 truncate">{{ dir.nom }}</p>
+              <p class="text-xs text-gray-400 mt-0.5">Créé le {{ formatDate(dir.createdDate || '') }}</p>
+            </div>
+          </div>
+
+          <!-- Services -->
+          <div class="bg-gray-50 rounded-xl p-3">
+            <p class="text-xs text-gray-500 font-medium mb-2">Services associés</p>
+            <div class="flex flex-wrap gap-1.5">
+              <ng-container *ngIf="dir.services && dir.services.length > 0; else noServicesMobile">
+                <span *ngFor="let svc of dir.services" class="service-chip">{{ svc.accronyme }}</span>
+              </ng-container>
+              <ng-template #noServicesMobile>
+                <span class="text-xs text-gray-400 italic">Aucun service assigné</span>
+              </ng-template>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex items-center gap-2 pt-1">
+            <button (click)="openEditModal(dir)"
+                    class="flex items-center gap-1.5 py-2 px-3 text-xs font-semibold text-amber-600 bg-amber-50 rounded-xl hover:bg-amber-100 active:scale-95 transition-all cursor-pointer">
+              <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+              </svg>
+              Modifier
+            </button>
+            <div class="flex-1"></div>
+            <button (click)="openDeleteModal(dir)"
+                    class="p-2 text-red-600 bg-red-50 rounded-xl hover:bg-red-100 active:scale-95 transition-all cursor-pointer">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="totalPages > 1" class="flex items-center justify-between px-6 py-3.5 border-t border-gray-100 bg-gray-50/50">
+      <span class="text-xs text-gray-500">
+        Page {{ currentPage }} / {{ totalPages }} — {{ totalItems }} direction{{ totalItems > 1 ? 's' : '' }}
+      </span>
+      <div class="flex items-center gap-1">
+        <button (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1"
+                class="w-8 h-8 flex items-center justify-center rounded-lg text-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-gray-600 hover:bg-gray-200 cursor-pointer">
+          ‹
+        </button>
+        <button *ngFor="let page of visiblePages"
+                (click)="goToPage(page)"
+                class="w-8 h-8 flex items-center justify-center rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                [class.text-white]="page === currentPage"
+                [class.text-gray-600]="page !== currentPage"
+                [class.hover:bg-gray-100]="page !== currentPage"
+                [style.background]="page === currentPage ? '#dc2626' : ''">
+          {{ page }}
+        </button>
+        <button (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages"
+                class="w-8 h-8 flex items-center justify-center rounded-lg text-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-gray-600 hover:bg-gray-200 cursor-pointer">
+          ›
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     MODAL CRÉER / ÉDITER
+     ═══════════════════════════════════════════════ -->
+<div *ngIf="showModal" class="fixed inset-0 z-50 overflow-y-auto">
+  <div class="flex items-end sm:items-center justify-center min-h-screen px-0 sm:px-4 pt-4 pb-0 sm:pb-20">
+    <div class="fixed inset-0 bg-gray-900/50 transition-opacity" (click)="closeModal()"></div>
+
+    <div class="relative bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full sm:max-w-lg mx-auto z-10 overflow-hidden">
+
+      <!-- Header modal -->
+      <div class="px-5 py-4" style="background:linear-gradient(135deg,#dc2626,#b91c1c);">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-bold text-white">
+              {{ modalMode === 'create' ? 'Nouvelle direction' : 'Modifier la direction' }}
+            </h3>
+          </div>
+          <button (click)="closeModal()" class="p-1.5 hover:bg-white/20 rounded-lg transition-colors text-white cursor-pointer">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Corps modal -->
+      <div class="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
+
+        <!-- Erreur -->
+        <div *ngIf="formError" class="flex items-start gap-3 p-3 bg-red-50 border border-red-200 rounded-xl">
+          <svg class="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <p class="text-sm text-red-700">{{ formError }}</p>
+        </div>
+
+        <!-- Acronyme -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">
+            Acronyme <span class="text-red-500">*</span>
+            <span class="ml-1 text-xs text-gray-400 font-normal">(sera mis en majuscules)</span>
+          </label>
+          <input type="text"
+                 [(ngModel)]="formAccronyme"
+                 placeholder="Ex: DRH, DAF, DSI..."
+                 maxlength="50"
+                 class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-red-400 focus:bg-white focus:border-transparent transition-all uppercase placeholder:normal-case">
+        </div>
+
+        <!-- Nom complet -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">
+            Intitulé complet <span class="text-red-500">*</span>
+          </label>
+          <input type="text"
+                 [(ngModel)]="formNom"
+                 placeholder="Ex: Direction des Ressources Humaines"
+                 maxlength="255"
+                 class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:bg-white focus:border-transparent transition-all">
+        </div>
+
+        <!-- Services associés -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Services associés
+            <span class="ml-1.5 text-xs text-gray-400 font-normal">({{ formServiceIds.size }} sélectionné{{ formServiceIds.size > 1 ? 's' : '' }})</span>
+          </label>
+
+          <div *ngIf="allServices.length === 0" class="text-xs text-gray-400 italic p-3 bg-gray-50 rounded-xl">
+            Aucun service disponible. Créez des services d'abord depuis le menu Services.
+          </div>
+
+          <div *ngIf="allServices.length > 0"
+               class="border border-gray-200 rounded-xl overflow-hidden max-h-48 overflow-y-auto divide-y divide-gray-50">
+            <div *ngFor="let svc of allServices"
+                 class="service-checkbox-item"
+                 [class.selected]="isServiceSelected(svc.idservice)"
+                 (click)="toggleService(svc.idservice)">
+              <!-- Checkbox visuelle -->
+              <div class="w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-colors"
+                   [class.bg-indigo-600]="isServiceSelected(svc.idservice)"
+                   [class.border-gray-300]="!isServiceSelected(svc.idservice)"
+                   [class.border-2]="!isServiceSelected(svc.idservice)">
+                <svg *ngIf="isServiceSelected(svc.idservice)"
+                     class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-bold text-gray-800 font-mono">{{ svc.accronyme }}</p>
+                <p class="text-[11px] text-gray-500 truncate">{{ svc.description }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Footer modal -->
+      <div class="bg-gray-50 px-5 py-4 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+        <button type="button" (click)="closeModal()"
+                class="w-full sm:w-auto px-4 py-2.5 text-gray-700 hover:bg-gray-200 rounded-xl transition-colors text-sm font-medium cursor-pointer">
+          Annuler
+        </button>
+        <button (click)="submitForm()"
+                [disabled]="submitting"
+                class="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 text-white rounded-xl transition-colors text-sm font-medium disabled:opacity-50 cursor-pointer"
+                style="background:#dc2626;"
+                onmouseover="this.style.background='#b91c1c'"
+                onmouseout="this.style.background='#dc2626'">
+          <span *ngIf="submitting" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+          {{ submitting ? 'Enregistrement...' : (modalMode === 'create' ? 'Créer la direction' : 'Enregistrer') }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     MODAL SUPPRESSION
+     ═══════════════════════════════════════════════ -->
+<div *ngIf="showDeleteModal && selectedDirection" class="fixed inset-0 z-[70] overflow-y-auto">
+  <div class="flex items-center justify-center min-h-screen px-4">
+    <div class="fixed inset-0 bg-gray-900/50" (click)="closeDeleteModal()"></div>
+
+    <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-sm mx-auto z-10 p-6">
+      <div class="text-center">
+        <div class="w-14 h-14 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <svg class="w-7 h-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+          </svg>
+        </div>
+        <h3 class="text-lg font-bold text-gray-900 mb-2">Supprimer la direction</h3>
+        <p class="text-gray-500 text-sm mb-1">Vous allez supprimer :</p>
+        <p class="font-bold font-mono text-lg mb-1" style="color:#dc2626;">{{ selectedDirection.accronyme }}</p>
+        <p class="text-gray-500 text-sm mb-4">{{ selectedDirection.nom }}</p>
+        <p class="text-xs text-red-500 mb-5">Les associations avec les services seront supprimées. Les demandes de stage existantes ne seront pas affectées.</p>
+
+        <div class="flex flex-col-reverse sm:flex-row justify-center gap-2">
+          <button (click)="closeDeleteModal()"
+                  class="w-full sm:w-auto px-4 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors text-sm font-medium cursor-pointer">
+            Annuler
+          </button>
+          <button (click)="confirmDelete()"
+                  [disabled]="submitting"
+                  class="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 disabled:opacity-50 transition-colors text-sm font-medium cursor-pointer">
+            <span *ngIf="submitting" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            {{ submitting ? 'Suppression...' : 'Supprimer' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -9,6 +9,7 @@ import { RouterModule, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../../../environments/environment';
 import { Loader } from '../../../../shared/components/loader/loader';
+import { StatCard } from '../../../../shared/components/stat-card/stat-card';
 
 // Aide soumise par un candidat
 interface AideCandidat {
@@ -35,7 +36,7 @@ interface AideCandidat {
 @Component({
   selector: 'app-aides-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, DatePipe, Loader],
+  imports: [CommonModule, RouterModule, FormsModule, DatePipe, Loader, StatCard],
   templateUrl: './aides-list.html',
   styleUrl: './aides-list.css',
 })
@@ -360,5 +361,26 @@ export class AidesList implements OnInit {
       'AUTRE':         'bg-gray-100 text-gray-700',
     };
     return classes[type] || 'bg-gray-100 text-gray-700';
+  }
+
+  // ─── Export CSV ───────────────────────────────────────────────────────────
+  exporterCSV(): void {
+    this.http.get(`${this.apiUrl}/aides/export`, { responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `aides_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.ngZone.run(() => {
+          this.errorMessage = 'Erreur lors de l\'export CSV.';
+          setTimeout(() => this.errorMessage = '', 4000);
+          this.cdr.detectChanges();
+        });
+      },
+    });
   }
 }

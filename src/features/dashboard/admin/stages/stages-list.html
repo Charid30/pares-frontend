@@ -21,68 +21,78 @@
   </div>
 
   <!-- Header -->
-  <div class="flex items-center justify-between gap-3">
+  <div class="flex items-start sm:items-center justify-between gap-3">
     <div>
       <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Gestion des Stages</h1>
-      <p class="text-xs sm:text-sm text-gray-500 mt-0.5">{{ totalItems }} demande(s) de stage</p>
+      <p class="text-xs sm:text-sm text-gray-500 mt-0.5">
+        <span class="font-semibold text-gray-700">{{ totalItems }}</span> demande{{ totalItems > 1 ? 's' : '' }} de stage
+      </p>
     </div>
     <div class="flex items-center gap-2 flex-shrink-0">
       <!-- Bouton Rapports -->
       <button (click)="openRapportsModal()"
-              class="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 active:scale-95 transition-all text-sm shadow-sm">
-        <svg class="w-4 h-4 text-[#c0392b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              class="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 active:scale-95 transition-all text-sm shadow-sm cursor-pointer">
+        <svg class="w-4 h-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
         <span class="hidden sm:inline">Rapports</span>
       </button>
       <!-- Bouton Export -->
       <button (click)="exporterStages()"
-              class="flex items-center gap-1.5 px-3 py-2 bg-[#c0392b] text-white font-medium rounded-xl hover:bg-[#96281b] active:scale-95 transition-all text-sm shadow-sm">
+              class="flex items-center gap-1.5 px-3 sm:px-4 py-2 text-sm font-semibold text-white bg-primary-500 hover:bg-primary-600 rounded-xl transition-all shadow-sm shadow-primary-200 cursor-pointer">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
         </svg>
-        <span class="hidden sm:inline">Exporter</span>
+        <span class="hidden sm:inline">Exporter CSV</span>
       </button>
     </div>
   </div>
 
+  <!-- Section demandes de modification en attente -->
+  <div *ngIf="isAdmin && demandesModification.length > 0"
+       class="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+    <div class="flex items-center gap-3 mb-3">
+      <div class="w-9 h-9 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+        <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+      </div>
+      <div>
+        <p class="text-sm font-bold text-amber-800">{{ demandesModification.length }} demande(s) de modification en attente</p>
+        <p class="text-xs text-amber-600">Suspension ou annulation de stage à traiter</p>
+      </div>
+    </div>
+    <div class="space-y-2">
+      <div *ngFor="let demande of demandesModification"
+           class="flex items-center justify-between bg-white rounded-xl px-4 py-2.5 border border-amber-100">
+        <div class="flex items-center gap-3">
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full" [ngClass]="getDemandeTypeClass(demande.type)">
+            {{ getDemandeTypeLabel(demande.type) }}
+          </span>
+          <span class="text-xs text-gray-700 font-medium">
+            {{ demande.candidat?.prenom }} {{ demande.candidat?.nom }}
+          </span>
+          <span class="text-xs text-gray-400 truncate max-w-[200px]">{{ demande.motif }}</span>
+        </div>
+        <button (click)="selectedDemande = demande; evaluerDemandeForm = { status: '', reponse_drh: '' }; showDemandesModal = true"
+                class="flex items-center gap-1.5 py-1.5 px-3 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold rounded-xl transition-all">
+          Traiter
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Stats Cards -->
-  <div *ngIf="stats" class="grid grid-cols-3 gap-2 sm:gap-3">
-    <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-red-100 hover:shadow-md transition-shadow flex items-center gap-2 sm:gap-3">
-      <div class="w-8 h-8 sm:w-11 sm:h-11 bg-red-50 rounded-xl flex items-center justify-center flex-shrink-0">
-        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-      </div>
-      <div class="min-w-0">
-        <p class="text-lg sm:text-2xl font-bold text-gray-900 leading-none">{{ stats.total }}</p>
-        <p class="text-xs text-gray-400 mt-0.5 truncate">Total</p>
-      </div>
-    </div>
-
-    <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-green-100 hover:shadow-md transition-shadow flex items-center gap-2 sm:gap-3">
-      <div class="w-8 h-8 sm:w-11 sm:h-11 bg-green-50 rounded-xl flex items-center justify-center flex-shrink-0">
-        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      </div>
-      <div class="min-w-0">
-        <p class="text-lg sm:text-2xl font-bold text-gray-900 leading-none">{{ stats.acceptes }}</p>
-        <p class="text-xs text-gray-400 mt-0.5 truncate">Acceptés</p>
-      </div>
-    </div>
-
-    <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex items-center gap-2 sm:gap-3">
-      <div class="w-8 h-8 sm:w-11 sm:h-11 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
-        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      </div>
-      <div class="min-w-0">
-        <p class="text-lg sm:text-2xl font-bold text-gray-900 leading-none">{{ stats.expires }}</p>
-        <p class="text-xs text-gray-400 mt-0.5 truncate">Expirés</p>
-      </div>
-    </div>
+  <div *ngIf="stats" class="grid gap-3 sm:gap-4"
+       [ngClass]="stats.programmationEnCours ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'">
+    <app-stat-card accent="red" label="Total demandes" [value]="stats.total"
+      iconPath="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></app-stat-card>
+    <app-stat-card accent="emerald" label="Acceptés" [value]="stats.acceptes"
+      iconPath="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></app-stat-card>
+    <app-stat-card accent="rose" label="Rejetés" [value]="stats.rejetes"
+      iconPath="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></app-stat-card>
+    <app-stat-card *ngIf="stats.programmationEnCours" accent="blue" label="Prog. en cours" [value]="stats.programmationEnCours"
+      iconPath="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></app-stat-card>
   </div>
 
   <!-- Filtres -->
@@ -105,11 +115,14 @@
           <option value="">Tous les statuts</option>
           <option value="EN_ATTENTE">En attente</option>
           <option value="EN_COURS_DE_TRAITEMENT">En traitement</option>
+          <option value="PROGRAMMATION_EN_COURS">Programmation en cours</option>
           <option value="ACCEPTE">Accepté</option>
           <option value="EN_COURS">En cours</option>
           <option value="TERMINE">Terminé</option>
           <option value="REJETE">Rejeté</option>
           <option value="EXPIRE">Expiré</option>
+          <option value="SUSPENDU">Suspendu</option>
+          <option value="ANNULE">Annulé</option>
           <option value="RAPPORT_SOUMIS">Rapport soumis</option>
         </select>
         <svg class="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none"
@@ -215,40 +228,40 @@
     <!-- Table Desktop -->
     <div *ngIf="!loading && !error && stages.length > 0" class="hidden md:block overflow-x-auto">
       <table class="w-full">
-        <thead class="bg-gray-50 border-b border-gray-100">
+        <thead class="bg-gray-50/70 border-b border-gray-100">
           <tr>
-            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Candidat</th>
-            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
-            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Domaine</th>
-            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date souhaitée</th>
-            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date effective</th>
-            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Statut</th>
-            <th class="px-4 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+            <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-400">Candidat</th>
+            <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-400">Domaine</th>
+            <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-400">Souhaité</th>
+            <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-400">Statut</th>
+            <th class="px-4 py-3.5 text-right text-xs font-semibold text-gray-400">Actions</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-100">
-          <tr *ngFor="let stage of stages" class="hover:bg-gray-50 transition-colors">
+        <tbody class="divide-y divide-gray-50">
+          <tr *ngFor="let stage of stages" class="group hover:bg-primary-50/30 transition-colors duration-150">
             <td class="px-4 py-4">
               <div class="flex items-center gap-3">
-                <div class="w-9 h-9 bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-full flex items-center justify-center text-yellow-600 font-semibold text-sm flex-shrink-0">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm flex-shrink-0 shadow-sm text-white"
+                     [ngClass]="stage.typeStage === 'SOUTENANCE' ? 'bg-gradient-to-br from-purple-400 to-purple-600' : 'bg-gradient-to-br from-primary-400 to-primary-600'">
                   {{ getInitials(stage) }}
                 </div>
                 <div class="min-w-0">
-                  <p class="text-sm font-medium text-gray-900 truncate">{{ getCandidatName(stage) }}</p>
-                  <p class="text-xs text-gray-500 truncate">{{ stage.candidat.email }}</p>
+                  <p class="text-sm font-semibold text-gray-900 truncate">{{ getCandidatName(stage) }}</p>
+                  <p class="text-xs text-gray-400 truncate">{{ stage.candidat.email }}</p>
+                  <p *ngIf="stage.direction" class="text-[10px] text-gray-400 mt-0.5">
+                    <span class="bg-gray-100 px-1.5 py-0.5 rounded font-mono">{{ stage.direction.accronyme }}</span>
+                  </p>
                 </div>
               </div>
             </td>
             <td class="px-4 py-4">
-              <span class="px-2.5 py-1 text-xs font-medium rounded-full whitespace-nowrap"
-                    [ngClass]="stage.typeStage === 'SOUTENANCE' ? 'bg-purple-100 text-purple-700' : 'bg-indigo-100 text-indigo-700'">
-                {{ getTypeLabel(stage.typeStage) }}
-              </span>
-            </td>
-            <td class="px-4 py-4">
-              <span *ngIf="stage.domaineStage" class="px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">
-                {{ stage.domaineStage }}
-              </span>
+              <div *ngIf="stage.domaineStage" class="min-w-0">
+                <p class="text-xs font-medium text-gray-700 leading-relaxed">{{ stage.domaineStage }}</p>
+                <span class="inline-block mt-0.5 px-2 py-0.5 text-[10px] font-semibold rounded-full"
+                      [ngClass]="stage.typeStage === 'SOUTENANCE' ? 'bg-purple-100 text-purple-600' : 'bg-indigo-50 text-indigo-600'">
+                  {{ getTypeLabel(stage.typeStage) }}
+                </span>
+              </div>
               <span *ngIf="!stage.domaineStage" class="text-xs text-gray-300">—</span>
             </td>
             <td class="px-4 py-4">
@@ -258,66 +271,76 @@
               <span *ngIf="!stage.dateDebutSouhaitee" class="text-xs text-gray-300">—</span>
             </td>
             <td class="px-4 py-4">
-              <span *ngIf="stage.dateDebutEffective" class="inline-flex items-center gap-1 text-xs font-medium text-green-700 whitespace-nowrap">
-                <svg class="w-3 h-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                </svg>
-                {{ stage.dateDebutEffective | date:'dd/MM/yyyy' }}
-              </span>
-              <span *ngIf="!stage.dateDebutEffective" class="text-xs text-gray-300">—</span>
-            </td>
-            <td class="px-4 py-4">
               <span class="px-2.5 py-1 text-xs font-semibold rounded-full" [ngClass]="getStatutClass(stage.statusStage)">
                 {{ getStatutLabel(stage.statusStage) }}
               </span>
             </td>
             <td class="px-4 py-4">
-              <div class="flex items-center justify-end gap-2">
+              <div class="flex items-center justify-end gap-1">
+                <!-- Voir -->
                 <button (click)="openViewModal(stage)"
-                        class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="Voir">
+                        class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all cursor-pointer"
+                        title="Voir les détails">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                   </svg>
                 </button>
+                <!-- Séparateur si actions disponibles -->
+                <div *ngIf="stage.statusStage === 'EN_ATTENTE' || stage.statusStage === 'EN_COURS_DE_TRAITEMENT' || stage.statusStage === 'PROGRAMMATION_EN_COURS' || stage.statusStage === 'ACCEPTE' || stage.statusStage === 'EN_COURS'"
+                     class="w-px h-4 bg-gray-200 mx-0.5"></div>
+                <!-- Approuver (rôle spécifique) -->
+                <button *ngIf="canApprouver && stage.statusStage === 'EN_ATTENTE'"
+                        (click)="approuverStage(stage)"
+                        [disabled]="submitting"
+                        class="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all cursor-pointer disabled:opacity-40"
+                        title="Approuver">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </button>
+                <!-- En traitement -->
                 <button *ngIf="stage.statusStage === 'EN_ATTENTE'"
                         (click)="mettreEnTraitement(stage)"
-                        class="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                        class="p-1.5 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all cursor-pointer"
                         title="Mettre en traitement">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
                 </button>
-                <button *ngIf="stage.statusStage === 'EN_ATTENTE' || stage.statusStage === 'EN_COURS_DE_TRAITEMENT'"
+                <!-- Accepter -->
+                <button *ngIf="stage.statusStage === 'EN_ATTENTE' || stage.statusStage === 'EN_COURS_DE_TRAITEMENT' || stage.statusStage === 'PROGRAMMATION_EN_COURS'"
                         (click)="openAcceptModal(stage)"
-                        class="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                        class="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all cursor-pointer"
                         title="Accepter">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                   </svg>
                 </button>
-                <button *ngIf="stage.statusStage === 'EN_ATTENTE' || stage.statusStage === 'EN_COURS_DE_TRAITEMENT'"
+                <!-- Refuser -->
+                <button *ngIf="stage.statusStage === 'EN_ATTENTE' || stage.statusStage === 'EN_COURS_DE_TRAITEMENT' || stage.statusStage === 'PROGRAMMATION_EN_COURS'"
                         (click)="openRejectModal(stage)"
-                        class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all cursor-pointer"
                         title="Refuser">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
+                <!-- Démarrer -->
                 <button *ngIf="stage.statusStage === 'ACCEPTE'"
                         (click)="demarrerStage(stage)"
-                        class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="Demarrer">
+                        class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all cursor-pointer"
+                        title="Démarrer le stage">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </button>
+                <!-- Expirer -->
                 <button *ngIf="stage.statusStage === 'EN_COURS'"
                         (click)="expirerStage(stage)"
-                        class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                        title="Marquer comme expire">
+                        class="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all cursor-pointer"
+                        title="Marquer comme expiré">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -405,7 +428,7 @@
               </svg>
               Traiter
             </button>
-            <button *ngIf="stage.statusStage === 'EN_ATTENTE' || stage.statusStage === 'EN_COURS_DE_TRAITEMENT'"
+            <button *ngIf="stage.statusStage === 'EN_ATTENTE' || stage.statusStage === 'EN_COURS_DE_TRAITEMENT' || stage.statusStage === 'PROGRAMMATION_EN_COURS'"
                     (click)="openAcceptModal(stage)"
                     class="flex items-center gap-1.5 py-2 px-3 text-xs font-semibold text-green-600 bg-green-50 rounded-xl hover:bg-green-100 active:scale-95 transition-all">
               <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -413,7 +436,7 @@
               </svg>
               Accepter
             </button>
-            <button *ngIf="stage.statusStage === 'EN_ATTENTE' || stage.statusStage === 'EN_COURS_DE_TRAITEMENT'"
+            <button *ngIf="stage.statusStage === 'EN_ATTENTE' || stage.statusStage === 'EN_COURS_DE_TRAITEMENT' || stage.statusStage === 'PROGRAMMATION_EN_COURS'"
                     (click)="openRejectModal(stage)"
                     class="flex items-center gap-1.5 py-2 px-3 text-xs font-semibold text-red-600 bg-red-50 rounded-xl hover:bg-red-100 active:scale-95 transition-all">
               <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -636,6 +659,118 @@
               </div>
             </div>
 
+            <!-- ══ Affectation direction / service (admin seulement) ══ -->
+            <div *ngIf="isAdmin" class="rounded-xl border-2 overflow-hidden"
+              style="border-color:#e8c9c9; background:linear-gradient(135deg,#fff5f5,#fff);">
+
+              <!-- En-tête -->
+              <div class="px-3 py-2 border-b flex items-center justify-between" style="border-color:#f5d0d0; background:#fef2f2;">
+                <div class="flex items-center gap-2">
+                  <div class="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0" style="background:#c0392b;">
+                    <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                  </div>
+                  <p class="text-[11px] font-bold uppercase tracking-wide" style="color:#7b1515;">Affectation administrative</p>
+                </div>
+                <!-- Badge statut affectation -->
+                <span class="text-[9px] font-bold px-2 py-0.5 rounded-full"
+                  [ngClass]="selectedStage!.direction_iddirection
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-amber-100 text-amber-700'">
+                  {{ selectedStage!.direction_iddirection ? 'Affectée' : 'Non affectée' }}
+                </span>
+              </div>
+
+              <div class="p-3 space-y-3">
+
+                <!-- Info si déjà affectée -->
+                <div *ngIf="selectedStage!.direction_iddirection"
+                  class="flex items-start gap-2 p-2 rounded-lg bg-green-50 border border-green-100">
+                  <svg class="w-3.5 h-3.5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <p class="text-[10px] text-green-700">
+                    Affectée à
+                    <strong>{{ getAffectationLabel(selectedStage!.direction_iddirection, selectedStage!.service_idservice) }}</strong>
+                  </p>
+                </div>
+
+                <!-- Dropdown Direction -->
+                <div>
+                  <label class="block text-[10px] font-semibold text-gray-600 mb-1">Direction</label>
+                  <div class="relative">
+                    <select [(ngModel)]="affectationForm.direction_iddirection"
+                      (ngModelChange)="affectationForm.service_idservice = null"
+                      class="w-full px-2.5 py-2 bg-white border border-gray-200 rounded-lg text-xs text-gray-800
+                             focus:border-red-400 focus:ring-0 appearance-none cursor-pointer transition-all">
+                      <option [ngValue]="null">— Aucune direction —</option>
+                      <option *ngFor="let dir of directions" [ngValue]="dir.iddirection">
+                        {{ dir.accronyme }} — {{ dir.nom }}
+                      </option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                      <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Dropdown Service (cascadé) -->
+                <div>
+                  <label class="block text-[10px] font-semibold text-gray-600 mb-1">Service</label>
+
+                  <!-- Aucune direction choisie -->
+                  <div *ngIf="!affectationForm.direction_iddirection"
+                    class="w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-400 italic">
+                    Sélectionnez d'abord une direction
+                  </div>
+
+                  <!-- Services disponibles -->
+                  <div *ngIf="affectationForm.direction_iddirection" class="relative">
+                    <select [(ngModel)]="affectationForm.service_idservice"
+                      class="w-full px-2.5 py-2 bg-white border border-gray-200 rounded-lg text-xs text-gray-800
+                             focus:border-red-400 focus:ring-0 appearance-none cursor-pointer transition-all">
+                      <option [ngValue]="null">— Aucun service —</option>
+                      <option *ngFor="let svc of servicesForAffectation" [ngValue]="svc.idservice">
+                        {{ svc.accronyme }} — {{ svc.description }}
+                      </option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                      <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                      </svg>
+                    </div>
+                  </div>
+
+                  <!-- Aucun service lié -->
+                  <p *ngIf="affectationForm.direction_iddirection && servicesForAffectation.length === 0"
+                     class="text-[10px] text-amber-600 mt-1">
+                    Aucun service disponible pour cette direction
+                  </p>
+                </div>
+
+                <!-- Bouton enregistrer -->
+                <button type="button" (click)="sauvegarderAffectation()"
+                  [disabled]="savingAffectation || !affectationForm.direction_iddirection"
+                  class="w-full py-2 text-white text-xs font-semibold rounded-lg transition-all active:scale-95
+                         disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                  style="background:#c0392b;">
+                  <svg *ngIf="savingAffectation" class="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                  </svg>
+                  <svg *ngIf="!savingAffectation" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                  </svg>
+                  {{ savingAffectation ? 'Enregistrement…' : 'Enregistrer l\'affectation' }}
+                </button>
+
+              </div>
+            </div>
+
             <!-- Badge renouvellement -->
             <div *ngIf="selectedStage.estRenouvellement"
                  class="bg-gray-50 rounded-xl border border-gray-100 overflow-hidden">
@@ -734,25 +869,36 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
                 <p class="text-[11px] font-bold text-gray-700 uppercase tracking-wide">Documents soumis</p>
-                <button (click)="downloadAllDocuments()"
-                        class="ml-auto flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-white text-[10px] font-medium hover:bg-[#96281b] active:scale-95 transition-all"
-                        style="background:#c0392b;"
-                        title="Télécharger tout le dossier">
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                  </svg>
-                  Tout télécharger
-                </button>
+                <div class="ml-auto flex items-center gap-1.5">
+                  <!-- Imprimer tout -->
+                  <button (click)="printAllDocuments()"
+                          class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-white text-[10px] font-medium bg-indigo-500 hover:bg-indigo-600 active:scale-95 transition-all cursor-pointer"
+                          title="Imprimer tout le dossier">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                    </svg>
+                    Imprimer
+                  </button>
+                  <!-- Télécharger tout -->
+                  <button (click)="downloadAllDocuments()"
+                          class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-white text-[10px] font-medium bg-primary-500 hover:bg-primary-600 active:scale-95 transition-all cursor-pointer"
+                          title="Télécharger tout le dossier">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Télécharger
+                  </button>
+                </div>
               </div>
               <div class="p-3 space-y-2">
                 <!-- Chaque doc : même pattern compact -->
                 <ng-container *ngFor="let doc of [
-                  {key:'cv', label:'CV', filename:selectedStage.cv_filename},
+                  {key:'cv', label:'CV daté et signé', filename:selectedStage.cv_filename},
                   {key:'cnib', label:'CNIB', filename:selectedStage.cnib_filename},
                   {key:'casierJudiciaire', label:'Casier judiciaire', filename:selectedStage.casierJudiciaire_filename},
-                  {key:'lettreMotivation', label:'Lettre de motivation', filename:selectedStage.lettreMotivation_filename},
+                  {key:'lettreMotivation', label:'Lettre de motivation signée', filename:selectedStage.lettreMotivation_filename},
                   {key:'lettreRecommandation', label:'Lettre de recommandation', filename:selectedStage.lettreRecommandation_filename},
-                  {key:'dernierDiplome', label:'Dernier diplôme', filename:selectedStage.dernierDiplome_filename}
+                  {key:'dernierDiplome', label:'Dernier diplôme légalisé', filename:selectedStage.dernierDiplome_filename}
                 ]">
                   <div *ngIf="doc.filename" class="bg-white rounded-lg border border-gray-200 p-2.5">
                     <div class="flex items-center gap-2 mb-2">
@@ -787,6 +933,59 @@
               </div>
             </div>
 
+            <!-- Documents de stage (convention / attestation) -->
+            <div *ngIf="selectedStage.statusStage === 'ACCEPTE' || selectedStage.statusStage === 'EN_COURS' || selectedStage.statusStage === 'TERMINE' || selectedStage.statusStage === 'SUSPENDU'">
+              <p class="text-[11px] font-bold text-gray-700 uppercase tracking-wide mb-2">Documents de stage</p>
+              <div class="grid grid-cols-2 gap-2">
+                <!-- Convention -->
+                <div class="flex items-center gap-2.5 p-2.5 rounded-xl border"
+                     [ngClass]="hasDoc('CONVENTION') ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-100'">
+                  <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                       [ngClass]="hasDoc('CONVENTION') ? 'bg-green-100' : 'bg-amber-100'">
+                    <svg *ngIf="hasDoc('CONVENTION')" class="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <svg *ngIf="!hasDoc('CONVENTION')" class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="text-[11px] font-semibold" [ngClass]="hasDoc('CONVENTION') ? 'text-green-800' : 'text-amber-700'">Convention</p>
+                    <p class="text-[10px]" [ngClass]="hasDoc('CONVENTION') ? 'text-green-600' : 'text-amber-500'">
+                      {{ hasDoc('CONVENTION') ? 'Jointe' : 'Non jointe' }}
+                    </p>
+                  </div>
+                </div>
+                <!-- Attestation -->
+                <div class="flex items-center gap-2.5 p-2.5 rounded-xl border"
+                     [ngClass]="hasDoc('ATTESTATION') ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-100'">
+                  <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                       [ngClass]="hasDoc('ATTESTATION') ? 'bg-green-100' : 'bg-gray-100'">
+                    <svg *ngIf="hasDoc('ATTESTATION')" class="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <svg *ngIf="!hasDoc('ATTESTATION')" class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="text-[11px] font-semibold" [ngClass]="hasDoc('ATTESTATION') ? 'text-green-800' : 'text-gray-500'">Attestation</p>
+                    <p class="text-[10px]" [ngClass]="hasDoc('ATTESTATION') ? 'text-green-600' : 'text-gray-400'">
+                      {{ hasDoc('ATTESTATION') ? 'Disponible' : 'Non émise' }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <button (click)="ouvrirDocModal(selectedStage)"
+                      [disabled]="hasDoc('CONVENTION') && hasDoc('ATTESTATION')"
+                      class="w-full mt-2 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-semibold text-indigo-600 bg-indigo-50 rounded-xl hover:bg-indigo-100 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Joindre un document
+              </button>
+            </div>
+
             <!-- Motif de refus -->
             <div *ngIf="selectedStage.statusStage === 'REJETE' && selectedStage.motifRefus"
                  class="bg-gray-50 rounded-xl border border-gray-100 overflow-hidden">
@@ -808,17 +1007,27 @@
         <div class="flex-shrink-0 px-4 py-3 border-t border-gray-100 bg-gray-50/60">
           <ng-container *ngIf="!loading && selectedStage">
             <!-- Bouton Fermer seul si pas d'action possible -->
-            <button *ngIf="selectedStage.statusStage !== 'EN_ATTENTE' && selectedStage.statusStage !== 'EN_COURS_DE_TRAITEMENT' && selectedStage.statusStage !== 'ACCEPTE' && selectedStage.statusStage !== 'EN_COURS'"
+            <button *ngIf="selectedStage.statusStage !== 'EN_ATTENTE' && selectedStage.statusStage !== 'EN_COURS_DE_TRAITEMENT' && selectedStage.statusStage !== 'PROGRAMMATION_EN_COURS' && selectedStage.statusStage !== 'ACCEPTE' && selectedStage.statusStage !== 'EN_COURS' && selectedStage.statusStage !== 'REJETE'"
                     (click)="closeModal()"
                     class="w-full px-3 py-2.5 bg-white border border-gray-200 text-gray-600 text-xs font-semibold rounded-xl hover:bg-gray-50 transition-colors">
               Fermer
             </button>
             <!-- Actions + Fermer si actions disponibles -->
-            <div *ngIf="selectedStage.statusStage === 'EN_ATTENTE' || selectedStage.statusStage === 'EN_COURS_DE_TRAITEMENT' || selectedStage.statusStage === 'ACCEPTE' || selectedStage.statusStage === 'EN_COURS'"
+            <div *ngIf="selectedStage.statusStage === 'EN_ATTENTE' || selectedStage.statusStage === 'EN_COURS_DE_TRAITEMENT' || selectedStage.statusStage === 'PROGRAMMATION_EN_COURS' || selectedStage.statusStage === 'ACCEPTE' || selectedStage.statusStage === 'EN_COURS' || selectedStage.statusStage === 'REJETE'"
                  class="flex flex-wrap gap-2">
               <button (click)="closeModal()"
                       class="py-2 px-3 bg-white border border-gray-200 text-gray-600 text-xs font-semibold rounded-xl hover:bg-gray-50 transition-colors">
                 Fermer
+              </button>
+              <!-- Modifier le motif / les documents non conformes (stage déjà rejeté) -->
+              <button *ngIf="selectedStage.statusStage === 'REJETE'"
+                      (click)="openRejectModal(selectedStage)"
+                      class="flex items-center gap-1.5 py-2 px-3 text-white text-xs font-semibold rounded-xl hover:bg-[#96281b] active:scale-95 transition-all"
+                      style="background:#c0392b;">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+                Modifier le motif
               </button>
               <!-- Mettre en traitement -->
               <button *ngIf="selectedStage.statusStage === 'EN_ATTENTE'"
@@ -830,7 +1039,7 @@
                 Traiter
               </button>
               <!-- Accepter -->
-              <button *ngIf="selectedStage.statusStage === 'EN_ATTENTE' || selectedStage.statusStage === 'EN_COURS_DE_TRAITEMENT'"
+              <button *ngIf="selectedStage.statusStage === 'EN_ATTENTE' || selectedStage.statusStage === 'EN_COURS_DE_TRAITEMENT' || selectedStage.statusStage === 'PROGRAMMATION_EN_COURS'"
                       (click)="openAcceptModal(selectedStage)"
                       class="flex items-center gap-1.5 py-2 px-3 bg-green-600 text-white text-xs font-semibold rounded-xl hover:bg-green-700 active:scale-95 transition-all">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -839,7 +1048,7 @@
                 Accepter
               </button>
               <!-- Refuser -->
-              <button *ngIf="selectedStage.statusStage === 'EN_ATTENTE' || selectedStage.statusStage === 'EN_COURS_DE_TRAITEMENT'"
+              <button *ngIf="selectedStage.statusStage === 'EN_ATTENTE' || selectedStage.statusStage === 'EN_COURS_DE_TRAITEMENT' || selectedStage.statusStage === 'PROGRAMMATION_EN_COURS'"
                       (click)="openRejectModal(selectedStage)"
                       class="flex items-center gap-1.5 py-2 px-3 text-white text-xs font-semibold rounded-xl hover:bg-[#96281b] active:scale-95 transition-all"
                       style="background:#c0392b;">
@@ -874,8 +1083,8 @@
       </ng-container>
 
       <!-- Modal Accept -->
-      <div *ngIf="selectedStage && modalMode === 'accept'">
-        <div class="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4">
+      <div *ngIf="selectedStage && modalMode === 'accept'" class="flex flex-col flex-1 min-h-0">
+        <div class="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4 flex-shrink-0">
           <div class="flex items-center justify-between">
             <h3 class="text-xl font-bold text-white">Accepter la demande</h3>
             <button (click)="closeModal()" class="p-2 hover:bg-white/20 rounded-lg transition-colors text-white">
@@ -886,7 +1095,7 @@
           </div>
         </div>
 
-        <div class="p-6">
+        <div class="p-6 overflow-y-auto flex-1 min-h-0">
           <p class="text-gray-600 mb-4">
             Vous allez accepter la demande de stage de <strong>{{ getCandidatName(selectedStage) }}</strong>.
           </p>
@@ -894,18 +1103,30 @@
           <div class="bg-yellow-50 rounded-xl p-4 mb-4">
             <p class="text-sm text-yellow-800">
               <strong>Date souhaitee par le candidat:</strong> {{ formatDate(selectedStage.dateDebutSouhaitee) }}
+              — <strong>Durée demandée:</strong> {{ selectedStage.dureeStageSouhaitee || selectedStage.dureeStage }} mois
             </p>
           </div>
 
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Date de debut effective <span class="text-red-500">*</span>
-            </label>
-            <input type="date"
-                   [(ngModel)]="acceptForm.dateDebutEffective"
-                   class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
-            <p class="text-xs text-gray-500 mt-1">Vous pouvez definir une date differente de celle souhaitee par le candidat</p>
+          <div class="mb-4 grid grid-cols-3 gap-3">
+            <div class="col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Date de debut effective <span class="text-red-500">*</span>
+              </label>
+              <input type="date"
+                     [(ngModel)]="acceptForm.dateDebutEffective"
+                     class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Durée (mois) <span class="text-red-500">*</span>
+              </label>
+              <input type="number" min="1" max="12" step="1"
+                     [(ngModel)]="acceptForm.dureeAccordee"
+                     placeholder="Mois"
+                     class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
+            </div>
           </div>
+          <p class="text-xs text-gray-500 mb-4">Vous pouvez définir une date et une durée différentes de celles demandées par le candidat</p>
 
           <div class="mb-4">
             <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -942,7 +1163,7 @@
           </div>
         </div>
 
-        <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3">
+        <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3 flex-shrink-0">
           <button (click)="closeModal()" class="px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors">
             Annuler
           </button>
@@ -956,10 +1177,10 @@
       </div>
 
       <!-- Modal Reject -->
-      <div *ngIf="selectedStage && modalMode === 'reject'">
-        <div class="bg-gradient-to-r from-red-500 to-red-600 px-6 py-4">
+      <div *ngIf="selectedStage && modalMode === 'reject'" class="flex flex-col flex-1 min-h-0">
+        <div class="bg-gradient-to-r from-red-500 to-red-600 px-6 py-4 flex-shrink-0">
           <div class="flex items-center justify-between">
-            <h3 class="text-xl font-bold text-white">Refuser la demande</h3>
+            <h3 class="text-xl font-bold text-white">{{ selectedStage.statusStage === 'REJETE' ? 'Modifier le motif de refus' : 'Refuser la demande' }}</h3>
             <button (click)="closeModal()" class="p-2 hover:bg-white/20 rounded-lg transition-colors text-white">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -968,9 +1189,12 @@
           </div>
         </div>
 
-        <div class="p-6">
-          <p class="text-gray-600 mb-4">
+        <div class="p-6 overflow-y-auto flex-1 min-h-0">
+          <p class="text-gray-600 mb-4" *ngIf="selectedStage.statusStage !== 'REJETE'">
             Vous allez refuser la demande de stage de <strong>{{ getCandidatName(selectedStage) }}</strong>.
+          </p>
+          <p class="text-gray-600 mb-4" *ngIf="selectedStage.statusStage === 'REJETE'">
+            Mettre à jour le motif et/ou les documents non conformes pour <strong>{{ getCandidatName(selectedStage) }}</strong>.
           </p>
 
           <div class="mb-4">
@@ -982,9 +1206,32 @@
                       placeholder="Veuillez indiquer le motif du refus..."
                       class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all resize-none"></textarea>
           </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Documents non conformes <span class="text-red-500">*</span>
+              <span class="text-gray-400 font-normal">(le candidat pourra les remplacer)</span>
+            </label>
+            <div class="grid grid-cols-2 gap-2">
+              <button *ngFor="let d of documentsDisponiblesRejet" type="button"
+                      (click)="toggleDocumentRejete(d.key)"
+                      class="flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-medium text-left transition-all"
+                      [ngClass]="documentsRejetesSelection.includes(d.key)
+                                 ? 'border-red-300 bg-red-50 text-red-700'
+                                 : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'">
+                <span class="w-4 h-4 rounded-md border flex items-center justify-center flex-shrink-0"
+                      [ngClass]="documentsRejetesSelection.includes(d.key) ? 'bg-red-500 border-red-500' : 'border-gray-300'">
+                  <svg *ngIf="documentsRejetesSelection.includes(d.key)" class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                  </svg>
+                </span>
+                {{ d.label }}
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3">
+        <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3 flex-shrink-0">
           <button (click)="closeModal()" class="px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors">
             Annuler
           </button>
@@ -992,7 +1239,7 @@
                   [disabled]="submitting"
                   class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors flex items-center gap-2">
             <span *ngIf="submitting" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-            {{ submitting ? 'Refus...' : 'Refuser' }}
+            {{ submitting ? 'Enregistrement...' : (selectedStage.statusStage === 'REJETE' ? 'Mettre à jour' : 'Refuser') }}
           </button>
         </div>
       </div>
@@ -1318,6 +1565,160 @@
       <button (click)="closeRapportsModal()"
               class="w-full py-2.5 px-4 bg-gray-100 text-gray-600 font-medium rounded-xl hover:bg-gray-200 active:scale-95 transition-all text-sm">
         Fermer
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal traitement demande de modification -->
+<div *ngIf="showDemandesModal && selectedDemande" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm" (click)="showDemandesModal=false"></div>
+  <div class="relative bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden">
+    <div class="bg-gradient-to-br from-amber-500 to-orange-600 px-6 py-5">
+      <h3 class="text-lg font-bold text-white">Demande de {{ getDemandeTypeLabel(selectedDemande.type) }}</h3>
+      <p class="text-amber-100 text-sm">{{ selectedDemande.candidat?.prenom }} {{ selectedDemande.candidat?.nom }}</p>
+    </div>
+    <div class="px-6 py-5 space-y-4">
+      <div class="bg-gray-50 rounded-xl p-4">
+        <p class="text-xs font-semibold text-gray-500 uppercase mb-1">Motif</p>
+        <p class="text-sm text-gray-800">{{ selectedDemande.motif }}</p>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1.5">Décision</label>
+        <div class="flex gap-3">
+          <button (click)="evaluerDemandeForm.status = 'APPROUVEE'"
+            class="flex-1 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all"
+            [ngClass]="evaluerDemandeForm.status==='APPROUVEE' ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 text-gray-600 hover:border-green-300'">
+            ✓ Approuver
+          </button>
+          <button (click)="evaluerDemandeForm.status = 'REJETEE'"
+            class="flex-1 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all"
+            [ngClass]="evaluerDemandeForm.status==='REJETEE' ? 'border-red-500 bg-red-50 text-red-700' : 'border-gray-200 text-gray-600 hover:border-red-300'">
+            ✗ Rejeter
+          </button>
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1.5">Commentaire (optionnel)</label>
+        <textarea [(ngModel)]="evaluerDemandeForm.reponse_drh" rows="3"
+          class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+          placeholder="Commentaire pour le candidat..."></textarea>
+      </div>
+    </div>
+    <div class="px-6 pb-6 flex gap-3">
+      <button (click)="evaluerDemande()" [disabled]="!evaluerDemandeForm.status || submittingDemande"
+        class="flex-1 py-3 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl transition-all disabled:opacity-50">
+        {{ submittingDemande ? 'Enregistrement...' : 'Confirmer la décision' }}
+      </button>
+      <button (click)="showDemandesModal=false; selectedDemande=null"
+        class="py-3 px-5 bg-gray-100 text-gray-600 font-medium rounded-xl hover:bg-gray-200">
+        Annuler
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL — JOINDRE DOCUMENT (CONVENTION / ATTESTATION)
+     ══════════════════════════════════════════════════════════ -->
+<div *ngIf="showDocModal"
+     class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-3 bg-indigo-600">
+      <div class="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+      </div>
+      <div class="flex-1">
+        <p class="font-semibold text-white text-sm">Joindre un document</p>
+        <p class="text-xs text-white/70 mt-0.5">Convention ou attestation de stage</p>
+      </div>
+      <button (click)="fermerDocModal()" class="text-white/70 hover:text-white transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="p-6 space-y-4">
+
+      <div *ngIf="checkingConvention" class="flex items-center gap-2 text-sm text-gray-400">
+        <div class="w-4 h-4 border-2 border-gray-300 border-t-indigo-500 rounded-full animate-spin"></div>
+        Vérification des documents...
+      </div>
+
+      <div *ngIf="!checkingConvention && stageHasConvention"
+           class="flex items-start gap-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-sm">
+        <svg class="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+        </svg>
+        <span>Une convention de stage est déjà jointe. Seule une attestation peut être créée.</span>
+      </div>
+
+      <div *ngIf="errorDoc"
+           class="flex items-center gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        {{ errorDoc }}
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
+          Type de document <span class="text-red-500">*</span>
+        </label>
+        <select [(ngModel)]="docType"
+                class="w-full px-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl
+                       focus:border-indigo-500 focus:bg-white focus:ring-0 outline-none transition-all">
+          <option value="CONVENTION" [disabled]="stageHasConvention">
+            Convention de stage{{ stageHasConvention ? ' (déjà jointe)' : '' }}
+          </option>
+          <option value="ATTESTATION">Attestation de stage</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
+          Date d'émission <span class="text-red-500">*</span>
+        </label>
+        <input type="date" [(ngModel)]="docDateEmission"
+               class="w-full px-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl
+                      focus:border-indigo-500 focus:bg-white focus:ring-0 outline-none transition-all"/>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
+          Fichier PDF <span class="text-red-500">*</span>
+        </label>
+        <label class="flex items-center gap-3 px-4 py-3 bg-gray-50 border-2 border-dashed border-gray-200
+                      rounded-xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 transition-all group">
+          <svg class="w-5 h-5 text-gray-400 group-hover:text-indigo-500 transition-colors flex-shrink-0"
+               fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+          </svg>
+          <span class="text-sm" [ngClass]="docFile ? 'text-indigo-700 font-medium' : 'text-gray-400'">
+            {{ docFile ? docFile.name : 'Cliquer pour sélectionner un PDF' }}
+          </span>
+          <input type="file" accept="application/pdf" class="hidden" (change)="onDocFileChange($event)"/>
+        </label>
+      </div>
+
+    </div>
+
+    <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3">
+      <button (click)="fermerDocModal()" [disabled]="soumissionDoc"
+              class="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:border-gray-300 rounded-xl transition-colors disabled:opacity-50">
+        Annuler
+      </button>
+      <button (click)="creerDocument()" [disabled]="soumissionDoc || (stageHasConvention && docType === 'CONVENTION')"
+              class="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all shadow-md shadow-indigo-500/25 disabled:opacity-50 disabled:cursor-not-allowed">
+        <div *ngIf="soumissionDoc" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+        {{ soumissionDoc ? 'Création...' : 'Joindre le document' }}
       </button>
     </div>
   </div>

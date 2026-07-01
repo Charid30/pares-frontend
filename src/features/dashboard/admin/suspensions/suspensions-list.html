@@ -1,0 +1,230 @@
+<div class="p-4 sm:p-6 max-w-7xl mx-auto">
+
+  <!-- En-tête -->
+  <div class="flex items-center gap-3 mb-6">
+    <div class="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm"
+         style="background:linear-gradient(135deg,#e74c3c,#c0392b);">
+      <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+    </div>
+    <div>
+      <h1 class="text-xl font-bold text-gray-900 leading-tight">Suspensions / Annulations</h1>
+      <p class="text-sm text-gray-500">Demandes de modification de stage soumises par les candidats</p>
+    </div>
+  </div>
+
+  <!-- Compteurs -->
+  <div class="grid grid-cols-3 gap-2 sm:gap-4 mb-5">
+    <app-stat-card accent="blue" label="En attente" [value]="countEnAttente" sublabel="Demandes à traiter"
+      iconPath="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></app-stat-card>
+    <app-stat-card accent="amber" label="Suspendus" [value]="countSuspendus" sublabel="Stages mis en pause"
+      iconPath="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></app-stat-card>
+    <app-stat-card accent="rose" label="Annulés" [value]="countAnnules" sublabel="Stages annulés"
+      iconPath="M6 18L18 6M6 6l12 12"></app-stat-card>
+  </div>
+
+  <!-- Filtres -->
+  <div class="flex flex-wrap gap-2 mb-4">
+    <select [(ngModel)]="filtreType" (change)="appliquerFiltres()"
+            class="px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-400">
+      <option value="">Tous les types</option>
+      <option value="SUSPENSION">Suspension</option>
+      <option value="ANNULATION">Annulation</option>
+    </select>
+    <select [(ngModel)]="filtreStatut" (change)="appliquerFiltres()"
+            class="px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-400">
+      <option value="">Tous les statuts</option>
+      <option value="EN_ATTENTE">En attente</option>
+      <option value="APPROUVEE">Approuvée</option>
+      <option value="REJETEE">Rejetée</option>
+    </select>
+    <button *ngIf="filtreType || filtreStatut || searchTerm" (click)="effacerFiltres()"
+            class="px-3 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
+      Effacer
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="space-y-3">
+    <div class="h-28 bg-gray-100 rounded-2xl animate-pulse"></div>
+    <div class="h-28 bg-gray-100 rounded-2xl animate-pulse"></div>
+  </div>
+
+  <!-- Liste vide -->
+  <div *ngIf="!isLoading && demandesFiltrees.length === 0"
+       class="bg-white rounded-2xl border border-gray-100 p-10 text-center">
+    <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+    </svg>
+    <p class="text-sm text-gray-500">Aucune demande de modification</p>
+  </div>
+
+  <!-- Liste -->
+  <div *ngIf="!isLoading" class="space-y-3">
+    <div *ngFor="let d of demandesFiltrees"
+         class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div class="h-1 w-full" [ngClass]="getTypeBarClass(d.type)"></div>
+      <div class="p-4">
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0"
+                 style="background:#fde8e8; color:#c0392b;">
+              {{ getInitiales(d) }}
+            </div>
+            <div class="min-w-0">
+              <p class="text-sm font-semibold text-gray-900 truncate">{{ getNomCandidat(d) }}</p>
+              <p class="text-xs text-gray-500 truncate">{{ d.candidat?.email }}</p>
+            </div>
+          </div>
+          <div class="flex flex-col items-end gap-1 flex-shrink-0">
+            <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full" [ngClass]="getTypeClass(d.type)">
+              {{ getTypeLabel(d.type) }}
+            </span>
+            <span class="px-2 py-0.5 text-[10px] font-semibold rounded-full" [ngClass]="getStatutClass(d.status)">
+              {{ getStatutLabel(d.status) }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Infos stage -->
+        <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
+          <span *ngIf="d.stage?.domaineStage"><span class="text-gray-400">Domaine :</span> {{ d.stage?.domaineStage }}</span>
+          <span *ngIf="d.stage?.typeStage"><span class="text-gray-400">Type :</span> {{ d.stage?.typeStage }}</span>
+          <span *ngIf="d.dateDebut"><span class="text-gray-400">{{ d.type === 'SUSPENSION' ? 'Début suspension :' : 'Date annulation :' }}</span> {{ d.dateDebut | date:'dd/MM/yyyy' }}</span>
+          <span><span class="text-gray-400">Soumise le :</span> {{ d.createdDate | date:'dd/MM/yyyy HH:mm' }}</span>
+        </div>
+
+        <!-- Motif -->
+        <div class="mt-2 bg-gray-50 rounded-lg p-2.5">
+          <p class="text-[10px] text-gray-400 uppercase font-semibold mb-0.5">Motif du candidat</p>
+          <p class="text-xs text-gray-700 whitespace-pre-line">{{ d.motif }}</p>
+        </div>
+
+        <!-- Pièces jointes -->
+        <div class="mt-2 flex flex-wrap gap-2">
+          <button *ngIf="d.justification_filename" (click)="ouvrirFichier(d, 'justification')"
+                  class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+            <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+            </svg>
+            Justification
+          </button>
+          <button *ngIf="d.lettreManuscrite_filename" (click)="ouvrirFichier(d, 'lettre')"
+                  class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+            <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+            </svg>
+            Demande manuscrite
+          </button>
+        </div>
+
+        <!-- Réponse DRH si traitée -->
+        <div *ngIf="d.status !== 'EN_ATTENTE'" class="mt-2 bg-blue-50 border border-blue-100 rounded-lg p-2.5">
+          <p class="text-[10px] text-blue-400 uppercase font-semibold mb-0.5">
+            Réponse — {{ d.processedBy || 'DRH' }}
+          </p>
+          <p class="text-xs text-blue-700">{{ d.reponse_drh || '(sans commentaire)' }}</p>
+        </div>
+
+        <!-- Action -->
+        <div *ngIf="peutTraiter(d)" class="mt-3 flex justify-end">
+          <button (click)="ouvrirEval(d)"
+                  class="px-4 py-2 text-sm font-semibold text-white rounded-xl transition-colors"
+                  style="background:#c0392b;">
+            Traiter cette demande
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ MODAL ÉVALUATION ════ -->
+<div *ngIf="showEvalModal && selectedDemande"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+     (click)="fermerEval()">
+  <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md" (click)="$event.stopPropagation()">
+    <!-- Header -->
+    <div class="px-6 py-5 rounded-t-3xl"
+         [ngClass]="selectedDemande.type === 'SUSPENSION' ? 'bg-gradient-to-br from-amber-500 to-orange-600' : 'bg-gradient-to-br from-red-500 to-rose-600'">
+      <h3 class="text-base font-bold text-white">Demande de {{ getTypeLabel(selectedDemande.type) }}</h3>
+      <p class="text-xs text-white/80 mt-0.5">{{ getNomCandidat(selectedDemande) }}</p>
+    </div>
+
+    <div class="px-6 py-5 space-y-4">
+      <!-- Motif -->
+      <div>
+        <p class="text-xs text-gray-400 uppercase font-semibold mb-1">Motif</p>
+        <p class="text-sm text-gray-700 bg-gray-50 rounded-lg p-2.5 whitespace-pre-line">{{ selectedDemande.motif }}</p>
+      </div>
+
+      <!-- Décision -->
+      <div>
+        <p class="text-xs text-gray-400 uppercase font-semibold mb-1.5">Décision</p>
+        <div class="grid grid-cols-2 gap-2">
+          <button (click)="evalForm.status = 'APPROUVEE'"
+                  class="py-2.5 text-sm font-semibold rounded-xl border-2 transition-all"
+                  [ngClass]="evalForm.status === 'APPROUVEE' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'">
+            ✓ Approuver
+          </button>
+          <button (click)="evalForm.status = 'REJETEE'"
+                  class="py-2.5 text-sm font-semibold rounded-xl border-2 transition-all"
+                  [ngClass]="evalForm.status === 'REJETEE' ? 'border-red-500 bg-red-50 text-red-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'">
+            ✕ Rejeter
+          </button>
+        </div>
+      </div>
+
+      <!-- Note approbation -->
+      <div *ngIf="evalForm.status === 'APPROUVEE'" class="flex items-start gap-2 p-2.5 bg-amber-50 border border-amber-100 rounded-lg">
+        <svg class="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M5 19h14a2 2 0 001.84-2.75L13.74 4a2 2 0 00-3.48 0L3.16 16.25A2 2 0 005 19z"/>
+        </svg>
+        <p class="text-[11px] text-amber-700">
+          En approuvant, le stage passera automatiquement au statut
+          <strong>{{ selectedDemande.type === 'SUSPENSION' ? 'SUSPENDU' : 'ANNULÉ' }}</strong>.
+        </p>
+      </div>
+
+      <!-- Commentaire -->
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Commentaire (optionnel)</label>
+        <textarea [(ngModel)]="evalForm.reponse_drh" rows="3"
+                  class="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-amber-400 resize-none"
+                  placeholder="Réponse au candidat..."></textarea>
+      </div>
+
+      <p *ngIf="errorEval" class="text-xs text-red-600">{{ errorEval }}</p>
+    </div>
+
+    <div class="px-6 pb-6 flex gap-3">
+      <button (click)="evaluer()" [disabled]="!evalForm.status || isSubmitting"
+              class="flex-1 py-2.5 text-sm font-semibold text-white rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              style="background:#c0392b;">
+        {{ isSubmitting ? 'Enregistrement…' : 'Confirmer la décision' }}
+      </button>
+      <button (click)="fermerEval()"
+              class="px-4 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
+        Annuler
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ TOASTS ════ -->
+<div class="fixed top-4 right-4 z-[60] space-y-2">
+  <div *ngFor="let t of toasts"
+       class="flex items-start gap-3 px-4 py-3 rounded-xl shadow-lg bg-white border max-w-sm"
+       [ngClass]="t.type === 'success' ? 'border-emerald-200' : t.type === 'error' ? 'border-red-200' : 'border-gray-200'">
+    <div class="flex-1 min-w-0">
+      <p class="text-sm font-semibold text-gray-900">{{ t.title }}</p>
+      <p class="text-xs text-gray-500">{{ t.message }}</p>
+    </div>
+    <button (click)="removeToast(t.id)" class="text-gray-400 hover:text-gray-600">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+</div>

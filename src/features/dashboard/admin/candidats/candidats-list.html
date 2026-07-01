@@ -22,60 +22,32 @@
 
 <div class="space-y-4 md:space-y-6 overflow-x-hidden max-w-full">
   <!-- Header -->
-  <div class="flex items-center justify-between gap-3">
+  <div class="flex items-start sm:items-center justify-between gap-3">
     <div>
       <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Gestion des Candidats</h1>
-      <p class="text-xs sm:text-sm text-gray-500 mt-0.5">{{ totalItems }} candidat(s) inscrit(s)</p>
+      <p class="text-xs sm:text-sm text-gray-500 mt-0.5">
+        <span class="font-semibold text-gray-700">{{ totalItems }}</span> candidat{{ totalItems > 1 ? 's' : '' }} inscrit{{ totalItems > 1 ? 's' : '' }}
+      </p>
     </div>
     <button (click)="exporterCSV()"
-            class="flex-shrink-0 flex items-center gap-2 px-3 sm:px-4 py-2 text-sm font-medium text-white rounded-xl transition-colors"
-            style="background:#16a34a;"
+            class="flex-shrink-0 flex items-center gap-2 px-3 sm:px-4 py-2 text-sm font-semibold text-white bg-primary-500 hover:bg-primary-600 rounded-xl transition-all shadow-sm shadow-primary-200 cursor-pointer"
             title="Exporter la liste complète en CSV">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
       </svg>
       <span class="hidden sm:inline">Exporter CSV</span>
     </button>
   </div>
 
-  <!-- Stats Cards (3 cartes sur la même ligne) -->
-  <div *ngIf="stats" class="grid grid-cols-3 gap-2 sm:gap-3">
-    <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-blue-100 hover:shadow-md transition-shadow flex items-center gap-2 sm:gap-3">
-      <div class="w-8 h-8 sm:w-11 sm:h-11 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
-        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-      </div>
-      <div class="min-w-0">
-        <p class="text-lg sm:text-2xl font-bold text-gray-900 leading-none">{{ stats.total }}</p>
-        <p class="text-xs text-gray-400 mt-0.5 truncate">Total</p>
-      </div>
-    </div>
-
-    <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-green-100 hover:shadow-md transition-shadow flex items-center gap-2 sm:gap-3">
-      <div class="w-8 h-8 sm:w-11 sm:h-11 bg-green-50 rounded-xl flex items-center justify-center flex-shrink-0">
-        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-        </svg>
-      </div>
-      <div class="min-w-0">
-        <p class="text-lg sm:text-2xl font-bold text-gray-900 leading-none">{{ stats.thisMonth }}</p>
-        <p class="text-xs text-gray-400 mt-0.5 truncate">Ce mois</p>
-      </div>
-    </div>
-
-    <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-yellow-100 hover:shadow-md transition-shadow flex items-center gap-2 sm:gap-3">
-      <div class="w-8 h-8 sm:w-11 sm:h-11 bg-yellow-50 rounded-xl flex items-center justify-center flex-shrink-0">
-        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-        </svg>
-      </div>
-      <div class="min-w-0">
-        <p class="text-lg sm:text-2xl font-bold text-gray-900 leading-none">{{ stats.withStages }}</p>
-        <p class="text-xs text-gray-400 mt-0.5 truncate">Avec stages</p>
-      </div>
-    </div>
+  <!-- Stats Cards -->
+  <div *ngIf="stats" class="grid grid-cols-3 gap-3 sm:gap-4">
+    <app-stat-card accent="blue" label="Total inscrits" [value]="stats.total"
+      iconPath="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></app-stat-card>
+    <app-stat-card accent="emerald" label="Ce mois-ci" [value]="stats.thisMonth"
+      iconPath="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></app-stat-card>
+    <app-stat-card accent="amber" label="Avec stages" [value]="stats.withStages"
+      iconPath="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></app-stat-card>
   </div>
 
   <!-- Loading State -->
@@ -94,62 +66,88 @@
   <div *ngIf="!loading && candidats.length > 0" class="hidden md:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
     <div class="overflow-x-auto">
       <table class="w-full">
-        <thead class="bg-gray-50 border-b border-gray-100">
+        <thead class="bg-gray-50/70 border-b border-gray-100">
           <tr>
-            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Candidat</th>
-            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Contact</th>
-            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" (click)="onSortChange('createdDate')">
-              <div class="flex items-center gap-1">
-                Date inscription
-                <svg *ngIf="sortBy === 'createdDate'" class="w-4 h-4" [class.rotate-180]="sortOrder === 'ASC'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <th class="px-6 py-3.5 text-left text-xs font-semibold text-gray-400">Candidat</th>
+            <th class="px-6 py-3.5 text-left text-xs font-semibold text-gray-400">Contact</th>
+            <th class="px-6 py-3.5 text-left text-xs font-semibold text-gray-400 cursor-pointer hover:text-gray-600 hover:bg-gray-100/60 transition-colors select-none" (click)="onSortChange('createdDate')">
+              <div class="flex items-center gap-1.5">
+                Inscription
+                <svg class="w-3.5 h-3.5 transition-transform" [class.rotate-180]="sortBy === 'createdDate' && sortOrder === 'ASC'" [class.opacity-30]="sortBy !== 'createdDate'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
             </th>
-            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Activité</th>
-            <th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+            <th class="px-6 py-3.5 text-left text-xs font-semibold text-gray-400">Stages</th>
+            <th class="px-6 py-3.5 text-right text-xs font-semibold text-gray-400">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-50">
-          <tr *ngFor="let candidat of candidats" class="hover:bg-gray-50 transition-colors">
+          <tr *ngFor="let candidat of candidats" class="group hover:bg-primary-50/30 transition-colors duration-150 border-b border-gray-50 last:border-0">
             <td class="px-6 py-4">
               <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-semibold">
+                <div class="w-9 h-9 bg-gradient-to-br from-primary-400 to-primary-600 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-sm">
                   {{ getInitials(candidat) }}
                 </div>
                 <div>
                   <p class="font-semibold text-gray-900">{{ candidat.prenom }} {{ candidat.nom }}</p>
-                  <p class="text-sm text-gray-500">ID: {{ candidat.idcandidats }}</p>
+                  <p class="text-xs text-gray-400 mt-0.5">
+                    <span class="inline-flex items-center gap-0.5 font-mono bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded text-[10px]">#{{ candidat.idcandidats }}</span>
+                  </p>
                 </div>
               </div>
             </td>
             <td class="px-6 py-4">
-              <p class="text-sm text-gray-900">{{ candidat.email }}</p>
-              <p class="text-sm text-gray-500">{{ candidat.telephone }}</p>
-            </td>
-            <td class="px-6 py-4 text-sm text-gray-600">
-              {{ formatDate(candidat.createdDate) }}
+              <p class="text-sm text-gray-700 font-medium">{{ candidat.email }}</p>
+              <p class="text-xs text-gray-400 mt-0.5">{{ candidat.telephone }}</p>
             </td>
             <td class="px-6 py-4">
-              <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700">
-                {{ candidat.stagesCount || 0 }} stage(s)
+              <p class="text-sm text-gray-600">{{ formatDate(candidat.createdDate) }}</p>
+            </td>
+            <td class="px-6 py-4">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full"
+                    [ngClass]="(candidat.stagesCount || 0) > 0 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-400'">
+                <span class="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                      [ngClass]="(candidat.stagesCount || 0) > 0 ? 'bg-blue-500' : 'bg-gray-300'"></span>
+                {{ candidat.stagesCount || 0 }} stage{{ (candidat.stagesCount || 0) > 1 ? 's' : '' }}
               </span>
             </td>
             <td class="px-6 py-4 text-right">
-              <div class="flex items-center justify-end gap-2">
-                <button (click)="openViewModal(candidat)" class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Voir détails">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="flex items-center justify-end gap-1">
+                <!-- Voir -->
+                <button (click)="openViewModal(candidat)"
+                        class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-150 cursor-pointer"
+                        title="Voir le profil">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                   </svg>
                 </button>
-                <button (click)="openEditModal(candidat)" class="p-2 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors" title="Modifier">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <!-- Modifier -->
+                <button (click)="openEditModal(candidat)"
+                        class="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all duration-150 cursor-pointer"
+                        title="Modifier">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                 </button>
-                <button (click)="openDeleteModal(candidat)" [disabled]="submitting" class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50" title="Supprimer">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <!-- Séparateur -->
+                <div class="w-px h-4 bg-gray-200 mx-0.5"></div>
+                <!-- Reset MDP -->
+                <button (click)="openResetPasswordModal(candidat)"
+                        [disabled]="submitting"
+                        class="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all duration-150 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                        title="Réinitialiser le mot de passe">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                  </svg>
+                </button>
+                <!-- Supprimer -->
+                <button (click)="openDeleteModal(candidat)"
+                        [disabled]="submitting"
+                        class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-150 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                        title="Supprimer">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                 </button>
@@ -226,6 +224,14 @@
             Modifier
           </button>
           <div class="flex-1"></div>
+          <button (click)="openResetPasswordModal(candidat)"
+                  [disabled]="submitting"
+                  class="p-2 text-indigo-500 bg-indigo-50 rounded-xl hover:bg-indigo-100 active:scale-95 transition-all disabled:opacity-50"
+                  title="Réinitialiser le mot de passe">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+            </svg>
+          </button>
           <button (click)="openDeleteModal(candidat)"
                   [disabled]="submitting"
                   class="p-2 text-red-500 bg-red-50 rounded-xl hover:bg-red-100 active:scale-95 transition-all disabled:opacity-50"
@@ -729,6 +735,128 @@
         <span class="relative z-10 text-sm">{{ submitting ? 'Suppression...' : 'Oui, supprimer' }}</span>
       </button>
       <button (click)="closeDeleteModal()"
+              [disabled]="submitting"
+              class="py-3 px-5 bg-gray-100 text-gray-600 font-medium rounded-xl hover:bg-gray-200 active:scale-95 transition-all disabled:opacity-50 text-sm">
+        Annuler
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== MODAL RESET MOT DE PASSE ===== -->
+<div *ngIf="showResetPasswordModal && candidatToReset" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+  <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm" (click)="closeResetPasswordModal()"></div>
+
+  <div class="relative bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col">
+
+    <!-- Header indigo -->
+    <div class="relative bg-gradient-to-br from-indigo-500 to-violet-600 px-6 pt-6 pb-8">
+      <button (click)="closeResetPasswordModal()"
+              class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 text-white transition-all">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+      <div class="flex items-center gap-4">
+        <div class="w-14 h-14 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center flex-shrink-0">
+          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+          </svg>
+        </div>
+        <div>
+          <p class="text-indigo-100 text-xs font-medium uppercase tracking-widest mb-1">Action admin</p>
+          <h3 class="text-lg font-bold text-white">Réinitialiser le mot de passe</h3>
+          <p class="text-indigo-200 text-xs mt-0.5">{{ candidatToReset.prenom }} {{ candidatToReset.nom }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Corps -->
+    <div class="px-6 py-5 space-y-4">
+
+      <!-- Candidat ciblé -->
+      <div class="flex items-center gap-3 bg-indigo-50 border border-indigo-100 rounded-2xl p-3.5">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-400 to-violet-500 text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
+          {{ getInitials(candidatToReset) }}
+        </div>
+        <div class="min-w-0">
+          <p class="font-bold text-gray-900 text-sm">{{ candidatToReset.prenom }} {{ candidatToReset.nom }}</p>
+          <p class="text-xs text-gray-500 truncate">{{ candidatToReset.email }}</p>
+        </div>
+      </div>
+
+      <!-- Champ nouveau mot de passe -->
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Nouveau mot de passe <span class="text-red-400">*</span></label>
+        <div class="relative">
+          <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+            <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <input [type]="resetPasswordForm.showPassword ? 'text' : 'password'"
+                 [(ngModel)]="resetPasswordForm.newPassword"
+                 name="newPassword"
+                 placeholder="Minimum 8 caractères"
+                 class="w-full pl-9 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white focus:border-transparent transition-all placeholder:text-gray-300">
+          <button type="button" (click)="resetPasswordForm.showPassword = !resetPasswordForm.showPassword"
+                  class="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600">
+            <svg *ngIf="!resetPasswordForm.showPassword" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            <svg *ngIf="resetPasswordForm.showPassword" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Confirmation -->
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Confirmer le mot de passe <span class="text-red-400">*</span></label>
+        <div class="relative">
+          <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+            <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <input [type]="resetPasswordForm.showPassword ? 'text' : 'password'"
+                 [(ngModel)]="resetPasswordForm.confirmPassword"
+                 name="confirmPassword"
+                 placeholder="Répéter le mot de passe"
+                 class="w-full pl-9 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white focus:border-transparent transition-all placeholder:text-gray-300"
+                 [class.border-red-300]="resetPasswordForm.confirmPassword && resetPasswordForm.newPassword !== resetPasswordForm.confirmPassword"
+                 [class.border-green-300]="resetPasswordForm.confirmPassword && resetPasswordForm.newPassword === resetPasswordForm.confirmPassword">
+        </div>
+        <p *ngIf="resetPasswordForm.confirmPassword && resetPasswordForm.newPassword !== resetPasswordForm.confirmPassword"
+           class="text-xs text-red-500 mt-1">Les mots de passe ne correspondent pas</p>
+      </div>
+
+      <!-- Note -->
+      <div class="flex items-start gap-2.5 bg-amber-50 border border-amber-100 rounded-xl p-3">
+        <svg class="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <p class="text-xs text-amber-700">Le candidat devra utiliser ce nouveau mot de passe pour se connecter. Communiquez-le lui directement.</p>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="px-6 pb-6 flex gap-3">
+      <button (click)="confirmResetPassword()"
+              [disabled]="submitting || !resetPasswordForm.newPassword || !resetPasswordForm.confirmPassword"
+              class="flex-1 group relative flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-indigo-500 to-violet-600 text-white font-semibold rounded-xl shadow-sm hover:shadow-md hover:from-indigo-600 hover:to-violet-700 active:scale-95 transition-all overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed">
+        <div class="absolute inset-0 bg-white/10 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+        <span *ngIf="submitting" class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full relative z-10"></span>
+        <svg *ngIf="!submitting" class="w-4 h-4 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+        </svg>
+        <span class="relative z-10 text-sm">{{ submitting ? 'Réinitialisation...' : 'Réinitialiser le mot de passe' }}</span>
+      </button>
+      <button (click)="closeResetPasswordModal()"
               [disabled]="submitting"
               class="py-3 px-5 bg-gray-100 text-gray-600 font-medium rounded-xl hover:bg-gray-200 active:scale-95 transition-all disabled:opacity-50 text-sm">
         Annuler

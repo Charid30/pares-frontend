@@ -89,26 +89,10 @@ export class Login {
       return;
     }
 
-    // Redirection selon le rôle
-    switch (user.role) {
-      case 'CANDIDAT':
-        this.router.navigate(['/dashboard/candidat']);
-        break;
-      case 'ADMIN':
-        this.router.navigate(['/admin/dashboard']);
-        break;
-      case 'AGENT_RH':
-        this.router.navigate(['/dashboard/rh']);
-        break;
-      case 'AGENT_FINANCIER':
-        this.router.navigate(['/dashboard/financier']);
-        break;
-      case 'AGENT_COMMERCIAL':
-        this.router.navigate(['/dashboard/commercial']);
-        break;
-      default:
-        // Rôle personnalisé → layout agent générique
-        this.router.navigate(['/dashboard/agent']);
+    switch (this.authService.getEffectiveDashboardRole(user)) {
+      case 'CANDIDAT': this.router.navigate(['/dashboard/candidat']); break;
+      case 'ADMIN':    this.router.navigate(['/admin/dashboard']);     break;
+      default:         this.router.navigate(['/dashboard/agent']);
     }
   }
 

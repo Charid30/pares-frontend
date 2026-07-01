@@ -7,6 +7,7 @@ import {
   Agent,
   Role,
   Service,
+  Direction,
   CreateAgentDTO,
   UpdateAgentDTO,
   ApiResponse,
@@ -18,6 +19,7 @@ export interface AgentFilters {
   search?: string;
   role?: number;
   service?: number;
+  direction?: number;
   page?: number;
   limit?: number;
 }
@@ -45,6 +47,13 @@ export class UserService {
   }
 
   /**
+   * Récupérer toutes les directions (pour le rattachement direct d'un agent sans service)
+   */
+  getDirections(): Observable<ApiResponse<Direction[]>> {
+    return this.http.get<ApiResponse<Direction[]>>(`${this.apiUrl}/directions`);
+  }
+
+  /**
    * Récupérer tous les agents avec filtres et pagination
    */
   getAgents(filters?: AgentFilters): Observable<ApiResponse<PaginatedResponse<Agent>>> {
@@ -54,6 +63,7 @@ export class UserService {
       if (filters.search) params = params.set('search', filters.search);
       if (filters.role) params = params.set('role', filters.role.toString());
       if (filters.service) params = params.set('service', filters.service.toString());
+      if (filters.direction) params = params.set('direction', filters.direction.toString());
       if (filters.page) params = params.set('page', filters.page.toString());
       if (filters.limit) params = params.set('limit', filters.limit.toString());
     }

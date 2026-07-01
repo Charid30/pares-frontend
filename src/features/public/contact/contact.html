@@ -116,10 +116,10 @@
               type="submit"
               [disabled]="contactForm.invalid || isSubmitting"
               class="btn-primary w-full text-sm py-3.5">
-              <span *ngIf="!isSubmitting">
+              <span *ngIf="!isSubmitting" class="flex items-center justify-center gap-2">
                 Envoyer le message
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
                 </svg>
               </span>
               <span *ngIf="isSubmitting" class="flex items-center justify-center gap-2">
@@ -233,7 +233,7 @@
         <div class="w-12 h-0.5 bg-primary-500 mx-auto"></div>
       </div>
 
-      <div class="max-w-2xl mx-auto space-y-3">
+      <div class="grid md:grid-cols-2 gap-4 max-w-4xl mx-auto">
 
         <div class="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-soft">
           <div class="p-6">

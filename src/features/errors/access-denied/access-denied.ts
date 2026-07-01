@@ -15,22 +15,14 @@ export class AccessDenied implements OnInit {
   currentUser: User | null = null;
   currentUrl: string = '';
 
-  // Map rôle → libellé lisible
   private roleLabels: Record<string, string> = {
-    ADMIN:             'Administrateur',
-    CANDIDAT:          'Candidat',
-    AGENT_RH:          'Agent RH',
-    AGENT_FINANCIER:   'Agent Financier',
-    AGENT_COMMERCIAL:  'Agent Commercial',
+    ADMIN:    'Administrateur',
+    CANDIDAT: 'Candidat',
   };
 
-  // Map rôle → route dashboard
   private roleDashboards: Record<string, string> = {
-    ADMIN:             '/admin/dashboard',
-    CANDIDAT:          '/dashboard/candidat',
-    AGENT_RH:          '/dashboard/rh',
-    AGENT_FINANCIER:   '/dashboard/financier',
-    AGENT_COMMERCIAL:  '/dashboard/commercial',
+    ADMIN:    '/admin/dashboard',
+    CANDIDAT: '/dashboard/candidat',
   };
 
   constructor(
@@ -56,7 +48,7 @@ export class AccessDenied implements OnInit {
       this.router.navigate(['/auth/login']);
       return;
     }
-    const path = this.roleDashboards[this.currentUser.role] ?? '/accueil';
+    const path = this.roleDashboards[this.currentUser.role] ?? '/dashboard/agent';
     this.router.navigate([path]);
   }
 
