@@ -201,7 +201,7 @@ export class AgentStage implements OnInit {
   errorAutorisation = '';
 
   get peutAutoriserRenouvellement(): boolean {
-    return this.authService.hasRole('ADMIN');
+    return this.peutValider;
   }
 
   getAutorisationActive(s: Stage): AutorisationRenouvellement | null {
@@ -249,14 +249,22 @@ export class AgentStage implements OnInit {
   private apiUrl = environment.apiUrl;
 
   // ── Permissions ───────────────────────────────────────────
+  // Sur scope=global (Vue globale), seules les permissions du rôle lectureGlobale s'appliquent
+  // pour les boutons d'action — évite que les permissions du rôle d'action classique (ex.
+  // APPROUVER de "Approbateur de stage") ne s'affichent sur des stages hors direction.
+  private permSurEcran(action: string): boolean {
+    if (this.scope !== 'global') return this.authService.hasPermission('STAGE', action);
+    return this.authService.hasRole('ADMIN') || this.authService.hasGlobalPermission('STAGE', action);
+  }
+
   get peutConsulter(): boolean  { return this.authService.hasPermission('STAGE', 'CONSULTER'); }
-  get peutApprouver(): boolean  { return this.authService.hasPermission('STAGE', 'APPROUVER'); }
-  get peutValider(): boolean    { return this.authService.hasPermission('STAGE', 'VALIDER') || this.authService.hasRole('ADMIN'); }
-  get peutRejeter(): boolean    { return this.authService.hasPermission('STAGE', 'REJETER') || this.authService.hasRole('ADMIN'); }
-  get peutCreer(): boolean      { return this.authService.hasPermission('STAGE', 'CREER'); }
-  get peutModifier(): boolean   { return this.authService.hasPermission('STAGE', 'MODIFIER'); }
-  get peutSupprimer(): boolean  { return this.authService.hasPermission('STAGE', 'SUPPRIMER'); }
-  get peutTransferer(): boolean { return this.authService.hasPermission('STAGE', 'TRANSFERER'); }
+  get peutApprouver(): boolean  { return this.permSurEcran('APPROUVER'); }
+  get peutValider(): boolean    { return this.permSurEcran('VALIDER') || this.authService.hasRole('ADMIN'); }
+  get peutRejeter(): boolean    { return this.permSurEcran('REJETER') || this.authService.hasRole('ADMIN'); }
+  get peutCreer(): boolean      { return this.permSurEcran('CREER'); }
+  get peutModifier(): boolean   { return this.permSurEcran('MODIFIER'); }
+  get peutSupprimer(): boolean  { return this.permSurEcran('SUPPRIMER'); }
+  get peutTransferer(): boolean { return this.permSurEcran('TRANSFERER'); }
 
   // ── Mode d'affichage (déterminé par la route) ──────────────
   // 'direction' (par défaut) : menu d'action "Stage [ACCRONYME]", filtré/actionnable

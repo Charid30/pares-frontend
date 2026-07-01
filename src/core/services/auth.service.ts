@@ -40,6 +40,7 @@ export interface User {
   agentId?: number;
   directions?: UserDirectionInfo[]; // direction(s) de l'agent connecté (via son service)
   lectureGlobaleModules?: string[]; // modules pour lesquels un rôle lectureGlobale donne CONSULTER
+  globalActionPermissions?: UserPermission[]; // permissions d'action uniquement via rôle lectureGlobale
 }
 
 export interface LoginResponse {
@@ -143,6 +144,7 @@ export class AuthService {
               roles: response.data.roles ?? current.roles,
               directions: response.data.directions ?? current.directions,
               lectureGlobaleModules: response.data.lectureGlobaleModules ?? current.lectureGlobaleModules,
+              globalActionPermissions: response.data.globalActionPermissions ?? current.globalActionPermissions,
             };
             localStorage.setItem('user', JSON.stringify(updated));
             this.currentUserSubject.next(updated);
@@ -271,6 +273,18 @@ export class AuthService {
    */
   hasLectureGlobale(module: string): boolean {
     return !!this.getCurrentUser()?.lectureGlobaleModules?.includes(module);
+  }
+
+  /**
+   * Permission d'action accordée via un rôle lectureGlobale uniquement.
+   * À utiliser sur les écrans "Vue globale" (scope=global) pour ne pas laisser
+   * fuiter les permissions du rôle d'action classique (ex. APPROUVER de "Approbateur de stage")
+   * sur des stages hors direction.
+   */
+  hasGlobalPermission(module: string, action: string): boolean {
+    return !!this.getCurrentUser()?.globalActionPermissions?.some(
+      p => p.module === module && p.action === action
+    );
   }
 
   /** Direction(s) associée(s) au service de l'agent connecté. */
