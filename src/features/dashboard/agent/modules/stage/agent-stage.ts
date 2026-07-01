@@ -420,6 +420,7 @@ export class AgentStage implements OnInit {
       next: (res) => {
         if (this.detailStage && this.detailStage.idstage === s.idstage) {
           this.detailStage.documents = res.data?.documents || [];
+          this.detailStage.autorisationsRenouvellement = res.data?.autorisationsRenouvellement || [];
         }
         this.loadingDetailDocs = false;
         this.cdr.detectChanges();
@@ -1091,6 +1092,7 @@ export class AgentStage implements OnInit {
       EN_COURS:               'En cours',
       RAPPORT_SOUMIS:         'Rapport soumis',
       TERMINE:                'Terminé',
+      EXPIRE:                 'Expiré',
       REJETE:                 'Rejeté',
       ANNULE:                 'Annulé',
       SUSPENDU:               'Suspendu',
@@ -1114,6 +1116,7 @@ export class AgentStage implements OnInit {
       EN_COURS:               'bg-green-50 text-green-700 border border-green-200',
       RAPPORT_SOUMIS:         'bg-purple-50 text-purple-700 border border-purple-200',
       TERMINE:                'bg-gray-100 text-gray-600 border border-gray-200',
+      EXPIRE:                 'bg-slate-100 text-slate-500 border border-slate-200',
       REJETE:                 'bg-red-50 text-red-700 border border-red-200',
       ANNULE:                 'bg-orange-50 text-orange-700 border border-orange-200',
       SUSPENDU:               'bg-purple-50 text-purple-700 border border-purple-200',
