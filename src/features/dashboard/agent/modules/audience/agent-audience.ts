@@ -64,15 +64,23 @@ export class AgentAudience implements OnInit {
   private previewDemande: DemandeAudience | null = null;
 
   // Permissions (réactives)
-  get peutConsulter(): boolean { return this.authService.hasPermission('DEMANDE_AUDIENCE', 'CONSULTER'); }
-  get peutValider():   boolean { return this.authService.hasPermission('DEMANDE_AUDIENCE', 'VALIDER'); }
-  get peutRejeter():   boolean { return this.authService.hasPermission('DEMANDE_AUDIENCE', 'REJETER'); }
-  get peutAffecter():  boolean { return this.authService.hasPermission('DEMANDE_AUDIENCE', 'MODIFIER'); }
+  get peutConsulter():  boolean { return this.authService.hasPermission('DEMANDE_AUDIENCE', 'CONSULTER'); }
+  get peutValider():    boolean { return this.authService.hasPermission('DEMANDE_AUDIENCE', 'VALIDER'); }
+  get peutRejeter():    boolean { return this.authService.hasPermission('DEMANDE_AUDIENCE', 'REJETER'); }
+  get peutAffecter():   boolean { return this.authService.hasPermission('DEMANDE_AUDIENCE', 'MODIFIER'); }
+  get peutTransferer(): boolean { return this.authService.hasPermission('DEMANDE_AUDIENCE', 'TRANSFERER'); }
 
-  // Affectation direction
+  // Affectation direction (dans modal détail)
   directions: DirectionInfo[] = [];
   affectationForm = { direction_iddirection: null as number | null };
   savingAffectation = false;
+
+  // Modal transfert dédié
+  showTransfertModal = false;
+  demandeATransferer: DemandeAudience | null = null;
+  directionCibleId: number | null = null;
+  soumissionTransfert = false;
+  errorTransfert = '';
 
   // Toasts
   toasts: { id: number; title: string; message: string; type: 'success' | 'error' | 'warning' }[] = [];
@@ -97,7 +105,7 @@ export class AgentAudience implements OnInit {
   ngOnInit(): void {
     if (!this.peutConsulter) return;
     this.charger();
-    if (this.peutAffecter) this.loadDirections();
+    if (this.peutAffecter || this.peutTransferer) this.loadDirections();
   }
 
   loadDirections(): void {
@@ -196,6 +204,52 @@ export class AgentAudience implements OnInit {
       error: (err) => {
         this.showToast('Erreur', err.error?.message || 'Impossible d\'affecter la direction', 'error');
         this.savingAffectation = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  // ── Modal Transfert ──
+  peutTransfererStatut(d: DemandeAudience): boolean {
+    return d.status !== 'REJETE' && d.status !== 'ANNULE';
+  }
+
+  ouvrirTransfertModal(d: DemandeAudience): void {
+    this.demandeATransferer = d;
+    this.directionCibleId = d.direction_iddirection ?? null;
+    this.errorTransfert = '';
+    this.soumissionTransfert = false;
+    this.showTransfertModal = true;
+  }
+
+  fermerTransfertModal(): void {
+    if (this.soumissionTransfert) return;
+    this.showTransfertModal = false;
+    this.demandeATransferer = null;
+    this.directionCibleId = null;
+    this.errorTransfert = '';
+  }
+
+  confirmerTransfert(): void {
+    if (!this.demandeATransferer || !this.directionCibleId || this.soumissionTransfert) return;
+    this.soumissionTransfert = true;
+    this.errorTransfert = '';
+    this.http.put<any>(`${this.apiUrl}/demandes-audience/${this.demandeATransferer.iddemande}/transferer`, {
+      direction_iddirection: this.directionCibleId,
+    }).subscribe({
+      next: (res) => {
+        if (res.success && this.demandeATransferer) {
+          const updated = res.data;
+          const idx = this.demandes.findIndex(d => d.iddemande === this.demandeATransferer!.iddemande);
+          if (idx !== -1) this.demandes[idx] = { ...this.demandes[idx], ...updated };
+          this.filtrer();
+        }
+        this.fermerTransfertModal();
+        this.showToast('Succès', 'Demande transférée avec succès');
+      },
+      error: (err) => {
+        this.errorTransfert = err.error?.message || 'Erreur lors du transfert';
+        this.soumissionTransfert = false;
         this.cdr.detectChanges();
       },
     });

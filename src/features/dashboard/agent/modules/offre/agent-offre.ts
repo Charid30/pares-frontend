@@ -7,6 +7,12 @@ import { AuthService } from '../../../../../core/services/auth.service';
 import { environment } from '../../../../../environments/environment';
 import { StatCard } from '../../../../../shared/components/stat-card/stat-card';
 
+interface DirectionInfo {
+  iddirection: number;
+  nom: string;
+  accronyme: string;
+}
+
 interface Offre {
   idoffres: number;
   typeOffre: string;
@@ -18,6 +24,8 @@ interface Offre {
   motifRefus: string | null;
   createdDate: string;
   lastModifiedDate?: string;
+  direction_iddirection?: number | null;
+  direction?: DirectionInfo | null;
   candidatCreateur?: {
     idcandidats: number;
     nom: string;
@@ -44,12 +52,13 @@ export class AgentOffre implements OnInit {
   filtreType = '';
 
   // Permissions (réactives)
-  get peutConsulter(): boolean { return this.authService.hasPermission('OFFRE', 'CONSULTER'); }
-  get peutCreer():    boolean { return this.authService.hasPermission('OFFRE', 'CREER'); }
-  get peutModifier(): boolean { return this.authService.hasPermission('OFFRE', 'MODIFIER'); }
-  get peutValider():  boolean { return this.authService.hasPermission('OFFRE', 'VALIDER'); }
-  get peutRejeter():  boolean { return this.authService.hasPermission('OFFRE', 'REJETER'); }
-  get peutSupprimer():boolean { return this.authService.hasPermission('OFFRE', 'SUPPRIMER'); }
+  get peutConsulter():  boolean { return this.authService.hasPermission('OFFRE', 'CONSULTER'); }
+  get peutCreer():      boolean { return this.authService.hasPermission('OFFRE', 'CREER'); }
+  get peutModifier():   boolean { return this.authService.hasPermission('OFFRE', 'MODIFIER'); }
+  get peutValider():    boolean { return this.authService.hasPermission('OFFRE', 'VALIDER'); }
+  get peutRejeter():    boolean { return this.authService.hasPermission('OFFRE', 'REJETER'); }
+  get peutSupprimer():  boolean { return this.authService.hasPermission('OFFRE', 'SUPPRIMER'); }
+  get peutTransferer(): boolean { return this.authService.hasPermission('OFFRE', 'TRANSFERER'); }
 
   // Statistiques statuts
   statsStatuts = [
@@ -90,6 +99,14 @@ export class AgentOffre implements OnInit {
   offreASupprimer: Offre | null = null;
   soumissionDelete = false;
 
+  // Modal transfert
+  showTransfertModal = false;
+  offreATransferer: Offre | null = null;
+  directionCibleId: number | null = null;
+  soumissionTransfert = false;
+  errorTransfert = '';
+  directions: DirectionInfo[] = [];
+
   // Modal modifier
   showEditModal = false;
   offreAModifier: Offre | null = null;
@@ -116,6 +133,14 @@ export class AgentOffre implements OnInit {
   ngOnInit(): void {
     if (!this.peutConsulter) return;
     this.charger();
+    if (this.peutTransferer) this.loadDirections();
+  }
+
+  loadDirections(): void {
+    this.http.get<any>(`${this.apiUrl}/stages/directions`).subscribe({
+      next: (res) => { if (res.success) { this.directions = res.data; this.cdr.detectChanges(); } },
+      error: (err) => console.error('Erreur chargement directions:', err),
+    });
   }
 
   charger(): void {
@@ -368,6 +393,52 @@ export class AgentOffre implements OnInit {
         this.cdr.detectChanges();
       },
     });
+  }
+
+  // ── Modal Transfert ──
+  peutTransfererStatut(o: Offre): boolean {
+    return !['REJETEE', 'CLOTUREE'].includes(o.statusOffre);
+  }
+
+  ouvrirTransfertModal(o: Offre): void {
+    this.offreATransferer = o;
+    this.directionCibleId = o.direction_iddirection || null;
+    this.errorTransfert = '';
+    this.soumissionTransfert = false;
+    this.showTransfertModal = true;
+  }
+
+  fermerTransfertModal(): void {
+    if (this.soumissionTransfert) return;
+    this.showTransfertModal = false;
+    this.offreATransferer = null;
+    this.directionCibleId = null;
+    this.errorTransfert = '';
+  }
+
+  confirmerTransfert(): void {
+    if (!this.offreATransferer || !this.directionCibleId || this.soumissionTransfert) return;
+    this.soumissionTransfert = true;
+    this.errorTransfert = '';
+    this.http.put<any>(`${this.apiUrl}/offres/${this.offreATransferer.idoffres}/transferer`, {
+      direction_iddirection: this.directionCibleId,
+    }).subscribe({
+      next: () => {
+        this.fermerTransfertModal();
+        this.showToast('Succès', 'Offre transférée avec succès');
+        this.charger();
+      },
+      error: (err) => {
+        this.errorTransfert = err.error?.message || 'Erreur lors du transfert';
+        this.soumissionTransfert = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  getDirectionLabel(dirId: any): string {
+    const dir = this.directions.find(d => d.iddirection === +dirId);
+    return dir ? `${dir.accronyme} — ${dir.nom}` : '—';
   }
 
   // ── Fichiers ──

@@ -19,6 +19,15 @@ interface Tab {
   icon: string;
 }
 
+interface AgentRoutage {
+  idagents: number;
+  nom: string;
+  prenom: string;
+  matricule: string;
+  direction_iddirection: number | null;
+  directionDirecte?: { iddirection: number; nom: string; accronyme: string } | null;
+}
+
 interface Settings {
   general: {
     nomOrganisation: string;
@@ -60,6 +69,10 @@ interface Settings {
     maxTentativesConnexion: number;
     longueurMinMotDePasse: number;
     dureeBlocage: number;
+  };
+  routage: {
+    agentDefautAudience: number | null;
+    agentDefautOffre: number | null;
   };
 }
 
@@ -108,7 +121,8 @@ export class Parametres implements OnInit {
     { id: 'recrutement', label: 'Recrutement', icon: 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
     { id: 'securite', label: 'Sécurité', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' },
     { id: 'notifications', label: 'Notifications', icon: 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9' },
-    { id: 'systeme', label: 'Système', icon: 'M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01' }
+    { id: 'systeme', label: 'Système', icon: 'M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01' },
+    { id: 'affectation', label: 'Affectation', icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4' },
   ];
 
   // Paramètres par défaut
@@ -168,8 +182,15 @@ export class Parametres implements OnInit {
       maxTentativesConnexion: 5,
       longueurMinMotDePasse: 8,
       dureeBlocage: 30
-    }
+    },
+    routage: {
+      agentDefautAudience: null,
+      agentDefautOffre: null,
+    },
   };
+
+  agentsRoutage: AgentRoutage[] = [];
+  loadingAgents = false;
 
   // Backup pour annuler
   private settingsBackup: Settings | null = null;
@@ -205,8 +226,40 @@ export class Parametres implements OnInit {
   constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
-    this.loadSettings();
     this.loadSystemInfo();
+    // Charger agents EN PREMIER, puis settings dans le callback
+    // Garantit que les <option> existent avant que ngModel essaie de binder la valeur
+    this.loadAgentsRoutage();
+  }
+
+  loadAgentsRoutage(): void {
+    this.loadingAgents = true;
+    this.http.get<any>(`${this.apiUrl}/admin/settings/agents`).subscribe({
+      next: (r) => {
+        if (r.success) this.agentsRoutage = r.data;
+        this.loadingAgents = false;
+        this.cdr.detectChanges();
+        this.loadSettings(); // settings chargés après agents
+      },
+      error: () => {
+        this.loadingAgents = false;
+        this.loadSettings(); // charger quand même les settings même si agents échouent
+      },
+    });
+  }
+
+  compareAgentId(a: any, b: any): boolean {
+    if (a === null && b === null) return true;
+    if (a === null || b === null) return false;
+    return +a === +b;
+  }
+
+  getAgentLabel(agentId: number | null): string {
+    if (!agentId) return 'Aucun agent configuré';
+    const a = this.agentsRoutage.find(x => x.idagents === +agentId);
+    if (!a) return '—';
+    const dir = a.directionDirecte ? ` (${a.directionDirecte.accronyme})` : '';
+    return `${a.nom} ${a.prenom}${dir}`;
   }
 
   loadSettings(): void {
@@ -214,7 +267,11 @@ export class Parametres implements OnInit {
     this.http.get<any>(`${this.apiUrl}/admin/settings`).subscribe({
       next: (r) => {
         if (r.success && r.data) {
-          this.settings = { ...this.settings, ...r.data };
+          this.settings = {
+            ...this.settings,
+            ...r.data,
+            routage: { ...this.settings.routage, ...(r.data.routage || {}) },
+          };
         }
         this.settingsBackup = JSON.parse(JSON.stringify(this.settings));
         this.loading = false;

@@ -192,6 +192,13 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                       </svg>
                     </button>
+                    <button *ngIf="peutTransferer && peutTransfererStatut(d)" (click)="ouvrirTransfertModal(d)"
+                            class="p-1.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-all duration-150"
+                            title="Transférer">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4M16 17H4m0 0l4 4m-4-4l4-4"/>
+                      </svg>
+                    </button>
                     <button *ngIf="d.modeSoumission === 'FICHIER'" (click)="previewFichier(d)"
                             class="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all duration-150"
                             title="Aperçu PDF">
@@ -506,6 +513,77 @@
                 class="px-4 py-2 text-sm font-medium text-white rounded-xl transition-colors disabled:opacity-50"
                 [ngClass]="decisionType === 'ACCEPTE' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'">
           {{ soumission ? 'En cours...' : 'Confirmer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Transfert Demande -->
+  <div *ngIf="showTransfertModal && demandeATransferer"
+       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+       (click)="fermerTransfertModal()">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md"
+         (click)="$event.stopPropagation()">
+      <!-- Header -->
+      <div class="px-6 py-4 rounded-t-2xl" style="background: linear-gradient(135deg,#0d9488,#0f766e)">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+            </svg>
+          </div>
+          <div class="min-w-0">
+            <h3 class="font-bold text-white text-base leading-tight">Transférer la demande</h3>
+            <p class="text-white/70 text-xs mt-0.5 truncate">
+              {{ demandeATransferer.candidat?.nom }} {{ demandeATransferer.candidat?.prenom }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="p-6 space-y-4">
+        <!-- Direction actuelle -->
+        <div *ngIf="demandeATransferer.direction_iddirection" class="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 rounded-xl px-3 py-2">
+          <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+          </svg>
+          <span>Direction actuelle : <strong class="text-gray-700">{{ getDirectionLabel(demandeATransferer.direction_iddirection) }}</strong></span>
+        </div>
+
+        <!-- Sélection direction cible -->
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1.5">Direction cible <span class="text-red-500">*</span></label>
+          <select [(ngModel)]="directionCibleId"
+                  class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-teal-400 bg-white">
+            <option [ngValue]="null" disabled>Choisir une direction...</option>
+            <option *ngFor="let dir of directions" [ngValue]="dir.iddirection">
+              {{ dir.accronyme }} — {{ dir.nom }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Erreur -->
+        <div *ngIf="errorTransfert" class="flex items-start gap-2 text-xs text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">
+          <svg class="w-3.5 h-3.5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span>{{ errorTransfert }}</span>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+        <button (click)="fermerTransfertModal()"
+                [disabled]="soumissionTransfert"
+                class="px-4 py-2 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors disabled:opacity-50">
+          Annuler
+        </button>
+        <button (click)="confirmerTransfert()"
+                [disabled]="!directionCibleId || soumissionTransfert"
+                class="px-4 py-2 text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 rounded-xl transition-colors disabled:opacity-50">
+          {{ soumissionTransfert ? 'Transfert...' : 'Confirmer le transfert' }}
         </button>
       </div>
     </div>
