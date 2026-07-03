@@ -310,7 +310,15 @@ export class OffresCommerciales implements OnInit {
 
   // ─── Gestion fichiers ─────────────────────────────────────────────────────
   onFileSelected(event: Event, field: 'cnib' | 'demandeOffre'): void {
-    const file = (event.target as HTMLInputElement).files?.[0] || null;
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] || null;
+    if (!file) return;
+    if (file.size > 1 * 1024 * 1024) {
+      this.errorCreate = 'Le fichier dépasse la taille maximale de 1 Mo';
+      input.value = '';
+      this.form[field] = null;
+      return;
+    }
     this.form[field] = file;
   }
 

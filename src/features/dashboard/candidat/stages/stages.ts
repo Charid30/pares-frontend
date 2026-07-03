@@ -182,7 +182,6 @@ export class Stages implements OnInit {
   // Fichier rapport
   rapportFile: FileInfo = { file: null, name: '', size: 0, error: '' };
 
-  // Taille max des fichiers (1 MB pour documents, 5 MB pour rapport/lettre)
   readonly MAX_FILE_SIZE = 1 * 1024 * 1024;
   readonly MAX_RAPPORT_SIZE = 5 * 1024 * 1024;
 
@@ -1255,8 +1254,8 @@ export class Stages implements OnInit {
       input.value = '';
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      this.showToast('Le fichier ne doit pas dépasser 5 Mo.', 'error');
+    if (file.size > 1 * 1024 * 1024) {
+      this.showToast('Le fichier ne doit pas dépasser 1 Mo.', 'error');
       input.value = '';
       return;
     }
@@ -1326,8 +1325,8 @@ export class Stages implements OnInit {
       input.value = '';
       return;
     }
-    if (file && file.size > 5 * 1024 * 1024) {
-      this.showToast('Le fichier ne doit pas dépasser 5 Mo.', 'error');
+    if (file && file.size > 1 * 1024 * 1024) {
+      this.showToast('Le fichier ne doit pas dépasser 1 Mo.', 'error');
       input.value = '';
       return;
     }

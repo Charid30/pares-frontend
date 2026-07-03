@@ -363,7 +363,7 @@ export class AidesList implements OnInit {
     return classes[type] || 'bg-gray-100 text-gray-700';
   }
 
-  // ─── Export CSV ───────────────────────────────────────────────────────────
+  // ─── Exports ──────────────────────────────────────────────────────────────
   exporterCSV(): void {
     this.http.get(`${this.apiUrl}/aides/export`, { responseType: 'blob' }).subscribe({
       next: (blob) => {
@@ -377,6 +377,26 @@ export class AidesList implements OnInit {
       error: () => {
         this.ngZone.run(() => {
           this.errorMessage = 'Erreur lors de l\'export CSV.';
+          setTimeout(() => this.errorMessage = '', 4000);
+          this.cdr.detectChanges();
+        });
+      },
+    });
+  }
+
+  exporterPDF(): void {
+    this.http.get(`${this.apiUrl}/aides/export/pdf`, { responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `rapport_aides_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.ngZone.run(() => {
+          this.errorMessage = 'Erreur lors de la génération du rapport PDF.';
           setTimeout(() => this.errorMessage = '', 4000);
           this.cdr.detectChanges();
         });

@@ -1072,7 +1072,7 @@ export class StagesList implements OnInit, OnDestroy {
     return labels[niveau] || niveau;
   }
 
-  // ==================== EXPORT ====================
+  // ==================== EXPORTS ====================
   exporterStages(): void {
     let url = `${environment.apiUrl}/stages/export`;
     const params: string[] = [];
@@ -1093,6 +1093,25 @@ export class StagesList implements OnInit, OnDestroy {
       },
       error: () => {
         this.showToast('error', 'Export', 'Impossible de générer le fichier CSV');
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  exporterStagesPDF(): void {
+    this.http.get(`${environment.apiUrl}/stages/export/pdf`, { responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        const today = new Date().toISOString().slice(0, 10);
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `rapport_stages_${today}.pdf`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        this.showToast('success', 'Rapport PDF', 'Rapport téléchargé avec succès');
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.showToast('error', 'Rapport PDF', 'Impossible de générer le rapport PDF');
         this.cdr.detectChanges();
       },
     });

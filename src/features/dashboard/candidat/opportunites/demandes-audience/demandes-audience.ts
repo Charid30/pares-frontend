@@ -194,8 +194,8 @@ export class DemandesAudience implements OnInit {
       input.value = '';
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      this.fichierJointError = 'Le fichier dépasse la taille maximale de 5 Mo';
+    if (file.size > 1 * 1024 * 1024) {
+      this.fichierJointError = 'Le fichier dépasse la taille maximale de 1 Mo';
       this.fichierJoint = null;
       this.fichierJointName = '';
       input.value = '';
