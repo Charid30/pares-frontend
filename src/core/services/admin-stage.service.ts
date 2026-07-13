@@ -70,7 +70,7 @@ export interface DemandeModificationStage {
 export interface Stage {
   idstage: number;
   typeStage: 'SOUTENANCE' | 'PERFECTIONNEMENT';
-  niveau: 'LICENCE' | 'MASTER' | 'DOCTORAT' | null;
+  niveau: 'CAP' | 'BEPC' | 'BEP' | 'BAC' | 'LICENCE' | 'MASTER' | 'DOCTORAT' | null;
   dernierDiplome_filename: string | null;
   domaineStage: string;
   dureeStage: number;

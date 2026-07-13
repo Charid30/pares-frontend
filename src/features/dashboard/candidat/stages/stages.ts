@@ -162,6 +162,9 @@ export class Stages implements OnInit {
   // Options pour le niveau
   niveauxSoutenance = ['LICENCE', 'MASTER', 'DOCTORAT'];
   niveauxPerfectionnement = [
+    { value: 'CAP', label: 'CAP' },
+    { value: 'BEPC', label: 'BEPC' },
+    { value: 'BEP', label: 'BEP' },
     { value: 'BAC', label: 'BAC' },
     { value: 'LICENCE', label: 'Licence' },
     { value: 'MASTER', label: 'Master' },
