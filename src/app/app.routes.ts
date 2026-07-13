@@ -180,6 +180,11 @@ export const routes: Routes = [
                 path: 'parametres',
                 loadComponent: () => import('../features/dashboard/admin/parametres/parametres').then(m => m.Parametres)
             },
+            // Clés API (applications externes)
+            {
+                path: 'api-keys',
+                loadComponent: () => import('../features/dashboard/admin/api-keys/api-keys').then(m => m.ApiKeys)
+            },
             // Profil administrateur
             {
                 path: 'profil',

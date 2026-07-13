@@ -100,7 +100,28 @@ export class StagesList implements OnInit, OnDestroy {
 
   // Modal
   showModal = false;
-  modalMode: 'view' | 'accept' | 'reject' | 'rapport' | 'attestation' = 'view';
+  modalMode: 'view' | 'accept' | 'reject' | 'rapport' | 'attestation' | 'exiger-document' = 'view';
+
+  // Statuts sur lesquels un document ne peut plus être exigé (déjà rejeté avec son propre
+  // flux, ou statut terminal). Doit rester synchronisé avec STATUTS_NON_EXIGIBLES côté backend.
+  readonly STATUTS_NON_EXIGIBLES = ['REJETE', 'ANNULE', 'TERMINE', 'EXPIRE'];
+
+  // Statuts regroupés sous le filtre rapide "Demandes en cours" : stages déjà démarrés
+  // (convention signée), donc réellement "en cours" — pas les demandes pas encore traitées.
+  readonly STATUTS_EN_COURS = 'ACCEPTE,EN_COURS';
+
+  peutExigerDocument(stage: Stage): boolean {
+    return !this.STATUTS_NON_EXIGIBLES.includes(stage.statusStage);
+  }
+
+  get filtreEnCoursActif(): boolean {
+    return this.filtreStatut === this.STATUTS_EN_COURS;
+  }
+
+  toggleFiltreEnCours(): void {
+    this.filtreStatut = this.filtreEnCoursActif ? '' : this.STATUTS_EN_COURS;
+    this.onFilterChange();
+  }
 
   // Rapports
   rapports: RapportStage[] = [];
@@ -509,6 +530,119 @@ export class StagesList implements OnInit, OnDestroy {
     this.showModal = true;
   }
 
+  // ==================== CORRECTION DATE DE DÉBUT ====================
+  // Permet de corriger une erreur de manipulation sur la date de début effective.
+  editingDateDebut = false;
+  nouvelleDateDebut = '';
+  savingDateDebut = false;
+
+  ouvrirEditionDateDebut(): void {
+    if (!this.selectedStage) return;
+    this.nouvelleDateDebut = this.selectedStage.dateDebutEffective
+      ? this.selectedStage.dateDebutEffective.substring(0, 10)
+      : '';
+    this.editingDateDebut = true;
+  }
+
+  annulerEditionDateDebut(): void {
+    this.editingDateDebut = false;
+    this.nouvelleDateDebut = '';
+  }
+
+  enregistrerDateDebut(): void {
+    if (!this.selectedStage || !this.nouvelleDateDebut) return;
+
+    this.savingDateDebut = true;
+    this.adminStageService.updateStage(this.selectedStage.idstage, {
+      dateDebutEffective: this.nouvelleDateDebut,
+    }).subscribe({
+      next: (response) => {
+        this.ngZone.run(() => {
+          if (response.success && this.selectedStage) {
+            this.selectedStage.dateDebutEffective = response.data.dateDebutEffective;
+            this.selectedStage.dateFinEffective = response.data.dateFinEffective;
+            this.editingDateDebut = false;
+            this.loadStages();
+            this.showToast('success', 'Date corrigée', 'La date de début a été mise à jour.');
+          }
+          this.savingDateDebut = false;
+          this.cdr.detectChanges();
+        });
+      },
+      error: (err) => {
+        this.ngZone.run(() => {
+          this.showToast('error', 'Erreur', err.error?.message || 'Erreur lors de la correction de la date');
+          this.savingDateDebut = false;
+          this.cdr.detectChanges();
+        });
+      }
+    });
+  }
+
+  // ==================== VOIR LA CONVENTION ====================
+  voirConvention(): void {
+    if (!this.selectedStage) return;
+    this.adminStageService.downloadConvention(this.selectedStage.idstage).subscribe({
+      next: (blob) => {
+        const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+        const url = window.URL.createObjectURL(pdfBlob);
+        const nouvelOnglet = window.open(url, '_blank');
+        if (nouvelOnglet) {
+          setTimeout(() => window.URL.revokeObjectURL(url), 10000);
+        } else {
+          this.showToast('error', 'Erreur', 'Impossible d\'ouvrir un nouvel onglet. Vérifiez vos paramètres de popup.');
+          window.URL.revokeObjectURL(url);
+        }
+      },
+      error: () => {
+        this.ngZone.run(() => {
+          this.showToast('error', 'Erreur', 'Impossible de charger la convention');
+          this.cdr.detectChanges();
+        });
+      }
+    });
+  }
+
+  openExigerDocumentModal(stage: Stage): void {
+    this.modalMode = 'exiger-document';
+    this.selectedStage = stage as StageDetails;
+    // Pré-cocher les documents déjà exigés (pas encore remplacés), pour visualiser l'état actuel
+    this.documentsRejetesSelection = this.parseDocumentsRejetes(stage.documentsRejetes);
+    this.showModal = true;
+  }
+
+  exigerDocumentsSubmit(): void {
+    if (!this.selectedStage) return;
+    if (this.documentsRejetesSelection.length === 0) {
+      this.showToast('error', 'Erreur', 'Veuillez sélectionner au moins un document');
+      return;
+    }
+
+    this.submitting = true;
+    const stageName = `${this.selectedStage.candidat.prenom} ${this.selectedStage.candidat.nom}`;
+
+    this.adminStageService.exigerDocuments(this.selectedStage.idstage, this.documentsRejetesSelection).subscribe({
+      next: (response) => {
+        this.ngZone.run(() => {
+          if (response.success) {
+            this.closeModal();
+            this.loadStages();
+            this.showToast('success', 'Document exigé', `${stageName} a été notifié(e) du remplacement à effectuer.`);
+          }
+          this.submitting = false;
+          this.cdr.detectChanges();
+        });
+      },
+      error: (err) => {
+        this.ngZone.run(() => {
+          this.showToast('error', 'Erreur', err.error?.message || 'Erreur lors de la demande de remplacement');
+          this.submitting = false;
+          this.cdr.detectChanges();
+        });
+      }
+    });
+  }
+
   parseDocumentsRejetes(raw: string | null | undefined): string[] {
     if (!raw) return [];
     try {
@@ -610,6 +744,8 @@ export class StagesList implements OnInit, OnDestroy {
     this.documentsRejetesSelection = [];
     this.evaluateRapportForm = { statusRapport: '', motifRefus: '' };
     this.attestationForm = { dateEmission: '', attestationFile: null };
+    this.editingDateDebut = false;
+    this.nouvelleDateDebut = '';
   }
 
   // ==================== FILE UPLOAD ====================

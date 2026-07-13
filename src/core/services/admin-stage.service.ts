@@ -327,9 +327,15 @@ export class AdminStageService {
   // =====================================================
 
   /**
-   * Mettre à jour les champs administratifs d'un stage (direction, service…)
+   * Mettre à jour les champs administratifs d'un stage (direction, service, dates, commentaire…)
    */
-  updateStage(id: number, data: { direction_iddirection?: number | null; service_idservice?: number | null }): Observable<ApiResponse<Stage>> {
+  updateStage(id: number, data: {
+    direction_iddirection?: number | null;
+    service_idservice?: number | null;
+    dateDebutEffective?: string | null;
+    dateFinEffective?: string | null;
+    commentaireAdmin?: string | null;
+  }): Observable<ApiResponse<Stage>> {
     return this.http.put<ApiResponse<Stage>>(`${this.apiUrl}/${id}`, data);
   }
 
@@ -338,6 +344,21 @@ export class AdminStageService {
    */
   approuverStage(id: number): Observable<ApiResponse<Stage>> {
     return this.http.put<ApiResponse<Stage>>(`${this.apiUrl}/${id}/approuver`, {});
+  }
+
+  /**
+   * Exiger le remplacement d'un ou plusieurs documents sans rejeter la demande.
+   * La demande garde son statut courant.
+   */
+  exigerDocuments(id: number, types: string[]): Observable<ApiResponse<Stage>> {
+    return this.http.put<ApiResponse<Stage>>(`${this.apiUrl}/${id}/exiger-document`, { types });
+  }
+
+  /**
+   * Récupérer la convention de stage jointe (PDF)
+   */
+  downloadConvention(stageId: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${stageId}/convention`, { responseType: 'blob' });
   }
 
   /**

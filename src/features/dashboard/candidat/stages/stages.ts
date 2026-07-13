@@ -74,6 +74,9 @@ export class Stages implements OnInit {
   etapeCreate: 1 | 2 | 3 | 4 | 5 = 1;
   showConfirmSubmitPopup = false;
 
+  // Popup d'avertissement sur les documents à légaliser, avant ouverture du formulaire
+  showLegalisationPopup = false;
+
   // Modal détails d'une demande
   showDetailModal = false;
   selectedDemandeDetail: DemandeStage | null = null;
@@ -493,6 +496,15 @@ export class Stages implements OnInit {
     return this.mesDemandesStage.find(s => STATUTS_BLOQUANTS.includes(s.statusStage));
   }
 
+  /**
+   * Vérifie si le candidat a une demande rejetée non encore corrigée.
+   * Tant qu'elle existe, il doit remplacer les documents non conformes et
+   * resoumettre cette demande plutôt que d'en créer une nouvelle.
+   */
+  get stageRejeteExistant(): DemandeStage | undefined {
+    return this.mesDemandesStage.find(s => s.statusStage === 'REJETE');
+  }
+
   get countEnAttente(): number {
     return this.mesDemandesStage.filter(s =>
       s.statusStage === 'EN_ATTENTE' || s.statusStage === 'PROGRAMMATION_EN_COURS'
@@ -543,6 +555,28 @@ export class Stages implements OnInit {
       this.showToast(msg + ' Vous ne pouvez pas soumettre une nouvelle demande.', 'error');
       return;
     }
+    // Une demande rejetée doit d'abord être corrigée (remplacer les documents non
+    // conformes puis resoumettre) — on ne permet pas de créer une demande vierge en parallèle.
+    if (this.stageRejeteExistant) {
+      this.showToast('Votre demande a été rejetée. Remplacez les documents non conformes puis resoumettez-la.', 'error');
+      this.ouvrirDetail(this.stageRejeteExistant);
+      return;
+    }
+    this.showLegalisationPopup = true;
+  }
+
+  /**
+   * Fermer l'avertissement de légalisation sans ouvrir le formulaire
+   */
+  fermerLegalisationPopup(): void {
+    this.showLegalisationPopup = false;
+  }
+
+  /**
+   * Le candidat confirme avoir légalisé ses documents : ouvrir le formulaire
+   */
+  confirmerLegalisationEtOuvrirFormulaire(): void {
+    this.showLegalisationPopup = false;
     this.etapeCreate = 1;
     this.showModal = true;
     this.resetForm();
