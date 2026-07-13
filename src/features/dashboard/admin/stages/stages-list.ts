@@ -559,11 +559,17 @@ export class StagesList implements OnInit, OnDestroy {
       next: (response) => {
         this.ngZone.run(() => {
           if (response.success && this.selectedStage) {
+            const statutAvant = this.selectedStage.statusStage;
             this.selectedStage.dateDebutEffective = response.data.dateDebutEffective;
             this.selectedStage.dateFinEffective = response.data.dateFinEffective;
+            this.selectedStage.statusStage = response.data.statusStage;
             this.editingDateDebut = false;
             this.loadStages();
-            this.showToast('success', 'Date corrigée', 'La date de début a été mise à jour.');
+            const statutChange = statutAvant !== response.data.statusStage;
+            this.showToast('success', 'Date corrigée',
+              statutChange
+                ? `La date de début a été mise à jour. Statut passé automatiquement à "${response.data.statusStage}".`
+                : 'La date de début a été mise à jour.');
           }
           this.savingDateDebut = false;
           this.cdr.detectChanges();
