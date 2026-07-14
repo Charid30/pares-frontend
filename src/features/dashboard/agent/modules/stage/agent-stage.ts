@@ -39,6 +39,7 @@ interface Stage {
   dateDebut?: string;
   dateFin?: string;
   dateDebutEffective?: string;
+  dateDebutProposee?: string | null;
   dateFinEffective?: string;
   dateDebutSouhaitee?: string;
   dureeStage?: number;
@@ -387,13 +388,52 @@ export class AgentStage implements OnInit {
     return pages;
   }
 
-  // ── Approbation ───────────────────────────────────────────
+  // ── Approbation (avec proposition de date, 1er ou 15 du mois) ───────────────
+  stageEnApprobation: Stage | null = null;
+  dateProposeeSelection = '';
+
+  /** Liste des prochains 1er et 15 du mois à proposer */
+  get datesProposablesApprobation(): { value: string; label: string }[] {
+    const options: { value: string; label: string }[] = [];
+    const aujourdHui = new Date();
+    aujourdHui.setHours(0, 0, 0, 0);
+    const curseur = new Date(aujourdHui.getFullYear(), aujourdHui.getMonth(), 1);
+
+    while (options.length < 8) {
+      for (const jour of [1, 15]) {
+        const d = new Date(curseur.getFullYear(), curseur.getMonth(), jour);
+        if (d >= aujourdHui) {
+          const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(jour).padStart(2, '0')}`;
+          const label = d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+          options.push({ value, label });
+        }
+      }
+      curseur.setMonth(curseur.getMonth() + 1);
+    }
+    return options.slice(0, 8);
+  }
+
+  ouvrirApprobation(s: Stage): void {
+    this.stageEnApprobation = s;
+    this.dateProposeeSelection = '';
+    this.cdr.detectChanges();
+  }
+
+  fermerApprobation(): void {
+    this.stageEnApprobation = null;
+    this.dateProposeeSelection = '';
+    this.cdr.detectChanges();
+  }
+
   approuverStage(s: Stage): void {
     if (this.soumission) return;
     this.soumission = true;
-    this.http.put<any>(`${this.apiUrl}/stages/${s.idstage}/approuver`, {}).subscribe({
+    this.http.put<any>(`${this.apiUrl}/stages/${s.idstage}/approuver`, {
+      dateDebutProposee: this.dateProposeeSelection || null,
+    }).subscribe({
       next: () => {
         this.soumission = false;
+        this.fermerApprobation();
         this.charger();
         this.showSuccessMessage('Demande approuvée — statut : Programmation en cours');
       },
@@ -455,8 +495,10 @@ export class AgentStage implements OnInit {
   ouvrirDecision(s: Stage, type: 'ACCEPTE' | 'REJETE' | 'SUSPENDU' | 'ANNULE' | 'EN_COURS'): void {
     this.stageEnDecision = s;
     this.decisionType = type;
-    // Pré-remplir la date de début avec la date souhaitée par le candidat
-    this.dateDebut = s.dateDebutSouhaitee ? s.dateDebutSouhaitee.substring(0, 10) : '';
+    // Pré-remplir la date de début avec la date proposée par l'agent lors de
+    // l'approbation si elle existe, sinon avec la date souhaitée par le candidat.
+    const datePreremplie = s.dateDebutProposee || s.dateDebutSouhaitee;
+    this.dateDebut = datePreremplie ? datePreremplie.substring(0, 10) : '';
     this.dateFin = '';
     this.dureeAccordee = s.dureeStageSouhaitee || s.dureeStage || null;
     this.commentaire = '';

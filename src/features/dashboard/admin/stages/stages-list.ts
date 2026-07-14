@@ -100,7 +100,7 @@ export class StagesList implements OnInit, OnDestroy {
 
   // Modal
   showModal = false;
-  modalMode: 'view' | 'accept' | 'reject' | 'rapport' | 'attestation' | 'exiger-document' = 'view';
+  modalMode: 'view' | 'accept' | 'reject' | 'rapport' | 'attestation' | 'exiger-document' | 'approuver' = 'view';
 
   // Statuts sur lesquels un document ne peut plus être exigé (déjà rejeté avec son propre
   // flux, ou statut terminal). Doit rester synchronisé avec STATUTS_NON_EXIGIBLES côté backend.
@@ -513,8 +513,10 @@ export class StagesList implements OnInit, OnDestroy {
   openAcceptModal(stage: Stage): void {
     this.modalMode = 'accept';
     this.selectedStage = stage as StageDetails;
-    // Pre-remplir avec la date souhaitee par le candidat et la duree demandee
-    this.acceptForm.dateDebutEffective = stage.dateDebutSouhaitee ? stage.dateDebutSouhaitee.split('T')[0] : '';
+    // Pre-remplir avec la date proposee par l'agent lors de l'approbation si elle existe,
+    // sinon avec la date souhaitee par le candidat, et la duree demandee.
+    const datePreremplie = stage.dateDebutProposee || stage.dateDebutSouhaitee;
+    this.acceptForm.dateDebutEffective = datePreremplie ? datePreremplie.split('T')[0] : '';
     this.acceptForm.dureeAccordee = stage.dureeStageSouhaitee || stage.dureeStage || null;
     this.showModal = true;
   }
@@ -530,10 +532,12 @@ export class StagesList implements OnInit, OnDestroy {
     this.showModal = true;
   }
 
-  // ==================== CORRECTION DATE DE DÉBUT ====================
-  // Permet de corriger une erreur de manipulation sur la date de début effective.
+  // ==================== CORRECTION DATE DE DÉBUT / DURÉE ====================
+  // Permet de corriger une erreur de manipulation sur la date de début effective
+  // et/ou la durée accordée. La date de fin est recalculée automatiquement.
   editingDateDebut = false;
   nouvelleDateDebut = '';
+  nouvelleDureeStage: number | null = null;
   savingDateDebut = false;
 
   ouvrirEditionDateDebut(): void {
@@ -541,20 +545,23 @@ export class StagesList implements OnInit, OnDestroy {
     this.nouvelleDateDebut = this.selectedStage.dateDebutEffective
       ? this.selectedStage.dateDebutEffective.substring(0, 10)
       : '';
+    this.nouvelleDureeStage = this.selectedStage.dureeStage || null;
     this.editingDateDebut = true;
   }
 
   annulerEditionDateDebut(): void {
     this.editingDateDebut = false;
     this.nouvelleDateDebut = '';
+    this.nouvelleDureeStage = null;
   }
 
   enregistrerDateDebut(): void {
-    if (!this.selectedStage || !this.nouvelleDateDebut) return;
+    if (!this.selectedStage || !this.nouvelleDateDebut || !this.nouvelleDureeStage) return;
 
     this.savingDateDebut = true;
     this.adminStageService.updateStage(this.selectedStage.idstage, {
       dateDebutEffective: this.nouvelleDateDebut,
+      dureeStage: this.nouvelleDureeStage,
     }).subscribe({
       next: (response) => {
         this.ngZone.run(() => {
@@ -562,14 +569,15 @@ export class StagesList implements OnInit, OnDestroy {
             const statutAvant = this.selectedStage.statusStage;
             this.selectedStage.dateDebutEffective = response.data.dateDebutEffective;
             this.selectedStage.dateFinEffective = response.data.dateFinEffective;
+            this.selectedStage.dureeStage = response.data.dureeStage;
             this.selectedStage.statusStage = response.data.statusStage;
             this.editingDateDebut = false;
             this.loadStages();
             const statutChange = statutAvant !== response.data.statusStage;
-            this.showToast('success', 'Date corrigée',
+            this.showToast('success', 'Date/durée corrigées',
               statutChange
-                ? `La date de début a été mise à jour. Statut passé automatiquement à "${response.data.statusStage}".`
-                : 'La date de début a été mise à jour.');
+                ? `Les informations ont été mises à jour. Statut passé automatiquement à "${response.data.statusStage}".`
+                : 'La date de début et la durée ont été mises à jour.');
           }
           this.savingDateDebut = false;
           this.cdr.detectChanges();
@@ -752,6 +760,8 @@ export class StagesList implements OnInit, OnDestroy {
     this.attestationForm = { dateEmission: '', attestationFile: null };
     this.editingDateDebut = false;
     this.nouvelleDateDebut = '';
+    this.nouvelleDureeStage = null;
+    this.dateProposeeSelection = '';
   }
 
   // ==================== FILE UPLOAD ====================
@@ -1539,35 +1549,59 @@ export class StagesList implements OnInit, OnDestroy {
     });
   }
 
-  approuverStage(stage: any): void {
-    this.openConfirmModal({
-      title: 'Approuver la demande',
-      message: `Approuver la demande de ${stage.candidat?.prenom} ${stage.candidat?.nom} ? Le statut passera à "Programmation en cours".`,
-      confirmText: 'Approuver',
-      confirmStyle: 'bg-green-600 hover:bg-green-700 text-white',
-      iconPath: 'M5 13l4 4L19 7',
-      iconColor: 'text-green-600',
-      onConfirm: () => {
-        this.submitting = true;
-        this.adminStageService.approuverStage(stage.idstage).subscribe({
-          next: (res) => {
-            this.ngZone.run(() => {
-              if (res.success) {
-                this.loadStages();
-                this.loadStats();
-                this.showToast('success', 'Approuvée !', 'La demande est maintenant en programmation.');
-              }
-              this.submitting = false;
-              this.cdr.detectChanges();
-            });
-          },
-          error: (err) => {
-            this.ngZone.run(() => {
-              this.showToast('error', 'Erreur', err.error?.message || 'Erreur lors de l\'approbation');
-              this.submitting = false;
-              this.cdr.detectChanges();
-            });
+  // ==================== APPROBATION avec proposition de date (1er ou 15 du mois) ====================
+  dateProposeeSelection = '';
+  /** Liste des prochains 1er et 15 du mois (aujourd'hui exclu s'il est déjà passé dans la journée) */
+  get datesProposablesApprobation(): { value: string; label: string }[] {
+    const options: { value: string; label: string }[] = [];
+    const aujourdHui = new Date();
+    aujourdHui.setHours(0, 0, 0, 0);
+    const curseur = new Date(aujourdHui.getFullYear(), aujourdHui.getMonth(), 1);
+
+    while (options.length < 8) {
+      for (const jour of [1, 15]) {
+        const d = new Date(curseur.getFullYear(), curseur.getMonth(), jour);
+        if (d >= aujourdHui) {
+          const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(jour).padStart(2, '0')}`;
+          const label = d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+          options.push({ value, label });
+        }
+      }
+      curseur.setMonth(curseur.getMonth() + 1);
+    }
+    return options.slice(0, 8);
+  }
+
+  openApprouverModal(stage: Stage): void {
+    this.modalMode = 'approuver';
+    this.selectedStage = stage as StageDetails;
+    this.dateProposeeSelection = '';
+    this.showModal = true;
+  }
+
+  confirmerApprouverStage(): void {
+    if (!this.selectedStage) return;
+    this.submitting = true;
+    const stageName = `${this.selectedStage.candidat.prenom} ${this.selectedStage.candidat.nom}`;
+
+    this.adminStageService.approuverStage(this.selectedStage.idstage, this.dateProposeeSelection || null).subscribe({
+      next: (res) => {
+        this.ngZone.run(() => {
+          if (res.success) {
+            this.closeModal();
+            this.loadStages();
+            this.loadStats();
+            this.showToast('success', 'Approuvée !', `La demande de ${stageName} est maintenant en programmation.`);
           }
+          this.submitting = false;
+          this.cdr.detectChanges();
+        });
+      },
+      error: (err) => {
+        this.ngZone.run(() => {
+          this.showToast('error', 'Erreur', err.error?.message || 'Erreur lors de l\'approbation');
+          this.submitting = false;
+          this.cdr.detectChanges();
         });
       }
     });

@@ -212,7 +212,7 @@
                 </button>
                 <!-- Approuver — Approbateur de stage -->
                 <button *ngIf="peutApprouver && peutAgirSur(s) && actionAutorisee('APPROUVER') && s.statusStage === 'EN_ATTENTE'"
-                        (click)="approuverStage(s)"
+                        (click)="ouvrirApprobation(s)"
                         [disabled]="soumission"
                         class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
                         title="Approuver">
@@ -885,7 +885,7 @@
       <div class="flex gap-2">
         <!-- Approuver dans le modal détail -->
         <button *ngIf="peutApprouver && peutAgirSur(detailStage) && actionAutorisee('APPROUVER') && detailStage.statusStage === 'EN_ATTENTE'"
-                (click)="approuverStage(detailStage); fermerDetail()"
+                (click)="ouvrirApprobation(detailStage); fermerDetail()"
                 [disabled]="soumission"
                 class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50
                        hover:bg-blue-100 rounded-xl transition-colors border border-blue-200 disabled:opacity-50">
@@ -979,6 +979,63 @@
   </div>
 </div>
 
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL — APPROBATION (avec proposition de date, 1er ou 15 du mois)
+     ══════════════════════════════════════════════════════════ -->
+<div *ngIf="stageEnApprobation"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+
+    <div class="px-6 py-4 bg-emerald-600 flex items-center justify-between flex-shrink-0">
+      <h3 class="text-lg font-bold text-white">Approuver la demande</h3>
+      <button (click)="fermerApprobation()" class="p-1.5 hover:bg-white/20 rounded-lg transition-colors text-white">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="p-6">
+      <p class="text-gray-600 mb-4 text-sm">
+        Vous allez approuver la demande de
+        <strong>{{ stageEnApprobation.candidat?.prenom }} {{ stageEnApprobation.candidat?.nom }}</strong>.
+        Le statut passera à "Programmation en cours".
+      </p>
+
+      <div class="bg-yellow-50 rounded-xl p-3 mb-4" *ngIf="stageEnApprobation.dateDebutSouhaitee">
+        <p class="text-xs text-yellow-800">
+          <strong>Date souhaitée par le candidat :</strong> {{ stageEnApprobation.dateDebutSouhaitee | date:'dd/MM/yyyy' }}
+        </p>
+      </div>
+
+      <label class="block text-sm font-medium text-gray-700 mb-2">
+        Proposer une date de début (optionnel)
+      </label>
+      <select [(ngModel)]="dateProposeeSelection"
+              class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-sm cursor-pointer">
+        <option value="">Ne pas proposer de date pour l'instant</option>
+        <option *ngFor="let d of datesProposablesApprobation" [value]="d.value">{{ d.label }}</option>
+      </select>
+      <p class="text-xs text-gray-500 mt-1.5">
+        Les stages ne peuvent démarrer que le 1<sup>er</sup> ou le 15 du mois — seules ces dates sont proposées.
+        La date définitive sera fixée lors de l'acceptation finale (avec la convention).
+      </p>
+    </div>
+
+    <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3 flex-shrink-0">
+      <button (click)="fermerApprobation()" class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-200 rounded-lg transition-colors">
+        Annuler
+      </button>
+      <button (click)="approuverStage(stageEnApprobation)"
+              [disabled]="soumission"
+              class="px-6 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors flex items-center gap-2">
+        <span *ngIf="soumission" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+        {{ soumission ? 'Envoi...' : 'Approuver' }}
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- ══════════════════════════════════════════════════════════
      MODAL — DÉCISION (ACCEPTER / REJETER)
