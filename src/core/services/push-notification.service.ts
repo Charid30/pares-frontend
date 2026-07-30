@@ -59,7 +59,7 @@ export class PushNotificationService {
     if (!subscription) {
       subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: this.urlBase64ToUint8Array(data.publicKey),
+        applicationServerKey: this.urlBase64ToUint8Array(data.publicKey) as BufferSource,
       });
     }
 
