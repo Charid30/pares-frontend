@@ -66,3 +66,39 @@ self.addEventListener('fetch', (event) => {
       })
   );
 });
+
+// ── Push : afficher la notification navigateur ──────────────────────────────
+self.addEventListener('push', (event) => {
+  let payload = { title: 'SONABHY Portail', body: 'Vous avez une nouvelle notification.', link: '/' };
+  try {
+    if (event.data) payload = { ...payload, ...event.data.json() };
+  } catch (_) { /* garder le payload par défaut */ }
+
+  event.waitUntil(
+    self.registration.showNotification(payload.title, {
+      body: payload.body,
+      icon: '/icon-192x192.png',
+      badge: '/icon-192x192.png',
+      data: { link: payload.link || '/' },
+    })
+  );
+});
+
+// ── Clic sur la notification : ouvrir/focaliser l'onglet sur le lien cible ──
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const link = event.notification.data?.link || '/';
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientsList) => {
+      for (const client of clientsList) {
+        if (client.url.includes(link) && 'focus' in client) return client.focus();
+      }
+      if (clientsList.length > 0 && 'focus' in clientsList[0]) {
+        clientsList[0].navigate(link);
+        return clientsList[0].focus();
+      }
+      return self.clients.openWindow(link);
+    })
+  );
+});

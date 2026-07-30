@@ -7,6 +7,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { NotificationService, Notification } from '../../../core/services/notification.service';
+import { PushNotificationService } from '../../../core/services/push-notification.service';
 
 @Component({
   selector: 'app-notification-bell',
@@ -31,8 +32,14 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
 
   private countSub?: Subscription;
 
+  // ─── Notifications push navigateur ─────────────────────────────────────────
+  pushSupported = false;
+  pushSubscribed = false;
+  pushLoading = false;
+
   constructor(
     private notifService: NotificationService,
+    private pushService: PushNotificationService,
     private router: Router,
     private cdr: ChangeDetectorRef,
   ) {}
@@ -40,6 +47,34 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.countSub = this.notifService.unreadCount$.subscribe((count) => {
       this.unreadCount = count;
+      this.cdr.detectChanges();
+    });
+
+    this.pushSupported = this.pushService.isSupported && this.pushService.permission !== 'denied';
+    if (this.pushSupported) {
+      this.pushService.isSubscribed().then((subscribed) => {
+        this.pushSubscribed = subscribed;
+        this.cdr.detectChanges();
+      });
+    }
+  }
+
+  // ─── Activer / désactiver les notifications push ──────────────────────────
+
+  togglePush(): void {
+    if (this.pushLoading) return;
+    this.pushLoading = true;
+
+    const action = this.pushSubscribed
+      ? this.pushService.unsubscribe().then(() => false)
+      : this.pushService.subscribe();
+
+    action.then((subscribed) => {
+      this.pushSubscribed = !!subscribed;
+      this.pushLoading = false;
+      this.cdr.detectChanges();
+    }).catch(() => {
+      this.pushLoading = false;
       this.cdr.detectChanges();
     });
   }

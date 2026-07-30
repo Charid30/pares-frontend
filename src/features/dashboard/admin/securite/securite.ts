@@ -6,12 +6,22 @@ import { environment } from '../../../../environments/environment';
 import { Loader } from '../../../../shared/components/loader/loader';
 import { StatCard } from '../../../../shared/components/stat-card/stat-card';
 
+interface GeoInfo {
+  country: string | null;
+  countryName: string | null;
+  region: string | null;
+  city: string | null;
+  ll: [number, number] | null;
+}
+
 interface BannedIp {
   id: number;
   ip_address: string;
   attempts: number;
   last_pattern: string | null;
   banned_until: string | null;
+  permanent: boolean;
+  geo: GeoInfo | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -21,6 +31,7 @@ interface SecurityLog {
   action: string;
   ip_address: string;
   details: { pattern?: string; attempts?: number; path?: string; method?: string } | null;
+  geo: GeoInfo | null;
   createdAt: string;
 }
 
@@ -89,6 +100,19 @@ export class Securite implements OnInit {
     });
   }
 
+  banPermanently(ip: BannedIp): void {
+    this.isLoadingAction = true;
+    this.http.put<{ success: boolean }>(`${this.base}/banned/${ip.id}/ban-permanent`, {}).subscribe({
+      next: () => {
+        this.successMessage = `IP ${ip.ip_address} bannie définitivement.`;
+        this.isLoadingAction = false;
+        this.load();
+        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 3000);
+      },
+      error: () => { this.isLoadingAction = false; this.cdr.detectChanges(); }
+    });
+  }
+
   deleteEntry(ip: BannedIp): void {
     this.isLoadingAction = true;
     this.http.delete<{ success: boolean }>(`${this.base}/banned/${ip.id}`).subscribe({
@@ -103,12 +127,26 @@ export class Securite implements OnInit {
   }
 
   isBanned(ip: BannedIp): boolean {
-    return !!ip.banned_until && new Date(ip.banned_until) > new Date();
+    return ip.permanent || (!!ip.banned_until && new Date(ip.banned_until) > new Date());
   }
 
   heuresRestantes(ip: BannedIp): number {
     if (!ip.banned_until) return 0;
     return Math.max(0, Math.ceil((new Date(ip.banned_until).getTime() - Date.now()) / 3600000));
+  }
+
+  geoLabel(geo: GeoInfo | null): string {
+    if (!geo || !geo.country) return 'Locale / Inconnue';
+    return geo.city ? `${geo.city}, ${geo.country}` : (geo.countryName || geo.country);
+  }
+
+  flagEmoji(countryCode: string | null): string {
+    if (!countryCode || countryCode.length !== 2) return '🌐';
+    const codePoints = countryCode
+      .toUpperCase()
+      .split('')
+      .map((c) => 127397 + c.charCodeAt(0));
+    return String.fromCodePoint(...codePoints);
   }
 
   patternLabel(pattern: string | null): string {

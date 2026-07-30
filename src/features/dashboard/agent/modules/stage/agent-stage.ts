@@ -1,9 +1,9 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Subscription } from 'rxjs';
 import { saveAs } from 'file-saver';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { AuthService } from '../../../../../core/services/auth.service';
@@ -81,7 +81,7 @@ interface StageStats {
   imports: [CommonModule, DatePipe, FormsModule, StatCard],
   templateUrl: './agent-stage.html',
 })
-export class AgentStage implements OnInit {
+export class AgentStage implements OnInit, OnDestroy {
 
   // ── Données ────────────────────────────────────────────────
   stages: Stage[] = [];
@@ -299,18 +299,15 @@ export class AgentStage implements OnInit {
     return !this.allowedTransitions || this.allowedTransitions.includes(transition);
   }
 
+  private routeDataSub?: Subscription;
+
   constructor(
     private http: HttpClient,
     private authService: AuthService,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
     private sanitizer: DomSanitizer
-  ) {
-    this.scope = this.route.snapshot.data['scope'] === 'global' ? 'global' : 'direction';
-    this.readOnly = !!this.route.snapshot.data['readOnly'];
-    this.statusFilter = this.route.snapshot.data['statusFilter'] || null;
-    this.allowedTransitions = this.route.snapshot.data['allowedTransitions'] || null;
-  }
+  ) {}
 
   ngOnInit(): void {
     // Charger le nom/prénom de l'agent connecté (pour les documents)
@@ -324,11 +321,28 @@ export class AgentStage implements OnInit {
       error: () => {} // non bloquant
     });
 
-    if (this.peutConsulter) {
-      this.charger();
-    } else {
-      this.cdr.detectChanges();
-    }
+    // Les écrans "Vue globale" (En attente / Approuvé / En cours / Terminé) pointent
+    // tous vers ce même composant — Angular réutilise donc la même instance au lieu
+    // de la recréer d'un onglet à l'autre (le constructeur ne se relance pas). On
+    // s'abonne à route.data (au lieu d'une lecture ponctuelle du snapshot) pour que
+    // le composant réagisse à chaque changement d'onglet sans nécessiter un F5.
+    this.routeDataSub = this.route.data.subscribe((data) => {
+      this.scope = data['scope'] === 'global' ? 'global' : 'direction';
+      this.readOnly = !!data['readOnly'];
+      this.statusFilter = data['statusFilter'] || null;
+      this.allowedTransitions = data['allowedTransitions'] || null;
+      this.page = 1;
+
+      if (this.peutConsulter) {
+        this.charger();
+      } else {
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.routeDataSub?.unsubscribe();
   }
 
   // ── Chargement ────────────────────────────────────────────
