@@ -1,12 +1,23 @@
 import { Component, OnInit, OnDestroy, ElementRef, ViewChild, ChangeDetectorRef, NgZone } from '@angular/core';
-import { FormGroup, FormBuilder, Validators, AbstractControl, ValidationErrors, ReactiveFormsModule } from '@angular/forms';
+import { FormGroup, FormBuilder, Validators, AbstractControl, ValidationErrors, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService, RegisterData } from '../../../core/services/auth.service';
 import { CommonModule } from '@angular/common';
+import {
+  getCountries, getCountryCallingCode, isValidPhoneNumber,
+  parsePhoneNumberFromString, CountryCode,
+} from 'libphonenumber-js';
+
+interface CountryOption {
+  code: CountryCode;
+  name: string;
+  dialCode: string;
+  flag: string;
+}
 
 @Component({
   selector: 'app-register',
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule],
   templateUrl: './register.html',
   styleUrl: './register.css',
 })
@@ -29,6 +40,49 @@ export class Register implements OnInit, OnDestroy {
 
   /** @deprecated conservé pour rétrocompatibilité du template */
   get showIfuField(): boolean { return this.showDocumentFiscal; }
+
+  // ── Téléphone international ───────────────────────────────────────────────
+  countries: CountryOption[] = [];
+  selectedCountry: CountryCode = 'BF';
+
+  get selectedCountryOption(): CountryOption | undefined {
+    return this.countries.find(c => c.code === this.selectedCountry);
+  }
+
+  private buildCountryList(): void {
+    const displayNames = new Intl.DisplayNames(['fr'], { type: 'region' });
+    this.countries = getCountries()
+      .map((code): CountryOption => ({
+        code,
+        name: displayNames.of(code) || code,
+        dialCode: `+${getCountryCallingCode(code)}`,
+        flag: this.flagEmoji(code),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+
+    // Burkina Faso en tête de liste (pays d'origine de la grande majorité des candidats)
+    const bfIndex = this.countries.findIndex(c => c.code === 'BF');
+    if (bfIndex > 0) {
+      const [bf] = this.countries.splice(bfIndex, 1);
+      this.countries.unshift(bf);
+    }
+  }
+
+  private flagEmoji(countryCode: string): string {
+    return String.fromCodePoint(...countryCode.toUpperCase().split('').map(c => 127397 + c.charCodeAt(0)));
+  }
+
+  onCountryChange(code: string): void {
+    this.selectedCountry = code as CountryCode;
+    this.registerForm.get('telephone')?.updateValueAndValidity();
+  }
+
+  /** Valide le numéro selon le pays actuellement sélectionné (référencé via closure). */
+  private telephoneValidator = (control: AbstractControl): ValidationErrors | null => {
+    const value = (control.value || '').toString().trim();
+    if (!value) return null;
+    return isValidPhoneNumber(value, this.selectedCountry) ? null : { invalidPhone: true };
+  };
 
   // ── OCR / scanner ────────────────────────────────────────────────────────
   /** 'idle' | 'choosing' | 'camera' | 'scanning' | 'error' */
@@ -53,6 +107,8 @@ export class Register implements OnInit, OnDestroy {
       return;
     }
 
+    this.buildCountryList();
+
     this.registerForm = this.fb.group({
       username: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email]],
@@ -61,7 +117,7 @@ export class Register implements OnInit, OnDestroy {
       prenom: ['', [Validators.required]],
       nom: ['', [Validators.required]],
       genre: ['', [Validators.required]],
-      telephone: ['', [Validators.required, Validators.pattern(/^[0-9]{8}$/)]],
+      telephone: ['', [Validators.required, this.telephoneValidator]],
       nip: ['', [Validators.required, Validators.pattern(/^[0-9]{17}$/)]],
       ifu: ['', [Validators.pattern(/^\d{8}[A-Za-z]$/)]],
       recipisse: ['', [Validators.minLength(3), Validators.maxLength(50)]],
@@ -516,6 +572,21 @@ export class Register implements OnInit, OnDestroy {
 
 // ── Soumission ───────────────────────────────────────────────────────────
 
+/**
+ * Construit le numéro final à enregistrer. Burkina Faso conserve le format
+ * historique (8 chiffres, sans indicatif) pour rester cohérent avec les
+ * comptes déjà existants ; les autres pays sont préfixés de leur indicatif
+ * international (ex: 33612345678 pour la France) afin de garantir l'unicité
+ * entre pays et de conserver l'origine du numéro.
+ */
+private buildTelephoneFinal(): string {
+  const raw = this.registerForm.value.telephone || '';
+  const parsed = parsePhoneNumberFromString(raw, this.selectedCountry);
+  const national = parsed?.nationalNumber || raw.replace(/\D/g, '');
+  if (this.selectedCountry === 'BF') return national;
+  return `${parsed?.countryCallingCode || getCountryCallingCode(this.selectedCountry)}${national}`;
+}
+
 onSubmit(): void {
   if(this.registerForm.valid) {
   this.isLoading = true;
@@ -530,7 +601,7 @@ onSubmit(): void {
     nom: this.registerForm.value.nom,
     prenom: this.registerForm.value.prenom,
     genre: this.registerForm.value.genre,
-    telephone: this.registerForm.value.telephone,
+    telephone: this.buildTelephoneFinal(),
     nip: this.registerForm.value.nip,
     ifu: this.documentFiscalType === 'ifu' ? (this.registerForm.value.ifu || undefined) : undefined,
     recipisse: this.documentFiscalType === 'recipisse' ? (this.registerForm.value.recipisse || undefined) : undefined,

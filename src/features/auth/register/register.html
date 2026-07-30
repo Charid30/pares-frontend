@@ -392,20 +392,22 @@
                 Téléphone <span class="text-red-500">*</span>
               </label>
               <div class="relative flex items-center">
-                <!-- Préfixe drapeau + indicatif -->
-                <div
-                  class="absolute left-0 flex items-center gap-1.5 pl-3 pr-3 py-3 border-r border-gray-200 pointer-events-none select-none">
-                  <span class="text-base leading-none">🇧🇫</span>
-                  <span class="text-sm font-medium text-gray-500">+226</span>
-                </div>
-                <input type="tel" formControlName="telephone" placeholder="70000000" maxlength="8"
-                  class="w-full pl-28 pr-4 py-3 bg-gray-50 border rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:bg-white"
+                <!-- Sélecteur de pays (drapeau + indicatif) -->
+                <select [ngModel]="selectedCountry" (ngModelChange)="onCountryChange($event)"
+                  [ngModelOptions]="{standalone: true}"
+                  class="absolute left-0 h-full pl-2.5 pr-1 py-3 border-r border-gray-200 bg-transparent text-sm font-medium text-gray-600 focus:outline-none cursor-pointer appearance-none max-w-[110px]">
+                  <option *ngFor="let c of countries" [value]="c.code">{{ c.flag }} {{ c.dialCode }}</option>
+                </select>
+                <input type="tel" formControlName="telephone" placeholder="Numéro de téléphone" maxlength="15"
+                  class="w-full pl-[105px] pr-4 py-3 bg-gray-50 border rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:bg-white"
                   [ngClass]="registerForm.get('telephone')?.invalid && registerForm.get('telephone')?.touched
                                    ? 'border-red-300 focus:ring-red-400'
                                    : 'border-gray-200 focus:ring-primary-400 focus:border-transparent'">
               </div>
               <p *ngIf="registerForm.get('telephone')?.invalid && registerForm.get('telephone')?.touched"
-                class="mt-1.5 text-xs text-red-500">Numéro de téléphone invalide (8 chiffres requis)</p>
+                class="mt-1.5 text-xs text-red-500">
+                Numéro de téléphone invalide pour {{ selectedCountryOption?.name }}
+              </p>
             </div>
 
             <!-- ════════════════════════════════════════════════
