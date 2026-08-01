@@ -100,6 +100,13 @@ export class UserService {
   }
 
   /**
+   * Activer / désactiver temporairement un compte agent (distinct de la suppression)
+   */
+  toggleAgentActif(id: number, actif: boolean): Observable<ApiResponse<Agent>> {
+    return this.http.put<ApiResponse<Agent>>(`${this.apiUrl}/agents/${id}/actif`, { actif });
+  }
+
+  /**
    * Changer le mot de passe d'un agent
    */
   changePassword(id: number, newPassword: string, confirmNewPassword: string): Observable<ApiResponse<void>> {

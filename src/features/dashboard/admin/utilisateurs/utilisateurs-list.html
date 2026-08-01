@@ -83,7 +83,13 @@
                   {{ agent.prenom.charAt(0) }}{{ agent.nom.charAt(0) }}
                 </div>
                 <div>
-                  <p class="text-sm font-medium text-gray-900">{{ agent.prenom }} {{ agent.nom }}</p>
+                  <div class="flex items-center gap-1.5">
+                    <p class="text-sm font-medium text-gray-900">{{ agent.prenom }} {{ agent.nom }}</p>
+                    <span *ngIf="!(agent.actif ?? true)"
+                          class="px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-amber-100 text-amber-700">
+                      Désactivé
+                    </span>
+                  </div>
                 </div>
               </div>
             </td>
@@ -129,6 +135,17 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                   </svg>
                 </button>
+                <button (click)="toggleAgentActif(agent)"
+                        class="p-2 rounded-lg transition-colors"
+                        [ngClass]="(agent.actif ?? true) ? 'text-gray-400 hover:text-amber-600 hover:bg-amber-50' : 'text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50'"
+                        [title]="(agent.actif ?? true) ? 'Désactiver' : 'Réactiver'">
+                  <svg *ngIf="agent.actif ?? true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                  </svg>
+                  <svg *ngIf="!(agent.actif ?? true)" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </button>
                 <button (click)="deleteAgent(agent)"
                         class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         title="Supprimer">
@@ -155,7 +172,13 @@
               {{ agent.prenom.charAt(0) }}{{ agent.nom.charAt(0) }}
             </div>
             <div class="flex-1 min-w-0">
-              <p class="font-bold text-gray-900 text-sm leading-tight truncate">{{ agent.prenom }} {{ agent.nom }}</p>
+              <div class="flex items-center gap-1.5">
+                <p class="font-bold text-gray-900 text-sm leading-tight truncate">{{ agent.prenom }} {{ agent.nom }}</p>
+                <span *ngIf="!(agent.actif ?? true)"
+                      class="px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-amber-100 text-amber-700 flex-shrink-0">
+                  Désactivé
+                </span>
+              </div>
               <p class="text-xs text-gray-400 mt-0.5 font-mono">{{ agent.matricule }}</p>
             </div>
             <div class="flex flex-wrap gap-1 justify-end flex-shrink-0 max-w-[55%]">
@@ -206,6 +229,17 @@
                     title="Changer mot de passe">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+              </svg>
+            </button>
+            <button (click)="toggleAgentActif(agent)"
+                    class="p-2 rounded-xl active:scale-95 transition-all"
+                    [ngClass]="(agent.actif ?? true) ? 'text-amber-600 bg-amber-50 hover:bg-amber-100' : 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100'"
+                    [title]="(agent.actif ?? true) ? 'Désactiver' : 'Réactiver'">
+              <svg *ngIf="agent.actif ?? true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+              </svg>
+              <svg *ngIf="!(agent.actif ?? true)" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
             </button>
             <button (click)="deleteAgent(agent)"

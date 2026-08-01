@@ -57,6 +57,7 @@ export interface Agent {
   lastModifiedDate?: Date;
   lastModifiedBy?: string;
   del: number;
+  actif?: boolean;
 }
 
 export interface Service {

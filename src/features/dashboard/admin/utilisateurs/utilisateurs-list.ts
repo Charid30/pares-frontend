@@ -694,6 +694,38 @@ export class UtilisateursList implements OnInit, OnDestroy {
     });
   }
 
+  toggleAgentActif(agent: Agent): void {
+    const nouvelEtat = !(agent.actif ?? true);
+    const agentName = `${agent.prenom} ${agent.nom}`;
+    const message = nouvelEtat
+      ? `Réactiver le compte de ${agentName} ?`
+      : `Désactiver le compte de ${agentName} ? Il ne pourra plus se connecter tant qu'il n'aura pas été réactivé.`;
+
+    if (!confirm(message)) return;
+
+    this.submitting = true;
+    this.userService.toggleAgentActif(agent.idagents, nouvelEtat).subscribe({
+      next: (response) => {
+        this.ngZone.run(() => {
+          if (response.success) {
+            agent.actif = nouvelEtat;
+            this.showToast('success', nouvelEtat ? 'Réactivé !' : 'Désactivé !',
+              `Le compte de ${agentName} a été ${nouvelEtat ? 'réactivé' : 'désactivé'}`);
+          }
+          this.submitting = false;
+          this.cdr.detectChanges();
+        });
+      },
+      error: (err) => {
+        this.ngZone.run(() => {
+          this.showToast('error', 'Erreur', err.error?.message || 'Erreur lors de la mise à jour');
+          this.submitting = false;
+          this.cdr.detectChanges();
+        });
+      }
+    });
+  }
+
   // ==================== HELPERS ====================
   getRoleBadgeClass(accronyme: string): string {
     switch (accronyme) {
