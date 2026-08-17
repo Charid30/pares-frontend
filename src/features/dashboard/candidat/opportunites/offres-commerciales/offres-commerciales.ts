@@ -235,6 +235,8 @@ export class OffresCommerciales implements OnInit {
 
   // ─── Modal création ───────────────────────────────────────────────────────
   ouvrirCreateModal(): void {
+    // Garde-fou en plus du [disabled] du bouton (défense en profondeur)
+    if (!this.ifuLoaded || !this.hasDocumentFiscal) return;
     this.form = { typeOffre: '', titre: '', description: '', cnib: null, demandeOffre: null };
     this.errorCreate = '';
     this.successMessage = '';

@@ -342,8 +342,8 @@
               <p class="text-sm font-medium text-gray-900 font-mono">{{ candidatDetail.user?.username || '—' }}</p>
             </div>
             <div class="p-3 bg-gray-50 rounded-xl">
-              <p class="text-xs text-gray-400 mb-1">NIP</p>
-              <p class="text-sm font-medium text-gray-900 font-mono">{{ candidatDetail.nip || '—' }}</p>
+              <p class="text-xs text-gray-400 mb-1">{{ candidatDetail.nip ? 'NIP' : 'Passeport' }}</p>
+              <p class="text-sm font-medium text-gray-900 font-mono">{{ candidatDetail.nip || candidatDetail.passeport || '—' }}</p>
             </div>
             <div class="p-3 bg-gray-50 rounded-xl">
               <p class="text-xs text-gray-400 mb-1">IFU</p>

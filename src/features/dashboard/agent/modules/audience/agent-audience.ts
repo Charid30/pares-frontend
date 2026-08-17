@@ -24,6 +24,8 @@ interface DemandeAudience {
   motif?: string;
   dateAudience: string;
   heureAudience: string;
+  dateAudienceConfirmee?: string | null;
+  heureAudienceConfirmee?: string | null;
   status: 'EN_ATTENTE' | 'ACCEPTE' | 'REJETE' | 'ANNULE';
   commentaireAdmin?: string;
   createdDate: string;
@@ -52,6 +54,8 @@ export class AgentAudience implements OnInit {
   demandeEnDecision: DemandeAudience | null = null;
   decisionType: 'ACCEPTE' | 'REJETE' = 'ACCEPTE';
   commentaire = '';
+  dateAudienceConfirmee = '';
+  heureAudienceConfirmee = '';
   soumission = false;
   showDetailModal = false;
   detailDemande: DemandeAudience | null = null;
@@ -259,20 +263,33 @@ export class AgentAudience implements OnInit {
     this.demandeEnDecision = d;
     this.decisionType = type;
     this.commentaire = '';
+    // Pré-remplir avec la date/heure déjà confirmées si elles existent, sinon
+    // avec la date/heure souhaitées par le candidat.
+    this.dateAudienceConfirmee = (d.dateAudienceConfirmee || d.dateAudience || '').substring(0, 10);
+    this.heureAudienceConfirmee = (d.heureAudienceConfirmee || d.heureAudience || '').substring(0, 5);
   }
 
   confirmerDecision(): void {
     if (!this.demandeEnDecision) return;
     if (this.decisionType === 'REJETE' && !this.commentaire.trim()) return;
     this.soumission = true;
-    this.http.put(`${this.apiUrl}/demandes-audience/${this.demandeEnDecision.iddemande}/statut`, {
+    const body: any = {
       status: this.decisionType,
       commentaireAdmin: this.commentaire || null,
-    }).subscribe({
+    };
+    if (this.decisionType === 'ACCEPTE') {
+      if (this.dateAudienceConfirmee) body.dateAudienceConfirmee = this.dateAudienceConfirmee;
+      if (this.heureAudienceConfirmee) body.heureAudienceConfirmee = this.heureAudienceConfirmee;
+    }
+    this.http.put(`${this.apiUrl}/demandes-audience/${this.demandeEnDecision.iddemande}/statut`, body).subscribe({
       next: () => {
         if (this.demandeEnDecision) {
           this.demandeEnDecision.status = this.decisionType;
           this.demandeEnDecision.commentaireAdmin = this.commentaire || undefined;
+          if (this.decisionType === 'ACCEPTE') {
+            this.demandeEnDecision.dateAudienceConfirmee = this.dateAudienceConfirmee || undefined;
+            this.demandeEnDecision.heureAudienceConfirmee = this.heureAudienceConfirmee || undefined;
+          }
         }
         this.calculerStats();
         this.filtrer();

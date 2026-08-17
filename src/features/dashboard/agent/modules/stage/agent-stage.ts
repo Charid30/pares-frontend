@@ -48,6 +48,7 @@ interface Stage {
   service?: string;
   commentaireAdmin?: string;
   createdDate: string;
+  dateResoumission?: string | null;
   candidat?: Candidat;
   documents?: StageDocument[];
   rapport?: {
@@ -124,7 +125,7 @@ export class AgentStage implements OnInit, OnDestroy {
     { key: 'cv', label: 'CV daté et signé' },
     { key: 'cnib', label: 'CNIB' },
     { key: 'casierJudiciaire', label: 'Casier judiciaire' },
-    { key: 'lettreMotivation', label: 'Lettre de motivation signée' },
+    { key: 'lettreMotivation', label: 'Demande de stage signée' },
     { key: 'lettreRecommandation', label: 'Lettre de recommandation' },
     { key: 'dernierDiplome', label: 'Dernier diplôme légalisé' },
   ];
@@ -830,7 +831,7 @@ export class AgentStage implements OnInit, OnDestroy {
     if (!this.detailStage) return [];
     const docs: { type: string; label: string; filename: string }[] = [];
     const map: { type: string; label: string; filenameKey: keyof Stage }[] = [
-      { type: 'lettreMotivation',    label: 'Lettre de motivation signée', filenameKey: 'lettreMotivation_filename' },
+      { type: 'lettreMotivation',    label: 'Demande de stage signée', filenameKey: 'lettreMotivation_filename' },
       { type: 'cv',                  label: 'CV daté et signé',        filenameKey: 'cv_filename'                  },
       { type: 'cnib',                label: 'Pièce d\'identité (CNIB)', filenameKey: 'cnib_filename'              },
       { type: 'casierJudiciaire',    label: 'Casier judiciaire',       filenameKey: 'casierJudiciaire_filename'    },

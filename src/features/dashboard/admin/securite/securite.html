@@ -7,14 +7,23 @@
       <h1 class="text-2xl lg:text-3xl font-bold text-gray-900">Surveillance Sécurité</h1>
       <p class="text-gray-500 mt-1">IPs bannies et tentatives d'injection détectées</p>
     </div>
-    <button (click)="load()"
-            class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 text-sm font-medium rounded-xl hover:bg-gray-50 active:scale-95 transition-all shadow-sm self-start lg:self-center">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-      </svg>
-      Actualiser
-    </button>
+    <div class="flex items-center gap-2 self-start lg:self-center">
+      <button (click)="ouvrirBanManuel()"
+              class="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-xl hover:bg-gray-800 active:scale-95 transition-all shadow-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+        </svg>
+        Bannir une IP
+      </button>
+      <button (click)="load()"
+              class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 text-sm font-medium rounded-xl hover:bg-gray-50 active:scale-95 transition-all shadow-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        Actualiser
+      </button>
+    </div>
   </div>
 
   <!-- ── Messages ────────────────────────────────────────────────────────── -->
@@ -165,6 +174,15 @@
                   <!-- Actions -->
                   <td class="px-5 py-3.5">
                     <div class="flex items-center justify-end gap-2">
+                      <button (click)="ouvrirDetails(ip)"
+                              title="Voir les requêtes et le profil associé"
+                              class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 active:scale-95 transition-all">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                        Détails
+                      </button>
                       @if (isBanned(ip) && !ip.permanent) {
                         <button (click)="banPermanently(ip)" [disabled]="isLoadingAction"
                                 title="Transformer en bannissement définitif"
@@ -255,6 +273,181 @@
         </div>
       </div>
     }
+  }
+
+  <!-- ── Modale bannissement manuel ───────────────────────────────────────── -->
+  @if (showBanManualModal) {
+    <div class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+         (click)="fermerBanManuel()">
+      <div class="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl p-6" (click)="$event.stopPropagation()">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-11 h-11 bg-gray-900 rounded-2xl flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-gray-900">Bannir une IP manuellement</h3>
+            <p class="text-xs text-gray-500">Indépendamment de toute détection automatique</p>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1.5">Adresse IP <span class="text-red-500">*</span></label>
+            <input type="text" [(ngModel)]="banManualForm.ip_address" name="ip_address" placeholder="Ex: 203.0.113.10"
+                   class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-mono outline-none focus:ring-2 focus:ring-gray-400 focus:bg-white transition-all"/>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1.5">Motif</label>
+            <input type="text" [(ngModel)]="banManualForm.reason" name="reason" placeholder="Ex: Signalée par un partenaire"
+                   class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-gray-400 focus:bg-white transition-all"/>
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="checkbox" id="banPermanentCheck" [(ngModel)]="banManualForm.permanent" name="permanent"
+                   class="w-4 h-4 rounded border-gray-300 text-gray-900 focus:ring-gray-400"/>
+            <label for="banPermanentCheck" class="text-sm text-gray-700">Bannissement définitif</label>
+          </div>
+          @if (!banManualForm.permanent) {
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1.5">Durée (heures)</label>
+              <input type="number" min="1" [(ngModel)]="banManualForm.durationHours" name="durationHours"
+                     class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-gray-400 focus:bg-white transition-all"/>
+            </div>
+          }
+        </div>
+
+        <div class="flex gap-3 mt-6">
+          <button type="button" (click)="fermerBanManuel()"
+                  class="flex-1 py-3 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-2xl hover:bg-gray-100 transition-colors">
+            Annuler
+          </button>
+          <button type="button" (click)="soumettreBanManuel()" [disabled]="!banManualForm.ip_address.trim() || banManualLoading"
+                  class="flex-1 py-3 text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 rounded-2xl transition-colors shadow-sm disabled:opacity-50">
+            {{ banManualLoading ? 'Bannissement...' : 'Bannir' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ── Modale détails IP (requêtes suspectes + profil éventuel) ────────────── -->
+  @if (detailsIp) {
+    <div class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+         (click)="fermerDetails()">
+      <div class="relative w-full max-w-2xl max-h-[90vh] flex flex-col bg-white rounded-3xl shadow-2xl" (click)="$event.stopPropagation()">
+
+        <div class="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div>
+            <h3 class="text-base font-bold text-gray-900 font-mono">{{ detailsIp.ip_address }}</h3>
+            <p class="text-xs text-gray-500 mt-0.5">Historique des requêtes et profil associé</p>
+          </div>
+          <button (click)="fermerDetails()" class="text-gray-400 hover:text-gray-600 p-1">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto px-6 py-4 space-y-5">
+
+          @if (detailsLoading) {
+            <div class="flex justify-center py-8">
+              <app-loader />
+            </div>
+          } @else {
+
+            <!-- Profil éventuel -->
+            <div>
+              <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Compte associé</h4>
+              @if (detailsUser) {
+                <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-4">
+                  <div class="flex items-center justify-between flex-wrap gap-2">
+                    <div>
+                      <p class="text-sm font-bold text-gray-900">
+                        {{ detailsUser.candidat ? (detailsUser.candidat.prenom + ' ' + detailsUser.candidat.nom) : (detailsUser.agents?.[0] ? (detailsUser.agents![0].prenom + ' ' + detailsUser.agents![0].nom) : detailsUser.username) }}
+                      </p>
+                      <p class="text-xs text-gray-500 mt-0.5">{{ detailsUser.candidat?.email || detailsUser.agents?.[0]?.email || '—' }}</p>
+                    </div>
+                    <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-indigo-600 text-white">
+                      {{ detailsUser.role?.description || detailsUser.role?.accronyme || '—' }}
+                    </span>
+                  </div>
+                  <div class="grid grid-cols-2 gap-3 mt-3 text-xs">
+                    <div>
+                      <p class="text-gray-400">Nom d'utilisateur</p>
+                      <p class="font-medium text-gray-700 font-mono">{{ detailsUser.username }}</p>
+                    </div>
+                    <div>
+                      <p class="text-gray-400">Dernière connexion</p>
+                      <p class="font-medium text-gray-700">{{ detailsUser.last_login_at ? (detailsUser.last_login_at | date:'dd/MM/yyyy HH:mm') : '—' }}</p>
+                    </div>
+                  </div>
+                </div>
+              } @else {
+                <div class="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-2xl p-4">
+                  <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <p class="text-sm text-gray-500">Aucun compte enregistré ne s'est connecté depuis cette adresse IP.</p>
+                </div>
+              }
+            </div>
+
+            <!-- Requêtes suspectes -->
+            <div>
+              <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                Requêtes suspectes ({{ detailsLogs.length }})
+              </h4>
+              @if (detailsLogs.length === 0) {
+                <p class="text-sm text-gray-400">Aucune requête enregistrée pour cette IP.</p>
+              } @else {
+                <div class="space-y-2">
+                  @for (log of detailsLogs; track log.id) {
+                    <div class="border border-gray-100 rounded-xl p-3 bg-gray-50/60">
+                      <div class="flex items-center justify-between flex-wrap gap-2">
+                        <div class="flex items-center gap-2 flex-wrap">
+                          @if (log.details?.pattern) {
+                            <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-red-100 text-red-700">
+                              {{ patternLabel(log.details?.pattern ?? null) }}
+                            </span>
+                          }
+                          @if (log.details?.path) {
+                            <span class="text-xs font-mono text-gray-600">{{ log.details?.method }} {{ log.details?.path }}</span>
+                          }
+                          @if (log.action === 'IP_BANNIE_MANUELLEMENT') {
+                            <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-900 text-white">Bannissement manuel</span>
+                          }
+                        </div>
+                        <span class="text-xs text-gray-400 flex-shrink-0">{{ log.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+                      </div>
+                      @if (log.details?.matchedField && log.details?.matchedValue) {
+                        <div class="mt-2 text-xs">
+                          <span class="text-gray-400">Champ « {{ log.details?.matchedField }} » : </span>
+                          <span class="font-mono text-gray-700 bg-white border border-gray-200 rounded px-1.5 py-0.5 break-all">{{ log.details?.matchedValue }}</span>
+                        </div>
+                      }
+                      @if (log.details?.reason) {
+                        <p class="mt-2 text-xs text-gray-500">Motif : {{ log.details?.reason }}</p>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+
+          }
+        </div>
+
+        <div class="flex-shrink-0 px-6 py-4 border-t border-gray-100">
+          <button (click)="fermerDetails()"
+                  class="w-full py-3 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-2xl transition-colors">
+            Fermer
+          </button>
+        </div>
+
+      </div>
+    </div>
   }
 
 </div>

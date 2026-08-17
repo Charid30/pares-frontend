@@ -944,7 +944,7 @@
               </div>
             </ng-container>
 
-            <!-- Lettre de motivation -->
+            <!-- Demande de stage signée -->
             <ng-container>
               <div class="flex items-center gap-3 p-2.5 rounded-xl border transition-all"
                 [style.borderColor]="files['lettreMotivation'].file ? '#86efac' : files['lettreMotivation'].error ? '#fca5a5' : '#e5e7eb'"
@@ -956,7 +956,7 @@
                   </svg>
                 </div>
                 <div class="flex-1 min-w-0">
-                  <p class="text-xs font-semibold text-gray-800">Lettre de motivation <span class="text-red-500">*</span></p>
+                  <p class="text-xs font-semibold text-gray-800">Demande de stage signée <span class="text-red-500">*</span></p>
                   <p class="text-[10px] truncate" [ngClass]="files['lettreMotivation'].file ? 'text-green-600' : files['lettreMotivation'].error ? 'text-red-500' : 'text-gray-400'">
                     {{ files['lettreMotivation'].file ? files['lettreMotivation'].name : files['lettreMotivation'].error || 'Aucun fichier' }}
                   </p>

@@ -45,6 +45,8 @@ interface DemandeAudience {
   // Commun
   dateAudience: string;
   heureAudience: string;
+  dateAudienceConfirmee?: string | null;
+  heureAudienceConfirmee?: string | null;
   status: 'EN_ATTENTE' | 'ACCEPTE' | 'REJETE' | 'ANNULE';
   commentaireAdmin?: string;
   createdDate: string;
@@ -97,6 +99,8 @@ export class AudiencesList implements OnInit, OnDestroy {
   traitement = {
     status: '' as string,
     commentaireAdmin: '',
+    dateAudienceConfirmee: '',
+    heureAudienceConfirmee: '',
   };
 
   // ── Modal détail ──────────────────────────────────────────────────────────
@@ -225,7 +229,14 @@ export class AudiencesList implements OnInit, OnDestroy {
   ouvrirTraitement(demande: DemandeAudience, event?: Event): void {
     event?.stopPropagation();
     this.selectedDemande = demande;
-    this.traitement = { status: '', commentaireAdmin: '' };
+    // Pré-remplir avec la date/heure déjà confirmées si elles existent, sinon
+    // avec la date/heure souhaitées par le candidat (base de départ pratique).
+    this.traitement = {
+      status: '',
+      commentaireAdmin: '',
+      dateAudienceConfirmee: (demande.dateAudienceConfirmee || demande.dateAudience || '').substring(0, 10),
+      heureAudienceConfirmee: (demande.heureAudienceConfirmee || demande.heureAudience || '').substring(0, 5),
+    };
     this.errorEval = '';
     this.showTraitementModal = true;
   }
@@ -253,6 +264,10 @@ export class AudiencesList implements OnInit, OnDestroy {
     const body: any = { status: this.traitement.status };
     if (this.traitement.commentaireAdmin.trim()) {
       body.commentaireAdmin = this.traitement.commentaireAdmin.trim();
+    }
+    if (this.traitement.status === 'ACCEPTE') {
+      if (this.traitement.dateAudienceConfirmee) body.dateAudienceConfirmee = this.traitement.dateAudienceConfirmee;
+      if (this.traitement.heureAudienceConfirmee) body.heureAudienceConfirmee = this.traitement.heureAudienceConfirmee;
     }
 
     this.http.put<any>(
@@ -285,7 +300,12 @@ export class AudiencesList implements OnInit, OnDestroy {
     event.stopPropagation();
     if (!this.peutTraiter(demande)) return;
     this.selectedDemande = demande;
-    this.traitement = { status: 'ACCEPTE', commentaireAdmin: '' };
+    this.traitement = {
+      status: 'ACCEPTE',
+      commentaireAdmin: '',
+      dateAudienceConfirmee: (demande.dateAudienceConfirmee || demande.dateAudience || '').substring(0, 10),
+      heureAudienceConfirmee: (demande.heureAudienceConfirmee || demande.heureAudience || '').substring(0, 5),
+    };
     this.errorEval = '';
     this.showTraitementModal = true;
   }
@@ -294,7 +314,7 @@ export class AudiencesList implements OnInit, OnDestroy {
     event.stopPropagation();
     if (!this.peutTraiter(demande)) return;
     this.selectedDemande = demande;
-    this.traitement = { status: 'REJETE', commentaireAdmin: '' };
+    this.traitement = { status: 'REJETE', commentaireAdmin: '', dateAudienceConfirmee: '', heureAudienceConfirmee: '' };
     this.errorEval = '';
     this.showTraitementModal = true;
   }

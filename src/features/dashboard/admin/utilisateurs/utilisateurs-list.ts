@@ -664,11 +664,43 @@ export class UtilisateursList implements OnInit, OnDestroy {
     });
   }
 
-  deleteAgent(agent: Agent): void {
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer l'agent ${agent.prenom} ${agent.nom} ?`)) {
-      return;
-    }
+  // ─── Modale de confirmation personnalisée (suppression / activation) ──────
+  confirmAction: 'delete' | 'toggle' | null = null;
+  confirmTarget: Agent | null = null;
 
+  demanderSuppression(agent: Agent): void {
+    this.confirmAction = 'delete';
+    this.confirmTarget = agent;
+  }
+
+  demanderToggleActif(agent: Agent): void {
+    this.confirmAction = 'toggle';
+    this.confirmTarget = agent;
+  }
+
+  annulerConfirmation(): void {
+    this.confirmAction = null;
+    this.confirmTarget = null;
+  }
+
+  executerConfirmation(): void {
+    if (!this.confirmAction || !this.confirmTarget) return;
+    const agent = this.confirmTarget;
+    const action = this.confirmAction;
+    this.annulerConfirmation();
+
+    if (action === 'delete') {
+      this.deleteAgent(agent);
+    } else {
+      this.toggleAgentActif(agent);
+    }
+  }
+
+  get confirmTargetActif(): boolean {
+    return this.confirmTarget ? (this.confirmTarget.actif ?? true) : true;
+  }
+
+  private deleteAgent(agent: Agent): void {
     this.submitting = true;
     const agentName = `${agent.prenom} ${agent.nom}`;
 
@@ -694,14 +726,9 @@ export class UtilisateursList implements OnInit, OnDestroy {
     });
   }
 
-  toggleAgentActif(agent: Agent): void {
+  private toggleAgentActif(agent: Agent): void {
     const nouvelEtat = !(agent.actif ?? true);
     const agentName = `${agent.prenom} ${agent.nom}`;
-    const message = nouvelEtat
-      ? `Réactiver le compte de ${agentName} ?`
-      : `Désactiver le compte de ${agentName} ? Il ne pourra plus se connecter tant qu'il n'aura pas été réactivé.`;
-
-    if (!confirm(message)) return;
 
     this.submitting = true;
     this.userService.toggleAgentActif(agent.idagents, nouvelEtat).subscribe({

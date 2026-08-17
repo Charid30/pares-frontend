@@ -13,6 +13,7 @@ interface Candidat {
   email: string;
   telephone: string;
   nip?: string;
+  passeport?: string;
   ifu?: string;
   createdDate: string;
   stagesCount?: number;

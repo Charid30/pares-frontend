@@ -19,6 +19,8 @@ interface DemandeAudience {
   // Commun
   dateAudience: string;
   heureAudience: string;
+  dateAudienceConfirmee: string | null;
+  heureAudienceConfirmee: string | null;
   status: 'EN_ATTENTE' | 'ACCEPTE' | 'REJETE' | 'ANNULE';
   commentaireAdmin: string | null;
   createdDate: string;

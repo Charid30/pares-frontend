@@ -135,7 +135,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                   </svg>
                 </button>
-                <button (click)="toggleAgentActif(agent)"
+                <button (click)="demanderToggleActif(agent)"
                         class="p-2 rounded-lg transition-colors"
                         [ngClass]="(agent.actif ?? true) ? 'text-gray-400 hover:text-amber-600 hover:bg-amber-50' : 'text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50'"
                         [title]="(agent.actif ?? true) ? 'Désactiver' : 'Réactiver'">
@@ -146,7 +146,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </button>
-                <button (click)="deleteAgent(agent)"
+                <button (click)="demanderSuppression(agent)"
                         class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         title="Supprimer">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -231,7 +231,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
               </svg>
             </button>
-            <button (click)="toggleAgentActif(agent)"
+            <button (click)="demanderToggleActif(agent)"
                     class="p-2 rounded-xl active:scale-95 transition-all"
                     [ngClass]="(agent.actif ?? true) ? 'text-amber-600 bg-amber-50 hover:bg-amber-100' : 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100'"
                     [title]="(agent.actif ?? true) ? 'Désactiver' : 'Réactiver'">
@@ -242,7 +242,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
             </button>
-            <button (click)="deleteAgent(agent)"
+            <button (click)="demanderSuppression(agent)"
                     class="p-2 text-red-600 bg-red-50 rounded-xl hover:bg-red-100 active:scale-95 transition-all"
                     title="Supprimer">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -818,5 +818,71 @@
 
     </div><!-- fin footer -->
 
+  </div>
+</div>
+
+<!-- Modale de confirmation (suppression / activation-désactivation) -->
+<div *ngIf="confirmAction && confirmTarget" class="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+  <!-- Backdrop -->
+  <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" (click)="annulerConfirmation()"></div>
+
+  <!-- Contenu -->
+  <div class="relative z-[10000] w-full max-w-sm bg-white rounded-3xl shadow-2xl p-6">
+    <div class="flex flex-col items-center text-center">
+      <!-- Icône -->
+      <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
+           [ngClass]="confirmAction === 'delete'
+             ? 'bg-red-100'
+             : (confirmTargetActif ? 'bg-amber-100' : 'bg-emerald-100')">
+        <svg *ngIf="confirmAction === 'delete'" class="w-7 h-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+        <svg *ngIf="confirmAction === 'toggle' && confirmTargetActif" class="w-7 h-7 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+        </svg>
+        <svg *ngIf="confirmAction === 'toggle' && !confirmTargetActif" class="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+
+      <!-- Titre -->
+      <h3 class="text-base font-bold text-gray-900">
+        {{ confirmAction === 'delete' ? 'Supprimer cet agent ?' : (confirmTargetActif ? 'Désactiver ce compte ?' : 'Réactiver ce compte ?') }}
+      </h3>
+
+      <!-- Message -->
+      <p class="text-sm text-gray-500 mt-2">
+        <ng-container *ngIf="confirmAction === 'delete'">
+          Vous êtes sur le point de supprimer définitivement le compte de
+          <span class="font-semibold text-gray-700">{{ confirmTarget!.prenom }} {{ confirmTarget!.nom }}</span>.
+          Cette action est irréversible.
+        </ng-container>
+        <ng-container *ngIf="confirmAction === 'toggle' && confirmTargetActif">
+          <span class="font-semibold text-gray-700">{{ confirmTarget!.prenom }} {{ confirmTarget!.nom }}</span>
+          ne pourra plus se connecter à son compte tant qu'il ne sera pas réactivé.
+        </ng-container>
+        <ng-container *ngIf="confirmAction === 'toggle' && !confirmTargetActif">
+          <span class="font-semibold text-gray-700">{{ confirmTarget!.prenom }} {{ confirmTarget!.nom }}</span>
+          pourra de nouveau se connecter à son compte.
+        </ng-container>
+      </p>
+
+      <!-- Boutons -->
+      <div class="flex gap-3 w-full mt-6">
+        <button type="button" (click)="annulerConfirmation()"
+                class="flex-1 py-3 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-2xl hover:bg-gray-100 transition-colors">
+          Annuler
+        </button>
+        <button type="button" (click)="executerConfirmation()"
+                class="flex-1 py-3 text-sm font-semibold text-white rounded-2xl transition-colors shadow-sm"
+                [ngClass]="confirmAction === 'delete'
+                  ? 'bg-red-600 hover:bg-red-700'
+                  : (confirmTargetActif ? 'bg-amber-500 hover:bg-amber-600' : 'bg-emerald-600 hover:bg-emerald-700')">
+          {{ confirmAction === 'delete' ? 'Supprimer' : (confirmTargetActif ? 'Désactiver' : 'Réactiver') }}
+        </button>
+      </div>
+    </div>
   </div>
 </div>

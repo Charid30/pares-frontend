@@ -235,6 +235,8 @@ export class AidesSociales implements OnInit {
 
   // ─── Modal création ───────────────────────────────────────────────────────
   ouvrirCreateModal(): void {
+    // Garde-fou en plus du [disabled] du bouton (défense en profondeur)
+    if (!this.ifuLoaded || !this.hasDocumentFiscal) return;
     this.form = { typeAide: '', titre: '', motif: '', cnib: null, demandeAide: null };
     this.errorCreate = '';
     this.successMessage = '';

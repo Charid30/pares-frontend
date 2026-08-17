@@ -82,6 +82,7 @@ export interface Stage {
   statusStage: 'EN_ATTENTE' | 'EN_COURS_DE_TRAITEMENT' | 'ACCEPTE' | 'REJETE' | 'EN_COURS' | 'TERMINE' | 'EXPIRE' | 'RAPPORT_SOUMIS' | 'PROGRAMMATION_EN_COURS' | 'SUSPENDU' | 'ANNULE';
   motifRefus: string | null;
   documentsRejetes?: string | null;
+  dateResoumission?: string | null;
   estRenouvellement: number;
   createdDate: string;
   candidat: CandidatInfo;

@@ -164,7 +164,12 @@
           </p>
 
           <p class="text-xs text-gray-400 mt-1">
-            Audience : {{ demande.dateAudience | date:'dd/MM/yyyy' }} à {{ demande.heureAudience }}
+            <ng-container *ngIf="demande.status === 'ACCEPTE' && demande.dateAudienceConfirmee">
+              Audience confirmée : <span class="font-semibold text-emerald-600">{{ demande.dateAudienceConfirmee | date:'dd/MM/yyyy' }} à {{ demande.heureAudienceConfirmee }}</span>
+            </ng-container>
+            <ng-container *ngIf="!(demande.status === 'ACCEPTE' && demande.dateAudienceConfirmee)">
+              Audience : {{ demande.dateAudience | date:'dd/MM/yyyy' }} à {{ demande.heureAudience }}
+            </ng-container>
             · Soumise le {{ demande.createdDate | date:'dd/MM/yy' }}
           </p>
 
@@ -701,18 +706,21 @@
             </span>
           </div>
 
-          <!-- Date audience -->
+          <!-- Date audience souhaitée -->
           <div class="flex items-center justify-between">
-            <span class="text-[10px] text-gray-500">Date d'audience</span>
+            <span class="text-[10px] text-gray-500">Date souhaitée</span>
             <span class="text-xs font-semibold text-gray-800">
-              {{ demandeDetail.dateAudience | date:'dd/MM/yyyy' }}
+              {{ demandeDetail.dateAudience | date:'dd/MM/yyyy' }} à {{ demandeDetail.heureAudience }}
             </span>
           </div>
 
-          <!-- Heure audience -->
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] text-gray-500">Heure d'audience</span>
-            <span class="text-xs font-semibold text-gray-800">{{ demandeDetail.heureAudience }}</span>
+          <!-- Date/heure confirmées par l'agent (si acceptée) -->
+          <div *ngIf="demandeDetail.status === 'ACCEPTE' && demandeDetail.dateAudienceConfirmee"
+               class="flex items-center justify-between bg-emerald-50 -mx-3 px-3 py-2 rounded-lg">
+            <span class="text-[10px] text-emerald-700 font-semibold">Date confirmée</span>
+            <span class="text-xs font-bold text-emerald-700">
+              {{ demandeDetail.dateAudienceConfirmee | date:'dd/MM/yyyy' }} à {{ demandeDetail.heureAudienceConfirmee }}
+            </span>
           </div>
 
           <!-- Date soumission -->

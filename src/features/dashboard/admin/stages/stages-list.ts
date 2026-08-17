@@ -146,7 +146,7 @@ export class StagesList implements OnInit, OnDestroy {
     { key: 'cv', label: 'CV daté et signé' },
     { key: 'cnib', label: 'CNIB' },
     { key: 'casierJudiciaire', label: 'Casier judiciaire' },
-    { key: 'lettreMotivation', label: 'Lettre de motivation signée' },
+    { key: 'lettreMotivation', label: 'Demande de stage signée' },
     { key: 'lettreRecommandation', label: 'Lettre de recommandation' },
     { key: 'dernierDiplome', label: 'Dernier diplôme légalisé' },
   ];

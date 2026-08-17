@@ -2,6 +2,7 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { environment } from '../../../../environments/environment';
 import { Loader } from '../../../../shared/components/loader/loader';
 import { StatCard } from '../../../../shared/components/stat-card/stat-card';
@@ -26,11 +27,23 @@ interface BannedIp {
   updatedAt: string;
 }
 
+interface SecurityLogDetails {
+  pattern?: string;
+  matchedField?: string | null;
+  matchedValue?: string | null;
+  attempts?: number;
+  path?: string;
+  method?: string;
+  reason?: string | null;
+  permanent?: boolean;
+  durationHours?: number | null;
+}
+
 interface SecurityLog {
   id: number;
   action: string;
   ip_address: string;
-  details: { pattern?: string; attempts?: number; path?: string; method?: string } | null;
+  details: SecurityLogDetails | null;
   geo: GeoInfo | null;
   createdAt: string;
 }
@@ -42,10 +55,20 @@ interface SecurityStats {
   recentLogs: SecurityLog[];
 }
 
+interface UserMatch {
+  idusers: number;
+  username: string;
+  last_login_ip: string | null;
+  last_login_at: string | null;
+  role?: { idrole: number; accronyme: string; description: string } | null;
+  candidat?: { idcandidats: number; nom: string; prenom: string; email: string; telephone?: string } | null;
+  agents?: { idagents: number; nom: string; prenom: string; email: string; matricule: string; actif: boolean }[];
+}
+
 @Component({
   selector: 'app-securite',
   standalone: true,
-  imports: [CommonModule, DatePipe, Loader, StatCard],
+  imports: [CommonModule, DatePipe, FormsModule, Loader, StatCard],
   templateUrl: './securite.html',
 })
 export class Securite implements OnInit {
@@ -56,6 +79,17 @@ export class Securite implements OnInit {
   isLoadingAction = false;
   errorMessage = '';
   successMessage = '';
+
+  // ─── Modale détails (requêtes suspectes + profil éventuel) ─────────────
+  detailsIp: BannedIp | null = null;
+  detailsLoading = false;
+  detailsLogs: SecurityLog[] = [];
+  detailsUser: UserMatch | null = null;
+
+  // ─── Modale bannissement manuel ─────────────────────────────────────────
+  showBanManualModal = false;
+  banManualLoading = false;
+  banManualForm = { ip_address: '', reason: '', permanent: false, durationHours: 72 };
 
   private readonly base = `${environment.apiUrl}/admin/security`;
 
@@ -123,6 +157,67 @@ export class Securite implements OnInit {
         setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 3000);
       },
       error: () => { this.isLoadingAction = false; this.cdr.detectChanges(); }
+    });
+  }
+
+  // ─── Détails d'une IP (requêtes suspectes + profil éventuel) ───────────
+  ouvrirDetails(ip: BannedIp): void {
+    this.detailsIp = ip;
+    this.detailsLoading = true;
+    this.detailsLogs = [];
+    this.detailsUser = null;
+
+    this.http.get<{ success: boolean; data: SecurityLog[] }>(`${this.base}/logs/${encodeURIComponent(ip.ip_address)}`).subscribe({
+      next: (res) => {
+        if (res.success) this.detailsLogs = res.data;
+        this.cdr.detectChanges();
+      },
+      error: () => { this.cdr.detectChanges(); }
+    });
+
+    this.http.get<{ success: boolean; data: UserMatch | null }>(`${this.base}/user-by-ip/${encodeURIComponent(ip.ip_address)}`).subscribe({
+      next: (res) => {
+        if (res.success) this.detailsUser = res.data;
+        this.detailsLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => { this.detailsLoading = false; this.cdr.detectChanges(); }
+    });
+  }
+
+  fermerDetails(): void {
+    this.detailsIp = null;
+    this.detailsLogs = [];
+    this.detailsUser = null;
+  }
+
+  // ─── Bannissement manuel ─────────────────────────────────────────────────
+  ouvrirBanManuel(): void {
+    this.banManualForm = { ip_address: '', reason: '', permanent: false, durationHours: 72 };
+    this.showBanManualModal = true;
+  }
+
+  fermerBanManuel(): void {
+    this.showBanManualModal = false;
+  }
+
+  soumettreBanManuel(): void {
+    if (!this.banManualForm.ip_address.trim()) return;
+    this.banManualLoading = true;
+    this.http.post<{ success: boolean }>(`${this.base}/ban-manual`, this.banManualForm).subscribe({
+      next: () => {
+        this.successMessage = `IP ${this.banManualForm.ip_address} bannie avec succès.`;
+        this.banManualLoading = false;
+        this.showBanManualModal = false;
+        this.load();
+        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 3000);
+      },
+      error: (err) => {
+        this.errorMessage = err.error?.message || "Erreur lors du bannissement";
+        this.banManualLoading = false;
+        this.cdr.detectChanges();
+        setTimeout(() => { this.errorMessage = ''; this.cdr.detectChanges(); }, 4000);
+      }
     });
   }
 

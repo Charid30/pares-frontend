@@ -411,9 +411,44 @@
             </div>
 
             <!-- ════════════════════════════════════════════════
-                 Champ NIP avec scanner
+                 Choix de la pièce d'identité : CNIB (NIP) ou Passeport
             ════════════════════════════════════════════════ -->
             <div>
+              <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                Pièce d'identité <span class="text-red-500">*</span>
+              </label>
+              <div class="grid grid-cols-2 gap-2">
+                <button type="button" (click)="setPieceIdentiteType('cnib')"
+                  class="flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all"
+                  [ngClass]="pieceIdentiteType === 'cnib'
+                    ? 'border-primary-500 bg-primary-50 text-primary-700'
+                    : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300'">
+                  <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+                  </svg>
+                  CNIB (NIP)
+                </button>
+                <button type="button" (click)="setPieceIdentiteType('passeport')"
+                  class="flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all"
+                  [ngClass]="pieceIdentiteType === 'passeport'
+                    ? 'border-primary-500 bg-primary-50 text-primary-700'
+                    : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300'">
+                  <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M5 21V5a2 2 0 012-2h10a2 2 0 012 2v16l-7-4-7 4z" />
+                  </svg>
+                  Passeport
+                </button>
+              </div>
+            </div>
+
+            <!-- ════════════════════════════════════════════════
+                 Champ NIP avec scanner
+            ════════════════════════════════════════════════ -->
+            <div *ngIf="pieceIdentiteType === 'cnib'">
               <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
                 Numéro NIP <span class="text-red-500">*</span>
               </label>
@@ -599,6 +634,32 @@
 
               <!-- Input fichier caché -->
               <input #fileInput type="file" accept="image/*" class="hidden" (change)="onFileSelected($event)">
+            </div>
+
+            <!-- ════════════════════════════════════════════════
+                 Champ Passeport (saisie manuelle uniquement)
+            ════════════════════════════════════════════════ -->
+            <div *ngIf="pieceIdentiteType === 'passeport'">
+              <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                Numéro de passeport <span class="text-red-500">*</span>
+              </label>
+              <div class="relative">
+                <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M5 21V5a2 2 0 012-2h10a2 2 0 012 2v16l-7-4-7 4z" />
+                </svg>
+                <input id="passeport-input" type="text" formControlName="passeport" placeholder="Ex: AB1234567"
+                  maxlength="12"
+                  class="w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl text-sm font-mono tracking-wider uppercase transition-all focus:outline-none focus:ring-2 focus:bg-white"
+                  [ngClass]="registerForm.get('passeport')?.invalid && registerForm.get('passeport')?.touched
+                                   ? 'border-red-300 focus:ring-red-400'
+                                   : 'border-gray-200 focus:ring-primary-400 focus:border-transparent'">
+              </div>
+              <p *ngIf="registerForm.get('passeport')?.invalid && registerForm.get('passeport')?.touched"
+                class="mt-1.5 text-xs text-red-500">Le numéro de passeport doit contenir entre 6 et 12 caractères alphanumériques</p>
             </div>
 
             <!-- IFU / Récépissé — toggle + choix exclusif -->

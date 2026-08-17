@@ -38,8 +38,8 @@
 
         <!-- Bouton nouvelle demande -->
         <button (click)="ouvrirCreateModal()"
-                [disabled]="ifuLoaded && !hasDocumentFiscal"
-                [title]="(ifuLoaded && !hasDocumentFiscal) ? 'Renseignez votre IFU ou récépissé dans votre profil' : ''"
+                [disabled]="!ifuLoaded || !hasDocumentFiscal"
+                [title]="!ifuLoaded ? 'Chargement...' : (!hasDocumentFiscal ? 'Renseignez votre IFU ou récépissé dans votre profil' : '')"
                 class="flex items-center gap-1.5 md:gap-2 px-3 md:px-5 py-2 md:py-2.5 bg-primary-500 hover:bg-primary-600 text-white
                        text-xs md:text-sm font-medium rounded-xl transition-all shadow-lg shadow-primary-500/25 flex-shrink-0
                        disabled:opacity-50 disabled:cursor-not-allowed">
@@ -194,7 +194,9 @@
             : 'Vous n\'avez pas encore soumis de demande d\'aide sociale.' }}
         </p>
         <button (click)="ouvrirCreateModal()"
-          class="inline-flex items-center gap-1.5 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white text-xs font-semibold rounded-xl transition-all active:scale-95">
+          [disabled]="!ifuLoaded || !hasDocumentFiscal"
+          [title]="!ifuLoaded ? 'Chargement...' : (!hasDocumentFiscal ? 'Renseignez votre IFU ou récépissé dans votre profil' : '')"
+          class="inline-flex items-center gap-1.5 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white text-xs font-semibold rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>

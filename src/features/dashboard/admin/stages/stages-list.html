@@ -288,9 +288,16 @@
               <span *ngIf="!stage.dateDebutSouhaitee" class="text-xs text-gray-300">—</span>
             </td>
             <td class="px-4 py-4">
-              <span class="px-2.5 py-1 text-xs font-semibold rounded-full" [ngClass]="getStatutClass(stage.statusStage)">
-                {{ getStatutLabel(stage.statusStage) }}
-              </span>
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="px-2.5 py-1 text-xs font-semibold rounded-full" [ngClass]="getStatutClass(stage.statusStage)">
+                  {{ getStatutLabel(stage.statusStage) }}
+                </span>
+                <span *ngIf="stage.statusStage === 'EN_ATTENTE' && stage.dateResoumission"
+                      class="px-2 py-1 text-[10px] font-semibold rounded-full bg-indigo-100 text-indigo-700"
+                      title="Resoumise après un rejet">
+                  Resoumise
+                </span>
+              </div>
             </td>
             <td class="px-4 py-4">
               <div class="flex items-center justify-end gap-1">
@@ -385,10 +392,16 @@
               <p class="font-bold text-gray-900 text-sm leading-tight truncate">{{ getCandidatName(stage) }}</p>
               <p class="text-xs text-gray-400 mt-0.5 truncate">{{ stage.candidat.email }}</p>
             </div>
-            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
-                  [ngClass]="getStatutClass(stage.statusStage)">
-              {{ getStatutLabel(stage.statusStage) }}
-            </span>
+            <div class="flex flex-col items-end gap-1 flex-shrink-0">
+              <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                    [ngClass]="getStatutClass(stage.statusStage)">
+                {{ getStatutLabel(stage.statusStage) }}
+              </span>
+              <span *ngIf="stage.statusStage === 'EN_ATTENTE' && stage.dateResoumission"
+                    class="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                Resoumise
+              </span>
+            </div>
           </div>
 
           <!-- Ligne 2 : Meta-infos -->
@@ -968,7 +981,7 @@
                   {key:'cv', label:'CV daté et signé', filename:selectedStage.cv_filename},
                   {key:'cnib', label:'CNIB', filename:selectedStage.cnib_filename},
                   {key:'casierJudiciaire', label:'Casier judiciaire', filename:selectedStage.casierJudiciaire_filename},
-                  {key:'lettreMotivation', label:'Lettre de motivation signée', filename:selectedStage.lettreMotivation_filename},
+                  {key:'lettreMotivation', label:'Demande de stage signée', filename:selectedStage.lettreMotivation_filename},
                   {key:'lettreRecommandation', label:'Lettre de recommandation', filename:selectedStage.lettreRecommandation_filename},
                   {key:'dernierDiplome', label:'Dernier diplôme légalisé', filename:selectedStage.dernierDiplome_filename}
                 ]">

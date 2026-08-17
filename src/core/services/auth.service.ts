@@ -61,7 +61,8 @@ export interface RegisterData {
   prenom: string;
   genre: string;
   telephone: string;
-  nip: string;
+  nip?: string;
+  passeport?: string;
   ifu?: string;
   recipisse?: string;
 }

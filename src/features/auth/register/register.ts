@@ -34,6 +34,9 @@ export class Register implements OnInit, OnDestroy {
   successMessage: string | null = null;
   showPassword = false;
 
+  // ── Pièce d'identité (CNIB/NIP ou Passeport) ─────────────────────────────
+  pieceIdentiteType: 'cnib' | 'passeport' = 'cnib';
+
   // ── Document fiscal (IFU ou Récépissé) ───────────────────────────────────
   showDocumentFiscal = false;
   documentFiscalType: 'ifu' | 'recipisse' = 'ifu';
@@ -119,6 +122,7 @@ export class Register implements OnInit, OnDestroy {
       genre: ['', [Validators.required]],
       telephone: ['', [Validators.required, this.telephoneValidator]],
       nip: ['', [Validators.required, Validators.pattern(/^[0-9]{17}$/)]],
+      passeport: ['', [Validators.pattern(/^[A-Za-z0-9]{6,12}$/)]],
       ifu: ['', [Validators.pattern(/^\d{8}[A-Za-z]$/)]],
       recipisse: ['', [Validators.minLength(3), Validators.maxLength(50)]],
       acceptTerms: [false, [Validators.requiredTrue]],
@@ -602,7 +606,8 @@ onSubmit(): void {
     prenom: this.registerForm.value.prenom,
     genre: this.registerForm.value.genre,
     telephone: this.buildTelephoneFinal(),
-    nip: this.registerForm.value.nip,
+    nip: this.pieceIdentiteType === 'cnib' ? (this.registerForm.value.nip || undefined) : undefined,
+    passeport: this.pieceIdentiteType === 'passeport' ? (this.registerForm.value.passeport || undefined) : undefined,
     ifu: this.documentFiscalType === 'ifu' ? (this.registerForm.value.ifu || undefined) : undefined,
     recipisse: this.documentFiscalType === 'recipisse' ? (this.registerForm.value.recipisse || undefined) : undefined,
   };
@@ -636,7 +641,7 @@ onSubmit(): void {
     },
   });
 } else {
-  ['prenom', 'nom', 'telephone', 'nip', 'ifu', 'acceptTerms'].forEach(f =>
+  ['prenom', 'nom', 'telephone', 'nip', 'passeport', 'ifu', 'acceptTerms'].forEach(f =>
     this.registerForm.get(f)?.markAsTouched()
   );
 }
@@ -644,6 +649,29 @@ onSubmit(): void {
 
 togglePasswordVisibility(): void {
   this.showPassword = !this.showPassword;
+}
+
+setPieceIdentiteType(type: 'cnib' | 'passeport'): void {
+  this.pieceIdentiteType = type;
+  const nipCtrl = this.registerForm.get('nip');
+  const passeportCtrl = this.registerForm.get('passeport');
+
+  if (type === 'cnib') {
+    passeportCtrl?.setValue('');
+    passeportCtrl?.markAsUntouched();
+    passeportCtrl?.clearValidators();
+    passeportCtrl?.addValidators(Validators.pattern(/^[A-Za-z0-9]{6,12}$/));
+    nipCtrl?.addValidators(Validators.required);
+  } else {
+    this.closeScan();
+    nipCtrl?.setValue('');
+    nipCtrl?.markAsUntouched();
+    nipCtrl?.clearValidators();
+    nipCtrl?.addValidators(Validators.pattern(/^[0-9]{17}$/));
+    passeportCtrl?.addValidators(Validators.required);
+  }
+  nipCtrl?.updateValueAndValidity();
+  passeportCtrl?.updateValueAndValidity();
 }
 
 toggleIfuField(): void {

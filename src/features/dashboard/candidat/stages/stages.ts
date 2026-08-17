@@ -1218,7 +1218,7 @@ export class Stages implements OnInit {
     cv: 'CV daté et signé',
     cnib: 'CNIB',
     casierJudiciaire: 'Casier judiciaire',
-    lettreMotivation: 'Lettre de motivation signée',
+    lettreMotivation: 'Demande de stage signée',
     lettreRecommandation: 'Lettre de recommandation',
     dernierDiplome: 'Dernier diplôme légalisé',
   };
