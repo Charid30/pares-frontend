@@ -8,7 +8,7 @@ import { Subscription } from 'rxjs';
 import { firstValueFrom } from 'rxjs';
 import { saveAs } from 'file-saver';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { AdminStageService, Stage, StageDetails, StageStats, StageFilters, RapportStage } from '../../../../core/services/admin-stage.service';
+import { AdminStageService, Stage, StageDetails, StageStats, StageFilters, RapportStage, AutorisationRenouvellement } from '../../../../core/services/admin-stage.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { SearchService } from '../../../../core/services/search.service';
 import { environment } from '../../../../environments/environment';
@@ -193,6 +193,10 @@ export class StagesList implements OnInit, OnDestroy {
   canApprouver = false;
   canValider = false;
   isAdmin = false;
+
+  // Autorisation de renouvellement (stage TERMINE / EXPIRE)
+  soumissionAutorisation = false;
+  errorAutorisation = '';
 
   // Demandes de modification
   demandesModification: any[] = [];
@@ -987,6 +991,44 @@ export class StagesList implements OnInit, OnDestroy {
         });
       }
     });
+      }
+    });
+  }
+
+  // ── Autorisation de renouvellement (stage TERMINE / EXPIRE) ────────────
+  getAutorisationActive(s: Stage): AutorisationRenouvellement | null {
+    const a = s.autorisationsRenouvellement;
+    if (!a || a.length === 0) return null;
+    const now = new Date();
+    const valid = a.find(x => new Date(x.expiresAt) > now);
+    return valid || null;
+  }
+
+  autoriserRenouvellement(s: Stage): void {
+    if (this.soumissionAutorisation) return;
+    this.soumissionAutorisation = true;
+    this.errorAutorisation = '';
+    this.http.put<any>(`${environment.apiUrl}/stages/${s.idstage}/autoriser-renouvellement`, {}).subscribe({
+      next: (res) => {
+        this.ngZone.run(() => {
+          this.soumissionAutorisation = false;
+          const autorisation: AutorisationRenouvellement = {
+            id: res.data?.id,
+            expiresAt: res.data?.expiresAt,
+          };
+          if (this.selectedStage && this.selectedStage.idstage === s.idstage) {
+            this.selectedStage = { ...this.selectedStage, autorisationsRenouvellement: [autorisation] };
+          }
+          this.showToast('success', 'Autorisation accordée', 'Valide 7 jours. Le candidat a été notifié.');
+          this.cdr.detectChanges();
+        });
+      },
+      error: (err) => {
+        this.ngZone.run(() => {
+          this.errorAutorisation = err.error?.message || 'Erreur lors de l\'autorisation';
+          this.soumissionAutorisation = false;
+          this.cdr.detectChanges();
+        });
       }
     });
   }

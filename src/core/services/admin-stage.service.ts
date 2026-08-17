@@ -90,6 +90,12 @@ export interface Stage {
   direction_iddirection?: number | null;
   service_idservice?: number | null;
   direction?: { iddirection: number; nom: string; accronyme: string };
+  autorisationsRenouvellement?: AutorisationRenouvellement[];
+}
+
+export interface AutorisationRenouvellement {
+  id: number;
+  expiresAt: string;
 }
 
 export interface RenouvellementInfo {
