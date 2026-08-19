@@ -59,8 +59,7 @@ export class StagesList implements OnInit, OnDestroy {
   searchTerm = '';
   filtreStatut = '';
   filtreType = '';
-  filtreDomaine = '';
-  domaines: string[] = [];
+  filtreDirection: number | null = null;
 
   // Etat
   loading = false;
@@ -238,7 +237,6 @@ export class StagesList implements OnInit, OnDestroy {
     if (this.isAdmin) this.loadDemandesModification();
     this.loadStats();
     this.loadStages();
-    this.loadDomaines();
     this.loadDirections();
     this.searchSub = this.searchService.term$.pipe(
       debounceTime(300),
@@ -316,18 +314,6 @@ export class StagesList implements OnInit, OnDestroy {
   }
 
   // ==================== DATA LOADING ====================
-  loadDomaines(): void {
-    this.adminStageService.getDomaines().subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.domaines = response.data;
-          this.cdr.detectChanges();
-        }
-      },
-      error: (err) => console.error('Erreur chargement domaines:', err)
-    });
-  }
-
   loadDirections(): void {
     this.http.get<any>(`${environment.apiUrl}/stages/directions`).subscribe({
       next: (res) => {
@@ -429,8 +415,8 @@ export class StagesList implements OnInit, OnDestroy {
       filters.typeStage = this.filtreType;
     }
 
-    if (this.filtreDomaine) {
-      filters.domaineStage = this.filtreDomaine;
+    if (this.filtreDirection) {
+      filters.directionId = this.filtreDirection;
     }
 
     this.adminStageService.getStages(filters).subscribe({

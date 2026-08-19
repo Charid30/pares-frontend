@@ -131,6 +131,7 @@
                 [ngClass]="filtreStatut ? 'bg-yellow-50 border-yellow-300 text-yellow-800 font-semibold' : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-100'">
           <option value="">Tous les statuts</option>
           <option value="EN_ATTENTE">En attente</option>
+          <option value="RESOUMISE">Resoumise</option>
           <option value="EN_COURS_DE_TRAITEMENT">En traitement</option>
           <option value="PROGRAMMATION_EN_COURS">Programmation en cours</option>
           <option value="ACCEPTE">Accepté</option>
@@ -171,22 +172,22 @@
         </svg>
       </div>
 
-      <!-- Filtre domaine -->
+      <!-- Filtre direction -->
       <div class="relative col-span-2 lg:col-span-1">
         <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none"
-             [ngClass]="filtreDomaine ? 'text-teal-600' : 'text-gray-400'"
+             [ngClass]="filtreDirection ? 'text-teal-600' : 'text-gray-400'"
              fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
         </svg>
-        <select [(ngModel)]="filtreDomaine"
+        <select [(ngModel)]="filtreDirection"
                 (change)="onFilterChange()"
                 class="w-full appearance-none pl-8 pr-7 py-2 rounded-xl text-xs font-medium border transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-400"
-                [ngClass]="filtreDomaine ? 'bg-teal-50 border-teal-300 text-teal-800 font-semibold' : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-100'">
-          <option value="">Tous les domaines</option>
-          <option *ngFor="let domaine of domaines" [value]="domaine">{{ domaine }}</option>
+                [ngClass]="filtreDirection ? 'bg-teal-50 border-teal-300 text-teal-800 font-semibold' : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-100'">
+          <option [ngValue]="null">Toutes les directions</option>
+          <option *ngFor="let d of directions" [ngValue]="d.iddirection">{{ d.nom }}</option>
         </select>
         <svg class="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none"
-             [ngClass]="filtreDomaine ? 'text-teal-500' : 'text-gray-400'"
+             [ngClass]="filtreDirection ? 'text-teal-500' : 'text-gray-400'"
              fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
         </svg>
@@ -195,10 +196,10 @@
     </div>
 
     <!-- Reset + compteur -->
-    <div *ngIf="filtreStatut || filtreType || filtreDomaine || searchTerm"
+    <div *ngIf="filtreStatut || filtreType || filtreDirection || searchTerm"
          class="flex items-center justify-between pt-1 border-t border-gray-100">
       <span class="text-xs text-gray-400">{{ totalItems }} résultat(s)</span>
-      <button (click)="filtreStatut = ''; filtreType = ''; filtreDomaine = ''; searchTerm = ''; onFilterChange()"
+      <button (click)="filtreStatut = ''; filtreType = ''; filtreDirection = null; searchTerm = ''; onFilterChange()"
               class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 active:scale-95 transition-all">
         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />

@@ -151,6 +151,7 @@ export interface StageFilters {
   statusStage?: string;
   typeStage?: string;
   domaineStage?: string;
+  directionId?: number;
   search?: string;
 }
 
@@ -224,6 +225,7 @@ export class AdminStageService {
     if (filters.statusStage) params = params.set('statusStage', filters.statusStage);
     if (filters.typeStage) params = params.set('typeStage', filters.typeStage);
     if (filters.domaineStage) params = params.set('domaineStage', filters.domaineStage);
+    if (filters.directionId) params = params.set('directionId', filters.directionId.toString());
     if (filters.search) params = params.set('search', filters.search);
 
     return this.http.get<ApiResponse<PaginatedResponse<Stage>>>(this.apiUrl, { params });
