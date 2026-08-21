@@ -79,6 +79,19 @@ export class AudiencesList implements OnInit, OnDestroy {
   filtreDateDebut = '';
   filtreDateFin = '';
 
+  // ── Archives ──────────────────────────────────────────────────────────────
+  // Une demande traitée (Acceptée / Rejetée / Annulée) est automatiquement
+  // archivée : elle sort de la liste principale pour ne pas noyer les demandes
+  // encore en attente, mais reste consultable via ce bascule.
+  readonly STATUTS_ARCHIVABLES = ['ACCEPTE', 'REJETE', 'ANNULE'];
+  voirArchives = false;
+
+  toggleArchives(): void {
+    this.voirArchives = !this.voirArchives;
+    this.filtreStatut = '';
+    this.appliquerFiltres();
+  }
+
   // ── Compteurs ─────────────────────────────────────────────────────────────
   countEnAttente = 0;
   countAccepte = 0;
@@ -200,6 +213,9 @@ export class AudiencesList implements OnInit, OnDestroy {
         (d.motif && d.motif.toLowerCase().includes(this.searchTerm.toLowerCase()));
       const matchStatut = !this.filtreStatut || d.status === this.filtreStatut;
       const matchMode   = !this.filtreMode   || d.modeSoumission === this.filtreMode;
+      const matchArchive = this.voirArchives
+        ? this.STATUTS_ARCHIVABLES.includes(d.status)
+        : !this.STATUTS_ARCHIVABLES.includes(d.status);
 
       let matchDate = true;
       if (debut || fin) {
@@ -212,7 +228,7 @@ export class AudiencesList implements OnInit, OnDestroy {
         }
       }
 
-      return matchSearch && matchStatut && matchMode && matchDate;
+      return matchSearch && matchStatut && matchMode && matchDate && matchArchive;
     });
   }
 
@@ -222,7 +238,8 @@ export class AudiencesList implements OnInit, OnDestroy {
     this.filtreMode      = '';
     this.filtreDateDebut = '';
     this.filtreDateFin   = '';
-    this.demandesFiltrees = [...this.demandes];
+    this.voirArchives    = false;
+    this.appliquerFiltres();
   }
 
   // ─── Modal traitement ─────────────────────────────────────────────────────

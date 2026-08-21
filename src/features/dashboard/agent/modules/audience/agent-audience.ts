@@ -51,6 +51,19 @@ export class AgentAudience implements OnInit {
   search = '';
   filtreStatut = '';
   filtreMode = '';
+
+  // ── Archives ──────────────────────────────────────────────────────────────
+  // Une demande traitée (Acceptée / Rejetée / Annulée) est automatiquement
+  // archivée : elle sort de la liste principale, mais reste consultable ici.
+  readonly STATUTS_ARCHIVABLES = ['ACCEPTE', 'REJETE', 'ANNULE'];
+  voirArchives = false;
+
+  toggleArchives(): void {
+    this.voirArchives = !this.voirArchives;
+    this.filtreStatut = '';
+    this.filtrer();
+  }
+
   demandeEnDecision: DemandeAudience | null = null;
   decisionType: 'ACCEPTE' | 'REJETE' = 'ACCEPTE';
   commentaire = '';
@@ -155,7 +168,10 @@ export class AgentAudience implements OnInit {
       const matchSearch = !this.search || nom.includes(this.search.toLowerCase());
       const matchStatut = !this.filtreStatut || d.status === this.filtreStatut;
       const matchMode = !this.filtreMode || d.modeSoumission === this.filtreMode;
-      return matchSearch && matchStatut && matchMode;
+      const matchArchive = this.voirArchives
+        ? this.STATUTS_ARCHIVABLES.includes(d.status)
+        : !this.STATUTS_ARCHIVABLES.includes(d.status);
+      return matchSearch && matchStatut && matchMode && matchArchive;
     });
   }
 
@@ -163,6 +179,7 @@ export class AgentAudience implements OnInit {
     this.search = '';
     this.filtreStatut = '';
     this.filtreMode = '';
+    this.voirArchives = false;
     this.filtrer();
   }
 
