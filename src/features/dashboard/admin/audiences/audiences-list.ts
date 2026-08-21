@@ -169,7 +169,9 @@ export class AudiencesList implements OnInit, OnDestroy {
     this.isLoading = true;
     this.errorMessage = '';
 
-    this.http.get<any>(`${this.apiUrl}/demandes-audience`).subscribe({
+    // limit=50 : plafond serveur — cette page charge tout puis filtre côté client,
+    // sans ce paramètre le serveur ne renvoie que 10 résultats par défaut.
+    this.http.get<any>(`${this.apiUrl}/demandes-audience?limit=50`).subscribe({
       next: (res) => {
         this.ngZone.run(() => {
           if (res.success && Array.isArray(res.data)) {
