@@ -190,8 +190,9 @@ export class AgentLayout implements OnInit, OnDestroy {
     const moduleOrder = ['CANDIDATURES', 'CANDIDATS', 'STAGE', 'SUIVI_STAGE', 'SUSPENSION_STAGE', 'OFFRE', 'AIDE', 'DEMANDE_AUDIENCE', 'AGENTS', 'SERVICES'];
     for (const mod of moduleOrder) {
       if (!modules.includes(mod) || !MODULE_MENU_MAP[mod]) continue;
-      if (mod === 'STAGE') {
-        this.pushStageMenuItems();
+      if (mod === 'STAGE') { this.pushStageMenuItems(); continue; }
+      if (mod === 'OFFRE' || mod === 'AIDE' || mod === 'DEMANDE_AUDIENCE') {
+        this.pushDirectionModuleMenuItem(mod);
         continue;
       }
       this.menuItems.push({
@@ -238,6 +239,27 @@ export class AgentLayout implements OnInit, OnDestroy {
       // Accès simple (ex. CONSULTER seul, sans rôle d'action ni lecture globale)
       this.menuItems.push({ ...base, route: MODULE_ROUTE_MAP['STAGE'] });
     }
+  }
+
+  /**
+   * Pour OFFRE, AIDE et DEMANDE_AUDIENCE : affiche le label avec l'accronyme de la
+   * direction de l'agent (ex. "Audience DSI") si l'agent a un rôle d'action
+   * (VALIDER / REJETER). Sinon, affiche le label générique.
+   */
+  private pushDirectionModuleMenuItem(mod: string): void {
+    const hasActionRole = ['VALIDER', 'REJETER', 'APPROUVER'].some(a => this.authService.hasPermission(mod, a));
+    const accronyme = this.authService.getUserDirectionAccronyme();
+    const base = MODULE_MENU_MAP[mod];
+    const shortLabel: Record<string, string> = {
+      OFFRE:            'Offre',
+      AIDE:             'Aide',
+      DEMANDE_AUDIENCE: 'Audience',
+    };
+    this.menuItems.push({
+      ...base,
+      label: (hasActionRole && accronyme) ? `${shortLabel[mod]} ${accronyme}` : base.label,
+      route: MODULE_ROUTE_MAP[mod],
+    });
   }
 
   get roleDescription(): string {
