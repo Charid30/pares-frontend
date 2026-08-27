@@ -94,7 +94,17 @@
           <option value="SERVICE">Service</option>
           <option value="AUTRE">Autre</option>
         </select>
-        @if (searchTerm || filtreStatut || filtreType) {
+        <select
+          [(ngModel)]="filtreDirection"
+          (change)="appliquerFiltres()"
+          class="flex-1 sm:w-44 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 focus:bg-white transition-all cursor-pointer"
+          [ngClass]="filtreDirection ? 'bg-teal-50 border-teal-300 text-teal-800 font-semibold' : ''">
+          <option [ngValue]="null">Toutes les directions</option>
+          @for (dir of directions; track dir.iddirection) {
+            <option [ngValue]="dir.iddirection">{{ dir.accronyme }} — {{ dir.nom }}</option>
+          }
+        </select>
+        @if (searchTerm || filtreStatut || filtreType || filtreDirection) {
           <button
             (click)="effacerFiltres()"
             class="px-3 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-sm active:scale-95 transition-all cursor-pointer shrink-0"
@@ -108,7 +118,7 @@
     </div>
 
     <!-- Résultats filtrés -->
-    @if (searchTerm || filtreStatut || filtreType) {
+    @if (searchTerm || filtreStatut || filtreType || filtreDirection) {
       <div class="flex items-center gap-1.5 mt-2 pt-2 border-t border-gray-100">
         <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
@@ -201,6 +211,24 @@
                 {{ offre.typeOffre }}
               </span>
             </div>
+
+            <!-- Direction concernée -->
+            @if (offre.direction) {
+              <div class="flex items-center gap-1.5 mb-2">
+                <svg class="w-3 h-3 text-teal-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+                <span class="text-[10px] font-semibold text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded">{{ offre.direction.accronyme }}</span>
+                <span class="text-xs text-gray-500 truncate">{{ offre.direction.nom }}</span>
+              </div>
+            } @else {
+              <div class="flex items-center gap-1.5 mb-2">
+                <svg class="w-3 h-3 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span class="text-xs text-amber-600 italic">Non affectée à une direction</span>
+              </div>
+            }
 
             <!-- Description -->
             @if (offre.description) {

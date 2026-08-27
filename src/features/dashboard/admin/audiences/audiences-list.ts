@@ -76,6 +76,7 @@ export class AudiencesList implements OnInit, OnDestroy {
   searchTerm = '';
   filtreStatut = '';
   filtreMode = '';
+  filtreDirection: number | null = null;
   filtreDateDebut = '';
   filtreDateFin = '';
 
@@ -213,8 +214,9 @@ export class AudiencesList implements OnInit, OnDestroy {
         nom.includes(this.searchTerm.toLowerCase()) ||
         (d.pourM && d.pourM.toLowerCase().includes(this.searchTerm.toLowerCase())) ||
         (d.motif && d.motif.toLowerCase().includes(this.searchTerm.toLowerCase()));
-      const matchStatut = !this.filtreStatut || d.status === this.filtreStatut;
-      const matchMode   = !this.filtreMode   || d.modeSoumission === this.filtreMode;
+      const matchStatut    = !this.filtreStatut    || d.status === this.filtreStatut;
+      const matchMode      = !this.filtreMode      || d.modeSoumission === this.filtreMode;
+      const matchDirection = !this.filtreDirection || d.direction_iddirection === this.filtreDirection;
       const matchArchive = this.voirArchives
         ? this.STATUTS_ARCHIVABLES.includes(d.status)
         : !this.STATUTS_ARCHIVABLES.includes(d.status);
@@ -230,7 +232,7 @@ export class AudiencesList implements OnInit, OnDestroy {
         }
       }
 
-      return matchSearch && matchStatut && matchMode && matchDate && matchArchive;
+      return matchSearch && matchStatut && matchMode && matchDirection && matchDate && matchArchive;
     });
   }
 
@@ -238,6 +240,7 @@ export class AudiencesList implements OnInit, OnDestroy {
     this.searchTerm      = '';
     this.filtreStatut    = '';
     this.filtreMode      = '';
+    this.filtreDirection = null;
     this.filtreDateDebut = '';
     this.filtreDateFin   = '';
     this.voirArchives    = false;

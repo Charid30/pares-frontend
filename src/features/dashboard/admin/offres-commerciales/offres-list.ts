@@ -14,6 +14,12 @@ import { Loader } from '../../../../shared/components/loader/loader';
 import { StatCard } from '../../../../shared/components/stat-card/stat-card';
 import { SearchService } from '../../../../core/services/search.service';
 
+interface DirectionInfo {
+  iddirection: number;
+  nom: string;
+  accronyme: string;
+}
+
 // Offre soumise par un candidat
 interface OffreCandidat {
   idoffres: number;
@@ -26,6 +32,8 @@ interface OffreCandidat {
   motifRefus: string | null;
   createdDate: string;
   lastModifiedDate: string;
+  direction_iddirection?: number | null;
+  direction?: DirectionInfo;
   candidatCreateur?: {
     idcandidats: number;
     nom: string;
@@ -58,6 +66,10 @@ export class OffresList implements OnInit, OnDestroy {
   searchTerm = '';
   filtreStatut = '';
   filtreType = '';
+  filtreDirection: number | null = null;
+
+  // ── Directions ─────────────────────────────────────────────────────────────
+  directions: DirectionInfo[] = [];
 
   // ── Compteurs (calculés depuis offres[]) ──────────────────────────────────
   countEnAttente = 0;
@@ -91,6 +103,7 @@ export class OffresList implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadOffres();
+    this.loadDirections();
     // Recherche globale (barre du haut)
     this.searchSub = this.searchService.term$.pipe(
       debounceTime(200),
@@ -146,6 +159,13 @@ export class OffresList implements OnInit, OnDestroy {
     });
   }
 
+  loadDirections(): void {
+    this.http.get<any>(`${this.apiUrl}/stages/directions`).subscribe({
+      next: (res) => { if (res.success) { this.directions = res.data; this.cdr.detectChanges(); } },
+      error: (err) => console.error('Erreur chargement directions:', err),
+    });
+  }
+
   // ─── Compteurs (calculés localement depuis offres[]) ──────────────────────
   calculerCompteurs(): void {
     this.countEnAttente    = this.offres.filter(o => o.statusOffre === 'EN_ATTENTE').length;
@@ -162,17 +182,19 @@ export class OffresList implements OnInit, OnDestroy {
         o.titre.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         o.typeOffre.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         nom.includes(this.searchTerm.toLowerCase());
-      const matchStatut = !this.filtreStatut || o.statusOffre === this.filtreStatut;
-      const matchType   = !this.filtreType   || o.typeOffre === this.filtreType;
-      return matchSearch && matchStatut && matchType;
+      const matchStatut    = !this.filtreStatut    || o.statusOffre === this.filtreStatut;
+      const matchType      = !this.filtreType      || o.typeOffre === this.filtreType;
+      const matchDirection = !this.filtreDirection || o.direction_iddirection === this.filtreDirection;
+      return matchSearch && matchStatut && matchType && matchDirection;
     });
   }
 
   effacerFiltres(): void {
-    this.searchTerm   = '';
-    this.filtreStatut = '';
-    this.filtreType   = '';
-    this.offresFiltrees = [...this.offres];
+    this.searchTerm      = '';
+    this.filtreStatut    = '';
+    this.filtreType      = '';
+    this.filtreDirection = null;
+    this.offresFiltrees  = [...this.offres];
   }
 
   // ─── Modal traitement ─────────────────────────────────────────────────────
