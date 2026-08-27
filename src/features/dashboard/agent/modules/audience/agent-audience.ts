@@ -73,6 +73,16 @@ export class AgentAudience implements OnInit {
   showDetailModal = false;
   detailDemande: DemandeAudience | null = null;
 
+  // Modification date de programmation (demande déjà acceptée)
+  showModifDateModal = false;
+  demandeAModifier: DemandeAudience | null = null;
+  modifDate = '';
+  modifHeure = '';
+  soumissionModifDate = false;
+
+  // Remise en attente
+  soumissionRemise = false;
+
   // Preview PDF
   showPreviewModal = false;
   previewBlobUrl: string | null = null;
@@ -280,6 +290,76 @@ export class AgentAudience implements OnInit {
       error: (err) => {
         this.errorTransfert = err.error?.message || 'Erreur lors du transfert';
         this.soumissionTransfert = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  ouvrirModifDate(d: DemandeAudience): void {
+    this.demandeAModifier = d;
+    this.modifDate = (d.dateAudienceConfirmee || d.dateAudience || '').substring(0, 10);
+    this.modifHeure = (d.heureAudienceConfirmee || d.heureAudience || '').substring(0, 5);
+    this.showModifDateModal = true;
+    this.cdr.detectChanges();
+  }
+
+  fermerModifDate(): void {
+    if (this.soumissionModifDate) return;
+    this.showModifDateModal = false;
+    this.demandeAModifier = null;
+  }
+
+  sauvegarderModifDate(): void {
+    if (!this.demandeAModifier || this.soumissionModifDate) return;
+    this.soumissionModifDate = true;
+    this.http.put<any>(`${this.apiUrl}/demandes-audience/${this.demandeAModifier.iddemande}/statut`, {
+      status: 'ACCEPTE',
+      dateAudienceConfirmee: this.modifDate || null,
+      heureAudienceConfirmee: this.modifHeure || null,
+    }).subscribe({
+      next: () => {
+        if (this.demandeAModifier) {
+          const idx = this.demandes.findIndex(d => d.iddemande === this.demandeAModifier!.iddemande);
+          if (idx !== -1) {
+            this.demandes[idx].dateAudienceConfirmee = this.modifDate || undefined;
+            this.demandes[idx].heureAudienceConfirmee = this.modifHeure || undefined;
+          }
+          if (this.detailDemande?.iddemande === this.demandeAModifier.iddemande) {
+            this.detailDemande.dateAudienceConfirmee = this.modifDate || undefined;
+            this.detailDemande.heureAudienceConfirmee = this.modifHeure || undefined;
+          }
+        }
+        this.showToast('Succès', 'Date de programmation mise à jour');
+        this.fermerModifDate();
+        this.soumissionModifDate = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.showToast('Erreur', err.error?.message || 'Erreur lors de la modification', 'error');
+        this.soumissionModifDate = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  remettreEnAttente(d: DemandeAudience): void {
+    if (this.soumissionRemise) return;
+    this.soumissionRemise = true;
+    this.http.put<any>(`${this.apiUrl}/demandes-audience/${d.iddemande}/statut`, { status: 'EN_ATTENTE' }).subscribe({
+      next: () => {
+        d.status = 'EN_ATTENTE';
+        d.commentaireAdmin = undefined;
+        d.dateAudienceConfirmee = null;
+        d.heureAudienceConfirmee = null;
+        this.calculerStats();
+        this.filtrer();
+        this.showToast('Succès', 'Demande remise en attente');
+        this.soumissionRemise = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.showToast('Erreur', err.error?.message || 'Impossible de remettre en attente', 'error');
+        this.soumissionRemise = false;
         this.cdr.detectChanges();
       },
     });

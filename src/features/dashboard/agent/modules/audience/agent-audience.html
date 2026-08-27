@@ -205,6 +205,20 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                       </svg>
                     </button>
+                    <button *ngIf="peutValider && d.status === 'ACCEPTE'" (click)="ouvrirModifDate(d)"
+                            class="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all duration-150"
+                            title="Modifier la date de programmation">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                      </svg>
+                    </button>
+                    <button *ngIf="peutValider && (d.status === 'ACCEPTE' || d.status === 'REJETE')" (click)="remettreEnAttente(d)"
+                            class="p-1.5 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all duration-150"
+                            title="Remettre en attente">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                      </svg>
+                    </button>
                     <button *ngIf="peutTransferer && peutTransfererStatut(d)" (click)="ouvrirTransfertModal(d)"
                             class="p-1.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-all duration-150"
                             title="Transférer">
@@ -292,6 +306,20 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
                 Rejeter
+              </button>
+              <button *ngIf="peutValider && d.status === 'ACCEPTE'" (click)="ouvrirModifDate(d)"
+                      class="flex items-center gap-1.5 py-2 px-3 text-xs font-semibold text-amber-600 bg-amber-50 rounded-xl hover:bg-amber-100 active:scale-95 transition-all">
+                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                Modifier date
+              </button>
+              <button *ngIf="peutValider && (d.status === 'ACCEPTE' || d.status === 'REJETE')" (click)="remettreEnAttente(d)"
+                      class="flex items-center gap-1.5 py-2 px-3 text-xs font-semibold text-orange-600 bg-orange-50 rounded-xl hover:bg-orange-100 active:scale-95 transition-all">
+                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                Remettre en attente
               </button>
               <button *ngIf="d.modeSoumission === 'FICHIER'" (click)="previewFichier(d)"
                       class="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all" title="Aperçu PDF">
@@ -450,6 +478,16 @@
                 class="px-4 py-2 text-sm font-medium text-red-700 bg-red-50 hover:bg-red-100 rounded-xl transition-colors">
           ✕ Rejeter
         </button>
+        <button *ngIf="peutValider && detailDemande.status === 'ACCEPTE'"
+                (click)="ouvrirModifDate(detailDemande); fermerDetail()"
+                class="px-4 py-2 text-sm font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-xl transition-colors">
+          Modifier date
+        </button>
+        <button *ngIf="peutValider && (detailDemande.status === 'ACCEPTE' || detailDemande.status === 'REJETE')"
+                (click)="remettreEnAttente(detailDemande); fermerDetail()"
+                class="px-4 py-2 text-sm font-medium text-orange-700 bg-orange-50 hover:bg-orange-100 rounded-xl transition-colors">
+          Remettre en attente
+        </button>
         <button (click)="fermerDetail()"
                 class="px-4 py-2 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
           Fermer
@@ -548,6 +586,62 @@
                 class="px-4 py-2 text-sm font-medium text-white rounded-xl transition-colors disabled:opacity-50"
                 [ngClass]="decisionType === 'ACCEPTE' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'">
           {{ soumission ? 'En cours...' : 'Confirmer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Modification date de programmation -->
+  <div *ngIf="showModifDateModal && demandeAModifier"
+       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+       (click)="fermerModifDate()">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm"
+         (click)="$event.stopPropagation()">
+      <div class="px-6 py-4 rounded-t-2xl" style="background:linear-gradient(135deg,#d97706,#b45309)">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <div class="min-w-0">
+            <h3 class="font-bold text-white text-base leading-tight">Modifier la date d'audience</h3>
+            <p class="text-white/70 text-xs mt-0.5 truncate">
+              {{ demandeAModifier.candidat?.nom }} {{ demandeAModifier.candidat?.prenom }}
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="p-6 space-y-4">
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-3">
+          <p class="text-xs font-semibold text-amber-700 mb-2">Nouvelle date de programmation</p>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] text-gray-500 mb-1">Date <span class="text-red-500">*</span></label>
+              <input type="date" [(ngModel)]="modifDate"
+                     class="w-full px-2.5 py-2 text-sm border border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400">
+            </div>
+            <div>
+              <label class="block text-[11px] text-gray-500 mb-1">Heure <span class="text-red-500">*</span></label>
+              <input type="time" [(ngModel)]="modifHeure"
+                     class="w-full px-2.5 py-2 text-sm border border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400">
+            </div>
+          </div>
+          <p class="text-[11px] text-gray-400 mt-2">
+            Date souhaitée par le candidat : {{ demandeAModifier.dateAudience | date:'dd/MM/yyyy' }} à {{ demandeAModifier.heureAudience?.substring(0,5) }}
+          </p>
+        </div>
+      </div>
+      <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+        <button (click)="fermerModifDate()"
+                [disabled]="soumissionModifDate"
+                class="px-4 py-2 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors disabled:opacity-50">
+          Annuler
+        </button>
+        <button (click)="sauvegarderModifDate()"
+                [disabled]="!modifDate || !modifHeure || soumissionModifDate"
+                class="px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-xl transition-colors disabled:opacity-50">
+          {{ soumissionModifDate ? 'Enregistrement...' : 'Enregistrer' }}
         </button>
       </div>
     </div>

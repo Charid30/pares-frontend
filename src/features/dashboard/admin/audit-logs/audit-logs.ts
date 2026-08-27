@@ -184,6 +184,9 @@ export class AuditLogs implements OnInit, OnDestroy {
       AIDE_REJETEE:            'Aide rejetée',
       AUDIENCE_ACCEPTEE:       'Audience acceptée',
       AUDIENCE_REJETEE:        'Audience rejetée',
+      AUDIENCE_EN_ATTENTE:     'Audience remise en attente',
+      AUDIENCE_AFFECTATION:    'Direction affectée',
+      AUDIENCE_TRANSFEREE:     'Audience transférée',
     };
     return labels[action] ?? action;
   }
