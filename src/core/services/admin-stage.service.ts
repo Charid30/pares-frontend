@@ -149,6 +149,7 @@ export interface StageFilters {
   page?: number;
   limit?: number;
   statusStage?: string;
+  excludeStatus?: string;
   typeStage?: string;
   domaineStage?: string;
   directionId?: number;
@@ -223,6 +224,7 @@ export class AdminStageService {
     if (filters.page) params = params.set('page', filters.page.toString());
     if (filters.limit) params = params.set('limit', filters.limit.toString());
     if (filters.statusStage) params = params.set('statusStage', filters.statusStage);
+    if (filters.excludeStatus) params = params.set('excludeStatus', filters.excludeStatus);
     if (filters.typeStage) params = params.set('typeStage', filters.typeStage);
     if (filters.domaineStage) params = params.set('domaineStage', filters.domaineStage);
     if (filters.directionId) params = params.set('directionId', filters.directionId.toString());

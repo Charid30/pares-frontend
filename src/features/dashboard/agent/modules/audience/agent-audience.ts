@@ -262,7 +262,16 @@ export class AgentAudience implements OnInit {
         if (res.success && this.demandeATransferer) {
           const updated = res.data;
           const idx = this.demandes.findIndex(d => d.iddemande === this.demandeATransferer!.iddemande);
-          if (idx !== -1) this.demandes[idx] = { ...this.demandes[idx], ...updated };
+          if (idx !== -1) {
+            // Un agent restreint à sa direction ne doit plus voir la demande une
+            // fois transférée ailleurs — seul un rôle "lecture globale" (qui voit
+            // toutes les directions) la garde affichée, juste mise à jour.
+            if (this.authService.hasLectureGlobale('DEMANDE_AUDIENCE')) {
+              this.demandes[idx] = { ...this.demandes[idx], ...updated };
+            } else {
+              this.demandes.splice(idx, 1);
+            }
+          }
           this.filtrer();
         }
         this.fermerTransfertModal();

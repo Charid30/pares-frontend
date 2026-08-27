@@ -98,6 +98,17 @@ export class AgentStage implements OnInit, OnDestroy {
   search = '';
   filtreStatut = '';
   filtreType = '';
+
+  // Une demande REJETEE est archivée automatiquement (sortie de la liste par
+  // défaut) ; reste consultable via ce bascule.
+  voirArchives = false;
+
+  toggleArchives(): void {
+    this.voirArchives = !this.voirArchives;
+    this.filtreStatut = '';
+    this.onFiltreChange();
+  }
+
   page = 1;
   limit = 20;
   total = 0;
@@ -355,12 +366,18 @@ export class AgentStage implements OnInit, OnDestroy {
     // sélecteur ne s'applique que s'il correspond à un sous-ensemble cohérent —
     // sinon on respecte simplement le statut choisi par l'agent.
     const statusStage = this.filtreStatut || this.statusFilter || '';
+    // Archivage automatique des demandes REJETEES : masquées par défaut de la
+    // liste principale, sauf si un filtre explicite (dropdown ou route) les cible déjà.
+    const archiveParam: Record<string, string> = statusStage
+      ? {}
+      : (this.voirArchives ? { statusStage: 'REJETE' } : { excludeStatus: 'REJETE' });
 
     const params = new URLSearchParams({
       page: String(this.page),
       limit: String(this.limit),
       scope: this.scope,
       ...(statusStage ? { statusStage } : {}),
+      ...archiveParam,
       ...(this.filtreType ? { typeStage: this.filtreType } : {}),
       ...(this.search ? { search: this.search } : {}),
     });
@@ -469,6 +486,7 @@ export class AgentStage implements OnInit, OnDestroy {
     this.search = '';
     this.filtreStatut = '';
     this.filtreType = '';
+    this.voirArchives = false;
     this.onFiltreChange();
   }
 
@@ -783,7 +801,24 @@ export class AgentStage implements OnInit, OnDestroy {
 
   onDocFileChange(event: Event): void {
     const input = event.target as HTMLInputElement;
-    this.docFile = input.files?.[0] || null;
+    const file = input.files?.[0] || null;
+    this.docFile = null;
+    if (!file) return;
+
+    if (file.type !== 'application/pdf') {
+      this.errorDoc = 'Seuls les fichiers PDF sont autorisés';
+      input.value = '';
+      this.cdr.detectChanges();
+      return;
+    }
+    if (file.size > 1 * 1024 * 1024) {
+      this.errorDoc = 'Le fichier dépasse la taille maximale de 1 Mo';
+      input.value = '';
+      this.cdr.detectChanges();
+      return;
+    }
+    this.errorDoc = '';
+    this.docFile = file;
   }
 
   creerDocument(): void {

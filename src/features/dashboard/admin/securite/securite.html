@@ -247,23 +247,30 @@
       @for (log of stats.recentLogs; track log.id) {
       <div class="flex items-center gap-3 px-5 py-3 hover:bg-gray-50/60 transition-colors">
         <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-          [class.bg-red-100]="log.action === 'IP_BANNIE'" [class.bg-amber-100]="log.action !== 'IP_BANNIE'">
-          <svg class="w-3.5 h-3.5" [class.text-red-600]="log.action === 'IP_BANNIE'"
-            [class.text-amber-600]="log.action !== 'IP_BANNIE'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          [class.bg-red-100]="log.action === 'IP_BANNIE' || log.action === 'COMPTE_VERROUILLE'"
+          [class.bg-amber-100]="log.action !== 'IP_BANNIE' && log.action !== 'COMPTE_VERROUILLE'">
+          <svg class="w-3.5 h-3.5" [class.text-red-600]="log.action === 'IP_BANNIE' || log.action === 'COMPTE_VERROUILLE'"
+            [class.text-amber-600]="log.action !== 'IP_BANNIE' && log.action !== 'COMPTE_VERROUILLE'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
         </div>
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2 flex-wrap">
+            @if (log.action === 'COMPTE_VERROUILLE') {
+            <span class="font-mono text-xs font-semibold text-gray-700">{{ log.details?.username }}</span>
+            } @else {
             <span class="font-mono text-xs font-semibold text-gray-700">{{ log.ip_address }}</span>
+            }
             <span class="inline-flex items-center gap-1 text-xs text-gray-500">
               <span class="text-sm">{{ flagEmoji(log.geo?.country ?? null) }}</span>
               {{ geoLabel(log.geo) }}
             </span>
             <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold"
-              [class.bg-red-100]="log.action === 'IP_BANNIE'" [class.text-red-700]="log.action === 'IP_BANNIE'"
-              [class.bg-amber-100]="log.action !== 'IP_BANNIE'" [class.text-amber-700]="log.action !== 'IP_BANNIE'">
-              {{ log.action === 'IP_BANNIE' ? 'IP bannie' : 'Tentative' }}
+              [class.bg-red-100]="log.action === 'IP_BANNIE' || log.action === 'COMPTE_VERROUILLE'"
+              [class.text-red-700]="log.action === 'IP_BANNIE' || log.action === 'COMPTE_VERROUILLE'"
+              [class.bg-amber-100]="log.action !== 'IP_BANNIE' && log.action !== 'COMPTE_VERROUILLE'"
+              [class.text-amber-700]="log.action !== 'IP_BANNIE' && log.action !== 'COMPTE_VERROUILLE'">
+              {{ log.action === 'IP_BANNIE' ? 'IP bannie' : (log.action === 'COMPTE_VERROUILLE' ? 'Compte verrouillé' : 'Tentative') }}
             </span>
             @if (log.details?.pattern) {
             <span class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">{{ patternLabel(log.details?.pattern ??
@@ -271,6 +278,9 @@
             }
             @if (log.details?.path) {
             <span class="text-xs text-gray-400 truncate">{{ log.details?.method }} {{ log.details?.path }}</span>
+            }
+            @if (log.action === 'COMPTE_VERROUILLE' && log.details?.attempts) {
+            <span class="text-xs text-gray-400">{{ log.details?.attempts }} tentatives échouées</span>
             }
           </div>
         </div>

@@ -198,10 +198,11 @@ export class AuditLogs implements OnInit, OnDestroy {
       d = details;
     }
     const parts: string[] = [];
+    if (d['objet'])              parts.push(d['objet']);
+    if (d['nom'])                parts.push(`Candidat : ${d['nom']} ${d['prenom'] ?? ''}`);
     if (d['motifRefus'])         parts.push(`Motif : ${d['motifRefus']}`);
     if (d['dateDebutEffective']) parts.push(`Début : ${d['dateDebutEffective']}`);
     if (d['champsModifies'])     parts.push(`Champs : ${(d['champsModifies'] as string[]).join(', ')}`);
-    if (d['nom'])                parts.push(`${d['nom']} ${d['prenom'] ?? ''}`);
     if (d['commentaireAdmin'])   parts.push(d['commentaireAdmin']);
     if (!parts.length) {
       const raw = Object.entries(d).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join(' • ');

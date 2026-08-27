@@ -37,6 +37,8 @@ interface SecurityLogDetails {
   reason?: string | null;
   permanent?: boolean;
   durationHours?: number | null;
+  username?: string;
+  lockedUntil?: string;
 }
 
 interface SecurityLog {

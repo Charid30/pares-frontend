@@ -64,8 +64,13 @@ export class DemandesAudience implements OnInit {
   pageSize = 10;
 
   // ── Modal — étapes ────────────────────────────────────────
-  etape: 1 | 2 = 1;  // Étape 1 : choix du mode | Étape 2 : formulaire
+  // Étape 1 : choix de la direction | Étape 2 : choix du mode | Étape 3 : formulaire
+  etape: 1 | 2 | 3 = 1;
   modeSoumission: 'FICHIER' | 'FORMULAIRE' | null = null;
+
+  // ── Direction concernée (choisie en premier) ───────────────
+  directions: { iddirection: number; nom: string; accronyme: string }[] = [];
+  selectedDirection: number | null = null;
 
   // ── Formulaires ───────────────────────────────────────────
   fichierForm: FormGroup;
@@ -124,6 +129,17 @@ export class DemandesAudience implements OnInit {
 
   ngOnInit(): void {
     this.loadMesDemandes();
+    this.loadDirections();
+  }
+
+  loadDirections(): void {
+    this.http.get<any>(`${this.apiUrl}/stages/directions`).subscribe({
+      next: (res) => {
+        if (res.success) this.directions = res.data;
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('[DemandesAudience] loadDirections:', err),
+    });
   }
 
   // ── Chargement ────────────────────────────────────────────
@@ -157,6 +173,7 @@ export class DemandesAudience implements OnInit {
   // ── Modal ─────────────────────────────────────────────────
   ouvrirModal(): void {
     this.etape = 1;
+    this.selectedDirection = null;
     this.modeSoumission = null;
     this.fichierForm.reset();
     this.ficheForm.reset();
@@ -171,14 +188,27 @@ export class DemandesAudience implements OnInit {
     this.showModal = false;
   }
 
-  choisirMode(mode: 'FICHIER' | 'FORMULAIRE'): void {
-    this.modeSoumission = mode;
+  choisirDirection(id: number): void {
+    this.selectedDirection = id;
     this.etape = 2;
     this.cdr.detectChanges();
   }
 
-  retourEtape1(): void {
+  choisirMode(mode: 'FICHIER' | 'FORMULAIRE'): void {
+    this.modeSoumission = mode;
+    this.etape = 3;
+    this.cdr.detectChanges();
+  }
+
+  retourEtapeDirection(): void {
     this.etape = 1;
+    this.selectedDirection = null;
+    this.modeSoumission = null;
+    this.cdr.detectChanges();
+  }
+
+  retourEtapeMode(): void {
+    this.etape = 2;
     this.modeSoumission = null;
     this.cdr.detectChanges();
   }
@@ -229,6 +259,10 @@ export class DemandesAudience implements OnInit {
 
   // ── Soumission ────────────────────────────────────────────
   soumettreDemande(): void {
+    if (!this.selectedDirection) {
+      this.showToast('Veuillez choisir la direction concernée', 'error');
+      return;
+    }
     if (!this.isFormValid()) {
       this.showToast('Veuillez remplir tous les champs obligatoires', 'error');
       return;
@@ -236,6 +270,7 @@ export class DemandesAudience implements OnInit {
 
     this.isSubmitting = true;
     const formData = new FormData();
+    formData.append('direction_iddirection', String(this.selectedDirection));
     formData.append('modeSoumission', this.modeSoumission!);
 
     if (this.modeSoumission === 'FICHIER') {

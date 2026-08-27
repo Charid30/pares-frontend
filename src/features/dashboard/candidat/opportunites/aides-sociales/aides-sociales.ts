@@ -321,6 +321,12 @@ export class AidesSociales implements OnInit {
       this.form[field] = null;
       return;
     }
+    if (file.type !== 'application/pdf') {
+      this.errorCreate = 'Seuls les fichiers PDF sont autorisés';
+      input.value = '';
+      this.form[field] = null;
+      return;
+    }
     this.form[field] = file;
   }
 

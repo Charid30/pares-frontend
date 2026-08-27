@@ -118,7 +118,19 @@ export class StagesList implements OnInit, OnDestroy {
   }
 
   toggleFiltreEnCours(): void {
+    this.voirArchives = false;
     this.filtreStatut = this.filtreEnCoursActif ? '' : this.STATUTS_EN_COURS;
+    this.onFilterChange();
+  }
+
+  // ── Archives (demandes de stage rejetées) ────────────────────────────────
+  // Une demande REJETEE sort automatiquement de la liste principale, pour ne
+  // pas la mélanger avec les demandes encore actives. Reste consultable ici.
+  voirArchives = false;
+
+  toggleArchives(): void {
+    this.voirArchives = !this.voirArchives;
+    this.filtreStatut = '';
     this.onFilterChange();
   }
 
@@ -409,6 +421,10 @@ export class StagesList implements OnInit, OnDestroy {
 
     if (this.filtreStatut) {
       filters.statusStage = this.filtreStatut;
+    } else if (this.voirArchives) {
+      filters.statusStage = 'REJETE';
+    } else {
+      filters.excludeStatus = 'REJETE';
     }
 
     if (this.filtreType) {
@@ -1265,14 +1281,14 @@ export class StagesList implements OnInit, OnDestroy {
         const today = new Date().toISOString().slice(0, 10);
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `stages_${today}.csv`;
+        a.download = `stages_${today}.xlsx`;
         a.click();
         URL.revokeObjectURL(a.href);
-        this.showToast('success', 'Export', 'Fichier CSV téléchargé avec succès');
+        this.showToast('success', 'Export', 'Fichier Excel téléchargé avec succès');
         this.cdr.detectChanges();
       },
       error: () => {
-        this.showToast('error', 'Export', 'Impossible de générer le fichier CSV');
+        this.showToast('error', 'Export', 'Impossible de générer le fichier Excel');
         this.cdr.detectChanges();
       },
     });
