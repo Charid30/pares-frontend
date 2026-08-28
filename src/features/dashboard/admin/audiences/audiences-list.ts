@@ -257,7 +257,7 @@ export class AudiencesList implements OnInit, OnDestroy {
     // Pré-remplir avec la date/heure déjà confirmées si elles existent, sinon
     // avec la date/heure souhaitées par le candidat (base de départ pratique).
     this.traitement = {
-      status: '',
+      status: demande.status === 'ACCEPTE' ? 'ACCEPTE' : '',
       commentaireAdmin: '',
       dateAudienceConfirmee: (demande.dateAudienceConfirmee || demande.dateAudience || '').substring(0, 10),
       heureAudienceConfirmee: (demande.heureAudienceConfirmee || demande.heureAudience || '').substring(0, 5),
@@ -442,7 +442,7 @@ export class AudiencesList implements OnInit, OnDestroy {
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
   peutTraiter(demande: DemandeAudience): boolean {
-    return demande.status === 'EN_ATTENTE';
+    return demande.status === 'EN_ATTENTE' || demande.status === 'ACCEPTE';
   }
 
   getNomCandidat(demande: DemandeAudience): string {
