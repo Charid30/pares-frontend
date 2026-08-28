@@ -392,6 +392,7 @@ export class UtilisateursList implements OnInit, OnDestroy {
     this.showModal = false;
     this.selectedAgent = null;
     this.currentStep = 1;
+    this.showDirectionDropdown = false;
     this.resetForm();
     this.stepErrors = {};
   }
@@ -556,6 +557,8 @@ export class UtilisateursList implements OnInit, OnDestroy {
     }
   }
 
+  showDirectionDropdown = false;
+
   toggleDirection(id: number): void {
     const idx = this.agentInfo.direction_ids.indexOf(id);
     if (idx === -1) {
@@ -565,8 +568,27 @@ export class UtilisateursList implements OnInit, OnDestroy {
     }
   }
 
+  addDirection(id: number): void {
+    if (!this.agentInfo.direction_ids.includes(id)) {
+      this.agentInfo.direction_ids = [...this.agentInfo.direction_ids, id];
+    }
+    this.showDirectionDropdown = false;
+  }
+
+  removeDirection(id: number): void {
+    this.agentInfo.direction_ids = this.agentInfo.direction_ids.filter(d => d !== id);
+  }
+
   isDirectionSelected(id: number): boolean {
     return this.agentInfo.direction_ids.includes(id);
+  }
+
+  getAvailableDirections(): Direction[] {
+    return this.directions.filter(d => !this.agentInfo.direction_ids.includes(d.iddirection));
+  }
+
+  getDirectionById(id: number): Direction | undefined {
+    return this.directions.find(d => d.iddirection === id);
   }
 
   createAgent(): void {

@@ -392,26 +392,61 @@ interface Service {
                   <option *ngFor="let s of servicesListe" [ngValue]="s.idservice">{{ s.nomService }}</option>
                 </select>
               </div>
-              <!-- Directions checkboxes -->
+              <!-- Directions — chips + bouton Ajouter -->
               <div *ngIf="attachMode === 'direction'">
                 <div *ngIf="loadingDirections" class="text-xs text-gray-400 py-2">Chargement des directions...</div>
-                <div *ngIf="!loadingDirections" class="grid grid-cols-2 gap-2">
-                  <label *ngFor="let d of directionsList"
-                         class="flex items-center gap-2 px-3 py-2 rounded-xl border cursor-pointer transition-colors select-none"
-                         [ngClass]="isDirectionSelected(d.iddirection) ? 'bg-slate-800 border-slate-800 text-white' : 'bg-gray-50 border-gray-200 text-gray-700'">
-                    <input type="checkbox" [checked]="isDirectionSelected(d.iddirection)" (change)="toggleDirection(d.iddirection)" class="sr-only">
-                    <span class="w-3.5 h-3.5 rounded border flex-shrink-0 flex items-center justify-center"
-                          [ngClass]="isDirectionSelected(d.iddirection) ? 'bg-white border-white' : 'border-gray-400'">
-                      <svg *ngIf="isDirectionSelected(d.iddirection)" class="w-2.5 h-2.5 text-slate-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
-                      </svg>
+                <div *ngIf="!loadingDirections">
+
+                  <!-- Chips -->
+                  <div class="flex flex-wrap gap-2 mb-3 min-h-[32px]">
+                    <span *ngIf="form.direction_ids.length === 0" class="text-sm text-gray-400 italic">Aucune direction sélectionnée</span>
+                    <span *ngFor="let id of form.direction_ids"
+                          class="inline-flex items-center gap-1.5 pl-3 pr-2 py-1.5 bg-slate-800 text-white text-xs font-semibold rounded-xl">
+                      {{ getDirectionById(id)?.accronyme || id }}
+                      <button type="button" (click)="removeDirection(id)"
+                              class="flex items-center justify-center w-4 h-4 rounded-full hover:bg-white/20 transition-colors">
+                        <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                      </button>
                     </span>
-                    <span class="text-xs font-medium truncate">{{ d.accronyme || d.nom }}</span>
-                  </label>
+                  </div>
+
+                  <!-- Bouton Ajouter + dropdown -->
+                  <div class="relative" *ngIf="getAvailableDirections().length > 0">
+                    <button type="button"
+                            (click)="showDirectionDropdown = !showDirectionDropdown"
+                            class="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 bg-gray-100 border border-gray-200 rounded-xl hover:bg-gray-200 transition-colors">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                      </svg>
+                      Ajouter une direction
+                    </button>
+
+                    <!-- Overlay fermeture -->
+                    <div *ngIf="showDirectionDropdown" class="fixed inset-0 z-10" (click)="showDirectionDropdown = false"></div>
+
+                    <!-- Dropdown -->
+                    <div *ngIf="showDirectionDropdown"
+                         class="absolute left-0 top-full mt-1 w-full bg-white border border-gray-200 rounded-2xl shadow-lg z-20 overflow-hidden">
+                      <button *ngFor="let d of getAvailableDirections()"
+                              type="button"
+                              (click)="addDirection(d.iddirection)"
+                              class="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 transition-colors border-b border-gray-50 last:border-0">
+                        <div class="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
+                          <span class="text-[9px] font-bold text-slate-700">{{ d.accronyme | slice:0:3 }}</span>
+                        </div>
+                        <div class="min-w-0">
+                          <p class="text-sm font-medium text-gray-900 truncate">{{ d.nom }}</p>
+                          <p class="text-xs text-gray-400">{{ d.accronyme }}</p>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+
+                  <p *ngIf="getAvailableDirections().length === 0 && form.direction_ids.length > 0"
+                     class="text-xs text-slate-500 font-medium mt-1">Toutes les directions ont été sélectionnées</p>
                 </div>
-                <p *ngIf="form.direction_ids.length > 0" class="text-xs text-slate-600 mt-1.5 font-medium">
-                  {{ form.direction_ids.length }} direction(s) sélectionnée(s)
-                </p>
               </div>
             </div>
             <div *ngIf="modalMode === 'edit'" class="flex items-center gap-3">
@@ -629,6 +664,7 @@ export class AgentAgents implements OnInit {
   loadingRoles = false;
   loadingServices = false;
   loadingDirections = false;
+  showDirectionDropdown = false;
 
   // ── Modal détail ───────────────────────────────────────────
   showDetailModal = false;
@@ -740,8 +776,27 @@ export class AgentAgents implements OnInit {
     }
   }
 
+  addDirection(id: number): void {
+    if (!this.form.direction_ids.includes(id)) {
+      this.form.direction_ids = [...this.form.direction_ids, id];
+    }
+    this.showDirectionDropdown = false;
+  }
+
+  removeDirection(id: number): void {
+    this.form.direction_ids = this.form.direction_ids.filter(d => d !== id);
+  }
+
   isDirectionSelected(id: number): boolean {
     return this.form.direction_ids.includes(id);
+  }
+
+  getAvailableDirections(): DirectionInfo[] {
+    return this.directionsList.filter(d => !this.form.direction_ids.includes(d.iddirection));
+  }
+
+  getDirectionById(id: number): DirectionInfo | undefined {
+    return this.directionsList.find(d => d.iddirection === id);
   }
 
   filtrer(): void {
@@ -803,6 +858,7 @@ export class AgentAgents implements OnInit {
     this.showModal = false;
     this.agentEnEdition = null;
     this.formErreur = '';
+    this.showDirectionDropdown = false;
   }
 
   soumettre(): void {
