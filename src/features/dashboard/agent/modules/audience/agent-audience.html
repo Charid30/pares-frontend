@@ -634,7 +634,7 @@
             </div>
           </div>
           <p class="text-[11px] text-gray-400 mt-2">
-            Date souhaitée par le candidat : {{ demandeAModifier.dateAudience | date:'dd/MM/yyyy' }} à {{ demandeAModifier.heureAudience?.substring(0,5) }}
+            Date souhaitée par le candidat : {{ demandeAModifier.dateAudience | date:'dd/MM/yyyy' }} à {{ demandeAModifier.heureAudience ? demandeAModifier.heureAudience.substring(0,5) : '' }}
           </p>
         </div>
       </div>

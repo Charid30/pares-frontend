@@ -170,13 +170,13 @@ export class AgentAide implements OnInit {
           this.detailAide.transfereDate = res.data?.transfereDate ?? null;
         }
         this.savingAffectation = false;
-        this.addToast('Affectation enregistrée', 'Direction mise à jour avec succès', 'success');
+        this.showToast('Affectation enregistrée', 'Direction mise à jour avec succès', 'success');
         this.charger();
         this.cdr.detectChanges();
       },
       error: (err) => {
         this.savingAffectation = false;
-        this.addToast('Erreur', err.error?.message || 'Erreur lors du transfert', 'error');
+        this.showToast('Erreur', err.error?.message || 'Erreur lors du transfert', 'error');
         this.cdr.detectChanges();
       },
     });
