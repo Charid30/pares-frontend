@@ -6,6 +6,12 @@ import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { environment } from '../../../../../environments/environment';
 
+interface DirectionInfo {
+  iddirection: number;
+  nom: string;
+  accronyme?: string;
+}
+
 interface Agent {
   idusers: number;   // mappé depuis idagents (pour les appels PUT/DELETE)
   idagents?: number;
@@ -19,6 +25,7 @@ interface Agent {
   role?: { idrole?: number; nomRole: string };
   role_idrole?: number;
   service?: { idservice?: number; nomService: string };
+  directions?: DirectionInfo[];
 }
 
 interface Role {
@@ -184,7 +191,7 @@ interface Service {
                         <p class="text-xs text-gray-500 truncate" *ngIf="a.email">{{ a.email }}</p>
                       </div>
                     </div>
-                    <!-- Badges rôle / service -->
+                    <!-- Badges rôle / service / directions -->
                     <div class="flex flex-wrap gap-1.5">
                       <span *ngIf="a.role"
                             class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary-50 text-primary-700 border border-primary-100">
@@ -200,6 +207,15 @@ interface Service {
                         </svg>
                         {{ a.service.nomService }}
                       </span>
+                      <ng-container *ngIf="a.directions && a.directions.length > 0">
+                        <span *ngFor="let d of a.directions"
+                              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
+                          <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                          </svg>
+                          {{ d.accronyme || d.nom }}
+                        </span>
+                      </ng-container>
                       <span *ngIf="!a.actif"
                             class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-600 border border-red-100">
                         Inactif
@@ -353,13 +369,50 @@ interface Service {
                 <option *ngFor="let r of roles" [ngValue]="r.idrole">{{ r.nomRole }}</option>
               </select>
             </div>
+            <!-- Toggle service / directions -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Service <span class="text-red-500">*</span></label>
-              <select [(ngModel)]="form.service_idservice"
-                      class="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-400 outline-none">
-                <option [ngValue]="null" disabled>{{ loadingServices ? 'Chargement...' : '-- Sélectionner un service --' }}</option>
-                <option *ngFor="let s of servicesListe" [ngValue]="s.idservice">{{ s.nomService }}</option>
-              </select>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Rattachement <span class="text-red-500">*</span></label>
+              <div class="flex gap-2 mb-3">
+                <button type="button" (click)="attachMode='service'; form.direction_ids=[]"
+                        class="flex-1 py-1.5 text-xs font-medium rounded-lg border transition-colors"
+                        [ngClass]="attachMode==='service' ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-gray-600 border-gray-300 hover:border-slate-500'">
+                  Service
+                </button>
+                <button type="button" (click)="attachMode='direction'; form.service_idservice=null"
+                        class="flex-1 py-1.5 text-xs font-medium rounded-lg border transition-colors"
+                        [ngClass]="attachMode==='direction' ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-gray-600 border-gray-300 hover:border-slate-500'">
+                  Direction(s)
+                </button>
+              </div>
+              <!-- Service select -->
+              <div *ngIf="attachMode === 'service'">
+                <select [(ngModel)]="form.service_idservice"
+                        class="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-400 outline-none">
+                  <option [ngValue]="null" disabled>{{ loadingServices ? 'Chargement...' : '-- Sélectionner un service --' }}</option>
+                  <option *ngFor="let s of servicesListe" [ngValue]="s.idservice">{{ s.nomService }}</option>
+                </select>
+              </div>
+              <!-- Directions checkboxes -->
+              <div *ngIf="attachMode === 'direction'">
+                <div *ngIf="loadingDirections" class="text-xs text-gray-400 py-2">Chargement des directions...</div>
+                <div *ngIf="!loadingDirections" class="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto pr-1">
+                  <label *ngFor="let d of directionsList"
+                         class="flex items-center gap-2 px-3 py-2 rounded-xl border cursor-pointer transition-colors select-none"
+                         [ngClass]="isDirectionSelected(d.iddirection) ? 'bg-slate-800 border-slate-800 text-white' : 'bg-gray-50 border-gray-200 text-gray-700 hover:border-slate-400'">
+                    <input type="checkbox" [checked]="isDirectionSelected(d.iddirection)" (change)="toggleDirection(d.iddirection)" class="sr-only">
+                    <span class="w-3.5 h-3.5 rounded border flex-shrink-0 flex items-center justify-center"
+                          [ngClass]="isDirectionSelected(d.iddirection) ? 'bg-white border-white' : 'border-gray-400'">
+                      <svg *ngIf="isDirectionSelected(d.iddirection)" class="w-2.5 h-2.5 text-slate-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                      </svg>
+                    </span>
+                    <span class="text-xs font-medium truncate">{{ d.accronyme || d.nom }}</span>
+                  </label>
+                </div>
+                <p *ngIf="form.direction_ids.length > 0" class="text-xs text-slate-600 mt-1.5 font-medium">
+                  {{ form.direction_ids.length }} direction(s) sélectionnée(s)
+                </p>
+              </div>
             </div>
             <div *ngIf="modalMode === 'edit'" class="flex items-center gap-3">
               <label class="relative inline-flex items-center cursor-pointer">
@@ -458,6 +511,18 @@ interface Service {
                 <p *ngIf="!detailAgent.service" class="text-sm text-gray-400">—</p>
               </div>
             </div>
+            <div *ngIf="detailAgent.directions && detailAgent.directions.length > 0">
+              <p class="text-xs text-gray-400 mb-1">Directions</p>
+              <div class="flex flex-wrap gap-1.5">
+                <span *ngFor="let d of detailAgent.directions"
+                      class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                  <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                  </svg>
+                  {{ d.accronyme || d.nom }}
+                </span>
+              </div>
+            </div>
             <div>
               <p class="text-xs text-gray-400 mb-0.5">Membre depuis</p>
               <p class="text-sm font-medium text-gray-800">{{ detailAgent.createdDate | date:'dd MMMM yyyy' }}</p>
@@ -551,14 +616,19 @@ export class AgentAgents implements OnInit {
     email: '',
     role_idrole: null as number | null,
     service_idservice: null as number | null,
+    direction_ids: [] as number[],
     actif: true,
   };
+  /** Mode d'affectation dans le formulaire: 'service' ou 'direction' */
+  attachMode: 'service' | 'direction' = 'service';
 
   // Données listes déroulantes
   roles: Role[] = [];
   servicesListe: Service[] = [];
+  directionsList: DirectionInfo[] = [];
   loadingRoles = false;
   loadingServices = false;
+  loadingDirections = false;
 
   // ── Modal détail ───────────────────────────────────────────
   showDetailModal = false;
@@ -610,6 +680,11 @@ export class AgentAgents implements OnInit {
             idservice: a.service.idservice,
             nomService: a.service.description || a.service.accronyme,
           } : undefined,
+          directions: (a.directions || []).map((d: any) => ({
+            iddirection: d.iddirection,
+            nom: d.nom,
+            accronyme: d.accronyme,
+          })),
         }));
         this.filtrer();
         this.loading = false;
@@ -626,6 +701,7 @@ export class AgentAgents implements OnInit {
   private chargerRolesEtServices(): void {
     this.loadingRoles = true;
     this.loadingServices = true;
+    this.loadingDirections = true;
     this.http.get<any>(`${this.apiUrl}/users/roles`).subscribe({
       next: (res) => {
         const raw: any[] = res.data || [];
@@ -644,6 +720,28 @@ export class AgentAgents implements OnInit {
       },
       error: () => { this.loadingServices = false; this.cdr.detectChanges(); },
     });
+    this.http.get<any>(`${this.apiUrl}/users/directions`).subscribe({
+      next: (res) => {
+        const raw: any[] = res.data || [];
+        this.directionsList = raw.map(d => ({ iddirection: d.iddirection, nom: d.nom, accronyme: d.accronyme }));
+        this.loadingDirections = false;
+        this.cdr.detectChanges();
+      },
+      error: () => { this.loadingDirections = false; this.cdr.detectChanges(); },
+    });
+  }
+
+  toggleDirection(id: number): void {
+    const idx = this.form.direction_ids.indexOf(id);
+    if (idx === -1) {
+      this.form.direction_ids = [...this.form.direction_ids, id];
+    } else {
+      this.form.direction_ids = this.form.direction_ids.filter(d => d !== id);
+    }
+  }
+
+  isDirectionSelected(id: number): boolean {
+    return this.form.direction_ids.includes(id);
   }
 
   filtrer(): void {
@@ -668,7 +766,8 @@ export class AgentAgents implements OnInit {
   }
 
   creerAgent(): void {
-    this.form = { username: '', password: '', confirmPassword: '', nom: '', prenom: '', matricule: '', email: '', role_idrole: null, service_idservice: null, actif: true };
+    this.form = { username: '', password: '', confirmPassword: '', nom: '', prenom: '', matricule: '', email: '', role_idrole: null, service_idservice: null, direction_ids: [], actif: true };
+    this.attachMode = 'service';
     this.formErreur = '';
     this.agentEnEdition = null;
     this.modalMode = 'create';
@@ -678,6 +777,8 @@ export class AgentAgents implements OnInit {
 
   modifierAgent(a: Agent): void {
     this.agentEnEdition = a;
+    const hasDirs = (a.directions?.length ?? 0) > 0;
+    this.attachMode = hasDirs ? 'direction' : 'service';
     this.form = {
       username: a.username,
       password: '',
@@ -687,7 +788,8 @@ export class AgentAgents implements OnInit {
       matricule: a.matricule || '',
       email: a.email || '',
       role_idrole: a.role?.idrole ?? null,
-      service_idservice: a.service?.idservice ?? null,
+      service_idservice: hasDirs ? null : (a.service?.idservice ?? null),
+      direction_ids: hasDirs ? (a.directions?.map(d => d.iddirection) ?? []) : [],
       actif: a.actif,
     };
     this.formErreur = '';
@@ -707,7 +809,8 @@ export class AgentAgents implements OnInit {
     if (!this.form.prenom.trim()) { this.formErreur = 'Le prénom est requis'; return; }
     if (!this.form.nom.trim()) { this.formErreur = 'Le nom est requis'; return; }
     if (!this.form.role_idrole) { this.formErreur = 'Le rôle est requis'; return; }
-    if (!this.form.service_idservice) { this.formErreur = 'Le service est requis'; return; }
+    if (this.attachMode === 'service' && !this.form.service_idservice) { this.formErreur = 'Le service est requis'; return; }
+    if (this.attachMode === 'direction' && this.form.direction_ids.length === 0) { this.formErreur = 'Veuillez sélectionner au moins une direction'; return; }
 
     if (this.modalMode === 'create') {
       if (!this.form.username.trim()) { this.formErreur = "Le nom d'utilisateur est requis"; return; }
@@ -720,7 +823,7 @@ export class AgentAgents implements OnInit {
     this.soumission = true;
 
     if (this.modalMode === 'create') {
-      const body = {
+      const body: any = {
         username: this.form.username,
         password: this.form.password,
         nom: this.form.nom,
@@ -728,8 +831,12 @@ export class AgentAgents implements OnInit {
         matricule: this.form.matricule || undefined,
         email: this.form.email || undefined,
         role_idrole: this.form.role_idrole,
-        service_idservice: this.form.service_idservice,
       };
+      if (this.attachMode === 'service') {
+        body.service_idservice = this.form.service_idservice;
+      } else {
+        body.direction_ids = this.form.direction_ids;
+      }
       this.http.post<any>(`${this.apiUrl}/users/agents`, body).subscribe({
         next: () => {
           this.soumission = false;
@@ -745,15 +852,19 @@ export class AgentAgents implements OnInit {
         },
       });
     } else {
-      const body = {
+      const body: any = {
         nom: this.form.nom,
         prenom: this.form.prenom,
         matricule: this.form.matricule || undefined,
         email: this.form.email || undefined,
         role_idrole: this.form.role_idrole,
-        service_idservice: this.form.service_idservice,
         actif: this.form.actif,
       };
+      if (this.attachMode === 'service') {
+        body.service_idservice = this.form.service_idservice;
+      } else {
+        body.direction_ids = this.form.direction_ids;
+      }
       this.http.put<any>(`${this.apiUrl}/users/agents/${this.agentEnEdition!.idusers}`, body).subscribe({
         next: () => {
           this.soumission = false;
