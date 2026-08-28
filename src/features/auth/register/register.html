@@ -139,6 +139,10 @@
 
         <!-- ── Formulaire ──────────────────────────────────────── -->
         <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+          <!-- Honeypot anti-bot — ne pas supprimer -->
+          <div style="position:absolute;left:-9999px;height:0;overflow:hidden" aria-hidden="true">
+            <input type="text" name="website" [(ngModel)]="honeypot" [ngModelOptions]="{standalone:true}" tabindex="-1" autocomplete="off">
+          </div>
 
           <!-- Alertes globales -->
           <div *ngIf="errorMessage" class="mb-5">

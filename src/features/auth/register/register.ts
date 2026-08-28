@@ -32,6 +32,7 @@ export class Register implements OnInit, OnDestroy {
   isLoading = false;
   errorMessage: string | null = null;
   successMessage: string | null = null;
+  honeypot = '';
   showPassword = false;
 
   // ── Pièce d'identité (CNIB/NIP ou Passeport) ─────────────────────────────
@@ -592,6 +593,7 @@ private buildTelephoneFinal(): string {
 }
 
 onSubmit(): void {
+  if (this.honeypot) return;
   if(this.registerForm.valid) {
   this.isLoading = true;
   this.errorMessage = null;
