@@ -398,10 +398,10 @@ interface Service {
                 <div *ngIf="!loadingDirections" class="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto pr-1">
                   <label *ngFor="let d of directionsList"
                          class="flex items-center gap-2 px-3 py-2 rounded-xl border cursor-pointer transition-colors select-none"
-                         [ngClass]="isDirectionSelected(d.iddirection) ? 'bg-slate-800 border-slate-800 text-white' : 'bg-gray-50 border-gray-200 text-gray-700 hover:border-slate-400'">
+                         [ngClass]="isDirectionSelected(d.iddirection) ? 'bg-slate-800 border-slate-800 text-white' : 'bg-gray-50 border-gray-200 text-gray-700'">
                     <input type="checkbox" [checked]="isDirectionSelected(d.iddirection)" (change)="toggleDirection(d.iddirection)" class="sr-only">
                     <span class="w-3.5 h-3.5 rounded border flex-shrink-0 flex items-center justify-center"
-                          [ngClass]="isDirectionSelected(d.iddirection) ? 'bg-white border-white' : 'border-gray-400'">
+                          [ngClass]="isDirectionSelected(d.iddirection) ? 'bg-white border-white' : 'border-gray-400'"
                       <svg *ngIf="isDirectionSelected(d.iddirection)" class="w-2.5 h-2.5 text-slate-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
                       </svg>
