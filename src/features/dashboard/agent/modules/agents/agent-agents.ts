@@ -395,7 +395,7 @@ interface Service {
               <!-- Directions checkboxes -->
               <div *ngIf="attachMode === 'direction'">
                 <div *ngIf="loadingDirections" class="text-xs text-gray-400 py-2">Chargement des directions...</div>
-                <div *ngIf="!loadingDirections" class="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto pr-1">
+                <div *ngIf="!loadingDirections" class="grid grid-cols-2 gap-2">
                   <label *ngFor="let d of directionsList"
                          class="flex items-center gap-2 px-3 py-2 rounded-xl border cursor-pointer transition-colors select-none"
                          [ngClass]="isDirectionSelected(d.iddirection) ? 'bg-slate-800 border-slate-800 text-white' : 'bg-gray-50 border-gray-200 text-gray-700'">

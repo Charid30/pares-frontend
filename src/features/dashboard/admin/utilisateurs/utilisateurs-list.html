@@ -564,7 +564,7 @@
           </select>
 
           <div *ngIf="agentInfo.rattachementType === 'direction'">
-            <div class="grid grid-cols-1 gap-2 max-h-44 overflow-y-auto pr-1">
+            <div class="grid grid-cols-1 gap-2">
               <label *ngFor="let direction of directions"
                      class="flex items-center gap-3 px-3 py-2.5 rounded-xl border cursor-pointer transition-all select-none"
                      [ngClass]="isDirectionSelected(direction.iddirection)
