@@ -94,7 +94,7 @@ export class UtilisateursList implements OnInit, OnDestroy {
     email: '',
     rattachementType: 'service' as 'service' | 'direction',
     service_idservice: 0,
-    direction_iddirection: 0,
+    direction_ids: [] as number[],
   };
 
   // Formulaire - Step 2: Compte Utilisateur
@@ -343,14 +343,17 @@ export class UtilisateursList implements OnInit, OnDestroy {
     this.stepErrors = {};
 
     // Pré-remplir les données
+    const hasDirs = (agent.directions?.length ?? 0) > 0;
     this.agentInfo = {
       nom: agent.nom,
       prenom: agent.prenom,
       matricule: agent.matricule,
       email: agent.email,
-      rattachementType: agent.direction_iddirection ? 'direction' : 'service',
+      rattachementType: (hasDirs || agent.direction_iddirection) ? 'direction' : 'service',
       service_idservice: agent.service_idservice || 0,
-      direction_iddirection: agent.direction_iddirection || 0,
+      direction_ids: hasDirs
+        ? agent.directions!.map(d => d.iddirection)
+        : (agent.direction_iddirection ? [agent.direction_iddirection] : []),
     };
 
     this.userInfo = {
@@ -401,7 +404,7 @@ export class UtilisateursList implements OnInit, OnDestroy {
       email: '',
       rattachementType: 'service',
       service_idservice: 0,
-      direction_iddirection: 0,
+      direction_ids: [],
     };
 
     this.userInfo = {
@@ -456,8 +459,8 @@ export class UtilisateursList implements OnInit, OnDestroy {
           if (!this.agentInfo.service_idservice) {
             this.stepErrors[step].push('Le service est requis');
           }
-        } else if (!this.agentInfo.direction_iddirection) {
-          this.stepErrors[step].push('La direction est requise');
+        } else if (this.agentInfo.direction_ids.length === 0) {
+          this.stepErrors[step].push('Veuillez sélectionner au moins une direction');
         }
         break;
 
@@ -553,6 +556,19 @@ export class UtilisateursList implements OnInit, OnDestroy {
     }
   }
 
+  toggleDirection(id: number): void {
+    const idx = this.agentInfo.direction_ids.indexOf(id);
+    if (idx === -1) {
+      this.agentInfo.direction_ids = [...this.agentInfo.direction_ids, id];
+    } else {
+      this.agentInfo.direction_ids = this.agentInfo.direction_ids.filter(d => d !== id);
+    }
+  }
+
+  isDirectionSelected(id: number): boolean {
+    return this.agentInfo.direction_ids.includes(id);
+  }
+
   createAgent(): void {
     this.submitting = true;
     const agentName = `${this.agentInfo.prenom} ${this.agentInfo.nom}`;
@@ -564,7 +580,7 @@ export class UtilisateursList implements OnInit, OnDestroy {
       email: this.agentInfo.email,
       ...(this.agentInfo.rattachementType === 'service'
         ? { service_idservice: this.agentInfo.service_idservice }
-        : { direction_iddirection: this.agentInfo.direction_iddirection }),
+        : { direction_ids: this.agentInfo.direction_ids }),
       roleIds: this.selectedRoleIds,
       username: this.userInfo.username,
       password: this.userInfo.password,
@@ -605,7 +621,7 @@ export class UtilisateursList implements OnInit, OnDestroy {
       email: this.agentInfo.email,
       ...(this.agentInfo.rattachementType === 'service'
         ? { service_idservice: this.agentInfo.service_idservice }
-        : { direction_iddirection: this.agentInfo.direction_iddirection }),
+        : { direction_ids: this.agentInfo.direction_ids }),
       roleIds: this.selectedRoleIds
     }).subscribe({
       next: (response) => {
@@ -808,8 +824,11 @@ export class UtilisateursList implements OnInit, OnDestroy {
     return service?.description || service?.accronyme || 'N/A';
   }
 
-  /** Libellé du rattachement d'un agent : son service, ou sa direction directe. */
+  /** Libellé du rattachement d'un agent : son service, ou ses directions. */
   getRattachementLabel(agent: Agent): string {
+    if (agent.directions && agent.directions.length > 0) {
+      return agent.directions.map(d => d.accronyme || d.nom).join(', ');
+    }
     if (agent.directionDirecte) {
       return `${agent.directionDirecte.nom} (${agent.directionDirecte.accronyme})`;
     }

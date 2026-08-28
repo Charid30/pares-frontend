@@ -42,7 +42,7 @@ export interface User {
 
 export interface Agent {
   idagents: number;
-  /** Rattachement : exactement un des deux (service_idservice OU direction_iddirection) */
+  /** Rattachement : service_idservice OU plusieurs directions via agents_directions */
   service_idservice: number | null;
   direction_iddirection?: number | null;
   nom: string;
@@ -51,6 +51,7 @@ export interface Agent {
   email: string;
   service?: Service;
   directionDirecte?: Direction;
+  directions?: Direction[];
   users?: User[];
   createdDate?: Date;
   createdBy?: string;
