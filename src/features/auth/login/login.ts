@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { PushNotificationService } from '../../../core/services/push-notification.service';
 
 @Component({
   selector: 'app-login',
@@ -22,7 +23,8 @@ export class Login {
     private authService: AuthService,
     private router: Router,
     private cdr: ChangeDetectorRef,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private pushService: PushNotificationService,
   ) {}
 
   ngOnInit(): void {
@@ -52,6 +54,10 @@ export class Login {
             this.isLoading = false;
             if (response.success) {
               this.redirectToDashboard();
+              // Demander la permission push après login (non bloquant)
+              if (this.pushService.isSupported && this.pushService.permission === 'default') {
+                this.pushService.subscribe().catch(() => {});
+              }
             }
             this.cdr.detectChanges();
           });

@@ -11,6 +11,12 @@ import { environment } from '../../../../environments/environment';
 import { Loader } from '../../../../shared/components/loader/loader';
 import { StatCard } from '../../../../shared/components/stat-card/stat-card';
 
+interface DirectionInfo {
+  iddirection: number;
+  nom: string;
+  accronyme: string;
+}
+
 // Aide soumise par un candidat
 interface AideCandidat {
   idaide: number;
@@ -23,6 +29,11 @@ interface AideCandidat {
   motifRefus: string | null;
   createdDate: string;
   lastModifiedDate: string;
+  direction_iddirection?: number | null;
+  direction?: DirectionInfo | null;
+  transfereParId?: number | null;
+  transferePar?: string | null;
+  transfereDate?: string | null;
   candidatCreateur?: {
     idcandidats: number;
     nom: string;
@@ -68,11 +79,18 @@ export class AidesList implements OnInit {
   evaluation = {
     statusAide: '' as string,
     motifRefus: '',
+    dateTraitement: '' as string,
+    heureTraitement: '' as string,
   };
 
   // ── Modal détail (lecture seule) ──────────────────────────────────────────
   showDetailModal = false;
   detailAide: AideCandidat | null = null;
+
+  // ── Affectation direction ─────────────────────────────────────────────────
+  directions: DirectionInfo[] = [];
+  affectationForm: { direction_iddirection: number | null } = { direction_iddirection: null };
+  savingAffectation = false;
 
   private apiUrl = environment.apiUrl;
 
@@ -85,6 +103,7 @@ export class AidesList implements OnInit {
 
   ngOnInit(): void {
     this.loadAides();
+    this.chargerDirections();
   }
 
   private openFromQueryParam(): void {
@@ -160,7 +179,7 @@ export class AidesList implements OnInit {
   ouvrirTraitement(aide: AideCandidat, event?: Event): void {
     event?.stopPropagation();
     this.selectedAide = aide;
-    this.evaluation = { statusAide: '', motifRefus: '' };
+    this.evaluation = { statusAide: '', motifRefus: '', dateTraitement: '', heureTraitement: '' };
     this.errorEval = '';
     this.showTraitementModal = true;
   }
@@ -188,6 +207,10 @@ export class AidesList implements OnInit {
     const body: any = { statusAide: this.evaluation.statusAide };
     if (this.evaluation.motifRefus.trim()) {
       body.motifRefus = this.evaluation.motifRefus.trim();
+    }
+    if (this.evaluation.dateTraitement) {
+      body.dateTraitement = this.evaluation.dateTraitement;
+      if (this.evaluation.heureTraitement) body.heureTraitement = this.evaluation.heureTraitement;
     }
 
     this.http.put<any>(
@@ -220,7 +243,7 @@ export class AidesList implements OnInit {
     event.stopPropagation();
     if (!this.peutEvaluer(aide)) return;
     this.selectedAide = aide;
-    this.evaluation = { statusAide: 'VALIDEE', motifRefus: '' };
+    this.evaluation = { statusAide: 'VALIDEE', motifRefus: '', dateTraitement: '', heureTraitement: '' };
     this.showTraitementModal = true;
     this.errorEval = '';
   }
@@ -229,7 +252,7 @@ export class AidesList implements OnInit {
     event.stopPropagation();
     if (!this.peutEvaluer(aide)) return;
     this.selectedAide = aide;
-    this.evaluation = { statusAide: 'REJETEE', motifRefus: '' };
+    this.evaluation = { statusAide: 'REJETEE', motifRefus: '', dateTraitement: '', heureTraitement: '' };
     this.showTraitementModal = true;
     this.errorEval = '';
   }
@@ -238,12 +261,60 @@ export class AidesList implements OnInit {
   voirDetail(aide: AideCandidat, event?: Event): void {
     event?.stopPropagation();
     this.detailAide = aide;
+    this.affectationForm = { direction_iddirection: aide.direction_iddirection ?? null };
     this.showDetailModal = true;
   }
 
   fermerDetail(): void {
     this.showDetailModal = false;
     this.detailAide = null;
+  }
+
+  // ─── Directions ───────────────────────────────────────────────────────────
+  chargerDirections(): void {
+    this.http.get<any>(`${this.apiUrl}/directions`).subscribe({
+      next: (res) => {
+        if (res.success && Array.isArray(res.data)) {
+          this.directions = res.data;
+        }
+      },
+      error: () => {},
+    });
+  }
+
+  getDirectionLabel(id: number | null | undefined): string {
+    if (!id) return '—';
+    const dir = this.directions.find(d => d.iddirection === id);
+    return dir ? `${dir.accronyme} — ${dir.nom}` : `Direction #${id}`;
+  }
+
+  sauvegarderAffectation(): void {
+    if (!this.detailAide || this.savingAffectation) return;
+    const newDirId = this.affectationForm.direction_iddirection;
+    if (!newDirId) { this.errorMessage = 'Veuillez sélectionner une direction.'; setTimeout(() => this.errorMessage = '', 3000); return; }
+    this.savingAffectation = true;
+    this.http.put<any>(`${this.apiUrl}/aides/${this.detailAide.idaide}/transferer`, { direction_iddirection: newDirId }).subscribe({
+      next: (res) => {
+        this.ngZone.run(() => {
+          this.savingAffectation = false;
+          if (res.success) {
+            this.successMessage = 'Aide affectée avec succès !';
+            setTimeout(() => this.successMessage = '', 4000);
+            this.loadAides();
+            this.fermerDetail();
+          }
+          this.cdr.detectChanges();
+        });
+      },
+      error: (err) => {
+        this.ngZone.run(() => {
+          this.savingAffectation = false;
+          this.errorMessage = err.error?.message || 'Erreur lors de l\'affectation.';
+          setTimeout(() => this.errorMessage = '', 4000);
+          this.cdr.detectChanges();
+        });
+      },
+    });
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────

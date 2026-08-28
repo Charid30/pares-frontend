@@ -55,6 +55,9 @@ interface DemandeAudience {
   // Affectation administrative
   direction_iddirection?: number | null;
   direction?: DirectionInfo;
+  transfereParId?: number | null;
+  transferePar?: string | null;
+  transfereDate?: string | null;
 }
 
 @Component({

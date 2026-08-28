@@ -85,6 +85,8 @@ export class OffresList implements OnInit, OnDestroy {
   evaluation = {
     statusOffre: '' as string,
     motifRefus: '',
+    dateEntretien: '' as string,
+    heureEntretien: '' as string,
   };
 
   // ── Modal détail (lecture seule) ──────────────────────────────────────────
@@ -201,7 +203,7 @@ export class OffresList implements OnInit, OnDestroy {
   ouvrirTraitement(offre: OffreCandidat, event?: Event): void {
     event?.stopPropagation();
     this.selectedOffre = offre;
-    this.evaluation = { statusOffre: '', motifRefus: '' };
+    this.evaluation = { statusOffre: '', motifRefus: '', dateEntretien: '', heureEntretien: '' };
     this.errorEval = '';
     this.showTraitementModal = true;
   }
@@ -229,6 +231,10 @@ export class OffresList implements OnInit, OnDestroy {
     const body: any = { statusOffre: this.evaluation.statusOffre };
     if (this.evaluation.motifRefus.trim()) {
       body.motifRefus = this.evaluation.motifRefus.trim();
+    }
+    if (this.evaluation.dateEntretien) {
+      body.dateEntretien = this.evaluation.dateEntretien;
+      if (this.evaluation.heureEntretien) body.heureEntretien = this.evaluation.heureEntretien;
     }
 
     this.http.put<any>(
@@ -261,7 +267,7 @@ export class OffresList implements OnInit, OnDestroy {
     event.stopPropagation();
     if (!this.peutEvaluer(offre)) return;
     this.selectedOffre = offre;
-    this.evaluation = { statusOffre: 'VALIDEE', motifRefus: '' };
+    this.evaluation = { statusOffre: 'VALIDEE', motifRefus: '', dateEntretien: '', heureEntretien: '' };
     this.showTraitementModal = true;
     this.errorEval = '';
   }
@@ -270,7 +276,7 @@ export class OffresList implements OnInit, OnDestroy {
     event.stopPropagation();
     if (!this.peutEvaluer(offre)) return;
     this.selectedOffre = offre;
-    this.evaluation = { statusOffre: 'REJETEE', motifRefus: '' };
+    this.evaluation = { statusOffre: 'REJETEE', motifRefus: '', dateEntretien: '', heureEntretien: '' };
     this.showTraitementModal = true;
     this.errorEval = '';
   }

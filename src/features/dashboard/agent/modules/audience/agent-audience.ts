@@ -34,6 +34,9 @@ interface DemandeAudience {
   candidat?: { idcandidats: number; nom: string; prenom: string; email: string; telephone?: string };
   direction_iddirection?: number | null;
   direction?: DirectionInfo;
+  transfereParId?: number | null;
+  transferePar?: string | null;
+  transfereDate?: string | null;
 }
 
 @Component({

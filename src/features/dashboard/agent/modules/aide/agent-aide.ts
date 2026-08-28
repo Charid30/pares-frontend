@@ -8,6 +8,8 @@ import { AuthService } from '../../../../../core/services/auth.service';
 import { environment } from '../../../../../environments/environment';
 import { StatCard } from '../../../../../shared/components/stat-card/stat-card';
 
+interface DirectionInfo { iddirection: number; nom: string; accronyme: string; }
+
 interface Aide {
   idaide: number;
   titre: string;
@@ -24,6 +26,12 @@ interface Aide {
   cnib_size?: number;
   demandeAide_filename?: string;
   demandeAide_size?: number;
+  // Affectation direction
+  direction_iddirection?: number | null;
+  direction?: DirectionInfo;
+  transfereParId?: number | null;
+  transferePar?: string | null;
+  transfereDate?: string | null;
 }
 
 @Component({
@@ -56,6 +64,12 @@ export class AgentAide implements OnInit {
     { value: 'REJETEE', label: 'Rejetées', dot: 'bg-red-500', ringClass: 'ring-red-400', count: 0, accent: 'rose',    icon: 'M6 18L18 6M6 6l12 12' },
     { value: 'EXPIREE', label: 'Expirées', dot: 'bg-gray-400', ringClass: 'ring-gray-400', count: 0, accent: 'slate',   icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
   ];
+
+  // Affectation direction
+  directions: DirectionInfo[] = [];
+  affectationForm = { direction_iddirection: null as number | null };
+  savingAffectation = false;
+  get peutAffecter(): boolean { return this.authService.hasPermission('AIDE', 'MODIFIER'); }
 
   // Modal détail
   showDetailModal = false;
@@ -125,6 +139,47 @@ export class AgentAide implements OnInit {
   ngOnInit(): void {
     if (!this.peutConsulter) return;
     this.charger();
+    this.chargerDirections();
+  }
+
+  chargerDirections(): void {
+    this.http.get<any>(`${this.apiUrl}/directions`).subscribe({
+      next: (res) => { this.directions = res.data || []; this.cdr.detectChanges(); },
+      error: () => {},
+    });
+  }
+
+  getDirectionLabel(id: number | null | undefined): string {
+    if (!id) return '—';
+    const d = this.directions.find(x => x.iddirection === id);
+    return d ? `${d.accronyme} — ${d.nom}` : `#${id}`;
+  }
+
+  sauvegarderAffectation(): void {
+    if (!this.detailAide) return;
+    this.savingAffectation = true;
+    this.http.put<any>(
+      `${this.apiUrl}/aides/${this.detailAide.idaide}/transferer`,
+      { direction_iddirection: this.affectationForm.direction_iddirection },
+    ).subscribe({
+      next: (res) => {
+        if (this.detailAide) {
+          this.detailAide.direction_iddirection = this.affectationForm.direction_iddirection;
+          this.detailAide.direction = this.directions.find(d => d.iddirection === this.affectationForm.direction_iddirection);
+          this.detailAide.transferePar = res.data?.transferePar ?? null;
+          this.detailAide.transfereDate = res.data?.transfereDate ?? null;
+        }
+        this.savingAffectation = false;
+        this.addToast('Affectation enregistrée', 'Direction mise à jour avec succès', 'success');
+        this.charger();
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.savingAffectation = false;
+        this.addToast('Erreur', err.error?.message || 'Erreur lors du transfert', 'error');
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   charger(): void {
@@ -389,6 +444,7 @@ export class AgentAide implements OnInit {
 
   voirDetail(a: Aide): void {
     this.detailAide = { ...a };
+    this.affectationForm = { direction_iddirection: a.direction_iddirection ?? null };
     this.showDetailModal = true;
     this.loadingDetailDocs = true;
     this.cdr.detectChanges();

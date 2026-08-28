@@ -717,9 +717,19 @@
                 <svg class="w-3.5 h-3.5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                <p class="text-[10px] text-green-700">
-                  Affectée à <strong>{{ getDirectionLabel(detailDemande.direction_iddirection) }}</strong>
-                </p>
+                <div class="flex-1 min-w-0">
+                  <p class="text-[10px] text-green-700">
+                    Affectée à <strong>{{ getDirectionLabel(detailDemande.direction_iddirection) }}</strong>
+                  </p>
+                  @if (detailDemande.transferePar) {
+                    <p class="text-[10px] text-green-600 mt-0.5">
+                      Transférée par <strong>{{ detailDemande.transferePar }}</strong>
+                      @if (detailDemande.transfereDate) {
+                        · {{ detailDemande.transfereDate | date:'dd/MM/yyyy HH:mm' }}
+                      }
+                    </p>
+                  }
+                </div>
               </div>
             }
 

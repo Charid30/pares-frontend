@@ -449,6 +449,26 @@
           </div>
         }
 
+        <!-- Date d'entretien (visible si VALIDEE) -->
+        @if (evaluation.statusOffre === 'VALIDEE' || evaluation.statusOffre === 'EN_TRAITEMENT') {
+          <div class="rounded-xl border border-blue-100 bg-blue-50 p-3 space-y-2">
+            <p class="text-xs font-semibold text-blue-700 uppercase tracking-wide">Date d'entretien (recommandé)</p>
+            <div class="flex gap-2">
+              <div class="flex-1">
+                <label class="block text-xs text-gray-600 mb-1">Date</label>
+                <input type="date" [(ngModel)]="evaluation.dateEntretien"
+                  class="w-full px-2.5 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"/>
+              </div>
+              <div class="w-32">
+                <label class="block text-xs text-gray-600 mb-1">Heure</label>
+                <input type="time" [(ngModel)]="evaluation.heureEntretien"
+                  class="w-full px-2.5 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"/>
+              </div>
+            </div>
+            <p class="text-[10px] text-blue-600">Si renseignée, le candidat recevra une notification push et email avec la date d'entretien.</p>
+          </div>
+        }
+
         <!-- Erreur -->
         @if (errorEval) {
           <div class="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 px-3 py-2.5 rounded-xl text-sm">
