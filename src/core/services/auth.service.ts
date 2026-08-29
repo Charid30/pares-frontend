@@ -65,6 +65,7 @@ export interface RegisterData {
   passeport?: string;
   ifu?: string;
   recipisse?: string;
+  formToken?: string;
 }
 
 // Rôles système avec layout dédié (tous les autres → /dashboard/agent)
@@ -120,6 +121,10 @@ export class AuthService {
   /**
    * Inscription
    */
+  getFormToken(): Observable<{ success: boolean; data: { token: string } }> {
+    return this.http.get<{ success: boolean; data: { token: string } }>(`${this.apiUrl}/form-token`);
+  }
+
   register(data: RegisterData): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.apiUrl}/register`, data, { withCredentials: true }).pipe(
       tap(response => {

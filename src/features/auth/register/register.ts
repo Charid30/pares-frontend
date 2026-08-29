@@ -33,6 +33,7 @@ export class Register implements OnInit, OnDestroy {
   errorMessage: string | null = null;
   successMessage: string | null = null;
   honeypot = '';
+  formToken = '';
   showPassword = false;
 
   // ── Pièce d'identité (CNIB/NIP ou Passeport) ─────────────────────────────
@@ -110,6 +111,11 @@ export class Register implements OnInit, OnDestroy {
       this.router.navigate(['/dashboard/candidat']);
       return;
     }
+
+    this.authService.getFormToken().subscribe({
+      next: (res) => { if (res.success) this.formToken = res.data.token; },
+      error: () => {}
+    });
 
     this.buildCountryList();
 
@@ -612,6 +618,7 @@ onSubmit(): void {
     passeport: this.pieceIdentiteType === 'passeport' ? (this.registerForm.value.passeport || undefined) : undefined,
     ifu: this.documentFiscalType === 'ifu' ? (this.registerForm.value.ifu || undefined) : undefined,
     recipisse: this.documentFiscalType === 'recipisse' ? (this.registerForm.value.recipisse || undefined) : undefined,
+    formToken: this.formToken,
   };
 
   this.authService.register(formData).subscribe({
