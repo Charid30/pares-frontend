@@ -143,6 +143,7 @@ export class AudiencesList implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadDemandes();
+    this.loadStats();
     this.loadDirections();
     this.searchSub = this.searchService.term$.pipe(
       debounceTime(200),
@@ -180,7 +181,6 @@ export class AudiencesList implements OnInit, OnDestroy {
         this.ngZone.run(() => {
           if (res.success && Array.isArray(res.data)) {
             this.demandes = res.data;
-            this.calculerCompteurs();
             this.appliquerFiltres();
             this.openFromQueryParam();
           }
@@ -198,12 +198,21 @@ export class AudiencesList implements OnInit, OnDestroy {
     });
   }
 
-  // ─── Compteurs ────────────────────────────────────────────────────────────
-  calculerCompteurs(): void {
-    this.countEnAttente = this.demandes.filter(d => d.status === 'EN_ATTENTE').length;
-    this.countAccepte   = this.demandes.filter(d => d.status === 'ACCEPTE').length;
-    this.countRejete    = this.demandes.filter(d => d.status === 'REJETE').length;
-    this.countAnnule    = this.demandes.filter(d => d.status === 'ANNULE').length;
+  // ─── Compteurs (depuis le backend — indépendant de la pagination) ─────────
+  loadStats(): void {
+    this.http.get<any>(`${this.apiUrl}/demandes-audience/stats`).subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.ngZone.run(() => {
+            this.countEnAttente = res.data.enAttente ?? 0;
+            this.countAccepte   = res.data.accepte   ?? 0;
+            this.countRejete    = res.data.rejete     ?? 0;
+            this.countAnnule    = res.data.annule     ?? 0;
+            this.cdr.detectChanges();
+          });
+        }
+      },
+    });
   }
 
   // ─── Filtres locaux ───────────────────────────────────────────────────────
@@ -303,6 +312,7 @@ export class AudiencesList implements OnInit, OnDestroy {
           if (res.success) {
             this.fermerTraitement();
             this.loadDemandes();
+            this.loadStats();
             this.successMessage = 'Décision enregistrée avec succès !';
             setTimeout(() => this.successMessage = '', 4000);
           }
