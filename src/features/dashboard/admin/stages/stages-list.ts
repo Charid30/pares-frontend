@@ -13,6 +13,9 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { SearchService } from '../../../../core/services/search.service';
 import { environment } from '../../../../environments/environment';
 import { StatCard } from '../../../../shared/components/stat-card/stat-card';
+import { StageConfirmModal, ConfirmModalConfig } from './components/stage-confirm-modal/stage-confirm-modal';
+import { StageDocModal } from './components/stage-doc-modal/stage-doc-modal';
+import { StageDemandesModal } from './components/stage-demandes-modal/stage-demandes-modal';
 
 interface Toast {
   id: number;
@@ -24,7 +27,7 @@ interface Toast {
 @Component({
   selector: 'app-stages-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, StatCard],
+  imports: [CommonModule, RouterModule, FormsModule, StatCard, StageConfirmModal, StageDocModal, StageDemandesModal],
   templateUrl: './stages-list.html',
   styles: [`
     .toast-enter {
@@ -67,21 +70,12 @@ export class StagesList implements OnInit, OnDestroy {
   error = '';
 
   // Modal de confirmation personnalisé
-  confirmModal: {
-    show: boolean;
-    title: string;
-    message: string;
-    confirmText: string;
-    confirmStyle: string;
-    iconPath: string;
-    iconColor: string;
-    onConfirm: () => void;
-  } = {
+  confirmModal: ConfirmModalConfig & { onConfirm: () => void } = {
     show: false, title: '', message: '', confirmText: '', confirmStyle: '',
     iconPath: '', iconColor: '', onConfirm: () => {}
   };
 
-  openConfirmModal(cfg: { title: string; message: string; confirmText: string; confirmStyle: string; iconPath: string; iconColor: string; onConfirm: () => void }): void {
+  openConfirmModal(cfg: Omit<ConfirmModalConfig, 'show'> & { onConfirm: () => void }): void {
     this.confirmModal = { show: true, ...cfg };
     this.cdr.detectChanges();
   }
@@ -192,13 +186,6 @@ export class StagesList implements OnInit, OnDestroy {
   // Joindre un document (convention / attestation) sur un stage déjà accepté
   showDocModal = false;
   docStageId: number | null = null;
-  docType: 'CONVENTION' | 'ATTESTATION' = 'CONVENTION';
-  docDateEmission = '';
-  docFile: File | null = null;
-  errorDoc = '';
-  soumissionDoc = false;
-  stageHasConvention = false;
-  checkingConvention = false;
 
   // Permissions
   canApprouver = false;
@@ -213,8 +200,6 @@ export class StagesList implements OnInit, OnDestroy {
   demandesModification: any[] = [];
   showDemandesModal = false;
   selectedDemande: any = null;
-  evaluerDemandeForm = { status: '' as 'APPROUVEE' | 'REJETEE' | '', reponse_drh: '' };
-  submittingDemande = false;
 
   // Affectation direction / service (admin)
   directions: { iddirection: number; nom: string; accronyme: string; services?: { idservice: number; accronyme: string; description: string }[] }[] = [];
@@ -681,78 +666,26 @@ export class StagesList implements OnInit, OnDestroy {
 
   ouvrirDocModal(stage: Stage): void {
     this.docStageId = stage.idstage;
-    this.docType = 'CONVENTION';
-    this.docDateEmission = new Date().toISOString().substring(0, 10);
-    this.docFile = null;
-    this.errorDoc = '';
-    this.stageHasConvention = false;
-    this.checkingConvention = true;
     this.showDocModal = true;
     this.cdr.detectChanges();
-
-    this.adminStageService.getStageById(stage.idstage).subscribe({
-      next: (res) => {
-        const docs: any[] = (res.data as any)?.documents || [];
-        this.stageHasConvention = docs.some((d) => d.typeDocument === 'CONVENTION');
-        if (this.stageHasConvention) this.docType = 'ATTESTATION';
-        this.checkingConvention = false;
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.checkingConvention = false;
-        this.cdr.detectChanges();
-      }
-    });
   }
 
   fermerDocModal(): void {
     this.showDocModal = false;
     this.docStageId = null;
-    this.soumissionDoc = false;
-    this.stageHasConvention = false;
-    this.errorDoc = '';
     this.cdr.detectChanges();
   }
 
-  onDocFileChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.docFile = input.files?.[0] || null;
-  }
-
-  creerDocument(): void {
-    if (!this.docStageId || this.soumissionDoc) return;
-    if (!this.docFile) { this.errorDoc = 'Veuillez sélectionner un fichier PDF'; this.cdr.detectChanges(); return; }
-    if (!this.docDateEmission) { this.errorDoc = "La date d'émission est requise"; this.cdr.detectChanges(); return; }
-
-    this.soumissionDoc = true;
-    this.errorDoc = '';
-
-    const formData = new FormData();
-    formData.append('stage_idstage', String(this.docStageId));
-    formData.append('typeDocument', this.docType);
-    formData.append('dateEmission', this.docDateEmission);
-    formData.append('document', this.docFile);
-    const user = this.authService.getCurrentUser();
-    if (user) formData.append('emetteurNom', `${user.prenom || ''} ${user.nom || ''}`.trim());
-
-    const stageId = this.docStageId;
-    this.http.post<any>(`${environment.apiUrl}/stages/documents`, formData).subscribe({
-      next: () => {
-        this.showToast('success', 'Document créé', 'Le document a été joint avec succès.');
-        this.fermerDocModal();
-        this.loadStages();
-        if (this.selectedStage?.idstage === stageId) {
-          this.adminStageService.getStageById(stageId!).subscribe({
-            next: (res) => { if (res.success) this.selectedStage = res.data; this.cdr.detectChanges(); }
-          });
-        }
-      },
-      error: (err) => {
-        this.errorDoc = err.error?.message || 'Erreur lors de la création du document';
-        this.soumissionDoc = false;
-        this.cdr.detectChanges();
-      }
-    });
+  onDocumentCreated(stageId: number): void {
+    this.showToast('success', 'Document créé', 'Le document a été joint avec succès.');
+    this.showDocModal = false;
+    this.docStageId = null;
+    this.loadStages();
+    if (this.selectedStage?.idstage === stageId) {
+      this.adminStageService.getStageById(stageId).subscribe({
+        next: (res) => { if (res.success) this.selectedStage = res.data; this.cdr.detectChanges(); }
+      });
+    }
   }
 
   closeModal(): void {
@@ -1651,34 +1584,13 @@ export class StagesList implements OnInit, OnDestroy {
     });
   }
 
-  evaluerDemande(): void {
-    if (!this.selectedDemande || !this.evaluerDemandeForm.status) return;
-    this.submittingDemande = true;
-    this.adminStageService.evaluerDemandeModification(this.selectedDemande.id, {
-      status: this.evaluerDemandeForm.status as 'APPROUVEE' | 'REJETEE',
-      reponse_drh: this.evaluerDemandeForm.reponse_drh || undefined
-    }).subscribe({
-      next: (res) => {
-        this.ngZone.run(() => {
-          if (res.success) {
-            this.showDemandesModal = false;
-            this.selectedDemande = null;
-            this.loadDemandesModification();
-            this.loadStages();
-            this.showToast('success', 'Décision enregistrée', 'La demande a été traitée avec succès.');
-          }
-          this.submittingDemande = false;
-          this.cdr.detectChanges();
-        });
-      },
-      error: (err) => {
-        this.ngZone.run(() => {
-          this.showToast('error', 'Erreur', err.error?.message || 'Erreur');
-          this.submittingDemande = false;
-          this.cdr.detectChanges();
-        });
-      }
-    });
+  onDemandeEvaluated(): void {
+    this.showDemandesModal = false;
+    this.selectedDemande = null;
+    this.loadDemandesModification();
+    this.loadStages();
+    this.showToast('success', 'Décision enregistrée', 'La demande a été traitée avec succès.');
+    this.cdr.detectChanges();
   }
 
   getDemandeTypeLabel(type: string): string {

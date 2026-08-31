@@ -17,6 +17,7 @@ export class Login {
   isLoading = false;
   errorMessage: string | null = null;
   showPassword = false;
+  isLocked = false;
 
   constructor(
     private fb: FormBuilder,
@@ -42,6 +43,7 @@ export class Login {
   }
 
   onSubmit(): void {
+    if (this.loginForm.invalid || this.isLocked) return;
     if (this.loginForm.valid) {
       this.isLoading = true;
       this.errorMessage = null;
@@ -66,7 +68,13 @@ export class Login {
           this.ngZone.run(() => {
             this.isLoading = false;
             if (error.status === 401) {
-              this.errorMessage = 'Nom d\'utilisateur ou mot de passe incorrect';
+              const msg: string = error.error?.message || '';
+              if (msg.includes('verrouillé') || msg.includes('tentatives')) {
+                this.isLocked = true;
+                this.errorMessage = msg;
+              } else {
+                this.errorMessage = 'Nom d\'utilisateur ou mot de passe incorrect';
+              }
             } else if (error.status === 400 && error.error?.message?.includes('suspect')) {
               this.errorMessage = '⚠️ Contenu suspect détecté. Vos actions ont été enregistrées et votre IP surveillée.';
             } else if (error.status === 403 && error.error?.message?.includes('banni')) {

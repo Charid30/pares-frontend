@@ -181,6 +181,7 @@ export class AidesSociales implements OnInit {
           }
         });
       },
+      error: () => { /* compteurs non critiques, silencieux */ }
     });
   }
 

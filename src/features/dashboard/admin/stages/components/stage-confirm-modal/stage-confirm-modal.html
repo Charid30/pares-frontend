@@ -1,0 +1,31 @@
+<div *ngIf="config.show"
+     class="fixed inset-0 z-[100] flex items-center justify-center p-4"
+     (click)="cancelled.emit()">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+
+  <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 flex flex-col gap-4"
+       (click)="$event.stopPropagation()">
+
+    <div class="flex flex-col items-center text-center gap-3">
+      <div class="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center">
+        <svg class="w-7 h-7" [ngClass]="config.iconColor" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="config.iconPath"/>
+        </svg>
+      </div>
+      <h3 class="text-base font-bold text-gray-900">{{ config.title }}</h3>
+      <p class="text-sm text-gray-500 leading-relaxed" [innerHTML]="config.message"></p>
+    </div>
+
+    <div class="flex gap-3 mt-1">
+      <button (click)="cancelled.emit()"
+              class="flex-1 py-2.5 px-4 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 active:scale-95 transition-all text-sm">
+        Annuler
+      </button>
+      <button (click)="confirmed.emit()"
+              class="flex-1 py-2.5 px-4 font-medium rounded-xl active:scale-95 transition-all text-sm"
+              [ngClass]="config.confirmStyle">
+        {{ config.confirmText }}
+      </button>
+    </div>
+  </div>
+</div>

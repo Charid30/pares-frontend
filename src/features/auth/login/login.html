@@ -174,8 +174,17 @@
           </a>
         </div>
 
+        <!-- Compte verrouillé -->
+        <div *ngIf="isLocked"
+             class="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+          <svg class="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+          <span class="text-amber-800 text-sm font-medium">{{ errorMessage }}</span>
+        </div>
+
         <!-- Message d'erreur global -->
-        <div *ngIf="errorMessage"
+        <div *ngIf="errorMessage && !isLocked"
              class="flex items-start gap-3 p-4 bg-red-50 border border-red-100 rounded-xl">
           <svg class="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -186,7 +195,7 @@
         <!-- Bouton connexion -->
         <button
           type="submit"
-          [disabled]="loginForm.invalid || isLoading"
+          [disabled]="loginForm.invalid || isLoading || isLocked"
           class="group w-full relative flex items-center justify-center gap-2 py-3.5 bg-primary-500 text-white text-sm font-semibold rounded-xl hover:bg-primary-600 active:scale-[0.98] transition-all shadow-sm overflow-hidden disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100">
           <!-- Shimmer effect -->
           <div class="absolute inset-0 bg-white/10 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none"></div>

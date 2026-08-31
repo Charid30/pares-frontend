@@ -181,6 +181,7 @@ export class OffresCommerciales implements OnInit {
           }
         });
       },
+      error: () => { /* compteurs non critiques, silencieux */ }
     });
   }
 
