@@ -13,6 +13,7 @@ interface GeoInfo {
   region: string | null;
   city: string | null;
   ll: [number, number] | null;
+  timezoneRegion: string | null;
 }
 
 interface BannedIp {
@@ -233,8 +234,13 @@ export class Securite implements OnInit {
   }
 
   geoLabel(geo: GeoInfo | null): string {
-    if (!geo || !geo.country) return 'Locale / Inconnue';
-    return geo.city ? `${geo.city}, ${geo.country}` : (geo.countryName || geo.country);
+    if (!geo) return 'Inconnue';
+    if (geo.country) {
+      return geo.city ? `${geo.city}, ${geo.countryName || geo.country}` : (geo.countryName || geo.country);
+    }
+    // IP cloud/datacenter : pas de pays mais fuseau horaire disponible
+    if (geo.timezoneRegion) return `Cloud / ${geo.timezoneRegion}`;
+    return 'Inconnue';
   }
 
   flagEmoji(countryCode: string | null): string {
