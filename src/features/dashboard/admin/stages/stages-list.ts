@@ -156,9 +156,15 @@ export class StagesList implements OnInit, OnDestroy {
     { key: 'dernierDiplome', label: 'Dernier diplôme légalisé' },
   ];
 
-  /** La lettre de recommandation n'est exigée que pour les stages de soutenance, pas pour le perfectionnement. */
+  readonly DOCUMENTS_RENOUVELLEMENT: { key: string; label: string }[] = [
+    { key: 'lettreMotivationRenouvellement', label: 'Lettre de renouvellement' },
+    { key: 'conventionStageEnCours', label: 'Convention du stage en cours' },
+  ];
+
+  /** Pour un renouvellement, seuls les docs du renouvellement sont concernés. */
   get documentsDisponiblesRejet(): { key: string; label: string }[] {
     if (!this.selectedStage) return this.DOCUMENTS_STAGE;
+    if (this.selectedStage.estRenouvellement) return this.DOCUMENTS_RENOUVELLEMENT;
     if (this.selectedStage.typeStage === 'PERFECTIONNEMENT') {
       return this.DOCUMENTS_STAGE.filter(d => d.key !== 'lettreRecommandation');
     }
