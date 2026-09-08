@@ -1221,6 +1221,8 @@ export class Stages implements OnInit {
     lettreMotivation: 'Demande de stage signée',
     lettreRecommandation: 'Lettre de recommandation',
     dernierDiplome: 'Dernier diplôme légalisé',
+    lettreMotivationRenouvellement: 'Lettre de demande de renouvellement',
+    conventionStageEnCours: 'Convention du stage en cours',
   };
   remplacementEnCours: Record<string, boolean> = {};
 
