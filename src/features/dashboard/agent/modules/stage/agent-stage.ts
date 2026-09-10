@@ -27,6 +27,14 @@ interface AutorisationRenouvellement {
   expiresAt: string;
 }
 
+interface RenouvellementInfo {
+  idrenouvellement: number;
+  dureeDemandee?: number;
+  dateRenouvellement?: string;
+  lettreMotivationRenouvellement_filename?: string;
+  conventionStageEnCours_filename?: string;
+}
+
 interface Stage {
   idstage: number;
   typeStage: string;
@@ -65,6 +73,9 @@ interface Stage {
   lettreMotivation_filename?: string;
   lettreRecommandation_filename?: string;
   dernierDiplome_filename?: string;
+  // Renouvellement
+  estRenouvellement?: boolean;
+  renouvellementInfo?: RenouvellementInfo | null;
 }
 
 interface StageStats {
@@ -901,6 +912,28 @@ export class AgentStage implements OnInit, OnDestroy {
       a.click();
       setTimeout(() => { document.body.removeChild(a); window.URL.revokeObjectURL(url); }, 500);
     }
+  }
+
+  /** Voir ou télécharger la lettre de demande de renouvellement */
+  accederLettreRenouvellement(mode: 'voir' | 'telecharger'): void {
+    const renouv = this.detailStage?.renouvellementInfo;
+    if (!renouv) return;
+    const filename = renouv.lettreMotivationRenouvellement_filename || `lettre_renouvellement_${renouv.idrenouvellement}.pdf`;
+    this.http.get(`${this.apiUrl}/stages/renouvellements/${renouv.idrenouvellement}/lettre`, { responseType: 'blob' }).subscribe({
+      next: (blob) => this.ouvrirOuTelechargerBlob(blob, filename, mode),
+      error: () => this.showSuccessMessage('Impossible de charger la lettre de renouvellement'),
+    });
+  }
+
+  /** Voir ou télécharger la convention du stage en cours (renouvellement) */
+  accederConventionRenouvellement(mode: 'voir' | 'telecharger'): void {
+    const renouv = this.detailStage?.renouvellementInfo;
+    if (!renouv) return;
+    const filename = renouv.conventionStageEnCours_filename || `convention_stage_en_cours_${renouv.idrenouvellement}.pdf`;
+    this.http.get(`${this.apiUrl}/stages/renouvellements/${renouv.idrenouvellement}/convention`, { responseType: 'blob' }).subscribe({
+      next: (blob) => this.ouvrirOuTelechargerBlob(blob, filename, mode),
+      error: () => this.showSuccessMessage('Impossible de charger la convention de renouvellement'),
+    });
   }
 
   /** Télécharger un document soumis par le candidat */
