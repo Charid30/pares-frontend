@@ -144,6 +144,10 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
         let path    = url.pathname;
         const query = url.search;
 
+        // Remappe les chemins /dashboard/admin/ → /admin/
+        if (path.startsWith('/dashboard/admin/')) {
+          path = path.replace('/dashboard/admin/', '/admin/');
+        }
         // Remappe les chemins agent → admin quand on est dans le layout admin
         if (this.router.url.startsWith('/admin') && path.startsWith('/dashboard/agent/')) {
           path = this.remapAgentToAdmin(path);

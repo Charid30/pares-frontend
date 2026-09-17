@@ -1,0 +1,498 @@
+<!-- agent-rapports.html -->
+<div class="space-y-4 md:space-y-6">
+
+  <!-- Notifications -->
+  <div *ngIf="successMessage"
+       class="flex items-center gap-3 px-5 py-3.5 bg-green-50 border border-green-200 rounded-2xl text-green-700 text-sm shadow-sm">
+    <svg class="w-5 h-5 flex-shrink-0 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+    </svg>
+    <span class="font-medium">{{ successMessage }}</span>
+  </div>
+  <div *ngIf="erreur"
+       class="flex items-center gap-3 px-5 py-3.5 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-sm shadow-sm">
+    <svg class="w-5 h-5 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <span class="font-medium">{{ erreur }}</span>
+  </div>
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div>
+      <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Rapports de stage</h1>
+      <p class="text-xs sm:text-sm text-gray-500 mt-0.5">{{ total }} rapport(s) soumis par les stagiaires</p>
+    </div>
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+      <div class="relative">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
+        </svg>
+        <input type="text" [(ngModel)]="search" (ngModelChange)="onFiltreChange()"
+               placeholder="Candidat, domaine, titre..."
+               class="w-full sm:w-60 pl-9 pr-9 py-2 rounded-xl text-sm bg-white border border-gray-200 text-gray-700
+                      focus:outline-none focus:ring-2 focus:ring-emerald-400 transition-all"/>
+        <button *ngIf="search" (click)="search = ''; onFiltreChange()"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <select [(ngModel)]="filtreStatut" (change)="onFiltreChange()"
+              class="px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm text-gray-700
+                     focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer flex-shrink-0">
+        <option value="">Tous les statuts</option>
+        <option value="SOUMIS">Soumis</option>
+        <option value="EN_EVALUATION">En évaluation</option>
+        <option value="VALIDE">Validé</option>
+        <option value="REFUSE">Refusé</option>
+      </select>
+      <button *ngIf="filtreStatut || search" (click)="effacerFiltres()"
+              class="px-3 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors flex-shrink-0">
+        Effacer
+      </button>
+      <button (click)="charger()"
+              class="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 active:scale-95 transition-all text-sm shadow-sm flex-shrink-0">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        <span class="hidden sm:inline">Actualiser</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+      <p class="text-xs text-gray-400 mb-1">Total</p>
+      <p class="text-2xl font-bold text-gray-900">{{ total }}</p>
+    </div>
+    <div class="bg-white rounded-2xl p-4 shadow-sm border border-blue-100">
+      <p class="text-xs text-blue-500 mb-1">Soumis</p>
+      <p class="text-2xl font-bold text-blue-600">{{ soumis }}</p>
+    </div>
+    <div class="bg-white rounded-2xl p-4 shadow-sm border border-green-100">
+      <p class="text-xs text-green-500 mb-1">Validés</p>
+      <p class="text-2xl font-bold text-green-600">{{ valides }}</p>
+    </div>
+    <div class="bg-white rounded-2xl p-4 shadow-sm border border-red-100">
+      <p class="text-xs text-red-400 mb-1">Refusés</p>
+      <p class="text-2xl font-bold text-red-500">{{ refuses }}</p>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+
+    <div *ngIf="isLoading" class="p-8 text-center">
+      <div class="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+      <p class="text-gray-500">Chargement...</p>
+    </div>
+
+    <div *ngIf="!isLoading && rapportsFiltrés.length === 0" class="p-8 text-center">
+      <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+      </div>
+      <h3 class="text-lg font-semibold text-gray-900 mb-2">Aucun rapport</h3>
+      <p class="text-gray-500">{{ filtreStatut || search ? 'Aucun résultat pour ce filtre.' : 'Les rapports de stage apparaîtront ici.' }}</p>
+    </div>
+
+    <!-- TABLE DESKTOP -->
+    <div *ngIf="!isLoading && rapportsFiltrés.length > 0" class="hidden md:block overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gray-50 border-b border-gray-100">
+          <tr>
+            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Stagiaire</th>
+            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Stage / Titre rapport</th>
+            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Durée stage</th>
+            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Cumul stagiaire</th>
+            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date soumission</th>
+            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Statut</th>
+            <th class="px-4 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr *ngFor="let r of rapportsFiltrés" class="hover:bg-gray-50 transition-colors">
+
+            <td class="px-4 py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-full flex items-center justify-center text-emerald-700 font-semibold text-sm flex-shrink-0">
+                  {{ getInitiales(r) }}
+                </div>
+                <div class="min-w-0">
+                  <p class="text-sm font-medium text-gray-900 truncate">
+                    {{ r.stage?.candidat?.prenom || '—' }} {{ r.stage?.candidat?.nom || '' }}
+                  </p>
+                  <p class="text-xs text-gray-500 truncate">{{ r.stage?.candidat?.email || '—' }}</p>
+                </div>
+              </div>
+            </td>
+
+            <td class="px-4 py-4">
+              <p class="text-sm font-medium text-gray-800 truncate max-w-[180px]">{{ r.titreRapport || '—' }}</p>
+              <p class="text-xs text-gray-500 truncate">{{ r.stage?.domaineStage || '—' }}</p>
+            </td>
+
+            <td class="px-4 py-4">
+              <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-indigo-100 text-indigo-700">
+                {{ r.stage?.dureeStage ?? '—' }} mois
+              </span>
+            </td>
+
+            <td class="px-4 py-4">
+              <div class="flex items-center gap-1.5">
+                <span class="text-sm font-bold text-emerald-700">{{ getCumulMois(r) }}</span>
+                <span class="text-xs text-gray-500">mois</span>
+              </div>
+            </td>
+
+            <td class="px-4 py-4">
+              <span class="text-xs text-gray-600">{{ formatDate(r.createdDate) }}</span>
+            </td>
+
+            <td class="px-4 py-4">
+              <span class="px-2.5 py-1 text-xs font-semibold rounded-full" [ngClass]="getStatutBadge(r.statusRapport)">
+                {{ getStatutLabel(r.statusRapport) }}
+              </span>
+              <p *ngIf="r.noteRapport" class="text-xs text-gray-500 mt-0.5">Note : {{ r.noteRapport }}/20</p>
+            </td>
+
+            <td class="px-4 py-4">
+              <div class="flex items-center justify-end gap-1">
+                <button (click)="voirDetail(r)"
+                        class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                        title="Voir détail">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- CARDS MOBILE -->
+    <div *ngIf="!isLoading && rapportsFiltrés.length > 0" class="md:hidden p-3 space-y-3">
+      <div *ngFor="let r of rapportsFiltrés"
+           (click)="voirDetail(r)"
+           class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition-all border border-gray-100">
+        <div class="h-1 w-full"
+             [ngClass]="r.statusRapport === 'VALIDE' ? 'bg-green-500' : r.statusRapport === 'REFUSE' ? 'bg-red-500' : r.statusRapport === 'EN_EVALUATION' ? 'bg-amber-400' : 'bg-blue-400'"></div>
+        <div class="p-4 space-y-2">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+              {{ getInitiales(r) }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="font-bold text-gray-900 text-sm truncate">
+                {{ r.stage?.candidat?.prenom || '—' }} {{ r.stage?.candidat?.nom || '' }}
+              </p>
+              <p class="text-xs text-gray-400 truncate">{{ r.titreRapport || r.stage?.domaineStage || '—' }}</p>
+            </div>
+            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0" [ngClass]="getStatutBadge(r.statusRapport)">
+              {{ getStatutLabel(r.statusRapport) }}
+            </span>
+          </div>
+          <div class="flex items-center gap-3 text-xs text-gray-500">
+            <span class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-medium">{{ r.stage?.dureeStage ?? '—' }} mois</span>
+            <span class="text-emerald-700 font-semibold">Cumul : {{ getCumulMois(r) }} mois</span>
+            <span class="ml-auto">{{ formatDate(r.createdDate) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL — DÉTAIL RAPPORT
+     ══════════════════════════════════════════════════════════ -->
+<div *ngIf="showModal && selected"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden">
+
+    <!-- Header -->
+    <div class="flex items-center gap-4 px-6 py-4 border-b border-gray-100 bg-slate-900 flex-shrink-0">
+      <div class="w-12 h-12 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-bold text-base">
+        {{ getInitiales(selected) }}
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="font-bold text-white truncate">
+          {{ selected.stage?.candidat?.prenom || '—' }} {{ selected.stage?.candidat?.nom || '' }}
+        </p>
+        <p class="text-xs text-gray-400">{{ selected.stage?.candidat?.email || '—' }}</p>
+      </div>
+      <span class="flex-shrink-0 px-2.5 py-1 text-xs font-semibold rounded-lg" [ngClass]="getStatutBadge(selected.statusRapport)">
+        {{ getStatutLabel(selected.statusRapport) }}
+      </span>
+      <button (click)="fermerModal()" class="text-gray-400 hover:text-white transition-colors flex-shrink-0 ml-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Contenu scrollable -->
+    <div class="flex-1 overflow-y-auto p-5 space-y-4">
+
+      <!-- Infos stage -->
+      <div class="bg-gray-50 rounded-xl border border-gray-100 overflow-hidden">
+        <div class="px-3 py-2 border-b border-gray-100 flex items-center gap-2">
+          <svg class="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253"/>
+          </svg>
+          <p class="text-[11px] font-bold text-gray-700 uppercase tracking-wide">Stage</p>
+        </div>
+        <div class="divide-y divide-gray-100">
+          <div class="flex items-center justify-between px-3 py-2.5">
+            <span class="text-xs text-gray-500">Domaine</span>
+            <span class="text-xs font-semibold text-gray-800">{{ selected.stage?.domaineStage || '—' }}</span>
+          </div>
+          <div class="flex items-center justify-between px-3 py-2.5">
+            <span class="text-xs text-gray-500">Durée du stage</span>
+            <span class="text-xs font-semibold text-gray-800">{{ selected.stage?.dureeStage ?? '—' }} mois</span>
+          </div>
+          <div class="flex items-center justify-between px-3 py-2.5">
+            <span class="text-xs text-gray-500">Période</span>
+            <span class="text-xs font-semibold text-gray-800">
+              {{ formatDate(selected.stage?.dateDebutEffective) }} → {{ formatDate(selected.stage?.dateFinEffective) }}
+            </span>
+          </div>
+          <div class="flex items-center justify-between px-3 py-2.5 bg-emerald-50">
+            <span class="text-xs text-emerald-700 font-medium">Total mois (stagiaire)</span>
+            <span class="text-sm font-bold text-emerald-800">{{ getCumulMois(selected) }} mois</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rapport -->
+      <div class="bg-gray-50 rounded-xl border border-gray-100 overflow-hidden">
+        <div class="px-3 py-2 border-b border-gray-100 flex items-center gap-2">
+          <svg class="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <p class="text-[11px] font-bold text-gray-700 uppercase tracking-wide">Rapport de stage</p>
+        </div>
+        <div class="divide-y divide-gray-100">
+          <div *ngIf="selected.titreRapport" class="flex items-center justify-between px-3 py-2.5">
+            <span class="text-xs text-gray-500">Titre</span>
+            <span class="text-xs font-semibold text-gray-800">{{ selected.titreRapport }}</span>
+          </div>
+          <div *ngIf="selected.natureRapport" class="flex items-center justify-between px-3 py-2.5">
+            <span class="text-xs text-gray-500">Nature</span>
+            <span class="text-xs font-semibold text-gray-800">{{ selected.natureRapport }}</span>
+          </div>
+          <div class="flex items-center justify-between px-3 py-2.5">
+            <span class="text-xs text-gray-500">Soumis le</span>
+            <span class="text-xs font-semibold text-gray-800">{{ formatDate(selected.createdDate) }}</span>
+          </div>
+          <div *ngIf="selected.noteRapport" class="flex items-center justify-between px-3 py-2.5">
+            <span class="text-xs text-gray-500">Note</span>
+            <span class="text-xs font-bold text-indigo-700">{{ selected.noteRapport }} / 20</span>
+          </div>
+          <div *ngIf="selected.commentaireEvaluateur" class="px-3 py-2.5">
+            <span class="text-xs text-gray-500 block mb-1">Commentaire</span>
+            <p class="text-xs text-gray-700">{{ selected.commentaireEvaluateur }}</p>
+          </div>
+          <div *ngIf="selected.motifRefus" class="px-3 py-2.5 bg-red-50">
+            <span class="text-xs text-red-500 block mb-1">Motif du refus</span>
+            <p class="text-xs text-red-700">{{ selected.motifRefus }}</p>
+          </div>
+          <div *ngIf="selected.rapportPdf_filename" class="p-3">
+            <p class="text-[10px] text-gray-400 truncate mb-2">{{ selected.rapportPdf_filename }}</p>
+            <div class="flex gap-2">
+              <button (click)="telechargerRapport('voir')"
+                      class="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-600 text-xs font-medium hover:bg-gray-100 active:scale-95 transition-all cursor-pointer">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+                Voir
+              </button>
+              <button (click)="telechargerRapport('telecharger')"
+                      class="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 bg-emerald-600 rounded-lg text-white text-xs font-medium hover:bg-emerald-700 active:scale-95 transition-all cursor-pointer">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                Télécharger
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Remplacer attestation si VALIDE -->
+      <div *ngIf="selected.statusRapport === 'VALIDE' && peutCreerAttestation"
+           class="flex items-center justify-between p-3 bg-blue-50 rounded-xl border border-blue-100">
+        <div>
+          <p class="text-xs font-semibold text-blue-800">Attestation de stage</p>
+          <p class="text-[10px] text-blue-600 mt-0.5">Uploader ou remplacer l'attestation PDF</p>
+        </div>
+        <button (click)="ouvrirRemplacement()"
+                class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 active:scale-95 transition-all cursor-pointer">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+          </svg>
+          Remplacer
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="flex items-center justify-between gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50 flex-shrink-0">
+      <button (click)="fermerModal()"
+              class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer">
+        Fermer
+      </button>
+      <div *ngIf="selected.statusRapport === 'SOUMIS' || selected.statusRapport === 'EN_EVALUATION'" class="flex gap-2">
+        <button *ngIf="peutValider" (click)="ouvrirDecision('VALIDE')"
+                class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 rounded-xl transition-colors active:scale-95 cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          Valider
+        </button>
+        <button *ngIf="peutRejeter" (click)="ouvrirDecision('REFUSE')"
+                class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors active:scale-95 cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+          Refuser
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL — DÉCISION
+     ══════════════════════════════════════════════════════════ -->
+<div *ngIf="showDecisionModal"
+     class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+    <div class="px-6 py-5 border-b border-gray-100"
+         [ngClass]="decisionType === 'VALIDE' ? 'bg-green-50' : 'bg-red-50'">
+      <h3 class="text-base font-bold" [ngClass]="decisionType === 'VALIDE' ? 'text-green-800' : 'text-red-800'">
+        {{ decisionType === 'VALIDE' ? 'Valider le rapport' : 'Refuser le rapport' }}
+      </h3>
+      <p class="text-sm mt-1" [ngClass]="decisionType === 'VALIDE' ? 'text-green-600' : 'text-red-600'">
+        {{ decisionType === 'VALIDE'
+          ? 'La validation enregistrera la note et permettra de générer une attestation de stage.'
+          : 'Le candidat sera informé du refus avec le motif saisi.' }}
+      </p>
+    </div>
+    <div class="p-6 space-y-4">
+
+      <!-- Validation fields -->
+      <ng-container *ngIf="decisionType === 'VALIDE'">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Note (/20) <span class="text-gray-400">(facultatif)</span></label>
+          <input type="number" min="0" max="20" step="0.5" [(ngModel)]="noteRapport"
+                 placeholder="Ex : 16"
+                 class="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400"/>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Commentaire <span class="text-gray-400">(facultatif)</span></label>
+          <textarea [(ngModel)]="commentaire" rows="2"
+                    placeholder="Remarques sur le rapport..."
+                    class="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400 resize-none"></textarea>
+        </div>
+        <div *ngIf="peutCreerAttestation">
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Attestation de stage (PDF) <span class="text-red-500">*</span>
+          </label>
+          <label class="flex items-center gap-3 p-3 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-green-400 hover:bg-green-50 transition-all">
+            <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+            </svg>
+            <span class="text-sm text-gray-500 truncate">
+              {{ attestationFile ? attestationFile.name : 'Choisir le PDF de l\'attestation...' }}
+            </span>
+            <input type="file" accept="application/pdf" (change)="onAttestationChange($event)" class="hidden"/>
+          </label>
+        </div>
+      </ng-container>
+
+      <!-- Refus field -->
+      <div *ngIf="decisionType === 'REFUSE'">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Motif du refus <span class="text-red-500">*</span></label>
+        <textarea [(ngModel)]="motifRefus" rows="3"
+                  placeholder="Précisez le motif du refus..."
+                  class="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"></textarea>
+      </div>
+
+      <div class="flex justify-end gap-3">
+        <button (click)="fermerDecision()" [disabled]="soumission"
+                class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 transition-colors cursor-pointer">
+          Annuler
+        </button>
+        <button (click)="confirmerDecision()"
+                [disabled]="soumission
+                  || (decisionType === 'REFUSE' && !motifRefus.trim())
+                  || (decisionType === 'VALIDE' && peutCreerAttestation && !attestationFile)"
+                class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-xl disabled:opacity-50 active:scale-95 transition-all cursor-pointer"
+                [ngClass]="decisionType === 'VALIDE' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'">
+          <svg *ngIf="soumission" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          {{ soumission ? 'Traitement...' : (decisionType === 'VALIDE' ? 'Valider le rapport' : 'Confirmer le refus') }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL — REMPLACER ATTESTATION
+     ══════════════════════════════════════════════════════════ -->
+<div *ngIf="showAttestationModal"
+     class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+    <div class="px-6 py-5 border-b border-gray-100 bg-blue-50">
+      <h3 class="text-base font-bold text-blue-800">Remplacer l'attestation</h3>
+      <p class="text-sm text-blue-600 mt-1">Sélectionnez le nouveau PDF d'attestation de stage.</p>
+    </div>
+    <div class="p-6 space-y-4">
+      <label class="flex items-center gap-3 p-4 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all">
+        <svg class="w-6 h-6 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+        </svg>
+        <span class="text-sm text-gray-500 truncate">
+          {{ attestationRemplacement ? attestationRemplacement.name : 'Choisir le PDF de l\'attestation...' }}
+        </span>
+        <input type="file" accept="application/pdf" (change)="onRemplacementChange($event)" class="hidden"/>
+      </label>
+      <div class="flex justify-end gap-3">
+        <button (click)="fermerRemplacement()" [disabled]="soumissionAttestation"
+                class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 cursor-pointer">
+          Annuler
+        </button>
+        <button (click)="confirmerRemplacement()" [disabled]="soumissionAttestation || !attestationRemplacement"
+                class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl disabled:opacity-50 active:scale-95 transition-all cursor-pointer">
+          <svg *ngIf="soumissionAttestation" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          {{ soumissionAttestation ? 'Upload...' : 'Uploader l\'attestation' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

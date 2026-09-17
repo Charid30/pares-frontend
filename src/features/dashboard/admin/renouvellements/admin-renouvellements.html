@@ -1,0 +1,431 @@
+<!-- admin-renouvellements.html -->
+<div class="space-y-4 md:space-y-6">
+
+  <!-- Notifications -->
+  <div *ngIf="successMessage"
+       class="flex items-center gap-3 px-5 py-3.5 bg-green-50 border border-green-200 rounded-2xl text-green-700 text-sm shadow-sm">
+    <svg class="w-5 h-5 flex-shrink-0 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+    </svg>
+    <span class="font-medium">{{ successMessage }}</span>
+  </div>
+  <div *ngIf="erreur"
+       class="flex items-center gap-3 px-5 py-3.5 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-sm shadow-sm">
+    <svg class="w-5 h-5 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <span class="font-medium">{{ erreur }}</span>
+  </div>
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div>
+      <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Renouvellements de stage</h1>
+      <p class="text-xs sm:text-sm text-gray-500 mt-0.5">{{ total }} demande(s) de renouvellement</p>
+    </div>
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+      <div class="relative">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
+        </svg>
+        <input type="text" [(ngModel)]="search" (ngModelChange)="onFiltreChange()"
+               placeholder="Rechercher par nom, domaine..."
+               class="w-full sm:w-60 pl-9 pr-9 py-2 rounded-xl text-sm bg-white border border-gray-200 text-gray-700
+                      focus:outline-none focus:ring-2 focus:ring-red-400 transition-all"/>
+        <button *ngIf="search" (click)="search = ''; onFiltreChange()"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <select [(ngModel)]="filtreStatut" (change)="onFiltreChange()"
+              class="px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm text-gray-700
+                     focus:outline-none focus:ring-2 focus:ring-red-400 cursor-pointer flex-shrink-0">
+        <option value="">Tous les statuts</option>
+        <option value="EN_ATTENTE">En attente</option>
+        <option value="ACCEPTE">Accepté</option>
+        <option value="REJETE">Rejeté</option>
+      </select>
+      <button *ngIf="filtreStatut || search" (click)="effacerFiltres()"
+              class="px-3 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors flex-shrink-0">
+        Effacer
+      </button>
+      <button (click)="charger()"
+              class="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 active:scale-95 transition-all text-sm shadow-sm flex-shrink-0">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        <span class="hidden sm:inline">Actualiser</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+      <p class="text-xs text-gray-400 mb-1">Total</p>
+      <p class="text-2xl font-bold text-gray-900">{{ total }}</p>
+    </div>
+    <div class="bg-white rounded-2xl p-4 shadow-sm border border-amber-100">
+      <p class="text-xs text-amber-500 mb-1">En attente</p>
+      <p class="text-2xl font-bold text-amber-600">{{ enAttente }}</p>
+    </div>
+    <div class="bg-white rounded-2xl p-4 shadow-sm border border-green-100">
+      <p class="text-xs text-green-500 mb-1">Acceptés</p>
+      <p class="text-2xl font-bold text-green-600">{{ acceptes }}</p>
+    </div>
+    <div class="bg-white rounded-2xl p-4 shadow-sm border border-red-100">
+      <p class="text-xs text-red-400 mb-1">Rejetés</p>
+      <p class="text-2xl font-bold text-red-500">{{ rejetes }}</p>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+
+    <div *ngIf="isLoading" class="p-8 text-center">
+      <div class="w-12 h-12 border-4 border-red-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+      <p class="text-gray-500">Chargement...</p>
+    </div>
+
+    <div *ngIf="!isLoading && renouvellementsFiltrés.length === 0" class="p-8 text-center">
+      <div class="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+      </div>
+      <h3 class="text-lg font-semibold text-gray-900 mb-2">Aucun renouvellement</h3>
+      <p class="text-gray-500">
+        {{ filtreStatut || search ? 'Aucun résultat pour ce filtre.' : 'Les demandes de renouvellement apparaîtront ici.' }}
+      </p>
+    </div>
+
+    <!-- TABLE DESKTOP -->
+    <div *ngIf="!isLoading && renouvellementsFiltrés.length > 0" class="hidden md:block overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gray-50 border-b border-gray-100">
+          <tr>
+            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Candidat</th>
+            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Stage d'origine</th>
+            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Durée</th>
+            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date demande</th>
+            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Fin stage actuel</th>
+            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Statut</th>
+            <th class="px-4 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr *ngFor="let r of renouvellementsFiltrés" class="hover:bg-gray-50 transition-colors">
+
+            <td class="px-4 py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-gradient-to-br from-red-100 to-red-200 rounded-full flex items-center justify-center text-red-700 font-semibold text-sm flex-shrink-0">
+                  {{ getInitiales(r) }}
+                </div>
+                <div class="min-w-0">
+                  <p class="text-sm font-medium text-gray-900 truncate">
+                    {{ r.stageActuel?.candidat?.prenom || '—' }} {{ r.stageActuel?.candidat?.nom || '' }}
+                  </p>
+                  <p class="text-xs text-gray-500 truncate">{{ r.stageActuel?.candidat?.email || '—' }}</p>
+                </div>
+              </div>
+            </td>
+
+            <td class="px-4 py-4">
+              <span class="text-sm text-gray-700">{{ r.stageActuel?.domaineStage || '—' }}</span>
+              <span class="ml-1 text-xs text-gray-400">(#{{ r.stageActuel?.idstage }})</span>
+            </td>
+
+            <td class="px-4 py-4">
+              <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-indigo-100 text-indigo-700">
+                {{ r.dureeDemandee }} mois
+              </span>
+            </td>
+
+            <td class="px-4 py-4">
+              <span class="text-xs text-gray-600">{{ r.dateRenouvellement | date:'dd/MM/yyyy' }}</span>
+            </td>
+
+            <td class="px-4 py-4">
+              <span class="text-xs text-gray-600">{{ r.stageActuel?.dateFinEffective | date:'dd/MM/yyyy' }}</span>
+            </td>
+
+            <td class="px-4 py-4">
+              <span class="px-2.5 py-1 text-xs font-semibold rounded-full" [ngClass]="getStatutBadge(r.statusRenouvellement)">
+                {{ getStatutLabel(r.statusRenouvellement) }}
+              </span>
+            </td>
+
+            <td class="px-4 py-4">
+              <div class="flex items-center justify-end gap-1">
+                <button (click)="voirDetail(r)"
+                        class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Voir détail">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                </button>
+                <button *ngIf="r.statusRenouvellement === 'EN_ATTENTE'"
+                        (click)="voirDetail(r)"
+                        class="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                        title="Traiter">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- CARDS MOBILE -->
+    <div *ngIf="!isLoading && renouvellementsFiltrés.length > 0" class="md:hidden p-3 space-y-3">
+      <div *ngFor="let r of renouvellementsFiltrés"
+           (click)="voirDetail(r)"
+           class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition-all border border-gray-100">
+        <div class="h-1 w-full"
+             [ngClass]="r.statusRenouvellement === 'ACCEPTE' ? 'bg-green-500' : r.statusRenouvellement === 'REJETE' ? 'bg-red-500' : 'bg-amber-400'"></div>
+        <div class="p-4 space-y-2">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-red-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+              {{ getInitiales(r) }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="font-bold text-gray-900 text-sm truncate">
+                {{ r.stageActuel?.candidat?.prenom || '—' }} {{ r.stageActuel?.candidat?.nom || '' }}
+              </p>
+              <p class="text-xs text-gray-400 truncate">{{ r.stageActuel?.domaineStage || '—' }}</p>
+            </div>
+            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0" [ngClass]="getStatutBadge(r.statusRenouvellement)">
+              {{ getStatutLabel(r.statusRenouvellement) }}
+            </span>
+          </div>
+          <div class="flex items-center gap-3 text-xs text-gray-500">
+            <span class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-medium">{{ r.dureeDemandee }} mois</span>
+            <span>{{ r.dateRenouvellement | date:'dd/MM/yyyy' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL — DÉTAIL RENOUVELLEMENT
+     ══════════════════════════════════════════════════════════ -->
+<div *ngIf="showModal && selected"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden">
+
+    <!-- Header -->
+    <div class="flex items-center gap-4 px-6 py-4 border-b border-gray-100 bg-slate-900 flex-shrink-0">
+      <div class="w-12 h-12 rounded-xl bg-red-600 flex items-center justify-center text-white font-bold text-base">
+        {{ getInitiales(selected) }}
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="font-bold text-white truncate">
+          {{ selected.stageActuel?.candidat?.prenom || '—' }} {{ selected.stageActuel?.candidat?.nom || '' }}
+        </p>
+        <p class="text-xs text-gray-400">{{ selected.stageActuel?.candidat?.email || '—' }}</p>
+      </div>
+      <span class="flex-shrink-0 px-2.5 py-1 text-xs font-semibold rounded-lg"
+            [ngClass]="getStatutBadge(selected.statusRenouvellement)">
+        {{ getStatutLabel(selected.statusRenouvellement) }}
+      </span>
+      <button (click)="fermerModal()" class="text-gray-400 hover:text-white transition-colors flex-shrink-0 ml-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Contenu scrollable -->
+    <div class="flex-1 overflow-y-auto p-5 space-y-4">
+
+      <!-- Métadonnées -->
+      <div class="bg-gray-50 rounded-xl border border-gray-100 overflow-hidden">
+        <div class="px-3 py-2 border-b border-gray-100 flex items-center gap-2">
+          <svg class="w-3.5 h-3.5 flex-shrink-0" style="color:#c0392b;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          <p class="text-[11px] font-bold text-gray-700 uppercase tracking-wide">Renouvellement</p>
+        </div>
+        <div class="divide-y divide-gray-100">
+          <div class="flex items-center justify-between px-3 py-2.5">
+            <span class="text-xs text-gray-500">Durée demandée</span>
+            <span class="text-xs font-semibold text-gray-800">{{ selected.dureeDemandee }} mois</span>
+          </div>
+          <div class="flex items-center justify-between px-3 py-2.5">
+            <span class="text-xs text-gray-500">Date de demande</span>
+            <span class="text-xs font-semibold text-gray-800">{{ formatDate(selected.dateRenouvellement) }}</span>
+          </div>
+          <div *ngIf="selected.stageActuel" class="flex items-center justify-between px-3 py-2.5">
+            <span class="text-xs text-gray-500">Stage d'origine</span>
+            <span class="text-xs font-semibold text-gray-800">
+              {{ selected.stageActuel.domaineStage || '—' }} (#{{ selected.stageActuel.idstage }})
+            </span>
+          </div>
+          <div *ngIf="selected.stageActuel?.dateFinEffective" class="flex items-center justify-between px-3 py-2.5">
+            <span class="text-xs text-gray-500">Fin du stage actuel</span>
+            <span class="text-xs font-semibold text-gray-800">{{ formatDate(selected.stageActuel!.dateFinEffective) }}</span>
+          </div>
+          <div *ngIf="selected.stageNouveau?.dateDebutEffective" class="flex items-center justify-between px-3 py-2.5">
+            <span class="text-xs text-gray-500">Début du nouveau stage</span>
+            <span class="text-xs font-semibold text-green-700">{{ formatDate(selected.stageNouveau!.dateDebutEffective) }}</span>
+          </div>
+          <div *ngIf="selected.stageNouveau?.dateFinEffective" class="flex items-center justify-between px-3 py-2.5">
+            <span class="text-xs text-gray-500">Fin du nouveau stage</span>
+            <span class="text-xs font-semibold text-red-600">{{ formatDate(selected.stageNouveau!.dateFinEffective) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Documents -->
+      <div class="bg-gray-50 rounded-xl border border-gray-100 overflow-hidden">
+        <div class="px-3 py-2 border-b border-gray-100 flex items-center gap-2">
+          <svg class="w-3.5 h-3.5 flex-shrink-0" style="color:#c0392b;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <p class="text-[11px] font-bold text-gray-700 uppercase tracking-wide">Documents de renouvellement</p>
+        </div>
+        <div class="p-3 space-y-2">
+
+          <!-- Convention -->
+          <ng-container *ngIf="selected.conventionStageEnCours_filename; else noConv">
+            <div class="bg-white rounded-lg border border-gray-200 p-2.5">
+              <p class="text-xs font-semibold text-gray-700 mb-1">Convention en cours</p>
+              <p class="text-[10px] text-gray-400 truncate mb-2">{{ selected.conventionStageEnCours_filename }}</p>
+              <div class="flex gap-2">
+                <button (click)="accederConvention('voir')"
+                        class="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-600 text-xs font-medium hover:bg-gray-100 active:scale-95 transition-all">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                  Voir
+                </button>
+                <button (click)="accederConvention('telecharger')"
+                        style="background:#c0392b;"
+                        class="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-white text-xs font-medium hover:bg-[#96281b] active:scale-95 transition-all">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                  </svg>
+                  Télécharger
+                </button>
+              </div>
+            </div>
+          </ng-container>
+          <ng-template #noConv>
+            <p class="text-xs text-gray-400 px-1">Convention non disponible</p>
+          </ng-template>
+
+          <!-- Lettre -->
+          <div *ngIf="selected.lettreMotivationRenouvellement_filename"
+               class="bg-white rounded-lg border border-gray-200 p-2.5">
+            <p class="text-xs font-semibold text-gray-700 mb-1">Lettre de renouvellement</p>
+            <p class="text-[10px] text-gray-400 truncate mb-2">{{ selected.lettreMotivationRenouvellement_filename }}</p>
+            <div class="flex gap-2">
+              <button (click)="accederLettre('voir')"
+                      class="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-600 text-xs font-medium hover:bg-gray-100 active:scale-95 transition-all">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+                Voir
+              </button>
+              <button (click)="accederLettre('telecharger')"
+                      style="background:#c0392b;"
+                      class="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-white text-xs font-medium hover:bg-[#96281b] active:scale-95 transition-all">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                Télécharger
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer actions -->
+    <div class="flex items-center justify-between gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50 flex-shrink-0">
+      <button (click)="fermerModal()"
+              class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+        Fermer
+      </button>
+      <div *ngIf="selected.statusRenouvellement === 'EN_ATTENTE'" class="flex gap-2">
+        <button (click)="ouvrirDecision('ACCEPTE')"
+                class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 rounded-xl transition-colors active:scale-95">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          Accepter
+        </button>
+        <button (click)="ouvrirDecision('REJETE')"
+                class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors active:scale-95">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+          Refuser
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL — CONFIRMATION DÉCISION
+     ══════════════════════════════════════════════════════════ -->
+<div *ngIf="showDecisionModal"
+     class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+    <div class="px-6 py-5 border-b border-gray-100"
+         [ngClass]="decisionType === 'ACCEPTE' ? 'bg-green-50' : 'bg-red-50'">
+      <h3 class="text-base font-bold" [ngClass]="decisionType === 'ACCEPTE' ? 'text-green-800' : 'text-red-800'">
+        {{ decisionType === 'ACCEPTE' ? 'Accepter le renouvellement' : 'Refuser le renouvellement' }}
+      </h3>
+      <p class="text-sm mt-1" [ngClass]="decisionType === 'ACCEPTE' ? 'text-green-600' : 'text-red-600'">
+        {{ decisionType === 'ACCEPTE'
+          ? 'Le nouveau stage sera créé automatiquement à partir du lendemain de la fin du stage actuel.'
+          : 'La demande sera rejetée et le candidat en sera informé.' }}
+      </p>
+    </div>
+    <div class="p-6 space-y-4">
+      <div *ngIf="decisionType === 'REJETE'">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Motif du refus <span class="text-red-500">*</span></label>
+        <textarea [(ngModel)]="motifRefus" rows="3"
+                  placeholder="Précisez le motif..."
+                  class="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"></textarea>
+      </div>
+      <div class="flex justify-end gap-3">
+        <button (click)="fermerDecision()" [disabled]="soumission"
+                class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 transition-colors">
+          Annuler
+        </button>
+        <button (click)="confirmerDecision()"
+                [disabled]="soumission || (decisionType === 'REJETE' && !motifRefus.trim())"
+                class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-xl disabled:opacity-50 active:scale-95 transition-all"
+                [ngClass]="decisionType === 'ACCEPTE' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'">
+          <svg *ngIf="soumission" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          {{ soumission ? 'Traitement...' : (decisionType === 'ACCEPTE' ? 'Confirmer l\'acceptation' : 'Confirmer le refus') }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -77,6 +77,7 @@ const MODULE_ROUTE_MAP: Record<string, string> = {
   CANDIDATURES:     '/dashboard/agent/candidatures',
   CANDIDATS:        '/dashboard/agent/candidats',
   STAGE:            '/dashboard/agent/stages',
+  RENOUVELLEMENTS:  '/dashboard/agent/renouvellements',
   SUIVI_STAGE:      '/dashboard/agent/suivi-stages',
   SUSPENSION_STAGE: '/dashboard/agent/suspensions',
   OFFRE:            '/dashboard/agent/offres',
@@ -239,6 +240,20 @@ export class AgentLayout implements OnInit, OnDestroy {
       // Accès simple (ex. CONSULTER seul, sans rôle d'action ni lecture globale)
       this.menuItems.push({ ...base, route: MODULE_ROUTE_MAP['STAGE'] });
     }
+
+    // Renouvellements de stage — visible dès que l'agent a accès au module STAGE
+    this.menuItems.push({
+      label: 'Renouvellements',
+      icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15',
+      route: MODULE_ROUTE_MAP['RENOUVELLEMENTS'],
+    });
+
+    // Rapports de stage
+    this.menuItems.push({
+      label: 'Rapports de stage',
+      icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+      route: '/dashboard/agent/rapports',
+    });
   }
 
   /**

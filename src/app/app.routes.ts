@@ -210,6 +210,16 @@ export const routes: Routes = [
                 path: 'securite',
                 loadComponent: () => import('../features/dashboard/admin/securite/securite').then(m => m.Securite)
             },
+            // Demandes de renouvellement de stage
+            {
+                path: 'renouvellements',
+                loadComponent: () => import('../features/dashboard/admin/renouvellements/admin-renouvellements').then(m => m.AdminRenouvellements)
+            },
+            // Rapports de stage
+            {
+                path: 'rapports',
+                loadComponent: () => import('../features/dashboard/admin/rapports/admin-rapports').then(m => m.AdminRapports)
+            },
             // Redirection par défaut
             {
                 path: '',
@@ -299,6 +309,20 @@ export const routes: Routes = [
                 canActivate: [permissionGuard],
                 data: { module: 'SUIVI_STAGE' },
                 loadComponent: () => import('../features/dashboard/agent/modules/suivi-stage/agent-suivi-stage').then(m => m.AgentSuiviStage),
+            },
+            // Module Renouvellements de stage
+            {
+                path: 'renouvellements',
+                canActivate: [permissionGuard],
+                data: { module: 'STAGE' },
+                loadComponent: () => import('../features/dashboard/agent/modules/renouvellement/agent-renouvellement').then(m => m.AgentRenouvellement),
+            },
+            // Module Rapports de stage
+            {
+                path: 'rapports',
+                canActivate: [permissionGuard],
+                data: { module: 'STAGE' },
+                loadComponent: () => import('../features/dashboard/agent/modules/rapports/agent-rapports').then(m => m.AgentRapports),
             },
             // Module Suspensions / Annulations
             {

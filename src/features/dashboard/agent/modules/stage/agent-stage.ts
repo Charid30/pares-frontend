@@ -76,6 +76,7 @@ interface Stage {
   // Renouvellement
   estRenouvellement?: boolean;
   renouvellementInfo?: RenouvellementInfo | null;
+  stageParent?: { idstage: number; domaineStage?: string } | null;
 }
 
 interface StageStats {

@@ -93,8 +93,7 @@
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
 
     <!-- Aides Sociales -->
-    <a routerLink="/admin/aides-sociales"
-      class="group relative bg-white rounded-2xl shadow-sm border border-gray-100
+    <a routerLink="/admin/aides-sociales" class="group relative bg-white rounded-2xl shadow-sm border border-gray-100
              hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer overflow-hidden">
       <div class="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl bg-primary-400"></div>
       <div class="p-4 sm:p-5 pl-5 sm:pl-6">
@@ -105,13 +104,12 @@
                 d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
             </svg>
           </div>
-          <span class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
-            [ngClass]="secondaryStats.aidesSociales.demandes > 0
+          <span class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full" [ngClass]="secondaryStats.aidesSociales.demandes > 0
               ? 'bg-amber-50 text-amber-700'
               : 'bg-gray-100 text-gray-400'">
             {{ secondaryStats.aidesSociales.demandes > 0
-              ? secondaryStats.aidesSociales.demandes + ' en attente'
-              : 'À jour' }}
+            ? secondaryStats.aidesSociales.demandes + ' en attente'
+            : 'À jour' }}
           </span>
         </div>
         <p class="text-3xl sm:text-4xl font-bold text-gray-900 tabular-nums leading-none">
@@ -125,8 +123,7 @@
     </a>
 
     <!-- Agents -->
-    <a routerLink="/admin/utilisateurs"
-      class="group relative bg-white rounded-2xl shadow-sm border border-gray-100
+    <a routerLink="/admin/utilisateurs" class="group relative bg-white rounded-2xl shadow-sm border border-gray-100
              hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer overflow-hidden">
       <div class="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl bg-slate-400"></div>
       <div class="p-4 sm:p-5 pl-5 sm:pl-6">
@@ -137,7 +134,8 @@
                 d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
           </div>
-          <span class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+          <span
+            class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
             {{ secondaryStats.utilisateurs.admins }}
             {{ secondaryStats.utilisateurs.admins > 1 ? 'admins' : 'admin' }}
           </span>
@@ -153,8 +151,7 @@
     </a>
 
     <!-- Stages en attente -->
-    <a routerLink="/admin/stages"
-      class="group relative bg-white rounded-2xl shadow-sm border border-gray-100
+    <a routerLink="/admin/stages" class="group relative bg-white rounded-2xl shadow-sm border border-gray-100
              hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer overflow-hidden">
       <div class="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl bg-amber-400"></div>
       <div class="p-4 sm:p-5 pl-5 sm:pl-6">
@@ -165,8 +162,7 @@
                 d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <span class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
-            [ngClass]="secondaryStats.stagesEnAttente > 0
+          <span class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full" [ngClass]="secondaryStats.stagesEnAttente > 0
               ? 'bg-amber-50 text-amber-700'
               : 'bg-secondary-50 text-secondary-700'">
             {{ secondaryStats.stagesEnAttente > 0 ? 'À traiter' : 'À jour' }}
@@ -183,8 +179,7 @@
     </a>
 
     <!-- Taux de validation -->
-    <a routerLink="/admin/stages"
-      class="group relative bg-white rounded-2xl shadow-sm border border-gray-100
+    <a routerLink="/admin/stages" class="group relative bg-white rounded-2xl shadow-sm border border-gray-100
              hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer overflow-hidden">
       <div class="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl bg-secondary-400"></div>
       <div class="p-4 sm:p-5 pl-5 sm:pl-6">
@@ -195,8 +190,7 @@
                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <span class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
-            [ngClass]="secondaryStats.tauxValidation >= 70
+          <span class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full" [ngClass]="secondaryStats.tauxValidation >= 70
               ? 'bg-secondary-50 text-secondary-700'
               : secondaryStats.tauxValidation >= 40
                 ? 'bg-amber-50 text-amber-700'
@@ -240,11 +234,9 @@
 
       <!-- Légende -->
       <div class="mt-4 space-y-1.5">
-        <div *ngFor="let label of stagesDonut.labels; let i = index"
-          class="flex items-center justify-between">
+        <div *ngFor="let label of stagesDonut.labels; let i = index" class="flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0"
-              [style.backgroundColor]="stagesDonut.colors[i]"></span>
+            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" [style.backgroundColor]="stagesDonut.colors[i]"></span>
             <span class="text-xs text-gray-500">{{ label }}</span>
           </div>
           <span class="text-xs font-semibold text-gray-700 tabular-nums">
@@ -313,8 +305,8 @@
           <span class="text-xs text-gray-400">Taux de traitement</span>
           <span class="text-xs font-semibold text-gray-600">
             {{ audiencesStats.total > 0
-              ? ((audiencesStats.acceptees + audiencesStats.rejetees) / audiencesStats.total * 100 | number:'1.0-0')
-              : 0 }}%
+            ? ((audiencesStats.acceptees + audiencesStats.rejetees) / audiencesStats.total * 100 | number:'1.0-0')
+            : 0 }}%
           </span>
         </div>
         <div class="h-2 bg-gray-100 rounded-full overflow-hidden flex gap-0.5">
@@ -458,7 +450,7 @@
 
       <div class="px-4 py-3 border-t border-gray-100 bg-gray-50/40">
         <a routerLink="/admin/taches"
-           class="w-full py-1.5 text-xs font-semibold text-primary-600 hover:text-primary-700 inline-flex items-center justify-center gap-1 transition-colors">
+          class="w-full py-1.5 text-xs font-semibold text-primary-600 hover:text-primary-700 inline-flex items-center justify-center gap-1 transition-colors">
           Toutes les tâches
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -581,5 +573,4 @@
       </div>
     </div>
   </div>
-
 </div>
