@@ -64,6 +64,7 @@ export class AdminRenouvellements implements OnInit {
   showDecisionModal = false;
   decisionType: 'ACCEPTE' | 'REJETE' | null = null;
   motifRefus = '';
+  conventionFile: File | null = null;
   soumission = false;
 
   // Stats
@@ -140,6 +141,7 @@ export class AdminRenouvellements implements OnInit {
   ouvrirDecision(type: 'ACCEPTE' | 'REJETE'): void {
     this.decisionType = type;
     this.motifRefus = '';
+    this.conventionFile = null;
     this.showDecisionModal = true;
   }
 
@@ -147,28 +149,67 @@ export class AdminRenouvellements implements OnInit {
     this.showDecisionModal = false;
     this.decisionType = null;
     this.motifRefus = '';
+    this.conventionFile = null;
+  }
+
+  onConventionChange(event: Event): void {
+    this.conventionFile = (event.target as HTMLInputElement).files?.[0] ?? null;
   }
 
   confirmerDecision(): void {
     if (!this.selected || !this.decisionType) return;
     if (this.decisionType === 'REJETE' && !this.motifRefus.trim()) return;
+    if (this.decisionType === 'ACCEPTE' && !this.conventionFile) return;
     this.soumission = true;
     const body: Record<string, string> = { statusRenouvellement: this.decisionType };
     if (this.decisionType === 'REJETE') body['motifRefus'] = this.motifRefus.trim();
 
-    this.http.put<{ success: boolean }>(
+    this.http.put<{ success: boolean; data: any }>(
       `${this.apiUrl}/stages/renouvellements/${this.selected.idrenouvellement}/evaluer`,
       body
     ).subscribe({
-      next: () => {
-        this.soumission = false;
-        this.showDecisionModal = false;
-        this.showModal = false;
-        this.successMessage = this.decisionType === 'ACCEPTE'
-          ? 'Renouvellement accepté avec succès.'
-          : 'Renouvellement rejeté.';
-        this.charger();
-        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
+      next: (res) => {
+        if (this.decisionType === 'ACCEPTE' && this.conventionFile) {
+          const nouveauStageId = res.data?.stageNouveau?.idstage ?? res.data?.stage_nouveau_idstage;
+          if (nouveauStageId) {
+            const fd = new FormData();
+            fd.append('stage_idstage', String(nouveauStageId));
+            fd.append('typeDocument', 'CONVENTION');
+            fd.append('document', this.conventionFile, this.conventionFile.name);
+            this.http.post(`${this.apiUrl}/stages/documents`, fd).subscribe({
+              next: () => {
+                this.soumission = false;
+                this.showDecisionModal = false;
+                this.showModal = false;
+                this.successMessage = 'Renouvellement accepté et convention uploadée avec succès.';
+                this.charger();
+                setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
+              },
+              error: () => {
+                this.soumission = false;
+                this.showDecisionModal = false;
+                this.showModal = false;
+                this.successMessage = 'Renouvellement accepté. L\'upload de la convention a échoué — réessayez ultérieurement.';
+                this.charger();
+                setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 6000);
+              },
+            });
+          } else {
+            this.soumission = false;
+            this.showDecisionModal = false;
+            this.showModal = false;
+            this.successMessage = 'Renouvellement accepté avec succès.';
+            this.charger();
+            setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
+          }
+        } else {
+          this.soumission = false;
+          this.showDecisionModal = false;
+          this.showModal = false;
+          this.successMessage = 'Renouvellement rejeté.';
+          this.charger();
+          setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
+        }
       },
       error: (err) => {
         this.soumission = false;
