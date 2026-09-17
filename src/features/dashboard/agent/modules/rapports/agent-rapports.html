@@ -92,7 +92,7 @@
       <p class="text-gray-500">Chargement...</p>
     </div>
 
-    <div *ngIf="!isLoading && rapportsFiltrés.length === 0" class="p-8 text-center">
+    <div *ngIf="!isLoading && rapportsFiltres.length === 0" class="p-8 text-center">
       <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
         <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -104,7 +104,7 @@
     </div>
 
     <!-- TABLE DESKTOP -->
-    <div *ngIf="!isLoading && rapportsFiltrés.length > 0" class="hidden md:block overflow-x-auto">
+    <div *ngIf="!isLoading && rapportsFiltres.length > 0" class="hidden md:block overflow-x-auto">
       <table class="w-full">
         <thead class="bg-gray-50 border-b border-gray-100">
           <tr>
@@ -118,7 +118,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
-          <tr *ngFor="let r of rapportsFiltrés" class="hover:bg-gray-50 transition-colors">
+          <tr *ngFor="let r of rapportsFiltres" class="hover:bg-gray-50 transition-colors">
 
             <td class="px-4 py-4">
               <div class="flex items-center gap-3">
@@ -181,8 +181,8 @@
     </div>
 
     <!-- CARDS MOBILE -->
-    <div *ngIf="!isLoading && rapportsFiltrés.length > 0" class="md:hidden p-3 space-y-3">
-      <div *ngFor="let r of rapportsFiltrés"
+    <div *ngIf="!isLoading && rapportsFiltres.length > 0" class="md:hidden p-3 space-y-3">
+      <div *ngFor="let r of rapportsFiltres"
            (click)="voirDetail(r)"
            class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition-all border border-gray-100">
         <div class="h-1 w-full"

@@ -51,7 +51,7 @@ export class AgentRapports implements OnInit {
   private readonly apiUrl = environment.apiUrl;
 
   rapports: Rapport[] = [];
-  rapportsFiltrés: Rapport[] = [];
+  rapportsFiltres: Rapport[] = [];
   isLoading = false;
   filtreStatut = '';
   search = '';
@@ -152,7 +152,7 @@ export class AgentRapports implements OnInit {
                 r.titreRapport?.toLowerCase().includes(q));
       });
     }
-    this.rapportsFiltrés = liste;
+    this.rapportsFiltres = liste;
   }
 
   onFiltreChange(): void { this.appliquerFiltres(); }
