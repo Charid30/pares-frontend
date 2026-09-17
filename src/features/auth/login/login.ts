@@ -12,8 +12,8 @@ import { PushNotificationService } from '../../../core/services/push-notificatio
   styleUrl: './login.css',
 })
 export class Login {
- 
-    loginForm!: FormGroup;
+
+  loginForm!: FormGroup;
   isLoading = false;
   errorMessage: string | null = null;
   showPassword = false;
@@ -26,7 +26,7 @@ export class Login {
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone,
     private pushService: PushNotificationService,
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     // Rediriger si déjà connecté
@@ -58,7 +58,7 @@ export class Login {
               this.redirectToDashboard();
               // Demander la permission push après login (non bloquant)
               if (this.pushService.isSupported && this.pushService.permission === 'default') {
-                this.pushService.subscribe().catch(() => {});
+                this.pushService.subscribe().catch(() => { });
               }
             }
             this.cdr.detectChanges();
@@ -97,7 +97,7 @@ export class Login {
 
   private redirectToDashboard(): void {
     const user = this.authService.getCurrentUser();
-    
+
     if (!user) {
       this.router.navigate(['/accueil']);
       return;
@@ -105,10 +105,9 @@ export class Login {
 
     switch (this.authService.getEffectiveDashboardRole(user)) {
       case 'CANDIDAT': this.router.navigate(['/dashboard/candidat']); break;
-      case 'ADMIN':    this.router.navigate(['/admin/dashboard']);     break;
-      default:         this.router.navigate(['/dashboard/agent']);
+      case 'ADMIN': this.router.navigate(['/admin/dashboard']); break;
+      default: this.router.navigate(['/dashboard/agent']);
     }
   }
-
 
 }
