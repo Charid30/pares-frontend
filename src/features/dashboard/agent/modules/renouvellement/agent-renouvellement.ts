@@ -68,6 +68,11 @@ export class AgentRenouvellement implements OnInit {
   conventionFile: File | null = null;
   soumission = false;
 
+  // Modal convention (remplacer/joindre après acceptation)
+  showConventionModal = false;
+  conventionRemplacement: File | null = null;
+  soumissionConvention = false;
+
   // Permissions
   peutValider = false;
   peutRejeter = false;
@@ -230,6 +235,51 @@ export class AgentRenouvellement implements OnInit {
       error: (err) => {
         this.soumission = false;
         this.erreur = err.error?.message || 'Une erreur est survenue.';
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  // ── Convention (post-acceptation) ────────────────────────────────────────────
+
+  ouvrirConventionModal(): void {
+    this.conventionRemplacement = null;
+    this.showConventionModal = true;
+  }
+
+  fermerConventionModal(): void {
+    this.showConventionModal = false;
+    this.conventionRemplacement = null;
+  }
+
+  onConventionRemplacementChange(event: Event): void {
+    this.conventionRemplacement = (event.target as HTMLInputElement).files?.[0] ?? null;
+  }
+
+  confirmerConvention(): void {
+    if (!this.selected || !this.conventionRemplacement) return;
+    const stageId = this.selected.stageNouveau?.idstage;
+    if (!stageId) {
+      this.erreur = 'Impossible de trouver le nouveau stage associé.';
+      this.cdr.detectChanges();
+      return;
+    }
+    this.soumissionConvention = true;
+    const fd = new FormData();
+    fd.append('stage_idstage', String(stageId));
+    fd.append('typeDocument', 'CONVENTION');
+    fd.append('document', this.conventionRemplacement, this.conventionRemplacement.name);
+    this.http.post(`${this.apiUrl}/stages/documents`, fd).subscribe({
+      next: () => {
+        this.soumissionConvention = false;
+        this.showConventionModal = false;
+        this.successMessage = 'Convention uploadée avec succès.';
+        this.charger();
+        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
+      },
+      error: (err) => {
+        this.soumissionConvention = false;
+        this.erreur = err.error?.message || 'Erreur lors de l\'upload de la convention.';
         this.cdr.detectChanges();
       },
     });
