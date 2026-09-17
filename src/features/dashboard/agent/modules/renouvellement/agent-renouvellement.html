@@ -384,6 +384,7 @@
           </svg>
           Joindre convention
         </button>
+        <!-- Approuver : EN_ATTENTE + perm APPROUVER -->
         <button *ngIf="selected.statusRenouvellement === 'EN_ATTENTE' && peutApprouver"
                 (click)="ouvrirApprobation()"
                 class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors active:scale-95">
@@ -391,6 +392,87 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
           </svg>
           Approuver
+        </button>
+        <!-- Accepter : EN_COURS_DE_TRAITEMENT + perm VALIDER -->
+        <button *ngIf="selected.statusRenouvellement === 'EN_COURS_DE_TRAITEMENT' && peutValider"
+                (click)="ouvrirDecision('ACCEPTE')"
+                class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 rounded-xl transition-colors active:scale-95">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          Accepter
+        </button>
+        <!-- Refuser : EN_ATTENTE ou EN_COURS_DE_TRAITEMENT + perm REJETER -->
+        <button *ngIf="(selected.statusRenouvellement === 'EN_ATTENTE' || selected.statusRenouvellement === 'EN_COURS_DE_TRAITEMENT') && peutRejeter"
+                (click)="ouvrirDecision('REJETE')"
+                class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors active:scale-95">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+          Refuser
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL — VALIDER / REJETER (permissions VALIDER ou REJETER)
+     ══════════════════════════════════════════════════════════ -->
+<div *ngIf="showDecisionModal"
+     class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+    <div class="px-6 py-5 border-b border-gray-100"
+         [ngClass]="decisionType === 'ACCEPTE' ? 'bg-green-50' : 'bg-red-50'">
+      <h3 class="text-base font-bold" [ngClass]="decisionType === 'ACCEPTE' ? 'text-green-800' : 'text-red-800'">
+        {{ decisionType === 'ACCEPTE' ? 'Accepter le renouvellement' : 'Refuser le renouvellement' }}
+      </h3>
+      <p class="text-sm mt-1" [ngClass]="decisionType === 'ACCEPTE' ? 'text-green-600' : 'text-red-600'">
+        {{ decisionType === 'ACCEPTE'
+          ? 'Le nouveau stage sera activé et les dates calculées automatiquement.'
+          : 'La demande sera rejetée définitivement.' }}
+      </p>
+    </div>
+    <div class="p-6 space-y-4">
+      <div *ngIf="decisionType === 'REJETE'">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Motif du refus <span class="text-red-500">*</span></label>
+        <textarea [(ngModel)]="motifRefus" rows="3"
+                  placeholder="Précisez le motif..."
+                  class="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"></textarea>
+      </div>
+      <div *ngIf="decisionType === 'ACCEPTE' && peutCreerConvention">
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Convention de stage <span class="text-red-500">*</span>
+        </label>
+        <p class="text-xs text-gray-400 mb-2">Joindre la convention pour le nouveau stage (PDF)</p>
+        <label class="flex items-center gap-3 px-4 py-3 border-2 border-dashed rounded-xl cursor-pointer transition-colors"
+               [ngClass]="conventionFile ? 'border-green-400 bg-green-50' : 'border-gray-200 bg-gray-50 hover:border-green-300 hover:bg-green-50/50'">
+          <svg class="w-5 h-5 flex-shrink-0" [ngClass]="conventionFile ? 'text-green-600' : 'text-gray-400'"
+               fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <span class="text-sm flex-1 truncate" [ngClass]="conventionFile ? 'text-green-700 font-medium' : 'text-gray-400'">
+            {{ conventionFile ? conventionFile.name : 'Cliquer pour sélectionner un fichier PDF' }}
+          </span>
+          <input type="file" accept=".pdf,application/pdf" class="hidden" (change)="onConventionChange($event)"/>
+        </label>
+      </div>
+      <div class="flex justify-end gap-3">
+        <button (click)="fermerDecision()" [disabled]="soumission"
+                class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 transition-colors">
+          Annuler
+        </button>
+        <button (click)="confirmerDecision()"
+                [disabled]="soumission || (decisionType === 'REJETE' && !motifRefus.trim()) || (decisionType === 'ACCEPTE' && peutCreerConvention && !conventionFile)"
+                class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-xl disabled:opacity-50 active:scale-95 transition-all"
+                [ngClass]="decisionType === 'ACCEPTE' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'">
+          <svg *ngIf="soumission" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          {{ soumission ? 'Traitement...' : (decisionType === 'ACCEPTE' ? 'Confirmer l\'acceptation' : 'Confirmer le refus') }}
         </button>
       </div>
     </div>
