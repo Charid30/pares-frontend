@@ -30,7 +30,7 @@ interface StageNouveau {
 
 interface Renouvellement {
   idrenouvellement: number;
-  statusRenouvellement: 'EN_ATTENTE' | 'ACCEPTE' | 'REJETE';
+  statusRenouvellement: 'EN_ATTENTE' | 'EN_COURS_DE_TRAITEMENT' | 'ACCEPTE' | 'REJETE';
   dureeDemandee: number;
   dateRenouvellement: string;
   lettreMotivationRenouvellement_filename?: string;
@@ -61,7 +61,11 @@ export class AgentRenouvellement implements OnInit {
   showModal = false;
   selected: Renouvellement | null = null;
 
-  // Modal décision (accepter/refuser)
+  // Modal approbation (agent)
+  showApprobationModal = false;
+  soumissionApprobation = false;
+
+  // Modal décision finale (admin — gardé pour admin uniquement, pas utilisé ici)
   showDecisionModal = false;
   decisionType: 'ACCEPTE' | 'REJETE' | null = null;
   motifRefus = '';
@@ -74,15 +78,15 @@ export class AgentRenouvellement implements OnInit {
   soumissionConvention = false;
 
   // Permissions
-  peutValider = false;
-  peutRejeter = false;
+  peutApprouver = false;
   peutCreerConvention = false;
 
   // Stats
-  get total()     { return this.renouvellements.length; }
-  get enAttente() { return this.renouvellements.filter(r => r.statusRenouvellement === 'EN_ATTENTE').length; }
-  get acceptes()  { return this.renouvellements.filter(r => r.statusRenouvellement === 'ACCEPTE').length; }
-  get rejetes()   { return this.renouvellements.filter(r => r.statusRenouvellement === 'REJETE').length; }
+  get total()             { return this.renouvellements.length; }
+  get enAttente()         { return this.renouvellements.filter(r => r.statusRenouvellement === 'EN_ATTENTE').length; }
+  get enTraitement()      { return this.renouvellements.filter(r => r.statusRenouvellement === 'EN_COURS_DE_TRAITEMENT').length; }
+  get acceptes()          { return this.renouvellements.filter(r => r.statusRenouvellement === 'ACCEPTE').length; }
+  get rejetes()           { return this.renouvellements.filter(r => r.statusRenouvellement === 'REJETE').length; }
 
   constructor(
     private http: HttpClient,
@@ -91,9 +95,8 @@ export class AgentRenouvellement implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.peutValider          = this.authService.hasPermission('STAGE', 'VALIDER');
-    this.peutRejeter          = this.authService.hasPermission('STAGE', 'REJETER');
-    this.peutCreerConvention  = this.authService.hasPermission('STAGE', 'CREER');
+    this.peutApprouver       = this.authService.hasPermission('STAGE', 'APPROUVER');
+    this.peutCreerConvention = this.authService.hasPermission('STAGE', 'CREER');
     this.charger();
   }
 
@@ -155,85 +158,33 @@ export class AgentRenouvellement implements OnInit {
     this.selected = null;
   }
 
-  // ── Actions ──────────────────────────────────────────────────────────────────
+  // ── Approbation (agent) ──────────────────────────────────────────────────────
 
-  ouvrirDecision(type: 'ACCEPTE' | 'REJETE'): void {
-    this.decisionType = type;
-    this.motifRefus = '';
-    this.conventionFile = null;
-    this.showDecisionModal = true;
+  ouvrirApprobation(): void {
+    this.showApprobationModal = true;
   }
 
-  fermerDecision(): void {
-    this.showDecisionModal = false;
-    this.decisionType = null;
-    this.motifRefus = '';
-    this.conventionFile = null;
+  fermerApprobation(): void {
+    this.showApprobationModal = false;
   }
 
-  onConventionChange(event: Event): void {
-    this.conventionFile = (event.target as HTMLInputElement).files?.[0] ?? null;
-  }
-
-  confirmerDecision(): void {
-    if (!this.selected || !this.decisionType) return;
-    if (this.decisionType === 'REJETE' && !this.motifRefus.trim()) return;
-    if (this.decisionType === 'ACCEPTE' && this.peutCreerConvention && !this.conventionFile) return;
-    this.soumission = true;
-    const body: Record<string, string> = { statusRenouvellement: this.decisionType };
-    if (this.decisionType === 'REJETE') body['motifRefus'] = this.motifRefus.trim();
-
+  confirmerApprobation(): void {
+    if (!this.selected) return;
+    this.soumissionApprobation = true;
     this.http.put<{ success: boolean; data: any }>(
-      `${this.apiUrl}/stages/renouvellements/${this.selected.idrenouvellement}/evaluer`,
-      body
+      `${this.apiUrl}/stages/renouvellements/${this.selected.idrenouvellement}/approuver`,
+      {}
     ).subscribe({
-      next: (res) => {
-        if (this.decisionType === 'ACCEPTE' && this.conventionFile && this.peutCreerConvention) {
-          const nouveauStageId = res.data?.stageNouveau?.idstage ?? res.data?.stage_nouveau_idstage;
-          if (nouveauStageId) {
-            const fd = new FormData();
-            fd.append('stage_idstage', String(nouveauStageId));
-            fd.append('typeDocument', 'CONVENTION');
-            fd.append('document', this.conventionFile, this.conventionFile.name);
-            this.http.post(`${this.apiUrl}/stages/documents`, fd).subscribe({
-              next: () => {
-                this.soumission = false;
-                this.showDecisionModal = false;
-                this.showModal = false;
-                this.successMessage = 'Renouvellement accepté et convention uploadée avec succès.';
-                this.charger();
-                setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
-              },
-              error: () => {
-                this.soumission = false;
-                this.showDecisionModal = false;
-                this.showModal = false;
-                this.successMessage = 'Renouvellement accepté. L\'upload de la convention a échoué — réessayez ultérieurement.';
-                this.charger();
-                setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 6000);
-              },
-            });
-          } else {
-            this.soumission = false;
-            this.showDecisionModal = false;
-            this.showModal = false;
-            this.successMessage = 'Renouvellement accepté avec succès.';
-            this.charger();
-            setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
-          }
-        } else {
-          this.soumission = false;
-          this.showDecisionModal = false;
-          this.showModal = false;
-          this.successMessage = this.decisionType === 'ACCEPTE'
-            ? 'Renouvellement accepté avec succès.'
-            : 'Renouvellement rejeté.';
-          this.charger();
-          setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
-        }
+      next: () => {
+        this.soumissionApprobation = false;
+        this.showApprobationModal = false;
+        this.showModal = false;
+        this.successMessage = 'Renouvellement approuvé — en attente de validation par l\'administration.';
+        this.charger();
+        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 5000);
       },
       error: (err) => {
-        this.soumission = false;
+        this.soumissionApprobation = false;
         this.erreur = err.error?.message || 'Une erreur est survenue.';
         this.cdr.detectChanges();
       },
@@ -328,19 +279,21 @@ export class AgentRenouvellement implements OnInit {
 
   getStatutBadge(statut: string): string {
     switch (statut) {
-      case 'EN_ATTENTE': return 'bg-amber-100 text-amber-700';
-      case 'ACCEPTE':    return 'bg-green-100 text-green-700';
-      case 'REJETE':     return 'bg-red-100 text-red-700';
-      default:           return 'bg-gray-100 text-gray-600';
+      case 'EN_ATTENTE':           return 'bg-amber-100 text-amber-700';
+      case 'EN_COURS_DE_TRAITEMENT': return 'bg-blue-100 text-blue-700';
+      case 'ACCEPTE':              return 'bg-green-100 text-green-700';
+      case 'REJETE':               return 'bg-red-100 text-red-700';
+      default:                     return 'bg-gray-100 text-gray-600';
     }
   }
 
   getStatutLabel(statut: string): string {
     switch (statut) {
-      case 'EN_ATTENTE': return 'En attente';
-      case 'ACCEPTE':    return 'Accepté';
-      case 'REJETE':     return 'Rejeté';
-      default:           return statut;
+      case 'EN_ATTENTE':           return 'En attente';
+      case 'EN_COURS_DE_TRAITEMENT': return 'En traitement';
+      case 'ACCEPTE':              return 'Accepté';
+      case 'REJETE':               return 'Rejeté';
+      default:                     return statut;
     }
   }
 }
