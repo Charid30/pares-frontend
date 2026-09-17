@@ -514,6 +514,9 @@ export class AgentStage implements OnInit, OnDestroy {
         if (this.detailStage && this.detailStage.idstage === s.idstage) {
           this.detailStage.documents = res.data?.documents || [];
           this.detailStage.autorisationsRenouvellement = res.data?.autorisationsRenouvellement || [];
+          this.detailStage.estRenouvellement = res.data?.estRenouvellement ?? false;
+          this.detailStage.renouvellementInfo = res.data?.renouvellementInfo ?? null;
+          this.detailStage.stageParent = res.data?.stageParent ?? null;
         }
         this.loadingDetailDocs = false;
         this.cdr.detectChanges();
