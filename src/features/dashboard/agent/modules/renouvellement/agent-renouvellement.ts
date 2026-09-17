@@ -50,7 +50,7 @@ export class AgentRenouvellement implements OnInit {
   private readonly apiUrl = environment.apiUrl;
 
   renouvellements: Renouvellement[] = [];
-  renouvellementsFiltrés: Renouvellement[] = [];
+  renouvellementsFiltres: Renouvellement[] = [];
   isLoading = false;
   filtreStatut = '';
   search = '';
@@ -122,7 +122,7 @@ export class AgentRenouvellement implements OnInit {
                 r.stageActuel?.domaineStage?.toLowerCase().includes(q));
       });
     }
-    this.renouvellementsFiltrés = liste;
+    this.renouvellementsFiltres = liste;
   }
 
   onFiltreChange(): void { this.appliquerFiltres(); }

@@ -49,7 +49,7 @@ export class AdminRenouvellements implements OnInit {
   private readonly apiUrl = environment.apiUrl;
 
   renouvellements: Renouvellement[] = [];
-  renouvellementsFiltrés: Renouvellement[] = [];
+  renouvellementsFiltres: Renouvellement[] = [];
   isLoading = false;
   filtreStatut = '';
   search = '';
@@ -114,7 +114,7 @@ export class AdminRenouvellements implements OnInit {
                 r.stageActuel?.domaineStage?.toLowerCase().includes(q));
       });
     }
-    this.renouvellementsFiltrés = liste;
+    this.renouvellementsFiltres = liste;
   }
 
   onFiltreChange(): void { this.appliquerFiltres(); }
