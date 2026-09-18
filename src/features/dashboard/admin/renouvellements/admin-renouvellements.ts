@@ -29,7 +29,7 @@ interface StageNouveau {
 
 export interface Renouvellement {
   idrenouvellement: number;
-  statusRenouvellement: 'EN_ATTENTE' | 'EN_COURS_DE_TRAITEMENT' | 'ACCEPTE' | 'REJETE';
+  statusRenouvellement: 'EN_ATTENTE' | 'PROGRAMMATION_EN_COURS' | 'ACCEPTE' | 'REJETE';
   dureeDemandee: number;
   dateRenouvellement: string;
   lettreMotivationRenouvellement_filename?: string;
@@ -75,7 +75,7 @@ export class AdminRenouvellements implements OnInit {
   // Stats
   get total()        { return this.renouvellements.length; }
   get enAttente()    { return this.renouvellements.filter(r => r.statusRenouvellement === 'EN_ATTENTE').length; }
-  get enTraitement() { return this.renouvellements.filter(r => r.statusRenouvellement === 'EN_COURS_DE_TRAITEMENT').length; }
+  get enTraitement() { return this.renouvellements.filter(r => r.statusRenouvellement === 'PROGRAMMATION_EN_COURS').length; }
   get acceptes()     { return this.renouvellements.filter(r => r.statusRenouvellement === 'ACCEPTE').length; }
   get rejetes()      { return this.renouvellements.filter(r => r.statusRenouvellement === 'REJETE').length; }
 
@@ -308,7 +308,7 @@ export class AdminRenouvellements implements OnInit {
   getStatutBadge(statut: string): string {
     switch (statut) {
       case 'EN_ATTENTE':             return 'bg-amber-100 text-amber-700';
-      case 'EN_COURS_DE_TRAITEMENT': return 'bg-blue-100 text-blue-700';
+      case 'PROGRAMMATION_EN_COURS': return 'bg-blue-100 text-blue-700';
       case 'ACCEPTE':                return 'bg-green-100 text-green-700';
       case 'REJETE':                 return 'bg-red-100 text-red-700';
       default:                       return 'bg-gray-100 text-gray-600';
@@ -318,7 +318,7 @@ export class AdminRenouvellements implements OnInit {
   getStatutLabel(statut: string): string {
     switch (statut) {
       case 'EN_ATTENTE':             return 'En attente';
-      case 'EN_COURS_DE_TRAITEMENT': return 'En traitement';
+      case 'PROGRAMMATION_EN_COURS': return 'Programmation en cours';
       case 'ACCEPTE':                return 'Accepté';
       case 'REJETE':                 return 'Rejeté';
       default:                       return statut;
