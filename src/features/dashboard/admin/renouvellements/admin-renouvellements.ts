@@ -34,6 +34,7 @@ export interface Renouvellement {
   dateRenouvellement: string;
   lettreMotivationRenouvellement_filename?: string;
   conventionStageEnCours_filename?: string;
+  resoumis?: number;
   stageActuel?: StageActuel;
   stageNouveau?: StageNouveau;
 }
@@ -60,11 +61,23 @@ export class AdminRenouvellements implements OnInit {
   showModal = false;
   selected: Renouvellement | null = null;
 
+  // Modal approbation (EN_ATTENTE → PROGRAMMATION_EN_COURS)
+  showApprobationModal = false;
+  soumissionApprobation = false;
+
+  // Modal réouverture (REJETE → EN_ATTENTE, admin seulement)
+  showRouvrirModal = false;
+  soumissionRouvrir = false;
+
   // Modal décision
   showDecisionModal = false;
   decisionType: 'ACCEPTE' | 'REJETE' | null = null;
   motifRefus = '';
   conventionFile: File | null = null;
+  lettreNonConforme = false;
+  conventionNonConforme = false;
+  dateDebutEffective = '';
+  dateFinEffective = '';
   soumission = false;
 
   // Modal convention (remplacer/joindre après acceptation)
@@ -144,10 +157,106 @@ export class AdminRenouvellements implements OnInit {
     this.selected = null;
   }
 
+  // ── Actions directes depuis la liste ────────────────────────────────────────
+
+  approuverDirect(r: Renouvellement): void {
+    this.selected = r;
+    this.showModal = false;
+    this.showApprobationModal = true;
+  }
+
+  accepterDirect(r: Renouvellement): void {
+    this.selected = r;
+    this.showModal = false;
+    this.ouvrirDecision('ACCEPTE');
+  }
+
+  rejeterDirect(r: Renouvellement): void {
+    this.selected = r;
+    this.showModal = false;
+    this.ouvrirDecision('REJETE');
+  }
+
+  rouvrirDirect(r: Renouvellement): void {
+    this.selected = r;
+    this.showModal = false;
+    this.ouvrirRouvrir();
+  }
+
+  // ── Approbation (EN_ATTENTE → PROGRAMMATION_EN_COURS) ────────────────────────
+
+  ouvrirApprobation(): void {
+    this.showApprobationModal = true;
+  }
+
+  fermerApprobation(): void {
+    this.showApprobationModal = false;
+  }
+
+  confirmerApprobation(): void {
+    if (!this.selected) return;
+    this.soumissionApprobation = true;
+    this.http.put<{ success: boolean; data: any }>(
+      `${this.apiUrl}/stages/renouvellements/${this.selected.idrenouvellement}/approuver`,
+      {}
+    ).subscribe({
+      next: () => {
+        this.soumissionApprobation = false;
+        this.showApprobationModal = false;
+        this.showModal = false;
+        this.successMessage = 'Renouvellement approuvé — en attente de validation.';
+        this.charger();
+        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 5000);
+      },
+      error: (err) => {
+        this.soumissionApprobation = false;
+        this.erreur = err.error?.message || 'Une erreur est survenue.';
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  // ── Réouverture directe (REJETE → EN_ATTENTE, admin) ────────────────────────
+
+  ouvrirRouvrir(): void {
+    this.showRouvrirModal = true;
+  }
+
+  fermerRouvrir(): void {
+    this.showRouvrirModal = false;
+  }
+
+  confirmerRouvrir(): void {
+    if (!this.selected) return;
+    this.soumissionRouvrir = true;
+    this.http.put<{ success: boolean; data: any }>(
+      `${this.apiUrl}/stages/renouvellements/${this.selected.idrenouvellement}/rouvrir`,
+      {}
+    ).subscribe({
+      next: () => {
+        this.soumissionRouvrir = false;
+        this.showRouvrirModal = false;
+        this.showModal = false;
+        this.successMessage = 'Renouvellement rouvert — il peut maintenant être traité.';
+        this.charger();
+        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 5000);
+      },
+      error: (err) => {
+        this.soumissionRouvrir = false;
+        this.erreur = err.error?.message || 'Une erreur est survenue.';
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
   ouvrirDecision(type: 'ACCEPTE' | 'REJETE'): void {
     this.decisionType = type;
     this.motifRefus = '';
     this.conventionFile = null;
+    this.lettreNonConforme = false;
+    this.conventionNonConforme = false;
+    this.dateDebutEffective = '';
+    this.dateFinEffective = '';
     this.showDecisionModal = true;
   }
 
@@ -155,7 +264,11 @@ export class AdminRenouvellements implements OnInit {
     this.showDecisionModal = false;
     this.decisionType = null;
     this.motifRefus = '';
+    this.lettreNonConforme = false;
+    this.conventionNonConforme = false;
     this.conventionFile = null;
+    this.dateDebutEffective = '';
+    this.dateFinEffective = '';
   }
 
   onConventionChange(event: Event): void {
@@ -165,10 +278,19 @@ export class AdminRenouvellements implements OnInit {
   confirmerDecision(): void {
     if (!this.selected || !this.decisionType) return;
     if (this.decisionType === 'REJETE' && !this.motifRefus.trim()) return;
-    if (this.decisionType === 'ACCEPTE' && !this.conventionFile) return;
+    const conventionDejaLiee = this.selected?.stageNouveau?.statusStage === 'EN_COURS';
+    if (this.decisionType === 'ACCEPTE' && !this.conventionFile && !conventionDejaLiee) return;
     this.soumission = true;
-    const body: Record<string, string> = { statusRenouvellement: this.decisionType };
-    if (this.decisionType === 'REJETE') body['motifRefus'] = this.motifRefus.trim();
+    const body: Record<string, any> = { statusRenouvellement: this.decisionType };
+    if (this.decisionType === 'REJETE') {
+      body['motifRefus'] = this.motifRefus.trim();
+      body['lettreNonConforme'] = this.lettreNonConforme;
+      body['conventionNonConforme'] = this.conventionNonConforme;
+    }
+    if (this.decisionType === 'ACCEPTE') {
+      if (this.dateDebutEffective) body['dateDebutEffective'] = this.dateDebutEffective;
+      if (this.dateFinEffective) body['dateFinEffective'] = this.dateFinEffective;
+    }
 
     this.http.put<{ success: boolean; data: any }>(
       `${this.apiUrl}/stages/renouvellements/${this.selected.idrenouvellement}/evaluer`,

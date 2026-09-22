@@ -35,6 +35,7 @@ interface Renouvellement {
   dateRenouvellement: string;
   lettreMotivationRenouvellement_filename?: string;
   conventionStageEnCours_filename?: string;
+  resoumis?: number;
   stageActuel?: StageActuel;
   stageNouveau?: StageNouveau;
 }
@@ -71,6 +72,8 @@ export class AgentRenouvellement implements OnInit {
   motifRefus = '';
   conventionFile: File | null = null;
   soumission = false;
+  lettreNonConforme = false;
+  conventionNonConforme = false;
 
   // Modal convention (remplacer/joindre après acceptation)
   showConventionModal = false;
@@ -162,6 +165,26 @@ export class AgentRenouvellement implements OnInit {
     this.selected = null;
   }
 
+  // ── Actions directes depuis la liste ────────────────────────────────────────
+
+  approuverDirect(r: Renouvellement): void {
+    this.selected = r;
+    this.showModal = false;
+    this.ouvrirApprobation();
+  }
+
+  accepterDirect(r: Renouvellement): void {
+    this.selected = r;
+    this.showModal = false;
+    this.ouvrirDecision('ACCEPTE');
+  }
+
+  rejeterDirect(r: Renouvellement): void {
+    this.selected = r;
+    this.showModal = false;
+    this.ouvrirDecision('REJETE');
+  }
+
   // ── Approbation (agent) ──────────────────────────────────────────────────────
 
   ouvrirApprobation(): void {
@@ -201,6 +224,8 @@ export class AgentRenouvellement implements OnInit {
     this.decisionType = type;
     this.motifRefus = '';
     this.conventionFile = null;
+    this.lettreNonConforme = false;
+    this.conventionNonConforme = false;
     this.showDecisionModal = true;
   }
 
@@ -208,6 +233,8 @@ export class AgentRenouvellement implements OnInit {
     this.showDecisionModal = false;
     this.decisionType = null;
     this.motifRefus = '';
+    this.lettreNonConforme = false;
+    this.conventionNonConforme = false;
     this.conventionFile = null;
   }
 
@@ -220,8 +247,12 @@ export class AgentRenouvellement implements OnInit {
     if (this.decisionType === 'REJETE' && !this.motifRefus.trim()) return;
     if (this.decisionType === 'ACCEPTE' && this.peutCreerConvention && !this.conventionFile) return;
     this.soumission = true;
-    const body: Record<string, string> = { statusRenouvellement: this.decisionType };
-    if (this.decisionType === 'REJETE') body['motifRefus'] = this.motifRefus.trim();
+    const body: Record<string, any> = { statusRenouvellement: this.decisionType };
+    if (this.decisionType === 'REJETE') {
+      body['motifRefus'] = this.motifRefus.trim();
+      body['lettreNonConforme'] = this.lettreNonConforme;
+      body['conventionNonConforme'] = this.conventionNonConforme;
+    }
 
     this.http.put<{ success: boolean; data: any }>(
       `${this.apiUrl}/stages/renouvellements/${this.selected.idrenouvellement}/evaluer`,
