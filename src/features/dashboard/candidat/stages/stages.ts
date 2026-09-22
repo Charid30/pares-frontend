@@ -12,6 +12,16 @@ interface FileInfo {
   error: string;
 }
 
+interface RenouvellementInfo {
+  idrenouvellement: number;
+  statusRenouvellement: string;
+  motifRefus: string | null;
+  lettreNonConforme: boolean;
+  conventionNonConforme: boolean;
+  lettreFilename: string | null;
+  conventionFilename: string | null;
+}
+
 interface DemandeStage {
   idstage: number;
   typeStage: string;
@@ -35,6 +45,8 @@ interface DemandeStage {
   dernierDiplome_filename: string | null;
   demandeModifEnCours: { id: number; type: 'SUSPENSION' | 'ANNULATION'; dateDebut: string | null; createdDate: string } | null;
   autorisationRenouvellement: { id: number; expiresAt: string } | null;
+  stage_parent_idstage: number | null;
+  renouvellement: RenouvellementInfo | null;
 }
 
 interface ConventionRenouvellement {
@@ -150,6 +162,13 @@ export class Stages implements OnInit {
     const dir = this.directions.find(d => String(d.iddirection) === String(dirId));
     return dir?.services ?? [];
   }
+
+  // Modal re-soumission renouvellement rejeté
+  showResoumissionModal = false;
+  stageForResoumission: DemandeStage | null = null;
+  isSubmittingResoumission = false;
+  resoumissionLettreFile: FileInfo = { file: null, name: '', size: 0, error: '' };
+  resoumissionConventionFile: FileInfo = { file: null, name: '', size: 0, error: '' };
 
   // Demande de modification
   showDemandeModifModal = false;
@@ -1339,6 +1358,95 @@ export class Stages implements OnInit {
       },
       error: (err) => {
         this.showToast(err.error?.message || 'Erreur lors de la resoumission', 'error');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  // ── Re-soumission renouvellement rejeté ────────────────────────────────────
+
+  ouvrirResoumissionModal(stage: DemandeStage): void {
+    this.stageForResoumission = stage;
+    this.resoumissionLettreFile = { file: null, name: '', size: 0, error: '' };
+    this.resoumissionConventionFile = { file: null, name: '', size: 0, error: '' };
+    this.showResoumissionModal = true;
+    this.cdr.detectChanges();
+  }
+
+  fermerResoumissionModal(): void {
+    this.showResoumissionModal = false;
+    this.stageForResoumission = null;
+    this.resoumissionLettreFile = { file: null, name: '', size: 0, error: '' };
+    this.resoumissionConventionFile = { file: null, name: '', size: 0, error: '' };
+  }
+
+  onResoumissionLettreSelect(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) { this.resoumissionLettreFile = { file: null, name: '', size: 0, error: '' }; return; }
+    if (file.type !== 'application/pdf') {
+      this.resoumissionLettreFile = { file: null, name: file.name, size: file.size, error: 'Seuls les fichiers PDF sont autorisés' };
+      input.value = ''; return;
+    }
+    if (file.size > this.MAX_RAPPORT_SIZE) {
+      this.resoumissionLettreFile = { file: null, name: file.name, size: file.size, error: 'Le fichier dépasse 5 Mo' };
+      input.value = ''; return;
+    }
+    this.resoumissionLettreFile = { file, name: file.name, size: file.size, error: '' };
+    this.cdr.detectChanges();
+  }
+
+  onResoumissionConventionSelect(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) { this.resoumissionConventionFile = { file: null, name: '', size: 0, error: '' }; return; }
+    if (file.type !== 'application/pdf') {
+      this.resoumissionConventionFile = { file: null, name: file.name, size: file.size, error: 'Seuls les fichiers PDF sont autorisés' };
+      input.value = ''; return;
+    }
+    if (file.size > this.MAX_RAPPORT_SIZE) {
+      this.resoumissionConventionFile = { file: null, name: file.name, size: file.size, error: 'Le fichier dépasse 5 Mo' };
+      input.value = ''; return;
+    }
+    this.resoumissionConventionFile = { file, name: file.name, size: file.size, error: '' };
+    this.cdr.detectChanges();
+  }
+
+  get resoumissionValide(): boolean {
+    const r = this.stageForResoumission?.renouvellement;
+    if (!r) return false;
+    if (r.lettreNonConforme && !this.resoumissionLettreFile.file) return false;
+    if (r.conventionNonConforme && !this.resoumissionConventionFile.file) return false;
+    if (this.resoumissionLettreFile.error || this.resoumissionConventionFile.error) return false;
+    return true;
+  }
+
+  soumettreResoumission(): void {
+    if (!this.stageForResoumission?.renouvellement || !this.resoumissionValide) return;
+    const idrenouvellement = this.stageForResoumission.renouvellement.idrenouvellement;
+    this.isSubmittingResoumission = true;
+
+    const formData = new FormData();
+    if (this.resoumissionLettreFile.file) {
+      formData.append('lettreRenouvellement', this.resoumissionLettreFile.file, this.resoumissionLettreFile.name);
+    }
+    if (this.resoumissionConventionFile.file) {
+      formData.append('conventionRenouvellement', this.resoumissionConventionFile.file, this.resoumissionConventionFile.name);
+    }
+
+    this.http.put<any>(`${this.apiUrl}/candidat/renouvellements/${idrenouvellement}/ressoumettre`, formData).subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.showToast('Votre demande de renouvellement a été re-soumise avec succès.', 'success');
+          this.fermerResoumissionModal();
+          this.loadMesDemandesStage();
+        }
+        this.isSubmittingResoumission = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.showToast(err.error?.message || 'Erreur lors de la re-soumission', 'error');
+        this.isSubmittingResoumission = false;
         this.cdr.detectChanges();
       }
     });

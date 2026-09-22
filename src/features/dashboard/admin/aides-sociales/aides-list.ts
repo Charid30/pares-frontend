@@ -272,7 +272,7 @@ export class AidesList implements OnInit {
 
   // ─── Directions ───────────────────────────────────────────────────────────
   chargerDirections(): void {
-    this.http.get<any>(`${this.apiUrl}/directions`).subscribe({
+    this.http.get<any>(`${this.apiUrl}/users/directions`).subscribe({
       next: (res) => {
         if (res.success && Array.isArray(res.data)) {
           this.directions = res.data;

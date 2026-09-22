@@ -176,16 +176,27 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                   </svg>
                 </button>
-                <button *ngIf="peutValider && r.statusRenouvellement === 'EN_ATTENTE'"
-                        (click)="voirDetail(r)"
+                <!-- Approuver : EN_ATTENTE + perm APPROUVER + pas re-soumis -->
+                <button *ngIf="peutApprouver && r.statusRenouvellement === 'EN_ATTENTE' && !r.resoumis"
+                        (click)="approuverDirect(r)"
+                        class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Approuver">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </button>
+                <!-- Accepter : PROGRAMMATION_EN_COURS + perm VALIDER + pas re-soumis -->
+                <button *ngIf="peutValider && r.statusRenouvellement === 'PROGRAMMATION_EN_COURS' && !r.resoumis"
+                        (click)="accepterDirect(r)"
                         class="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                        title="Accepter">
+                        title="Accepter (joindre convention)">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                   </svg>
                 </button>
-                <button *ngIf="peutRejeter && r.statusRenouvellement === 'EN_ATTENTE'"
-                        (click)="voirDetail(r)"
+                <!-- Refuser : EN_ATTENTE ou PROGRAMMATION_EN_COURS + perm REJETER -->
+                <button *ngIf="peutRejeter && (r.statusRenouvellement === 'EN_ATTENTE' || r.statusRenouvellement === 'PROGRAMMATION_EN_COURS')"
+                        (click)="rejeterDirect(r)"
                         class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         title="Refuser">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -224,10 +235,25 @@
             <span class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-medium">{{ r.dureeDemandee }} mois</span>
             <span>{{ r.dateRenouvellement | date:'dd/MM/yyyy' }}</span>
           </div>
-          <div class="flex items-center gap-2 pt-2 border-t border-gray-100">
+          <div class="flex items-center gap-2 pt-2 border-t border-gray-100 flex-wrap">
             <button (click)="voirDetail(r)"
                     class="flex items-center gap-1.5 py-2 px-3 text-xs font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 active:scale-95 transition-all">
               Voir détail
+            </button>
+            <button *ngIf="peutApprouver && r.statusRenouvellement === 'EN_ATTENTE' && !r.resoumis"
+                    (click)="approuverDirect(r)"
+                    class="flex items-center gap-1.5 py-2 px-3 text-xs font-semibold text-blue-700 bg-blue-100 rounded-xl hover:bg-blue-200 active:scale-95 transition-all">
+              Approuver
+            </button>
+            <button *ngIf="peutValider && r.statusRenouvellement === 'PROGRAMMATION_EN_COURS' && !r.resoumis"
+                    (click)="accepterDirect(r)"
+                    class="flex items-center gap-1.5 py-2 px-3 text-xs font-semibold text-green-700 bg-green-100 rounded-xl hover:bg-green-200 active:scale-95 transition-all">
+              Accepter
+            </button>
+            <button *ngIf="peutRejeter && (r.statusRenouvellement === 'EN_ATTENTE' || r.statusRenouvellement === 'PROGRAMMATION_EN_COURS')"
+                    (click)="rejeterDirect(r)"
+                    class="flex items-center gap-1.5 py-2 px-3 text-xs font-semibold text-red-700 bg-red-100 rounded-xl hover:bg-red-200 active:scale-95 transition-all">
+              Refuser
             </button>
           </div>
         </div>
@@ -384,8 +410,8 @@
           </svg>
           Joindre convention
         </button>
-        <!-- Approuver : EN_ATTENTE + perm APPROUVER -->
-        <button *ngIf="selected.statusRenouvellement === 'EN_ATTENTE' && peutApprouver"
+        <!-- Approuver : EN_ATTENTE + perm APPROUVER + pas re-soumis -->
+        <button *ngIf="selected.statusRenouvellement === 'EN_ATTENTE' && peutApprouver && !selected.resoumis"
                 (click)="ouvrirApprobation()"
                 class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors active:scale-95">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -393,8 +419,8 @@
           </svg>
           Approuver
         </button>
-        <!-- Accepter : PROGRAMMATION_EN_COURS + perm VALIDER -->
-        <button *ngIf="selected.statusRenouvellement === 'PROGRAMMATION_EN_COURS' && peutValider"
+        <!-- Accepter : PROGRAMMATION_EN_COURS + perm VALIDER + pas re-soumis -->
+        <button *ngIf="selected.statusRenouvellement === 'PROGRAMMATION_EN_COURS' && peutValider && !selected.resoumis"
                 (click)="ouvrirDecision('ACCEPTE')"
                 class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 rounded-xl transition-colors active:scale-95">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -435,11 +461,28 @@
       </p>
     </div>
     <div class="p-6 space-y-4">
-      <div *ngIf="decisionType === 'REJETE'">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Motif du refus <span class="text-red-500">*</span></label>
-        <textarea [(ngModel)]="motifRefus" rows="3"
-                  placeholder="Précisez le motif..."
-                  class="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"></textarea>
+      <div *ngIf="decisionType === 'REJETE'" class="space-y-3">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Motif du refus <span class="text-red-500">*</span></label>
+          <textarea [(ngModel)]="motifRefus" rows="3"
+                    placeholder="Précisez le motif..."
+                    class="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"></textarea>
+        </div>
+        <div>
+          <p class="text-sm font-medium text-gray-700 mb-2">Documents non conformes</p>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" [(ngModel)]="lettreNonConforme"
+                     class="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-400"/>
+              <span class="text-sm text-gray-600">Lettre de motivation non conforme</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" [(ngModel)]="conventionNonConforme"
+                     class="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-400"/>
+              <span class="text-sm text-gray-600">Convention de stage en cours non conforme</span>
+            </label>
+          </div>
+        </div>
       </div>
       <div *ngIf="decisionType === 'ACCEPTE' && peutCreerConvention">
         <label class="block text-sm font-medium text-gray-700 mb-1">
