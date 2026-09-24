@@ -438,6 +438,11 @@ export class AgentStage implements OnInit, OnDestroy {
   dateProposeeSelection = '';
   nomMaitreStageApprobation = '';
 
+  // ── Combobox maître de stage ──────────────────────────────
+  agentsListe: { idagents: number; nom: string; prenom: string; matricule: string }[] = [];
+  agentsFiltres: { idagents: number; nom: string; prenom: string; matricule: string }[] = [];
+  showAgentsSuggestions = false;
+
   /** Liste des prochains 1er et 15 du mois à proposer */
   get datesProposablesApprobation(): { value: string; label: string }[] {
     const options: { value: string; label: string }[] = [];
@@ -463,6 +468,14 @@ export class AgentStage implements OnInit, OnDestroy {
     this.stageEnApprobation = s;
     this.dateProposeeSelection = '';
     this.nomMaitreStageApprobation = '';
+    this.showAgentsSuggestions = false;
+    this.agentsFiltres = [];
+    if (this.agentsListe.length === 0) {
+      this.http.get<any>(`${this.apiUrl}/stages/agents-liste`).subscribe({
+        next: (res) => { this.agentsListe = res.data || []; },
+        error: () => {}
+      });
+    }
     this.cdr.detectChanges();
   }
 
@@ -470,6 +483,29 @@ export class AgentStage implements OnInit, OnDestroy {
     this.stageEnApprobation = null;
     this.dateProposeeSelection = '';
     this.nomMaitreStageApprobation = '';
+    this.showAgentsSuggestions = false;
+    this.agentsFiltres = [];
+    this.cdr.detectChanges();
+  }
+
+  onNomMaitreInput(): void {
+    const val = this.nomMaitreStageApprobation.trim().toLowerCase();
+    if (!val) {
+      this.agentsFiltres = [];
+      this.showAgentsSuggestions = false;
+      return;
+    }
+    this.agentsFiltres = this.agentsListe.filter(a =>
+      `${a.prenom} ${a.nom}`.toLowerCase().includes(val) ||
+      a.matricule.toLowerCase().includes(val)
+    ).slice(0, 8);
+    this.showAgentsSuggestions = this.agentsFiltres.length > 0;
+  }
+
+  selectAgent(a: { nom: string; prenom: string }): void {
+    this.nomMaitreStageApprobation = `${a.prenom} ${a.nom}`;
+    this.showAgentsSuggestions = false;
+    this.agentsFiltres = [];
     this.cdr.detectChanges();
   }
 

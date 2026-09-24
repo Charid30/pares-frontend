@@ -354,6 +354,13 @@ export class AdminStageService {
   }
 
   /**
+   * Récupérer la liste des agents actifs (pour le combobox maître de stage)
+   */
+  getAgentsListe(): Observable<ApiResponse<{ idagents: number; nom: string; prenom: string; matricule: string }[]>> {
+    return this.http.get<ApiResponse<{ idagents: number; nom: string; prenom: string; matricule: string }[]>>(`${this.apiUrl}/agents-liste`);
+  }
+
+  /**
    * Approuver un stage (EN_ATTENTE → PROGRAMMATION_EN_COURS).
    * dateDebutProposee, si fournie, doit être le 1er ou le 15 du mois.
    */

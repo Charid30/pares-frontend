@@ -708,6 +708,8 @@ export class StagesList implements OnInit, OnDestroy {
     this.nouvelleDureeStage = null;
     this.dateProposeeSelection = '';
     this.nomMaitreStageApprobation = '';
+    this.showAgentsSuggestions = false;
+    this.agentsFiltres = [];
   }
 
   // ==================== FILE UPLOAD ====================
@@ -1536,6 +1538,11 @@ export class StagesList implements OnInit, OnDestroy {
   // ==================== APPROBATION avec proposition de date (1er ou 15 du mois) ====================
   dateProposeeSelection = '';
   nomMaitreStageApprobation = '';
+
+  // ── Combobox maître de stage ──────────────────────────────
+  agentsListe: { idagents: number; nom: string; prenom: string; matricule: string }[] = [];
+  agentsFiltres: { idagents: number; nom: string; prenom: string; matricule: string }[] = [];
+  showAgentsSuggestions = false;
   /** Liste des prochains 1er et 15 du mois (aujourd'hui exclu s'il est déjà passé dans la journée) */
   get datesProposablesApprobation(): { value: string; label: string }[] {
     const options: { value: string; label: string }[] = [];
@@ -1562,7 +1569,36 @@ export class StagesList implements OnInit, OnDestroy {
     this.selectedStage = stage as StageDetails;
     this.dateProposeeSelection = '';
     this.nomMaitreStageApprobation = '';
+    this.showAgentsSuggestions = false;
+    this.agentsFiltres = [];
     this.showModal = true;
+    if (this.agentsListe.length === 0) {
+      this.adminStageService.getAgentsListe().subscribe({
+        next: (res) => { this.agentsListe = res.data || []; },
+        error: () => {}
+      });
+    }
+  }
+
+  onNomMaitreInput(): void {
+    const val = this.nomMaitreStageApprobation.trim().toLowerCase();
+    if (!val) {
+      this.agentsFiltres = [];
+      this.showAgentsSuggestions = false;
+      return;
+    }
+    this.agentsFiltres = this.agentsListe.filter(a =>
+      `${a.prenom} ${a.nom}`.toLowerCase().includes(val) ||
+      a.matricule.toLowerCase().includes(val)
+    ).slice(0, 8);
+    this.showAgentsSuggestions = this.agentsFiltres.length > 0;
+  }
+
+  selectAgent(a: { nom: string; prenom: string }): void {
+    this.nomMaitreStageApprobation = `${a.prenom} ${a.nom}`;
+    this.showAgentsSuggestions = false;
+    this.agentsFiltres = [];
+    this.cdr.detectChanges();
   }
 
   confirmerApprouverStage(): void {
