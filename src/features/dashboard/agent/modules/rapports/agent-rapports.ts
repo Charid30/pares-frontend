@@ -66,7 +66,6 @@ export class AgentRapports implements OnInit {
   showDecisionModal = false;
   decisionType: 'VALIDE' | 'REFUSE' | null = null;
   motifRefus = '';
-  noteRapport: number | null = null;
   commentaire = '';
   attestationFile: File | null = null;
   soumission = false;
@@ -170,7 +169,6 @@ export class AgentRapports implements OnInit {
   ouvrirDecision(type: 'VALIDE' | 'REFUSE'): void {
     this.decisionType = type;
     this.motifRefus = '';
-    this.noteRapport = null;
     this.commentaire = '';
     this.attestationFile = null;
     this.showDecisionModal = true;
@@ -185,16 +183,16 @@ export class AgentRapports implements OnInit {
 
   confirmerDecision(): void {
     if (!this.selected || !this.decisionType) return;
+    if (!this.commentaire.trim()) return;
     if (this.decisionType === 'REFUSE' && !this.motifRefus.trim()) return;
     if (this.decisionType === 'VALIDE' && this.peutCreerAttestation && !this.attestationFile) return;
     this.soumission = true;
 
-    const body: Record<string, unknown> = { statusRapport: this.decisionType };
+    const body: Record<string, unknown> = {
+      statusRapport: this.decisionType,
+      commentaireEvaluateur: this.commentaire.trim(),
+    };
     if (this.decisionType === 'REFUSE') body['motifRefus'] = this.motifRefus.trim();
-    if (this.decisionType === 'VALIDE') {
-      if (this.noteRapport !== null) body['noteRapport'] = this.noteRapport;
-      if (this.commentaire.trim()) body['commentaireEvaluateur'] = this.commentaire.trim();
-    }
 
     this.http.put<{ success: boolean }>(
       `${this.apiUrl}/stages/rapports/${this.selected.idrapport}/evaluer`, body

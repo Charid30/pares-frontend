@@ -160,7 +160,6 @@
               <span class="px-2.5 py-1 text-xs font-semibold rounded-full" [ngClass]="getStatutBadge(r.statusRapport)">
                 {{ getStatutLabel(r.statusRapport) }}
               </span>
-              <p *ngIf="r.noteRapport" class="text-xs text-gray-500 mt-0.5">Note : {{ r.noteRapport }}/20</p>
             </td>
 
             <td class="px-4 py-4">
@@ -287,10 +286,6 @@
             <span class="text-xs text-gray-500">Soumis le</span>
             <span class="text-xs font-semibold text-gray-800">{{ formatDate(selected.createdDate) }}</span>
           </div>
-          <div *ngIf="selected.noteRapport" class="flex items-center justify-between px-3 py-2.5">
-            <span class="text-xs text-gray-500">Note</span>
-            <span class="text-xs font-bold text-indigo-700">{{ selected.noteRapport }} / 20</span>
-          </div>
           <div *ngIf="selected.commentaireEvaluateur" class="px-3 py-2.5">
             <span class="text-xs text-gray-500 block mb-1">Commentaire</span>
             <p class="text-xs text-gray-700">{{ selected.commentaireEvaluateur }}</p>
@@ -386,19 +381,17 @@
     </div>
     <div class="p-6 space-y-4">
 
+      <!-- Commentaire — obligatoire pour toute décision -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Commentaire <span class="text-red-500">*</span>
+        </label>
+        <textarea [(ngModel)]="commentaire" rows="3"
+                  placeholder="Remarques sur le rapport..."
+                  class="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400 resize-none"></textarea>
+      </div>
+
       <ng-container *ngIf="decisionType === 'VALIDE'">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Note (/20) <span class="text-gray-400">(facultatif)</span></label>
-          <input type="number" min="0" max="20" step="0.5" [(ngModel)]="noteRapport"
-                 placeholder="Ex : 16"
-                 class="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400"/>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Commentaire <span class="text-gray-400">(facultatif)</span></label>
-          <textarea [(ngModel)]="commentaire" rows="2"
-                    placeholder="Remarques sur le rapport..."
-                    class="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400 resize-none"></textarea>
-        </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">
             Attestation de stage (PDF) <span class="text-red-500">*</span>
@@ -429,6 +422,7 @@
         </button>
         <button (click)="confirmerDecision()"
                 [disabled]="soumission
+                  || !commentaire.trim()
                   || (decisionType === 'REFUSE' && !motifRefus.trim())
                   || (decisionType === 'VALIDE' && !attestationFile)"
                 class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-xl disabled:opacity-50 active:scale-95 transition-all cursor-pointer"

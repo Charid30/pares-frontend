@@ -248,6 +248,13 @@ export class AgentLayout implements OnInit, OnDestroy {
       route: MODULE_ROUTE_MAP['RENOUVELLEMENTS'],
     });
 
+    // Archives (stages expirés sans parent)
+    this.menuItems.push({
+      label: 'Archivés',
+      icon: 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4',
+      route: '/dashboard/agent/archives',
+    });
+
     // Rapports de stage
     this.menuItems.push({
       label: 'Rapports de stage',
