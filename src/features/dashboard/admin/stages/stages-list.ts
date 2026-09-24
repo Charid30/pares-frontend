@@ -707,6 +707,7 @@ export class StagesList implements OnInit, OnDestroy {
     this.nouvelleDateDebut = '';
     this.nouvelleDureeStage = null;
     this.dateProposeeSelection = '';
+    this.nomMaitreStageApprobation = '';
   }
 
   // ==================== FILE UPLOAD ====================
@@ -1534,6 +1535,7 @@ export class StagesList implements OnInit, OnDestroy {
 
   // ==================== APPROBATION avec proposition de date (1er ou 15 du mois) ====================
   dateProposeeSelection = '';
+  nomMaitreStageApprobation = '';
   /** Liste des prochains 1er et 15 du mois (aujourd'hui exclu s'il est déjà passé dans la journée) */
   get datesProposablesApprobation(): { value: string; label: string }[] {
     const options: { value: string; label: string }[] = [];
@@ -1559,15 +1561,16 @@ export class StagesList implements OnInit, OnDestroy {
     this.modalMode = 'approuver';
     this.selectedStage = stage as StageDetails;
     this.dateProposeeSelection = '';
+    this.nomMaitreStageApprobation = '';
     this.showModal = true;
   }
 
   confirmerApprouverStage(): void {
-    if (!this.selectedStage) return;
+    if (!this.selectedStage || !this.nomMaitreStageApprobation.trim()) return;
     this.submitting = true;
     const stageName = `${this.selectedStage.candidat.prenom} ${this.selectedStage.candidat.nom}`;
 
-    this.adminStageService.approuverStage(this.selectedStage.idstage, this.dateProposeeSelection || null).subscribe({
+    this.adminStageService.approuverStage(this.selectedStage.idstage, this.dateProposeeSelection || null, this.nomMaitreStageApprobation.trim()).subscribe({
       next: (res) => {
         this.ngZone.run(() => {
           if (res.success) {

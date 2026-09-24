@@ -48,6 +48,7 @@ interface Stage {
   dateFin?: string;
   dateDebutEffective?: string;
   dateDebutProposee?: string | null;
+  nomMaitreStage?: string | null;
   dateFinEffective?: string;
   dateDebutSouhaitee?: string;
   dureeStage?: number;
@@ -435,6 +436,7 @@ export class AgentStage implements OnInit, OnDestroy {
   // ── Approbation (avec proposition de date, 1er ou 15 du mois) ───────────────
   stageEnApprobation: Stage | null = null;
   dateProposeeSelection = '';
+  nomMaitreStageApprobation = '';
 
   /** Liste des prochains 1er et 15 du mois à proposer */
   get datesProposablesApprobation(): { value: string; label: string }[] {
@@ -460,20 +462,24 @@ export class AgentStage implements OnInit, OnDestroy {
   ouvrirApprobation(s: Stage): void {
     this.stageEnApprobation = s;
     this.dateProposeeSelection = '';
+    this.nomMaitreStageApprobation = '';
     this.cdr.detectChanges();
   }
 
   fermerApprobation(): void {
     this.stageEnApprobation = null;
     this.dateProposeeSelection = '';
+    this.nomMaitreStageApprobation = '';
     this.cdr.detectChanges();
   }
 
   approuverStage(s: Stage): void {
     if (this.soumission) return;
+    if (!this.nomMaitreStageApprobation.trim()) return;
     this.soumission = true;
     this.http.put<any>(`${this.apiUrl}/stages/${s.idstage}/approuver`, {
       dateDebutProposee: this.dateProposeeSelection || null,
+      nomMaitreStage: this.nomMaitreStageApprobation.trim(),
     }).subscribe({
       next: () => {
         this.soumission = false;

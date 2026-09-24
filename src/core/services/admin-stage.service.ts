@@ -78,6 +78,7 @@ export interface Stage {
   dateDebutSouhaitee: string;
   dateDebutEffective: string | null;
   dateDebutProposee: string | null;
+  nomMaitreStage: string | null;
   dateFinEffective: string | null;
   statusStage: 'EN_ATTENTE' | 'EN_COURS_DE_TRAITEMENT' | 'ACCEPTE' | 'REJETE' | 'EN_COURS' | 'TERMINE' | 'EXPIRE' | 'RAPPORT_SOUMIS' | 'PROGRAMMATION_EN_COURS' | 'SUSPENDU' | 'ANNULE';
   motifRefus: string | null;
@@ -356,8 +357,11 @@ export class AdminStageService {
    * Approuver un stage (EN_ATTENTE → PROGRAMMATION_EN_COURS).
    * dateDebutProposee, si fournie, doit être le 1er ou le 15 du mois.
    */
-  approuverStage(id: number, dateDebutProposee?: string | null): Observable<ApiResponse<Stage>> {
-    return this.http.put<ApiResponse<Stage>>(`${this.apiUrl}/${id}/approuver`, { dateDebutProposee: dateDebutProposee || null });
+  approuverStage(id: number, dateDebutProposee?: string | null, nomMaitreStage?: string | null): Observable<ApiResponse<Stage>> {
+    return this.http.put<ApiResponse<Stage>>(`${this.apiUrl}/${id}/approuver`, {
+      dateDebutProposee: dateDebutProposee || null,
+      nomMaitreStage: nomMaitreStage || null,
+    });
   }
 
   /**

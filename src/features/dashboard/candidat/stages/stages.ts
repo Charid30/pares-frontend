@@ -30,7 +30,9 @@ interface DemandeStage {
   dureeStage: number;
   dateDebutSouhaitee: string;
   dateDebutEffective: string | null;
+  dateDebutProposee?: string | null;
   dateFinEffective: string | null;
+  nomMaitreStage?: string | null;
   statusStage: string;
   motifRefus: string | null;
   documentsRejetes: string | null;
