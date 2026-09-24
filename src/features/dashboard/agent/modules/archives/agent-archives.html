@@ -1,0 +1,208 @@
+<!-- agent-archives.html — Stages archivés (EXPIRE) -->
+<div class="p-6 space-y-6">
+
+  <!-- En-tête -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Archives</h1>
+      <p class="text-sm text-gray-500 mt-1">Stages expirés (hors renouvellements)</p>
+    </div>
+    <span class="px-3 py-1 text-sm font-medium bg-gray-100 text-gray-700 rounded-full">
+      {{ total }} enregistrement{{ total > 1 ? 's' : '' }}
+    </span>
+  </div>
+
+  <!-- Filtres -->
+  <div class="bg-white rounded-xl border border-gray-200 p-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1">Recherche</label>
+        <input
+          type="text"
+          [(ngModel)]="search"
+          (ngModelChange)="onFiltreChange()"
+          placeholder="Nom, prénom, email…"
+          class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+        />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1">Type de stage</label>
+        <select
+          [(ngModel)]="filtreType"
+          (ngModelChange)="onFiltreChange()"
+          class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+        >
+          <option value="">Tous les types</option>
+          <option value="ACADEMIQUE">Académique</option>
+          <option value="PROFESSIONNEL">Professionnel</option>
+          <option value="AUTRE">Autre</option>
+        </select>
+      </div>
+      <div class="flex items-end">
+        <button
+          (click)="effacerFiltres()"
+          class="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+        >
+          Réinitialiser
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Message erreur -->
+  <div *ngIf="erreur" class="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm">
+    {{ erreur }}
+  </div>
+
+  <!-- Chargement -->
+  <div *ngIf="isLoading" class="flex justify-center py-12">
+    <div class="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+  </div>
+
+  <!-- Liste vide -->
+  <div *ngIf="!isLoading && stages.length === 0" class="text-center py-16 bg-white rounded-xl border border-gray-200">
+    <svg class="mx-auto h-12 w-12 text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+        d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+    </svg>
+    <p class="text-gray-500 font-medium">Aucun stage archivé</p>
+    <p class="text-gray-400 text-sm mt-1">Les stages expirés apparaîtront ici.</p>
+  </div>
+
+  <!-- Tableau -->
+  <div *ngIf="!isLoading && stages.length > 0" class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr>
+            <th class="text-left px-4 py-3 font-medium text-gray-600">Stagiaire</th>
+            <th class="text-left px-4 py-3 font-medium text-gray-600">Direction</th>
+            <th class="text-left px-4 py-3 font-medium text-gray-600">Type</th>
+            <th class="text-left px-4 py-3 font-medium text-gray-600">Domaine</th>
+            <th class="text-left px-4 py-3 font-medium text-gray-600">Début</th>
+            <th class="text-left px-4 py-3 font-medium text-gray-600">Fin</th>
+            <th class="text-left px-4 py-3 font-medium text-gray-600">Durée</th>
+            <th class="text-center px-4 py-3 font-medium text-gray-600">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr *ngFor="let s of stages" class="hover:bg-gray-50 transition-colors">
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600 flex-shrink-0">
+                  {{ getInitiales(s) }}
+                </div>
+                <div>
+                  <p class="font-medium text-gray-900">{{ s.candidat?.prenom }} {{ s.candidat?.nom }}</p>
+                  <p class="text-xs text-gray-400">{{ s.candidat?.email }}</p>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-3 text-gray-700">{{ s.direction?.accronyme || '—' }}</td>
+            <td class="px-4 py-3 text-gray-700">{{ s.typeStage || '—' }}</td>
+            <td class="px-4 py-3 text-gray-700">{{ s.domaineStage || '—' }}</td>
+            <td class="px-4 py-3 text-gray-500">{{ formatDate(s.dateDebutEffective) }}</td>
+            <td class="px-4 py-3 text-gray-500">{{ formatDate(s.dateFinEffective) }}</td>
+            <td class="px-4 py-3 text-gray-700">
+              {{ s.dureeStage ? s.dureeStage + ' j.' : '—' }}
+            </td>
+            <td class="px-4 py-3 text-center">
+              <button
+                (click)="voirDetail(s)"
+                class="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 cursor-pointer transition-colors"
+              >
+                Détails
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="totalPages > 1" class="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50">
+      <p class="text-sm text-gray-500">Page {{ page }} / {{ totalPages }}</p>
+      <div class="flex gap-2">
+        <button
+          (click)="changerPage(page - 1)"
+          [disabled]="page === 1"
+          class="px-3 py-1 text-sm border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-100 cursor-pointer transition-colors"
+        >
+          Précédent
+        </button>
+        <button
+          (click)="changerPage(page + 1)"
+          [disabled]="page === totalPages"
+          class="px-3 py-1 text-sm border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-100 cursor-pointer transition-colors"
+        >
+          Suivant
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal détail -->
+<div *ngIf="showModal && selected" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" (click)="fermerModal()"></div>
+  <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+    <!-- En-tête -->
+    <div class="bg-gray-700 px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-gray-500 flex items-center justify-center text-white font-bold">
+          {{ getInitiales(selected) }}
+        </div>
+        <div>
+          <h2 class="text-white font-semibold">{{ selected.candidat?.prenom }} {{ selected.candidat?.nom }}</h2>
+          <p class="text-gray-300 text-xs">{{ selected.candidat?.email }}</p>
+        </div>
+      </div>
+      <button (click)="fermerModal()" class="text-gray-300 hover:text-white cursor-pointer transition-colors">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <!-- Corps -->
+    <div class="p-6 space-y-4">
+      <span class="inline-block px-3 py-1 text-xs font-semibold bg-gray-100 text-gray-700 rounded-full">
+        Expiré
+      </span>
+      <div class="grid grid-cols-2 gap-4 text-sm">
+        <div>
+          <p class="text-gray-400 text-xs mb-1">Direction</p>
+          <p class="font-medium text-gray-800">{{ selected.direction?.nom || '—' }}</p>
+        </div>
+        <div>
+          <p class="text-gray-400 text-xs mb-1">Type</p>
+          <p class="font-medium text-gray-800">{{ selected.typeStage || '—' }}</p>
+        </div>
+        <div>
+          <p class="text-gray-400 text-xs mb-1">Domaine</p>
+          <p class="font-medium text-gray-800">{{ selected.domaineStage || '—' }}</p>
+        </div>
+        <div>
+          <p class="text-gray-400 text-xs mb-1">Durée</p>
+          <p class="font-medium text-gray-800">{{ selected.dureeStage ? selected.dureeStage + ' jours' : '—' }}</p>
+        </div>
+        <div>
+          <p class="text-gray-400 text-xs mb-1">Début effectif</p>
+          <p class="font-medium text-gray-800">{{ formatDate(selected.dateDebutEffective) }}</p>
+        </div>
+        <div>
+          <p class="text-gray-400 text-xs mb-1">Fin effective</p>
+          <p class="font-medium text-gray-800">{{ formatDate(selected.dateFinEffective) }}</p>
+        </div>
+      </div>
+    </div>
+    <!-- Pied -->
+    <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+      <button
+        (click)="fermerModal()"
+        class="px-4 py-2 text-sm text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+      >
+        Fermer
+      </button>
+    </div>
+  </div>
+</div>

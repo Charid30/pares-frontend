@@ -215,6 +215,11 @@ export const routes: Routes = [
                 path: 'renouvellements',
                 loadComponent: () => import('../features/dashboard/admin/renouvellements/admin-renouvellements').then(m => m.AdminRenouvellements)
             },
+            // Archives (stages expirés sans parent)
+            {
+                path: 'archives',
+                loadComponent: () => import('../features/dashboard/admin/archives/admin-archives').then(m => m.AdminArchives)
+            },
             // Rapports de stage
             {
                 path: 'rapports',
@@ -316,6 +321,13 @@ export const routes: Routes = [
                 canActivate: [permissionGuard],
                 data: { module: 'STAGE' },
                 loadComponent: () => import('../features/dashboard/agent/modules/renouvellement/agent-renouvellement').then(m => m.AgentRenouvellement),
+            },
+            // Module Archives (stages expirés sans parent)
+            {
+                path: 'archives',
+                canActivate: [permissionGuard],
+                data: { module: 'STAGE' },
+                loadComponent: () => import('../features/dashboard/agent/modules/archives/agent-archives').then(m => m.AgentArchives),
             },
             // Module Rapports de stage
             {
