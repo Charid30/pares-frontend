@@ -1158,6 +1158,38 @@ export class Stages implements OnInit {
     this.accederConvention(stageId, 'telecharger');
   }
 
+  accederDocumentRenouvellement(idrenouvellement: number, type: 'lettre' | 'convention', mode: 'voir' | 'telecharger'): void {
+    const url = `${this.apiUrl}/candidat/renouvellements/${idrenouvellement}/${type}`;
+    this.http.get(url, { responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+        const objectUrl = window.URL.createObjectURL(pdfBlob);
+        const label = type === 'lettre' ? 'lettre_renouvellement' : 'convention_renouvellement';
+        if (mode === 'voir') {
+          const tab = window.open(objectUrl, '_blank');
+          if (tab) {
+            setTimeout(() => window.URL.revokeObjectURL(objectUrl), 10000);
+          } else {
+            this.showToast('Impossible d\'ouvrir un nouvel onglet', 'error');
+            window.URL.revokeObjectURL(objectUrl);
+          }
+        } else {
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = objectUrl;
+          a.download = `${label}_${idrenouvellement}.pdf`;
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(() => { document.body.removeChild(a); window.URL.revokeObjectURL(objectUrl); }, 500);
+          this.showToast('Téléchargement lancé', 'success');
+        }
+      },
+      error: () => {
+        this.showToast('Erreur lors du chargement du document', 'error');
+      },
+    });
+  }
+
   /** Stage actuellement sélectionné pour le modal de renouvellement */
   get stageRenouvellementEnCours(): DemandeStage | null {
     if (!this.renouvellementStageId) return null;
