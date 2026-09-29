@@ -203,13 +203,33 @@
         </svg>
       </div>
 
+      <!-- Filtre mois proposé -->
+      <div class="relative col-span-2 lg:col-span-1">
+        <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none"
+             [ngClass]="filtreMoisPropose ? 'text-blue-600' : 'text-gray-400'"
+             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        <input type="month" [(ngModel)]="filtreMoisPropose"
+               (change)="onFilterChange()"
+               placeholder="Mois proposé"
+               class="w-full pl-8 pr-3 py-2 rounded-xl text-xs font-medium border transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+               [ngClass]="filtreMoisPropose ? 'bg-blue-50 border-blue-300 text-blue-800 font-semibold' : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-100'"/>
+        <button *ngIf="filtreMoisPropose" (click)="filtreMoisPropose = ''; onFilterChange()"
+                class="absolute right-2 top-1/2 -translate-y-1/2 text-blue-400 hover:text-blue-600 transition-colors">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
     </div>
 
     <!-- Reset + compteur -->
-    <div *ngIf="filtreStatut || filtreType || filtreDirection || searchTerm || voirArchives"
+    <div *ngIf="filtreStatut || filtreType || filtreDirection || searchTerm || voirArchives || filtreMoisPropose"
          class="flex items-center justify-between pt-1 border-t border-gray-100">
       <span class="text-xs text-gray-400">{{ totalItems }} résultat(s)</span>
-      <button (click)="filtreStatut = ''; filtreType = ''; filtreDirection = null; searchTerm = ''; voirArchives = false; onFilterChange()"
+      <button (click)="filtreStatut = ''; filtreType = ''; filtreDirection = null; searchTerm = ''; voirArchives = false; filtreMoisPropose = ''; onFilterChange()"
               class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 active:scale-95 transition-all">
         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
@@ -260,7 +280,7 @@
           <tr>
             <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-400">Candidat</th>
             <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-400">Domaine</th>
-            <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-400">Souhaité</th>
+            <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-400">Date souhaitée / proposée</th>
             <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-400">Statut</th>
             <th class="px-4 py-3.5 text-right text-xs font-semibold text-gray-400">Actions</th>
           </tr>
@@ -293,10 +313,22 @@
               <span *ngIf="!stage.domaineStage" class="text-xs text-gray-300">—</span>
             </td>
             <td class="px-4 py-4">
-              <span *ngIf="stage.dateDebutSouhaitee" class="text-xs text-gray-600 whitespace-nowrap">
-                {{ stage.dateDebutSouhaitee | date:'dd/MM/yyyy' }}
-              </span>
-              <span *ngIf="!stage.dateDebutSouhaitee" class="text-xs text-gray-300">—</span>
+              <!-- Date proposée (PROGRAMMATION_EN_COURS) -->
+              <ng-container *ngIf="stage.statusStage === 'PROGRAMMATION_EN_COURS' && stage.dateDebutProposee; else dateSouhaitee">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 border border-blue-100 text-[10px] font-bold text-blue-700 whitespace-nowrap mb-0.5">
+                  <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+                  {{ stage.dateDebutProposee | date:'MMMM yyyy':'':'fr' | titlecase }}
+                </span>
+                <p class="text-[10px] text-gray-400">{{ stage.dateDebutProposee | date:'dd/MM/yyyy' }}</p>
+              </ng-container>
+              <ng-template #dateSouhaitee>
+                <span *ngIf="stage.dateDebutSouhaitee" class="text-xs text-gray-600 whitespace-nowrap">
+                  {{ stage.dateDebutSouhaitee | date:'dd/MM/yyyy' }}
+                </span>
+                <span *ngIf="!stage.dateDebutSouhaitee" class="text-xs text-gray-300">—</span>
+              </ng-template>
             </td>
             <td class="px-4 py-4">
               <div class="flex items-center gap-1.5 flex-wrap">

@@ -63,6 +63,7 @@ export class StagesList implements OnInit, OnDestroy {
   filtreStatut = '';
   filtreType = '';
   filtreDirection: number | null = null;
+  filtreMoisPropose = '';
 
   // Etat
   loading = false;
@@ -430,6 +431,10 @@ export class StagesList implements OnInit, OnDestroy {
 
     if (this.filtreDirection) {
       filters.directionId = this.filtreDirection;
+    }
+
+    if (this.filtreMoisPropose) {
+      filters.moisPropose = this.filtreMoisPropose;
     }
 
     this.adminStageService.getStages(filters).subscribe({
