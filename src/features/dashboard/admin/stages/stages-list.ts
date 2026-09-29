@@ -193,6 +193,12 @@ export class StagesList implements OnInit, OnDestroy {
   showDocModal = false;
   docStageId: number | null = null;
 
+  // Remplacer la convention existante
+  showReplaceConventionModal = false;
+  replaceConventionFile: File | null = null;
+  replaceConventionError = '';
+  replacingConvention = false;
+
   // Permissions
   canApprouver = false;
   canValider = false;
@@ -680,6 +686,66 @@ export class StagesList implements OnInit, OnDestroy {
     this.showDocModal = false;
     this.docStageId = null;
     this.cdr.detectChanges();
+  }
+
+  ouvrirRemplaceConvention(): void {
+    this.replaceConventionFile = null;
+    this.replaceConventionError = '';
+    this.showReplaceConventionModal = true;
+    this.cdr.detectChanges();
+  }
+
+  fermerRemplaceConvention(): void {
+    this.showReplaceConventionModal = false;
+    this.replaceConventionFile = null;
+    this.replaceConventionError = '';
+    this.cdr.detectChanges();
+  }
+
+  onReplaceConventionFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
+    const file = input.files[0];
+    if (file.type !== 'application/pdf') {
+      this.replaceConventionError = 'Seuls les fichiers PDF sont acceptés';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      this.replaceConventionError = 'Le fichier ne doit pas dépasser 5 Mo';
+      return;
+    }
+    this.replaceConventionFile = file;
+    this.replaceConventionError = '';
+  }
+
+  confirmerRemplaceConvention(): void {
+    if (!this.selectedStage || !this.replaceConventionFile || this.replacingConvention) return;
+    this.replacingConvention = true;
+    this.replaceConventionError = '';
+    this.adminStageService.remplacerConvention(this.selectedStage.idstage, this.replaceConventionFile).subscribe({
+      next: () => {
+        this.ngZone.run(() => {
+          this.replacingConvention = false;
+          this.fermerRemplaceConvention();
+          // Recharger les documents du stage sélectionné
+          if (this.selectedStage) {
+            this.adminStageService.getStageById(this.selectedStage.idstage).subscribe({
+              next: (res) => { if (res.data) { (this.selectedStage as any).documents = res.data.documents || []; this.cdr.detectChanges(); } },
+              error: () => {}
+            });
+          }
+          this.showToast('success', 'Convention remplacée', 'La nouvelle convention a été enregistrée.');
+          this.cdr.detectChanges();
+        });
+      },
+      error: (err) => {
+        this.ngZone.run(() => {
+          this.replaceConventionError = err.error?.message || 'Erreur lors du remplacement';
+          this.replacingConvention = false;
+          this.cdr.detectChanges();
+        });
+      }
+    });
   }
 
   onDocumentCreated(stageId: number): void {
