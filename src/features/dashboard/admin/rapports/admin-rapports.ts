@@ -37,6 +37,7 @@ export interface Rapport {
   dateEvaluation?: string;
   createdDate?: string;
   stage?: StageInfo;
+  moisConsommes?: number;
 }
 
 @Component({
@@ -74,8 +75,6 @@ export class AdminRapports implements OnInit {
   attestationRemplacement: File | null = null;
   soumissionAttestation = false;
 
-  // Cumul mois par candidat
-  cumulMoisParCandidat: Map<number, number> = new Map();
 
   get total()   { return this.rapports.length; }
   get soumis()  { return this.rapports.filter(r => r.statusRapport === 'SOUMIS').length; }
@@ -95,7 +94,6 @@ export class AdminRapports implements OnInit {
     this.http.get<{ success: boolean; data: Rapport[] }>(`${this.apiUrl}/stages/rapports`).subscribe({
       next: (res) => {
         this.rapports = res.data ?? [];
-        this.calculerCumulMois();
         this.appliquerFiltres();
         this.isLoading = false;
         this.cdr.detectChanges();
@@ -108,18 +106,8 @@ export class AdminRapports implements OnInit {
     });
   }
 
-  private calculerCumulMois(): void {
-    this.cumulMoisParCandidat.clear();
-    for (const r of this.rapports) {
-      const id = r.stage?.candidat?.idcandidats;
-      if (id === undefined) continue;
-      this.cumulMoisParCandidat.set(id, (this.cumulMoisParCandidat.get(id) ?? 0) + (r.stage?.dureeStage ?? 0));
-    }
-  }
-
   getCumulMois(r: Rapport): number {
-    const id = r.stage?.candidat?.idcandidats;
-    return id !== undefined ? (this.cumulMoisParCandidat.get(id) ?? 0) : 0;
+    return r.moisConsommes ?? 0;
   }
 
   appliquerFiltres(): void {
