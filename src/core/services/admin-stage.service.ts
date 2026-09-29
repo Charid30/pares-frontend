@@ -155,6 +155,7 @@ export interface StageFilters {
   domaineStage?: string;
   directionId?: number;
   search?: string;
+  moisPropose?: string;
 }
 
 export interface StageSuivi {
@@ -230,6 +231,7 @@ export class AdminStageService {
     if (filters.domaineStage) params = params.set('domaineStage', filters.domaineStage);
     if (filters.directionId) params = params.set('directionId', filters.directionId.toString());
     if (filters.search) params = params.set('search', filters.search);
+    if (filters.moisPropose) params = params.set('moisPropose', filters.moisPropose);
 
     return this.http.get<ApiResponse<PaginatedResponse<Stage>>>(this.apiUrl, { params });
   }
