@@ -1043,23 +1043,34 @@
               <p class="text-[11px] font-bold text-gray-700 uppercase tracking-wide mb-2">Documents de stage</p>
               <div class="grid grid-cols-2 gap-2">
                 <!-- Convention -->
-                <div class="flex items-center gap-2.5 p-2.5 rounded-xl border"
-                     [ngClass]="hasDoc('CONVENTION') ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-100'">
-                  <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                       [ngClass]="hasDoc('CONVENTION') ? 'bg-green-100' : 'bg-amber-100'">
-                    <svg *ngIf="hasDoc('CONVENTION')" class="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                    </svg>
-                    <svg *ngIf="!hasDoc('CONVENTION')" class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
+                <div class="flex flex-col gap-1.5">
+                  <div class="flex items-center gap-2.5 p-2.5 rounded-xl border"
+                       [ngClass]="hasDoc('CONVENTION') ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-100'">
+                    <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                         [ngClass]="hasDoc('CONVENTION') ? 'bg-green-100' : 'bg-amber-100'">
+                      <svg *ngIf="hasDoc('CONVENTION')" class="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                      </svg>
+                      <svg *ngIf="!hasDoc('CONVENTION')" class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <p class="text-[11px] font-semibold" [ngClass]="hasDoc('CONVENTION') ? 'text-green-800' : 'text-amber-700'">Convention</p>
+                      <p class="text-[10px]" [ngClass]="hasDoc('CONVENTION') ? 'text-green-600' : 'text-amber-500'">
+                        {{ hasDoc('CONVENTION') ? 'Jointe' : 'Non jointe' }}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p class="text-[11px] font-semibold" [ngClass]="hasDoc('CONVENTION') ? 'text-green-800' : 'text-amber-700'">Convention</p>
-                    <p class="text-[10px]" [ngClass]="hasDoc('CONVENTION') ? 'text-green-600' : 'text-amber-500'">
-                      {{ hasDoc('CONVENTION') ? 'Jointe' : 'Non jointe' }}
-                    </p>
-                  </div>
+                  <!-- Bouton remplacer (uniquement si convention déjà jointe) -->
+                  <button *ngIf="hasDoc('CONVENTION')"
+                          (click)="ouvrirRemplaceConvention()"
+                          class="w-full flex items-center justify-center gap-1 py-1.5 text-[10px] font-semibold text-orange-600 bg-orange-50 rounded-lg hover:bg-orange-100 transition-all border border-orange-100">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    Remplacer
+                  </button>
                 </div>
                 <!-- Attestation -->
                 <div class="flex items-center gap-2.5 p-2.5 rounded-xl border"
@@ -1897,6 +1908,76 @@
   (close)="fermerDocModal()"
   (documentCreated)="onDocumentCreated($event)"
 ></app-stage-doc-modal>
+
+<!-- ══ Modal Remplacer la convention ══════════════════════════════════════ -->
+<div *ngIf="showReplaceConventionModal"
+     class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm" (click)="$event.stopPropagation()">
+    <!-- En-tête -->
+    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-xl bg-orange-100 flex items-center justify-center">
+          <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+        </div>
+        <h3 class="text-sm font-bold text-gray-800">Remplacer la convention</h3>
+      </div>
+      <button (click)="fermerRemplaceConvention()" class="text-gray-400 hover:text-gray-600 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Corps -->
+    <div class="px-5 py-4">
+      <p class="text-xs text-gray-500 mb-4">
+        L'ancienne convention sera remplacée par le nouveau fichier PDF. Cette action est irréversible.
+      </p>
+
+      <!-- Zone upload -->
+      <label class="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-xl cursor-pointer transition-colors"
+             [ngClass]="replaceConventionFile ? 'border-orange-300 bg-orange-50' : 'border-gray-200 bg-gray-50 hover:bg-gray-100'">
+        <div *ngIf="!replaceConventionFile" class="flex flex-col items-center gap-1">
+          <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+          </svg>
+          <p class="text-xs text-gray-500">Cliquez pour sélectionner un PDF</p>
+          <p class="text-[10px] text-gray-400">Max 5 Mo</p>
+        </div>
+        <div *ngIf="replaceConventionFile" class="flex flex-col items-center gap-1 px-4 text-center">
+          <svg class="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <p class="text-xs font-semibold text-orange-700 truncate w-full">{{ replaceConventionFile.name }}</p>
+          <p class="text-[10px] text-orange-500">{{ (replaceConventionFile.size / 1024).toFixed(0) }} Ko</p>
+        </div>
+        <input type="file" accept=".pdf" class="hidden" (change)="onReplaceConventionFileSelected($event)"/>
+      </label>
+
+      <!-- Erreur -->
+      <p *ngIf="replaceConventionError" class="mt-2 text-xs text-red-600">{{ replaceConventionError }}</p>
+    </div>
+
+    <!-- Pied -->
+    <div class="flex gap-3 px-5 pb-5">
+      <button (click)="fermerRemplaceConvention()"
+              class="flex-1 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all">
+        Annuler
+      </button>
+      <button (click)="confirmerRemplaceConvention()"
+              [disabled]="!replaceConventionFile || replacingConvention"
+              class="flex-1 py-2.5 text-sm font-semibold text-white bg-orange-500 rounded-xl hover:bg-orange-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+        <svg *ngIf="replacingConvention" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+        </svg>
+        {{ replacingConvention ? 'Remplacement…' : 'Remplacer' }}
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- ══ Modal de confirmation personnalisé ══════════════════════════════════ -->
 <app-stage-confirm-modal

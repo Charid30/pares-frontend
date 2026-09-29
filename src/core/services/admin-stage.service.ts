@@ -387,6 +387,15 @@ export class AdminStageService {
   }
 
   /**
+   * Remplacer la convention de stage existante par une nouvelle version
+   */
+  remplacerConvention(stageId: number, file: File): Observable<ApiResponse<{ iddocument: number }>> {
+    const formData = new FormData();
+    formData.append('conventionStage', file, file.name);
+    return this.http.put<ApiResponse<{ iddocument: number }>>(`${this.apiUrl}/${stageId}/convention`, formData);
+  }
+
+  /**
    * Récupérer les demandes de modification (suspension/annulation)
    */
   getDemandesModification(filters: { status?: string } = {}): Observable<ApiResponse<DemandeModificationStage[]>> {

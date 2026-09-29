@@ -108,7 +108,7 @@
             <td class="px-4 py-3 text-gray-700">{{ s.domaineStage || '—' }}</td>
             <td class="px-4 py-3 text-gray-500">{{ formatDate(s.dateDebutEffective) }}</td>
             <td class="px-4 py-3 text-gray-500">{{ formatDate(s.dateFinEffective) }}</td>
-            <td class="px-4 py-3 text-gray-700">{{ s.dureeStage ? s.dureeStage + ' j.' : '—' }}</td>
+            <td class="px-4 py-3 text-gray-700">{{ s.dureeStage ? s.dureeStage + ' mois' : '—' }}</td>
             <td class="px-4 py-3 text-center">
               <button
                 (click)="voirDetail(s)"
@@ -190,7 +190,7 @@
         </div>
         <div>
           <p class="text-gray-400 text-xs mb-1">Durée</p>
-          <p class="font-medium text-gray-800">{{ selected.dureeStage ? selected.dureeStage + ' jours' : '—' }}</p>
+          <p class="font-medium text-gray-800">{{ selected.dureeStage ? selected.dureeStage + ' mois' : '—' }}</p>
         </div>
         <div>
           <p class="text-gray-400 text-xs mb-1">Début effectif</p>
