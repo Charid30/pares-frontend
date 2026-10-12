@@ -22,6 +22,10 @@ interface MesRenouvellement {
   createdBy: string | null;
   lastModifiedBy: string | null;
   lastModifiedDate: string | null;
+  lettreNonConforme: boolean | null;
+  conventionNonConforme: boolean | null;
+  lettreMotivationFilename: string | null;
+  conventionFilename: string | null;
   stageActuel: StageInfo | null;
   stageNouveau: StageInfo | null;
 }
@@ -38,6 +42,15 @@ export class MesRenouvellements implements OnInit {
   loading = true;
   error: string | null = null;
   expanded: Set<number> = new Set();
+
+  // Re-soumission modal
+  showResoumissionModal = false;
+  resoumissionTarget: MesRenouvellement | null = null;
+  resoumissionLettreFile: File | null = null;
+  resoumissionConventionFile: File | null = null;
+  resoumissionSubmitting = false;
+  resoumissionError: string | null = null;
+  resoumissionSuccess = false;
 
   private api = environment.apiUrl;
 
@@ -76,6 +89,87 @@ export class MesRenouvellements implements OnInit {
   isExpanded(id: number): boolean {
     return this.expanded.has(id);
   }
+
+  // ─── Re-soumission ───────────────────────────────────────
+
+  ouvrirResoumission(r: MesRenouvellement): void {
+    this.resoumissionTarget = r;
+    this.resoumissionLettreFile = null;
+    this.resoumissionConventionFile = null;
+    this.resoumissionError = null;
+    this.resoumissionSuccess = false;
+    this.showResoumissionModal = true;
+  }
+
+  fermerResoumission(): void {
+    if (this.resoumissionSubmitting) return;
+    this.showResoumissionModal = false;
+    this.resoumissionTarget = null;
+  }
+
+  onLettreChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.resoumissionLettreFile = input.files?.[0] ?? null;
+  }
+
+  onConventionChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.resoumissionConventionFile = input.files?.[0] ?? null;
+  }
+
+  soumettreDossier(): void {
+    if (!this.resoumissionTarget) return;
+    const r = this.resoumissionTarget;
+
+    // Vérifier que les fichiers non conformes sont remplacés
+    if (r.lettreNonConforme && !this.resoumissionLettreFile) {
+      this.resoumissionError = 'Vous devez fournir une nouvelle lettre de motivation (signalée non conforme).';
+      return;
+    }
+    if (r.conventionNonConforme && !this.resoumissionConventionFile) {
+      this.resoumissionError = 'Vous devez fournir une nouvelle convention (signalée non conforme).';
+      return;
+    }
+
+    const fd = new FormData();
+    if (this.resoumissionLettreFile) fd.append('lettreRenouvellement', this.resoumissionLettreFile);
+    if (this.resoumissionConventionFile) fd.append('conventionRenouvellement', this.resoumissionConventionFile);
+
+    this.resoumissionSubmitting = true;
+    this.resoumissionError = null;
+
+    this.http.put<{ success: boolean }>(
+      `${this.api}/candidat/renouvellements/${r.idrenouvellement}/ressoumettre`,
+      fd,
+      { withCredentials: true }
+    ).subscribe({
+      next: () => {
+        this.resoumissionSubmitting = false;
+        this.resoumissionSuccess = true;
+        setTimeout(() => {
+          this.fermerResoumission();
+          this.charger();
+        }, 1500);
+      },
+      error: (err) => {
+        this.resoumissionSubmitting = false;
+        this.resoumissionError = err.error?.message || 'Erreur lors de la re-soumission.';
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  // ─── Téléchargements ─────────────────────────────────────
+
+  telechargerLettre(id: number): void {
+    window.open(`${this.api}/candidat/renouvellements/${id}/lettre`, '_blank');
+  }
+
+  telechargerConvention(id: number): void {
+    window.open(`${this.api}/candidat/renouvellements/${id}/convention`, '_blank');
+  }
+
+  // ─── Statuts ─────────────────────────────────────────────
 
   getStatutBadge(status: string): string {
     const map: Record<string, string> = {
