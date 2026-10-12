@@ -1208,6 +1208,10 @@ export class Stages implements OnInit {
    * - TERMINE / EXPIRE : si une autorisation admin active existe
    */
   peutRenouveler(stage: DemandeStage): boolean {
+    // Bloquer si un renouvellement existe déjà (quel que soit son statut)
+    // Le rejet se gère via le bouton "Re-soumettre", pas via une nouvelle demande
+    if (stage.renouvellement) return false;
+
     // Cas TERMINE / EXPIRE : autorisation admin requise
     if (stage.statusStage === 'TERMINE' || stage.statusStage === 'EXPIRE') {
       if (!stage.autorisationRenouvellement) return false;
