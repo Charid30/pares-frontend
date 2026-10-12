@@ -49,9 +49,19 @@
         <option value="EN_ATTENTE">En attente</option>
         <option value="PROGRAMMATION_EN_COURS">Programmation en cours</option>
         <option value="ACCEPTE">Accepté</option>
+        <option value="EN_COURS">En cours</option>
+        <option value="EXPIRE">Expiré</option>
+        <option value="TERMINE">Terminé</option>
+        <option value="RAPPORT_SOUMIS">Rapport soumis</option>
         <option value="REJETE">Rejeté</option>
       </select>
-      <button *ngIf="filtreStatut || search" (click)="effacerFiltres()"
+      <input type="date" [(ngModel)]="dateDebut" (change)="onFiltreChange()"
+             class="px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-400 flex-shrink-0"
+             title="Date de début">
+      <input type="date" [(ngModel)]="dateFin" (change)="onFiltreChange()"
+             class="px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-400 flex-shrink-0"
+             title="Date de fin">
+      <button *ngIf="filtreStatut || search || dateDebut || dateFin" (click)="effacerFiltres()"
               class="px-3 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors flex-shrink-0">
         Effacer
       </button>
@@ -67,22 +77,34 @@
   </div>
 
   <!-- Stats -->
-  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+  <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+    <div class="bg-white rounded-2xl p-3 shadow-sm border border-gray-100">
       <p class="text-xs text-gray-400 mb-1">Total</p>
       <p class="text-2xl font-bold text-gray-900">{{ total }}</p>
     </div>
-    <div class="bg-white rounded-2xl p-4 shadow-sm border border-amber-100">
+    <div class="bg-white rounded-2xl p-3 shadow-sm border border-amber-100">
       <p class="text-xs text-amber-500 mb-1">En attente</p>
-      <p class="text-2xl font-bold text-amber-600">{{ enAttente }}</p>
+      <p class="text-2xl font-bold text-amber-600">{{ stats.enAttente }}</p>
     </div>
-    <div class="bg-white rounded-2xl p-4 shadow-sm border border-blue-100">
+    <div class="bg-white rounded-2xl p-3 shadow-sm border border-blue-100">
       <p class="text-xs text-blue-500 mb-1">En traitement</p>
-      <p class="text-2xl font-bold text-blue-600">{{ enTraitement }}</p>
+      <p class="text-2xl font-bold text-blue-600">{{ stats.enTraitement }}</p>
     </div>
-    <div class="bg-white rounded-2xl p-4 shadow-sm border border-green-100">
+    <div class="bg-white rounded-2xl p-3 shadow-sm border border-green-100">
       <p class="text-xs text-green-500 mb-1">Acceptés</p>
-      <p class="text-2xl font-bold text-green-600">{{ acceptes }}</p>
+      <p class="text-2xl font-bold text-green-600">{{ stats.accepte }}</p>
+    </div>
+    <div class="bg-white rounded-2xl p-3 shadow-sm border border-indigo-100">
+      <p class="text-xs text-indigo-500 mb-1">En cours</p>
+      <p class="text-2xl font-bold text-indigo-600">{{ stats.enCours }}</p>
+    </div>
+    <div class="bg-white rounded-2xl p-3 shadow-sm border border-orange-100">
+      <p class="text-xs text-orange-500 mb-1">Expirés</p>
+      <p class="text-2xl font-bold text-orange-600">{{ stats.expire }}</p>
+    </div>
+    <div class="bg-white rounded-2xl p-3 shadow-sm border border-gray-200">
+      <p class="text-xs text-gray-500 mb-1">Terminés</p>
+      <p class="text-2xl font-bold text-gray-600">{{ stats.termine }}</p>
     </div>
   </div>
 
@@ -119,6 +141,7 @@
             <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Durée</th>
             <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date demande</th>
             <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Statut</th>
+            <th class="px-4 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Convention</th>
             <th class="px-4 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
           </tr>
         </thead>
@@ -163,6 +186,26 @@
               <span class="px-2.5 py-1 text-xs font-semibold rounded-full" [ngClass]="getStatutBadge(r.statusRenouvellement)">
                 {{ getStatutLabel(r.statusRenouvellement) }}
               </span>
+            </td>
+
+            <!-- Convention -->
+            <td class="px-4 py-4 text-center">
+              <ng-container *ngIf="r.conventionStageEnCours_filename; else noConvBadge">
+                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs font-semibold" title="{{ r.conventionStageEnCours_filename }}">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                  </svg>
+                  Jointe
+                </span>
+              </ng-container>
+              <ng-template #noConvBadge>
+                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 text-gray-400 text-xs font-medium">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                  Manquante
+                </span>
+              </ng-template>
             </td>
 
             <!-- Actions -->
@@ -215,7 +258,15 @@
       <div *ngFor="let r of renouvellementsFiltres"
            class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100">
         <div class="h-1 w-full"
-             [ngClass]="r.statusRenouvellement === 'ACCEPTE' ? 'bg-green-500' : r.statusRenouvellement === 'REJETE' ? 'bg-red-500' : 'bg-amber-400'"></div>
+             [ngClass]="{
+               'bg-green-500':  r.statusRenouvellement === 'ACCEPTE',
+               'bg-red-500':    r.statusRenouvellement === 'REJETE',
+               'bg-indigo-500': r.statusRenouvellement === 'EN_COURS',
+               'bg-orange-400': r.statusRenouvellement === 'EXPIRE',
+               'bg-gray-400':   r.statusRenouvellement === 'TERMINE',
+               'bg-blue-400':   r.statusRenouvellement === 'PROGRAMMATION_EN_COURS',
+               'bg-amber-400':  r.statusRenouvellement === 'EN_ATTENTE'
+             }"></div>
         <div class="p-4 space-y-3">
           <div class="flex items-center gap-3">
             <div class="w-11 h-11 rounded-2xl bg-primary-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-md">
@@ -231,9 +282,16 @@
               {{ getStatutLabel(r.statusRenouvellement) }}
             </span>
           </div>
-          <div class="flex items-center gap-3 text-xs text-gray-500">
+          <div class="flex items-center gap-2 flex-wrap text-xs text-gray-500">
             <span class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-medium">{{ r.dureeDemandee }} mois</span>
             <span>{{ r.dateRenouvellement | date:'dd/MM/yyyy' }}</span>
+            <span *ngIf="r.conventionStageEnCours_filename"
+                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-semibold">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              Convention jointe
+            </span>
           </div>
           <div class="flex items-center gap-2 pt-2 border-t border-gray-100 flex-wrap">
             <button (click)="voirDetail(r)"
@@ -259,6 +317,50 @@
         </div>
       </div>
     </div>
+
+    <!-- Pagination -->
+    <div *ngIf="!isLoading && totalPages > 1"
+         class="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50">
+      <p class="text-xs text-gray-500">
+        Page <span class="font-semibold text-gray-700">{{ page }}</span> / {{ totalPages }}
+        &nbsp;·&nbsp; {{ total }} résultat(s)
+      </p>
+      <div class="flex items-center gap-1">
+        <button (click)="allerPage(1)" [disabled]="page === 1"
+                class="p-1.5 rounded-lg text-gray-500 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" title="Première page">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7M18 19l-7-7 7-7"/>
+          </svg>
+        </button>
+        <button (click)="allerPage(page - 1)" [disabled]="page === 1"
+                class="p-1.5 rounded-lg text-gray-500 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" title="Page précédente">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+        </button>
+        <ng-container *ngFor="let p of [].constructor(totalPages); let i = index">
+          <button *ngIf="i + 1 >= page - 2 && i + 1 <= page + 2"
+                  (click)="allerPage(i + 1)"
+                  class="min-w-[2rem] px-2 py-1 rounded-lg text-xs font-semibold transition-colors"
+                  [ngClass]="page === i + 1 ? 'bg-primary-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-200'">
+            {{ i + 1 }}
+          </button>
+        </ng-container>
+        <button (click)="allerPage(page + 1)" [disabled]="page === totalPages"
+                class="p-1.5 rounded-lg text-gray-500 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" title="Page suivante">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </button>
+        <button (click)="allerPage(totalPages)" [disabled]="page === totalPages"
+                class="p-1.5 rounded-lg text-gray-500 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" title="Dernière page">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M6 5l7 7-7 7"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
   </div>
 
 </div>
@@ -315,9 +417,14 @@
           </div>
           <div *ngIf="selected.stageActuel" class="flex items-center justify-between px-3 py-2.5">
             <span class="text-xs text-gray-500">Stage d'origine</span>
-            <span class="text-xs font-semibold text-gray-800">
+            <a [href]="'/agent/stages?id=' + selected.stageActuel.idstage"
+               target="_blank"
+               class="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 transition-colors cursor-pointer">
               {{ selected.stageActuel.domaineStage || '—' }} (#{{ selected.stageActuel.idstage }})
-            </span>
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+              </svg>
+            </a>
           </div>
           <div *ngIf="selected.stageActuel?.dateFinEffective" class="flex items-center justify-between px-3 py-2.5">
             <span class="text-xs text-gray-500">Fin du stage actuel</span>
@@ -401,7 +508,26 @@
         Fermer
       </button>
       <div class="flex gap-2">
-        <button *ngIf="selected.statusRenouvellement === 'ACCEPTE' && peutCreerConvention"
+        <!-- Convention : déjà jointe → Consulter + Remplacer -->
+        <ng-container *ngIf="selected.statusRenouvellement === 'ACCEPTE' && peutCreerConvention && selected.conventionStageEnCours_filename">
+          <button (click)="accederConvention('voir')"
+                  class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition-colors active:scale-95">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+            Consulter convention
+          </button>
+          <button (click)="ouvrirConventionModal()"
+                  class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors active:scale-95">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+            </svg>
+            Remplacer
+          </button>
+        </ng-container>
+        <!-- Convention : pas encore jointe → Joindre -->
+        <button *ngIf="selected.statusRenouvellement === 'ACCEPTE' && peutCreerConvention && !selected.conventionStageEnCours_filename"
                 (click)="ouvrirConventionModal()"
                 class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors active:scale-95">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -438,6 +564,40 @@
           Refuser
         </button>
       </div>
+
+      <!-- Historique des statuts -->
+      <div *ngIf="getHistorique().length > 0" class="px-6 pb-5">
+        <div class="border-t border-gray-100 pt-4">
+          <button (click)="showHistoriqueTab = !showHistoriqueTab"
+            class="flex items-center gap-2 text-xs font-semibold text-gray-500 hover:text-gray-700 transition-colors cursor-pointer">
+            <svg class="w-3.5 h-3.5 transition-transform duration-200" [class.rotate-180]="showHistoriqueTab"
+              fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+            Historique ({{ getHistorique().length }})
+          </button>
+          <div *ngIf="showHistoriqueTab" class="mt-3 space-y-2">
+            <div *ngFor="let h of getHistorique()" class="flex items-start gap-2 text-xs text-gray-600">
+              <div class="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0"
+                [ngClass]="{
+                  'bg-amber-400': h.statut === 'EN_ATTENTE',
+                  'bg-blue-500': h.statut === 'PROGRAMMATION_EN_COURS',
+                  'bg-green-500': h.statut === 'ACCEPTE',
+                  'bg-indigo-500': h.statut === 'EN_COURS',
+                  'bg-orange-400': h.statut === 'EXPIRE',
+                  'bg-gray-400': h.statut === 'TERMINE' || h.statut === 'RAPPORT_SOUMIS',
+                  'bg-red-500': h.statut === 'REJETE'
+                }">
+              </div>
+              <span class="text-gray-400 flex-shrink-0 tabular-nums">{{ h.date | date:'dd/MM/yy HH:mm' }}</span>
+              <span class="font-medium text-gray-700">{{ getStatutLabelHist(h.statut) }}</span>
+              <span *ngIf="h.auteur" class="text-gray-400">· {{ h.auteur }}</span>
+              <span *ngIf="h.note" class="text-gray-500 italic">· {{ h.note }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>

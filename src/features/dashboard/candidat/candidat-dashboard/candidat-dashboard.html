@@ -196,6 +196,42 @@
           </div>
         </section>
 
+        <!-- ── Section renouvellements ── -->
+        <section *ngIf="renouvActifs > 0 || renouvRejetes > 0" class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <span class="text-primary-500 text-xs font-semibold uppercase tracking-widest">Suivi</span>
+              <h2 class="text-base font-bold text-gray-900 mt-0.5">Mes renouvellements</h2>
+            </div>
+            <a routerLink="/dashboard/candidat/mes-renouvellements"
+              class="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1 cursor-pointer transition-colors">
+              Voir tout
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </a>
+          </div>
+
+          <div class="grid grid-cols-3 gap-3">
+            <div class="text-center p-3 bg-amber-50 rounded-xl border border-amber-100">
+              <p class="text-xl font-bold text-amber-700">{{ renouvEnAttente }}</p>
+              <p class="text-[11px] text-amber-600 mt-0.5">En attente</p>
+            </div>
+            <div class="text-center p-3 bg-indigo-50 rounded-xl border border-indigo-100">
+              <p class="text-xl font-bold text-indigo-700">{{ renouvActifs }}</p>
+              <p class="text-[11px] text-indigo-600 mt-0.5">Actifs</p>
+            </div>
+            <div *ngIf="renouvRejetes > 0" class="text-center p-3 bg-red-50 rounded-xl border border-red-100 animate-pulse">
+              <p class="text-xl font-bold text-red-700">{{ renouvRejetes }}</p>
+              <p class="text-[11px] text-red-600 mt-0.5">À re-soumettre</p>
+            </div>
+            <div *ngIf="renouvRejetes === 0" class="text-center p-3 bg-green-50 rounded-xl border border-green-100">
+              <p class="text-xl font-bold text-green-700">{{ renouvTermines }}</p>
+              <p class="text-[11px] text-green-600 mt-0.5">Terminés</p>
+            </div>
+          </div>
+        </section>
+
       </div><!-- /colonne principale -->
 
       <!-- ── Sidebar Desktop (1/3) ── -->

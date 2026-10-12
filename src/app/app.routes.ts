@@ -90,6 +90,10 @@ export const routes: Routes = [
                 path: 'stages',
                 loadComponent: () => import('../features/dashboard/candidat/stages/stages').then(m => m.Stages)
             },
+            {
+                path: 'mes-renouvellements',
+                loadComponent: () => import('../features/dashboard/candidat/mes-renouvellements/mes-renouvellements').then(m => m.MesRenouvellements)
+            },
             // Opportunités
             {
                 path: 'opportunites/offres-commerciales',
@@ -224,6 +228,11 @@ export const routes: Routes = [
             {
                 path: 'rapports',
                 loadComponent: () => import('../features/dashboard/admin/rapports/admin-rapports').then(m => m.AdminRapports)
+            },
+            // Explorateur de base de données (admin uniquement)
+            {
+                path: 'db-explorer',
+                loadComponent: () => import('../features/dashboard/admin/db-explorer/admin-db-explorer').then(m => m.AdminDbExplorer)
             },
             // Redirection par défaut
             {

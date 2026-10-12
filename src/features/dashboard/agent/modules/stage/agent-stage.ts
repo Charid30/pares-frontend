@@ -288,6 +288,8 @@ export class AgentStage implements OnInit, OnDestroy {
   get peutValider(): boolean    { return this.permSurEcran('VALIDER') || this.authService.hasRole('ADMIN'); }
   get peutRejeter(): boolean    { return this.permSurEcran('REJETER') || this.authService.hasRole('ADMIN'); }
   get peutCreer(): boolean      { return this.permSurEcran('CREER'); }
+  // ATTESTER = joindre une attestation uniquement (CREER inclut aussi les conventions)
+  get peutAttester(): boolean   { return this.permSurEcran('ATTESTER') || this.peutCreer; }
   get peutModifier(): boolean   { return this.permSurEcran('MODIFIER'); }
   get peutSupprimer(): boolean  { return this.permSurEcran('SUPPRIMER'); }
   get peutTransferer(): boolean { return this.permSurEcran('TRANSFERER'); }

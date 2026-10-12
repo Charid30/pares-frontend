@@ -20,6 +20,10 @@ interface RenouvellementInfo {
   conventionNonConforme: boolean;
   lettreFilename: string | null;
   conventionFilename: string | null;
+  stageNouveauId: number | null;
+  stageNouveauDateDebut: string | null;
+  stageNouveauDateFin: string | null;
+  stageNouveauStatus: string | null;
 }
 
 interface DemandeStage {
