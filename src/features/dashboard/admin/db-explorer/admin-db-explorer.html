@@ -1,0 +1,200 @@
+<div class="flex flex-col gap-6 p-6 min-h-screen bg-gray-50">
+
+  <!-- En-tête -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Explorateur de base de données</h1>
+      <p class="text-sm text-gray-500 mt-1">Accès complet à la base — toutes les requêtes sont loggées</p>
+    </div>
+    <span class="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-700 border border-red-200">
+      <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
+      Accès admin uniquement
+    </span>
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-4 gap-6">
+
+    <!-- Panneau gauche : tables + presets + historique -->
+    <div class="xl:col-span-1 flex flex-col gap-4">
+
+      <!-- Liste des tables -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50">
+          <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Tables</span>
+          <button (click)="loadTables()" class="text-gray-400 hover:text-primary-600 transition-colors cursor-pointer" title="Rafraîchir">
+            <svg class="w-4 h-4" [class.animate-spin]="loadingTables" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+          </button>
+        </div>
+        <div class="max-h-52 overflow-y-auto divide-y divide-gray-50">
+          @if (loadingTables) {
+            <div class="px-4 py-3 text-xs text-gray-400">Chargement…</div>
+          }
+          @for (table of tables; track table) {
+            <button (click)="selectTable(table)"
+              class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors cursor-pointer font-mono truncate">
+              {{ table }}
+            </button>
+          }
+          @if (!loadingTables && tables.length === 0) {
+            <div class="px-4 py-3 text-xs text-gray-400">Aucune table</div>
+          }
+        </div>
+      </div>
+
+      <!-- Requêtes prédéfinies -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-4 py-3 border-b border-gray-100 bg-gray-50">
+          <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Requêtes rapides</span>
+        </div>
+        <div class="divide-y divide-gray-50">
+          @for (p of presets; track p.label) {
+            <button (click)="usePreset(p.sql)"
+              class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors cursor-pointer leading-tight">
+              {{ p.label }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Historique -->
+      @if (queryHistory.length > 0) {
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div class="px-4 py-3 border-b border-gray-100 bg-gray-50">
+            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Historique</span>
+          </div>
+          <div class="divide-y divide-gray-50 max-h-40 overflow-y-auto">
+            @for (h of queryHistory; track h) {
+              <button (click)="useHistory(h)"
+                class="w-full text-left px-4 py-2 text-xs text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition-colors cursor-pointer font-mono truncate">
+                {{ h }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Panneau principal -->
+    <div class="xl:col-span-3 flex flex-col gap-4">
+
+      <!-- Éditeur SQL -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50">
+          <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Éditeur SQL</span>
+          <button (click)="clearEditor()" class="text-xs text-gray-400 hover:text-gray-600 cursor-pointer transition-colors">Effacer</button>
+        </div>
+        <div class="p-4">
+          <textarea
+            [(ngModel)]="sqlInput"
+            (keydown.control.enter)="execute()"
+            rows="7"
+            placeholder="SELECT * FROM stage WHERE del = 0 LIMIT 50"
+            class="w-full font-mono text-sm bg-gray-900 text-green-300 rounded-lg p-4 border-0 outline-none resize-none placeholder-gray-600 focus:ring-2 focus:ring-primary-500 leading-relaxed"
+          ></textarea>
+          <div class="flex items-center justify-between mt-3">
+            <span class="text-xs text-gray-400">Ctrl+Entrée pour exécuter • Toutes les requêtes sont loggées dans le journal d'activité</span>
+            <button (click)="execute()" [disabled]="loading || !sqlInput.trim()"
+              class="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-primary-600 text-white text-sm font-semibold
+                     hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-sm">
+              @if (loading) {
+                <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+                Exécution…
+              } @else {
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Exécuter
+              }
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Erreur -->
+      @if (errorMsg) {
+        <div class="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <svg class="w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <div>
+            <p class="font-semibold">Erreur SQL</p>
+            <p class="mt-1 font-mono text-xs">{{ errorMsg }}</p>
+          </div>
+        </div>
+      }
+
+      <!-- Résultats -->
+      @if (result) {
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50">
+            <div class="flex items-center gap-3">
+              <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Résultats</span>
+              <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                [class]="result.rowCount > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'">
+                {{ result.rowCount }} ligne{{ result.rowCount !== 1 ? 's' : '' }}
+              </span>
+              @if (result.truncated) {
+                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-700">
+                  Limité à 300 lignes
+                </span>
+              }
+              @if (result.affectedRows !== null) {
+                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-blue-100 text-blue-700">
+                  {{ result.affectedRows }} ligne(s) affectée(s)
+                </span>
+              }
+            </div>
+            @if (result.rowCount > 0) {
+              <button (click)="exportCsv()"
+                class="inline-flex items-center gap-1.5 text-xs font-medium text-primary-600 hover:text-primary-800 cursor-pointer transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                Exporter CSV
+              </button>
+            }
+          </div>
+
+          @if (result.rowCount === 0) {
+            <div class="px-4 py-10 text-center text-sm text-gray-400">
+              Aucun résultat retourné
+            </div>
+          } @else {
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs">
+                <thead>
+                  <tr class="bg-slate-800 text-white">
+                    @for (col of result.columns; track col) {
+                      <th class="px-3 py-2.5 text-left font-semibold whitespace-nowrap tracking-wide">{{ col }}</th>
+                    }
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                  @for (row of result.rows; track $index) {
+                    <tr class="hover:bg-gray-50 transition-colors" [class.bg-gray-50]="$index % 2 === 1">
+                      @for (col of result.columns; track col) {
+                        <td class="px-3 py-2 whitespace-nowrap max-w-xs truncate font-mono"
+                          [class.text-gray-300]="isNull(row[col])"
+                          [class.italic]="isNull(row[col])"
+                          [title]="formatValue(row[col])">
+                          {{ formatValue(row[col]) }}
+                        </td>
+                      }
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      }
+
+    </div>
+  </div>
+</div>
