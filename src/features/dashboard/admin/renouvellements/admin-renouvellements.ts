@@ -475,8 +475,13 @@ export class AdminRenouvellements implements OnInit {
 
   accederConvention(mode: 'voir' | 'telecharger'): void {
     if (!this.selected) return;
-    const filename = this.selected.conventionStageEnCours_filename || `convention_${this.selected.idrenouvellement}.pdf`;
-    this.http.get(`${this.apiUrl}/stages/renouvellements/${this.selected.idrenouvellement}/convention`, { responseType: 'blob' }).subscribe({
+    this.accederConventionRow(this.selected, mode);
+  }
+
+  accederConventionRow(r: Renouvellement, mode: 'voir' | 'telecharger', event?: Event): void {
+    event?.stopPropagation();
+    const filename = r.conventionStageEnCours_filename || `convention_${r.idrenouvellement}.pdf`;
+    this.http.get(`${this.apiUrl}/stages/renouvellements/${r.idrenouvellement}/convention`, { responseType: 'blob' }).subscribe({
       next: (blob) => this.ouvrirOuTelechargerBlob(blob, filename, mode),
       error: () => { this.erreur = 'Impossible de charger la convention.'; this.cdr.detectChanges(); },
     });
