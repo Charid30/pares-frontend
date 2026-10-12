@@ -3,6 +3,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
 import { AuthService } from '../../../../../core/services/auth.service';
 
@@ -103,6 +104,8 @@ export class AgentRenouvellement implements OnInit {
   showConventionModal = false;
   conventionRemplacement: File | null = null;
   soumissionConvention = false;
+  printingAllDocs = false;
+  downloadingAllDocs = false;
 
   // Permissions
   peutApprouver = false;
@@ -398,7 +401,7 @@ export class AgentRenouvellement implements OnInit {
 
   accederConventionRow(r: Renouvellement, mode: 'voir' | 'telecharger', event?: Event): void {
     event?.stopPropagation();
-    const filename = r.conventionStageEnCours_filename || `convention_${r.idrenouvellement}.pdf`;
+    const filename = r.stageNouveau?.documents?.[0]?.document_filename || `convention_renouvellement_${r.idrenouvellement}.pdf`;
     this.http.get(`${this.apiUrl}/stages/renouvellements/${r.idrenouvellement}/convention`, { responseType: 'blob' }).subscribe({
       next: (blob) => this.ouvrirOuTelechargerBlob(blob, filename, mode),
       error: () => { this.erreur = 'Impossible de charger la convention.'; this.cdr.detectChanges(); },
@@ -419,6 +422,88 @@ export class AgentRenouvellement implements OnInit {
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
+
+  async imprimerDocuments(): Promise<void> {
+    if (!this.selected || this.printingAllDocs) return;
+    const c = this.selected.stageActuel?.candidat;
+    const candidatNom = c ? `${c.prenom || ''} ${c.nom || ''}`.trim() : 'Candidat';
+    const id = this.selected.idrenouvellement;
+    const items: { label: string; url: string }[] = [];
+    this.printingAllDocs = true;
+    this.cdr.detectChanges();
+    try {
+      if (this.selected.lettreMotivationRenouvellement_filename) {
+        const blob = await firstValueFrom(
+          this.http.get(`${this.apiUrl}/stages/renouvellements/${id}/lettre`, { responseType: 'blob' })
+        ).catch(() => null);
+        if (blob) items.push({ label: 'Lettre de renouvellement', url: window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' })) });
+      }
+      if (this.selected.stageNouveau?.documents?.length) {
+        const blob = await firstValueFrom(
+          this.http.get(`${this.apiUrl}/stages/renouvellements/${id}/convention`, { responseType: 'blob' })
+        ).catch(() => null);
+        if (blob) items.push({ label: 'Convention de renouvellement', url: window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' })) });
+      }
+    } finally {
+      this.printingAllDocs = false;
+      this.cdr.detectChanges();
+    }
+    if (items.length === 0) return;
+    const printWindow = window.open('', '_blank', 'width=960,height=700');
+    if (!printWindow) { items.forEach(it => window.URL.revokeObjectURL(it.url)); return; }
+    const embedsHtml = items.map((it, idx) =>
+      `<div class="doc-page"><div class="doc-label">${idx + 1} / ${items.length} — ${it.label}</div><embed src="${it.url}" type="application/pdf" width="100%" height="100%"/></div>`
+    ).join('');
+    printWindow.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
+<title>Impression renouvellement — ${candidatNom}</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;background:#f3f4f6}
+.notice{display:flex;align-items:flex-start;gap:10px;background:#fffbeb;border:1px solid #f59e0b;border-radius:8px;padding:12px 16px;margin:16px;font-size:13px;color:#92400e;line-height:1.5}.notice strong{color:#78350f}
+.doc-page{background:white;margin:16px;border-radius:8px;box-shadow:0 1px 6px rgba(0,0,0,.12);overflow:hidden;height:calc(100vh - 48px)}
+.doc-label{padding:9px 16px;background:#1e293b;color:white;font-size:12px;font-weight:600;letter-spacing:.3px}
+embed{display:block;height:calc(100% - 36px);width:100%}
+@media print{@page{size:A4 portrait;margin:8mm}body{background:white}.notice{display:none}
+.doc-page{margin:0;box-shadow:none;border-radius:0;height:100vh;page-break-after:always;break-after:page}.doc-label{display:none}embed{height:100vh}}</style></head>
+<body><div class="notice"><svg width="18" height="18" fill="none" stroke="#d97706" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:1px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+<span><strong>Important :</strong> Sélectionnez <strong>Recto simple</strong> dans la boîte d'impression.</span></div>
+${embedsHtml}<script>let n=0;document.querySelectorAll('embed').forEach(e=>e.addEventListener('load',()=>{if(++n>=${items.length})setTimeout(()=>window.print(),500)}));setTimeout(()=>window.print(),4000);<\/script></body></html>`);
+    printWindow.document.close();
+  }
+
+  async telechargerZip(): Promise<void> {
+    if (!this.selected || this.downloadingAllDocs) return;
+    const c = this.selected.stageActuel?.candidat;
+    const candidatNom = c ? `${c.prenom || ''}_${c.nom || ''}`.replace(/\s+/g, '_') : 'Candidat';
+    const id = this.selected.idrenouvellement;
+    this.downloadingAllDocs = true;
+    this.cdr.detectChanges();
+    try {
+      const { default: JSZip } = await import('jszip');
+      const zip = new JSZip();
+      if (this.selected.lettreMotivationRenouvellement_filename) {
+        const blob = await firstValueFrom(
+          this.http.get(`${this.apiUrl}/stages/renouvellements/${id}/lettre`, { responseType: 'blob' })
+        ).catch(() => null);
+        if (blob) zip.file(this.selected.lettreMotivationRenouvellement_filename, blob as Blob);
+      }
+      if (this.selected.stageNouveau?.documents?.length) {
+        const blob = await firstValueFrom(
+          this.http.get(`${this.apiUrl}/stages/renouvellements/${id}/convention`, { responseType: 'blob' })
+        ).catch(() => null);
+        const fname = this.selected.stageNouveau.documents[0]?.document_filename || `convention_renouvellement_${id}.pdf`;
+        if (blob) zip.file(fname, blob as Blob);
+      }
+      const content: Blob = await zip.generateAsync({ type: 'blob' });
+      const url = window.URL.createObjectURL(content);
+      const a = document.createElement('a');
+      a.href = url; a.download = `Renouvellement_${candidatNom}.zip`; a.click();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      this.erreur = 'Erreur lors de la génération du ZIP.';
+    } finally {
+      this.downloadingAllDocs = false;
+      this.cdr.detectChanges();
+    }
+  }
 
   getInitiales(r: Renouvellement): string {
     const c = r.stageActuel?.candidat;
