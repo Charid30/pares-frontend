@@ -29,13 +29,6 @@ interface StageNouveau {
 
 type StatusRenouvellement = 'EN_ATTENTE' | 'PROGRAMMATION_EN_COURS' | 'ACCEPTE' | 'REJETE' | 'EN_COURS' | 'EXPIRE' | 'TERMINE' | 'RAPPORT_SOUMIS';
 
-export interface HistoriqueEvent {
-  date: string;
-  statut: string;
-  auteur: string;
-  note: string | null;
-}
-
 export interface Renouvellement {
   idrenouvellement: number;
   statusRenouvellement: StatusRenouvellement;
@@ -44,9 +37,10 @@ export interface Renouvellement {
   lettreMotivationRenouvellement_filename?: string;
   conventionStageEnCours_filename?: string;
   resoumis?: number;
-  historiqueJson?: string;
-  historique?: HistoriqueEvent[];
   motifRefus?: string;
+  createdBy?: string;
+  lastModifiedBy?: string;
+  lastModifiedDate?: string;
   stageActuel?: StageActuel;
   stageNouveau?: StageNouveau;
 }
@@ -79,8 +73,6 @@ export class AdminRenouvellements implements OnInit {
   dateFin = '';
   successMessage = '';
   erreur = '';
-  showHistoriqueTab = false;
-
   // Pagination
   page = 1;
   limit = 15;
@@ -179,7 +171,6 @@ export class AdminRenouvellements implements OnInit {
   voirDetail(r: Renouvellement): void {
     this.selected = r;
     this.showModal = true;
-    this.showHistoriqueTab = false;
     this.erreur = '';
     this.successMessage = '';
   }
@@ -313,24 +304,6 @@ export class AdminRenouvellements implements OnInit {
         this.cdr.detectChanges();
       },
     });
-  }
-
-  getHistorique(): HistoriqueEvent[] {
-    if (!this.selected) return [];
-    if (this.selected.historique) return this.selected.historique;
-    if (this.selected.historiqueJson) {
-      try { return JSON.parse(this.selected.historiqueJson); } catch (_) { return []; }
-    }
-    return [];
-  }
-
-  getStatutLabelHist(status: string): string {
-    const map: Record<string, string> = {
-      EN_ATTENTE: 'En attente', PROGRAMMATION_EN_COURS: 'Approuvé',
-      ACCEPTE: 'Accepté', EN_COURS: 'En cours', EXPIRE: 'Expiré',
-      TERMINE: 'Terminé', RAPPORT_SOUMIS: 'Rapport soumis', REJETE: 'Rejeté',
-    };
-    return map[status] ?? status;
   }
 
   supprimerRenouvellement(): void {

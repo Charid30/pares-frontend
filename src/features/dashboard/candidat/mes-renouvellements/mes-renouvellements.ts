@@ -13,20 +13,15 @@ interface StageInfo {
   status?: string;
 }
 
-interface HistoriqueEvent {
-  date: string;
-  statut: string;
-  auteur: string;
-  note: string | null;
-}
-
 interface MesRenouvellement {
   idrenouvellement: number;
   statusRenouvellement: string;
   motifRefus: string | null;
   dureeDemandee: number | null;
   dateRenouvellement: string;
-  historique: HistoriqueEvent[];
+  createdBy: string | null;
+  lastModifiedBy: string | null;
+  lastModifiedDate: string | null;
   stageActuel: StageInfo | null;
   stageNouveau: StageInfo | null;
 }
