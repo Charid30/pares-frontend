@@ -27,16 +27,31 @@ interface StageNouveau {
   dateFinEffective?: string;
 }
 
+type StatusRenouvellement = 'EN_ATTENTE' | 'PROGRAMMATION_EN_COURS' | 'ACCEPTE' | 'REJETE' | 'EN_COURS' | 'EXPIRE' | 'TERMINE' | 'RAPPORT_SOUMIS';
+
 export interface Renouvellement {
   idrenouvellement: number;
-  statusRenouvellement: 'EN_ATTENTE' | 'PROGRAMMATION_EN_COURS' | 'ACCEPTE' | 'REJETE';
+  statusRenouvellement: StatusRenouvellement;
   dureeDemandee: number;
   dateRenouvellement: string;
   lettreMotivationRenouvellement_filename?: string;
   conventionStageEnCours_filename?: string;
   resoumis?: number;
+  motifRefus?: string;
+  createdBy?: string;
+  lastModifiedBy?: string;
+  lastModifiedDate?: string;
   stageActuel?: StageActuel;
   stageNouveau?: StageNouveau;
+}
+
+interface PaginatedResult {
+  rows: Renouvellement[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  stats: { enAttente: number; enTraitement: number; accepte: number; enCours: number; expire: number; termine: number; rejete: number };
 }
 
 @Component({
@@ -54,8 +69,16 @@ export class AdminRenouvellements implements OnInit {
   isLoading = false;
   filtreStatut = '';
   search = '';
+  dateDebut = '';
+  dateFin = '';
   successMessage = '';
   erreur = '';
+  // Pagination
+  page = 1;
+  limit = 15;
+  total = 0;
+  totalPages = 0;
+  stats: PaginatedResult['stats'] = { enAttente: 0, enTraitement: 0, accepte: 0, enCours: 0, expire: 0, termine: 0, rejete: 0 };
 
   // Modal détail
   showModal = false;
@@ -85,13 +108,6 @@ export class AdminRenouvellements implements OnInit {
   conventionRemplacement: File | null = null;
   soumissionConvention = false;
 
-  // Stats
-  get total()        { return this.renouvellements.length; }
-  get enAttente()    { return this.renouvellements.filter(r => r.statusRenouvellement === 'EN_ATTENTE').length; }
-  get enTraitement() { return this.renouvellements.filter(r => r.statusRenouvellement === 'PROGRAMMATION_EN_COURS').length; }
-  get acceptes()     { return this.renouvellements.filter(r => r.statusRenouvellement === 'ACCEPTE').length; }
-  get rejetes()      { return this.renouvellements.filter(r => r.statusRenouvellement === 'REJETE').length; }
-
   constructor(
     private http: HttpClient,
     private cdr: ChangeDetectorRef,
@@ -104,10 +120,23 @@ export class AdminRenouvellements implements OnInit {
   charger(): void {
     this.isLoading = true;
     this.erreur = '';
-    this.http.get<{ success: boolean; data: Renouvellement[] }>(`${this.apiUrl}/stages/renouvellements`).subscribe({
+    const params: Record<string, string> = {
+      page:  String(this.page),
+      limit: String(this.limit),
+    };
+    if (this.filtreStatut) params['statusRenouvellement'] = this.filtreStatut;
+    if (this.search.trim()) params['search'] = this.search.trim();
+    if (this.dateDebut) params['dateDebut'] = this.dateDebut;
+    if (this.dateFin)   params['dateFin']   = this.dateFin;
+
+    this.http.get<{ success: boolean; data: PaginatedResult }>(`${this.apiUrl}/stages/renouvellements`, { params }).subscribe({
       next: (res) => {
-        this.renouvellements = res.data ?? [];
-        this.appliquerFiltres();
+        const data = res.data;
+        this.renouvellements = data.rows ?? [];
+        this.renouvellementsFiltres = data.rows ?? [];
+        this.total = data.total;
+        this.totalPages = data.totalPages;
+        this.stats = data.stats;
         this.isLoading = false;
         this.cdr.detectChanges();
       },
@@ -119,30 +148,24 @@ export class AdminRenouvellements implements OnInit {
     });
   }
 
-  appliquerFiltres(): void {
-    let liste = [...this.renouvellements];
-    if (this.filtreStatut) {
-      liste = liste.filter(r => r.statusRenouvellement === this.filtreStatut);
-    }
-    if (this.search.trim()) {
-      const q = this.search.toLowerCase();
-      liste = liste.filter(r => {
-        const c = r.stageActuel?.candidat;
-        return (c?.nom?.toLowerCase().includes(q) ||
-                c?.prenom?.toLowerCase().includes(q) ||
-                c?.email?.toLowerCase().includes(q) ||
-                r.stageActuel?.domaineStage?.toLowerCase().includes(q));
-      });
-    }
-    this.renouvellementsFiltres = liste;
+  onFiltreChange(): void {
+    this.page = 1;
+    this.charger();
   }
 
-  onFiltreChange(): void { this.appliquerFiltres(); }
+  allerPage(p: number): void {
+    if (p < 1 || p > this.totalPages) return;
+    this.page = p;
+    this.charger();
+  }
 
   effacerFiltres(): void {
     this.filtreStatut = '';
     this.search = '';
-    this.appliquerFiltres();
+    this.dateDebut = '';
+    this.dateFin = '';
+    this.page = 1;
+    this.charger();
   }
 
   voirDetail(r: Renouvellement): void {
@@ -244,6 +267,57 @@ export class AdminRenouvellements implements OnInit {
       error: (err) => {
         this.soumissionRouvrir = false;
         this.erreur = err.error?.message || 'Une erreur est survenue.';
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  annulerApprobation(): void {
+    if (!this.selected || this.selected.statusRenouvellement !== 'PROGRAMMATION_EN_COURS') return;
+    if (!confirm('Annuler l\'approbation ? Le renouvellement repassera en "En attente".')) return;
+    this.http.put<any>(`${this.apiUrl}/stages/renouvellements/${this.selected.idrenouvellement}/annuler-approbation`, {}).subscribe({
+      next: () => {
+        this.showModal = false;
+        this.successMessage = 'Approbation annulée — le renouvellement est de nouveau en attente.';
+        this.charger();
+        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 5000);
+      },
+      error: (err) => {
+        this.erreur = err.error?.message || 'Erreur lors de l\'annulation.';
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  expirerRenouvellement(): void {
+    if (!this.selected) return;
+    if (!confirm('Marquer ce renouvellement comme EXPIRÉ ? Le nouveau stage sera également marqué expiré.')) return;
+    this.http.put<any>(`${this.apiUrl}/stages/renouvellements/${this.selected.idrenouvellement}/expirer`, {}).subscribe({
+      next: () => {
+        this.showModal = false;
+        this.successMessage = 'Renouvellement marqué expiré.';
+        this.charger();
+        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
+      },
+      error: (err) => {
+        this.erreur = err.error?.message || 'Erreur lors de l\'expiration.';
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  supprimerRenouvellement(): void {
+    if (!this.selected) return;
+    if (!confirm(`Supprimer définitivement cette demande de renouvellement ? Cette action est irréversible.`)) return;
+    this.http.delete<any>(`${this.apiUrl}/stages/renouvellements/${this.selected.idrenouvellement}`).subscribe({
+      next: () => {
+        this.showModal = false;
+        this.successMessage = 'Demande de renouvellement supprimée.';
+        this.charger();
+        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 5000);
+      },
+      error: (err) => {
+        this.erreur = err.error?.message || 'Erreur lors de la suppression.';
         this.cdr.detectChanges();
       },
     });
@@ -433,7 +507,11 @@ export class AdminRenouvellements implements OnInit {
       case 'PROGRAMMATION_EN_COURS': return 'bg-blue-100 text-blue-700';
       case 'ACCEPTE':                return 'bg-green-100 text-green-700';
       case 'REJETE':                 return 'bg-red-100 text-red-700';
-      default:                       return 'bg-gray-100 text-gray-600';
+      case 'EN_COURS':               return 'bg-indigo-100 text-indigo-700';
+      case 'EXPIRE':                 return 'bg-orange-100 text-orange-700';
+      case 'TERMINE':                return 'bg-gray-200 text-gray-600';
+      case 'RAPPORT_SOUMIS':         return 'bg-purple-100 text-purple-700';
+      default:                       return 'bg-gray-100 text-gray-500';
     }
   }
 
@@ -443,8 +521,36 @@ export class AdminRenouvellements implements OnInit {
       case 'PROGRAMMATION_EN_COURS': return 'Programmation en cours';
       case 'ACCEPTE':                return 'Accepté';
       case 'REJETE':                 return 'Rejeté';
+      case 'EN_COURS':               return 'En cours';
+      case 'EXPIRE':                 return 'Expiré';
+      case 'TERMINE':                return 'Terminé';
+      case 'RAPPORT_SOUMIS':         return 'Rapport soumis';
       default:                       return statut;
     }
+  }
+
+  exporterCSV(): void {
+    const rows = this.renouvellementsFiltres;
+    if (!rows.length) return;
+    const header = ['ID', 'Candidat', 'Email', 'Domaine', 'Durée (mois)', 'Date demande', 'Statut', 'Convention'];
+    const lines = rows.map(r => [
+      r.idrenouvellement,
+      `${r.stageActuel?.candidat?.prenom || ''} ${r.stageActuel?.candidat?.nom || ''}`.trim(),
+      r.stageActuel?.candidat?.email || '',
+      r.stageActuel?.domaineStage || '',
+      r.dureeDemandee,
+      r.dateRenouvellement ? new Date(r.dateRenouvellement).toLocaleDateString('fr-FR') : '',
+      this.getStatutLabel(r.statusRenouvellement),
+      r.conventionStageEnCours_filename ? 'Jointe' : 'Manquante',
+    ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+    const csv = '﻿' + [header.join(','), ...lines].join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `renouvellements_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   formatDate(d?: string): string {

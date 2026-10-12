@@ -18,8 +18,9 @@ export class CandidatLayout implements OnInit, OnDestroy {
   currentUser: any = null;
   mobileMenuOpen = false;
   userMenuOpen = false;
-  showOpportunitesMenu = false;  // Pour desktop hover
-  opportunitesMenuMobileOpen = false;  // Pour mobile click
+  showOpportunitesMenu = false;
+  opportunitesMenuMobileOpen = false;
+  renouvBadge = 0;
 
   // ── Popup genre (anciens comptes sans genre) ──────────────────────────
   showGenrePopup = false;
@@ -45,11 +46,23 @@ export class CandidatLayout implements OnInit, OnDestroy {
       return;
     }
 
-    // Vérifier si le genre est renseigné — sinon afficher le popup (anciens comptes)
     this.checkGenre();
-
-    // Démarrer le polling des notifications in-app
     this.notificationService.startPolling(30000);
+    this.chargerBadgeRenouvellements();
+  }
+
+  private chargerBadgeRenouvellements(): void {
+    this.http.get<{ success: boolean; data: any[] }>(`${this.apiUrl}/candidat/renouvellements`, { withCredentials: true })
+      .subscribe({
+        next: (res) => {
+          const list = res.data || [];
+          this.renouvBadge = list.filter(r =>
+            ['EN_ATTENTE', 'REJETE'].includes(r.statusRenouvellement)
+          ).length;
+          this.cdr.detectChanges();
+        },
+        error: () => {}
+      });
   }
 
   checkGenre(): void {

@@ -343,6 +343,48 @@
                     Renouveler
                   </button>
 
+                  <!-- Indicateur statut renouvellement -->
+                  <span *ngIf="demande.renouvellement?.statusRenouvellement === 'EN_ATTENTE'"
+                    class="text-[11px] px-2.5 py-1.5 rounded-lg border border-amber-200 bg-amber-50 text-amber-600 font-medium animate-pulse">
+                    Renouvellement en attente
+                  </span>
+                  <span *ngIf="demande.renouvellement?.statusRenouvellement === 'PROGRAMMATION_EN_COURS'"
+                    class="text-[11px] px-2.5 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-600 font-medium">
+                    Renouvellement approuvé
+                  </span>
+                  <span *ngIf="demande.renouvellement?.statusRenouvellement === 'ACCEPTE'"
+                    class="text-[11px] px-2.5 py-1.5 rounded-lg border border-green-200 bg-green-50 text-green-600 font-medium">
+                    Renouvellement accepté
+                  </span>
+                  <span *ngIf="demande.renouvellement?.statusRenouvellement === 'EN_COURS'"
+                    class="text-[11px] px-2.5 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-600 font-medium">
+                    Renouvellement en cours
+                  </span>
+                  <span *ngIf="demande.renouvellement?.statusRenouvellement === 'TERMINE' || demande.renouvellement?.statusRenouvellement === 'RAPPORT_SOUMIS'"
+                    class="text-[11px] px-2.5 py-1.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-500 font-medium">
+                    Renouvellement terminé
+                  </span>
+                  <span *ngIf="demande.renouvellement?.statusRenouvellement === 'EXPIRE'"
+                    class="text-[11px] px-2.5 py-1.5 rounded-lg border border-orange-200 bg-orange-50 text-orange-500 font-medium">
+                    Renouvellement expiré
+                  </span>
+
+                  <!-- Dates du nouveau stage si renouvellement accepté/en cours -->
+                  <ng-container *ngIf="demande.renouvellement?.stageNouveauDateDebut &&
+                    (demande.renouvellement?.statusRenouvellement === 'ACCEPTE' ||
+                     demande.renouvellement?.statusRenouvellement === 'EN_COURS' ||
+                     demande.renouvellement?.statusRenouvellement === 'PROGRAMMATION_EN_COURS')">
+                    <span class="text-[11px] px-2.5 py-1.5 rounded-lg border border-teal-200 bg-teal-50 text-teal-700 font-medium flex items-center gap-1">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                      </svg>
+                      {{ demande.renouvellement.stageNouveauDateDebut | date:'dd/MM/yy' }}
+                      <ng-container *ngIf="demande.renouvellement.stageNouveauDateFin">
+                        → {{ demande.renouvellement.stageNouveauDateFin | date:'dd/MM/yy' }}
+                      </ng-container>
+                    </span>
+                  </ng-container>
+
                   <!-- Re-soumettre renouvellement rejeté -->
                   <button *ngIf="demande.renouvellement?.statusRenouvellement === 'REJETE'"
                     (click)="ouvrirResoumissionModal(demande)"
@@ -1590,6 +1632,38 @@
           </svg>
           Demander un renouvellement
         </button>
+
+        <!-- Statut renouvellement en cours de traitement -->
+        <div *ngIf="selectedDemandeDetail.renouvellement?.statusRenouvellement === 'EN_ATTENTE'"
+             class="px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2">
+          <svg class="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <div>
+            <p class="text-xs font-semibold text-amber-700">Renouvellement en attente</p>
+            <p class="text-[11px] text-amber-600 mt-0.5">Votre demande est en attente de traitement par l'équipe.</p>
+          </div>
+        </div>
+        <div *ngIf="selectedDemandeDetail.renouvellement?.statusRenouvellement === 'PROGRAMMATION_EN_COURS'"
+             class="px-3 py-2.5 bg-blue-50 border border-blue-200 rounded-xl flex items-start gap-2">
+          <svg class="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <div>
+            <p class="text-xs font-semibold text-blue-700">Renouvellement approuvé</p>
+            <p class="text-[11px] text-blue-600 mt-0.5">Votre demande a été approuvée, en attente de validation finale.</p>
+          </div>
+        </div>
+        <div *ngIf="selectedDemandeDetail.renouvellement?.statusRenouvellement === 'ACCEPTE'"
+             class="px-3 py-2.5 bg-green-50 border border-green-200 rounded-xl flex items-start gap-2">
+          <svg class="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          <div>
+            <p class="text-xs font-semibold text-green-700">Renouvellement accepté</p>
+            <p class="text-[11px] text-green-600 mt-0.5">Votre renouvellement a été validé.</p>
+          </div>
+        </div>
 
         <!-- Re-soumettre un renouvellement rejeté -->
         <ng-container *ngIf="selectedDemandeDetail.renouvellement?.statusRenouvellement === 'REJETE'">

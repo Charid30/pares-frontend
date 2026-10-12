@@ -91,11 +91,18 @@ export class AdminDashboard implements OnInit, AfterViewInit {
   ];
 
   // Statistiques secondaires
-  secondaryStats = {
+  secondaryStats: {
+    aidesSociales: { active: number; demandes: number };
+    utilisateurs: { total: number; admins: number };
+    stagesEnAttente: number;
+    tauxValidation: number;
+    renouvellements?: { total: number; enAttente: number; enTraitement: number; acceptes: number; enCours: number; expires: number; termines: number; rejetes: number };
+  } = {
     aidesSociales: { active: 0, demandes: 0 },
     utilisateurs: { total: 0, admins: 0 },
     stagesEnAttente: 0,
-    tauxValidation: 0
+    tauxValidation: 0,
+    renouvellements: { total: 0, enAttente: 0, enTraitement: 0, acceptes: 0, enCours: 0, expires: 0, termines: 0, rejetes: 0 },
   };
 
   // Activités récentes
