@@ -206,13 +206,13 @@
               </ng-template>
             </td>
 
-            <!-- Convention -->
+            <!-- Convention du renouvellement (uploadée par l'admin lors de l'acceptation) -->
             <td class="px-4 py-4 text-center">
-              <ng-container *ngIf="r.conventionStageEnCours_filename; else noConvBadgeAdmin">
+              <ng-container *ngIf="r.stageNouveau?.documents && r.stageNouveau.documents.length > 0; else noConvBadgeAdmin">
                 <div class="inline-flex items-center gap-1">
                   <button (click)="accederConventionRow(r, 'voir', $event)"
                           class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs font-semibold hover:bg-green-200 transition-colors cursor-pointer"
-                          title="Voir : {{ r.conventionStageEnCours_filename }}">
+                          title="Voir : {{ r.stageNouveau?.documents?.[0]?.document_filename }}">
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                     </svg>

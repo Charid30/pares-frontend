@@ -25,6 +25,7 @@ interface StageNouveau {
   statusStage: string;
   dateDebutEffective?: string;
   dateFinEffective?: string;
+  documents?: { document_filename: string }[];
 }
 
 type StatusRenouvellement = 'EN_ATTENTE' | 'PROGRAMMATION_EN_COURS' | 'ACCEPTE' | 'REJETE' | 'EN_COURS' | 'EXPIRE' | 'TERMINE' | 'RAPPORT_SOUMIS';
