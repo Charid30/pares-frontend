@@ -471,6 +471,52 @@ export class StagesList implements OnInit, OnDestroy {
     this.loadStages();
   }
 
+  // ── Onglets de vue (remplacent les boutons « Demandes en cours » / « Archives ») ──
+  readonly vues: { key: 'toutes' | 'en-cours' | 'archives'; label: string }[] = [
+    { key: 'toutes',   label: 'Toutes' },
+    { key: 'en-cours', label: 'En cours' },
+    { key: 'archives', label: 'Archives' },
+  ];
+
+  get vueActive(): 'toutes' | 'en-cours' | 'archives' {
+    if (this.voirArchives) return 'archives';
+    if (this.filtreEnCoursActif) return 'en-cours';
+    return 'toutes';
+  }
+
+  changerVue(vue: 'toutes' | 'en-cours' | 'archives'): void {
+    this.voirArchives = vue === 'archives';
+    this.filtreStatut = vue === 'en-cours' ? this.STATUTS_EN_COURS : '';
+    this.onFilterChange();
+  }
+
+  // ── Menu Exporter (Excel, PDF, Rapports) ─────────────────────────────────
+  showExportMenu = false;
+
+  // ── Panneau de filtres (icône entonnoir) ──────────────────────────────────
+  showFiltres = false;
+
+  /** Nombre de filtres du panneau actifs (badge sur l'icône). Le raccourci
+   *  « Demandes en cours » a son propre bouton et n'est pas compté ici. */
+  get nbFiltresActifs(): number {
+    const statut = this.filtreStatut && !this.filtreEnCoursActif ? 1 : 0;
+    return statut + [this.filtreType, this.filtreDirection, this.filtreMoisPropose].filter(Boolean).length;
+  }
+
+  /** Réinitialise les filtres du panneau sans changer d'onglet
+   *  (la recherche reste pilotée par la barre globale du haut) */
+  effacerFiltres(): void {
+    if (!this.filtreEnCoursActif) this.filtreStatut = '';
+    this.filtreType = '';
+    this.filtreDirection = null;
+    this.filtreMoisPropose = '';
+    this.onFilterChange();
+  }
+
+  getDirectionNom(id: number | null): string {
+    return this.directions.find(d => d.iddirection === id)?.nom || '';
+  }
+
   // ==================== PAGINATION ====================
   goToPage(page: number): void {
     if (page >= 1 && page <= this.totalPages) {
@@ -1238,6 +1284,7 @@ export class StagesList implements OnInit, OnDestroy {
       'TERMINE': 'bg-teal-100 text-teal-700',
       'REJETE': 'bg-red-100 text-red-700',
       'EXPIRE': 'bg-gray-100 text-gray-700',
+      'PROLONGE': 'bg-indigo-100 text-indigo-700',
       'RAPPORT_SOUMIS': 'bg-purple-100 text-purple-700',
       'PROGRAMMATION_EN_COURS': 'bg-blue-100 text-blue-700 border-blue-200',
       'SUSPENDU': 'bg-orange-100 text-orange-700 border-orange-200',
@@ -1255,6 +1302,7 @@ export class StagesList implements OnInit, OnDestroy {
       'TERMINE': 'Termine',
       'REJETE': 'Rejete',
       'EXPIRE': 'Expire',
+      'PROLONGE': 'Prolongé',
       'RAPPORT_SOUMIS': 'Rapport soumis',
       'PROGRAMMATION_EN_COURS': 'Programmation en cours',
       'SUSPENDU': 'Suspendu',

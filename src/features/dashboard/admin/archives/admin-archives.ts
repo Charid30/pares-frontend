@@ -1,9 +1,12 @@
 // admin-archives.ts — Stages archivés (EXPIRE + sans parent)
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
+import { SearchService } from '../../../../core/services/search.service';
 
 interface Candidat {
   idcandidats: number;
@@ -27,6 +30,8 @@ interface StageArchive {
   dateDebutEffective?: string;
   dateFinEffective?: string;
   dureeStage?: number;
+  /** Chaîne stage + renouvellements (durée totale, fin du dernier renouvellement) */
+  chaine?: { dureeTotaleMois: number; nbRenouvellements: number; finProlongation: string | null; prolonge: boolean };
   candidat?: Candidat;
   direction?: Direction;
 }
@@ -37,7 +42,7 @@ interface StageArchive {
   imports: [CommonModule, FormsModule],
   templateUrl: './admin-archives.html',
 })
-export class AdminArchives implements OnInit {
+export class AdminArchives implements OnInit, OnDestroy {
 
   private readonly apiUrl = environment.apiUrl;
 
@@ -49,6 +54,12 @@ export class AdminArchives implements OnInit {
   search = '';
   filtreType = '';
   filtreDomaine = '';
+  filtreDirection: number | null = null;
+  directions: Direction[] = [];
+
+  // Panneau de filtres (icône entonnoir)
+  showFiltres = false;
+  private searchSub?: Subscription;
 
   total = 0;
   page = 1;
@@ -66,10 +77,53 @@ export class AdminArchives implements OnInit {
   constructor(
     private http: HttpClient,
     private cdr: ChangeDetectorRef,
+    private searchService: SearchService,
   ) {}
 
   ngOnInit(): void {
     this.charger();
+    this.http.get<{ success: boolean; data: Direction[] }>(`${this.apiUrl}/stages/directions`).subscribe({
+      next: (res) => { this.directions = res.data ?? []; this.cdr.detectChanges(); },
+      error: () => { this.directions = []; },
+    });
+    // La recherche se fait via la barre globale du haut (comme la page Stages)
+    this.searchSub = this.searchService.term$.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+    ).subscribe(term => {
+      if (term === this.search) return;
+      this.search = term;
+      this.onFiltreChange();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.searchSub?.unsubscribe();
+  }
+
+  /** Nombre de filtres actifs (badge sur l'icône entonnoir) */
+  get nbFiltresActifs(): number {
+    return [this.filtreType, this.filtreDirection, this.filtreDomaine.trim()].filter(Boolean).length;
+  }
+
+  /** Durée totale = stage initial + renouvellements effectués (le renouvellement prolonge le stage) */
+  dureeTotale(s: StageArchive): string {
+    const total = s.chaine?.dureeTotaleMois ?? s.dureeStage;
+    if (!total) return '—';
+    const nb = s.chaine?.nbRenouvellements ?? 0;
+    return nb > 0
+      ? `${total} mois au total (dont ${nb} renouvellement${nb > 1 ? 's' : ''})`
+      : `${total} mois`;
+  }
+
+  getTypeLabel(type?: string): string {
+    if (type === 'SOUTENANCE') return 'Soutenance';
+    if (type === 'PERFECTIONNEMENT') return 'Perfectionnement';
+    return type || '—';
+  }
+
+  getDirectionNom(id: number | null): string {
+    return this.directions.find(d => d.iddirection === id)?.nom || '';
   }
 
   charger(): void {
@@ -81,7 +135,8 @@ export class AdminArchives implements OnInit {
     };
     if (this.search.trim())   params['search']       = this.search.trim();
     if (this.filtreType)      params['typeStage']    = this.filtreType;
-    if (this.filtreDomaine)   params['domaineStage'] = this.filtreDomaine;
+    if (this.filtreDomaine.trim()) params['domaineStage'] = this.filtreDomaine.trim();
+    if (this.filtreDirection) params['directionId']  = String(this.filtreDirection);
 
     this.http.get<{ success: boolean; data: { items: StageArchive[]; total: number; totalPages: number } }>(
       `${this.apiUrl}/stages/archives`, { params }
@@ -107,10 +162,11 @@ export class AdminArchives implements OnInit {
     this.charger();
   }
 
+  /** Réinitialise les filtres du panneau (la recherche reste pilotée par la barre du haut) */
   effacerFiltres(): void {
-    this.search = '';
     this.filtreType = '';
     this.filtreDomaine = '';
+    this.filtreDirection = null;
     this.page = 1;
     this.charger();
   }
