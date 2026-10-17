@@ -41,7 +41,12 @@ export class MesRenouvellements implements OnInit {
   renouvellements: MesRenouvellement[] = [];
   loading = true;
   error: string | null = null;
-  expanded: Set<number> = new Set();
+
+  // Onglets de filtre (même principe que « Mes stages »)
+  activeFilter: 'tous' | 'en_cours' | 'rejetes' = 'tous';
+
+  // Modal détail
+  selectedDetail: MesRenouvellement | null = null;
 
   // Re-soumission modal
   showResoumissionModal = false;
@@ -77,16 +82,27 @@ export class MesRenouvellements implements OnInit {
       });
   }
 
-  toggleExpand(id: number): void {
-    if (this.expanded.has(id)) {
-      this.expanded.delete(id);
-    } else {
-      this.expanded.add(id);
-    }
+  setFilter(f: 'tous' | 'en_cours' | 'rejetes'): void {
+    this.activeFilter = f;
   }
 
-  isExpanded(id: number): boolean {
-    return this.expanded.has(id);
+  get renouvellementsFiltres(): MesRenouvellement[] {
+    if (this.activeFilter === 'en_cours') {
+      return this.renouvellements.filter(r =>
+        ['EN_ATTENTE', 'EN_COURS_DE_TRAITEMENT', 'PROGRAMMATION_EN_COURS', 'ACCEPTE', 'EN_COURS'].includes(r.statusRenouvellement));
+    }
+    if (this.activeFilter === 'rejetes') {
+      return this.renouvellements.filter(r => r.statusRenouvellement === 'REJETE');
+    }
+    return this.renouvellements;
+  }
+
+  ouvrirDetail(r: MesRenouvellement): void {
+    this.selectedDetail = r;
+  }
+
+  fermerDetail(): void {
+    this.selectedDetail = null;
   }
 
   // ─── Re-soumission ───────────────────────────────────────
