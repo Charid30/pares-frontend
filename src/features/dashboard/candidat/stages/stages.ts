@@ -29,6 +29,15 @@ interface DemandeStage {
   /** 'PROLONGE' quand un renouvellement prolonge ce stage (calculé par le backend) */
   statutAffiche?: string;
   chaine?: { dureeTotaleMois: number; nbRenouvellements: number; finProlongation: string | null; prolonge: boolean };
+  /** État du rapport (calculé par le backend, uniquement sur la demande initiale — null sur un renouvellement) :
+   *  un seul rapport pour toute la chaîne, après la fin du dernier stage ou sur autorisation de l'admin */
+  rapportInfo?: {
+    peutSoumettre: boolean;
+    message: string | null;
+    rapportExiste: boolean;
+    autorisation: { id: number; expiresAt: string } | null;
+    finChaine: string | null;
+  } | null;
   idstage: number;
   typeStage: string;
   niveau: string | null;

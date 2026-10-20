@@ -291,6 +291,22 @@
                       {{ getJoursRestants(demande.dateFinEffective) }}j restants
                     </span>
                   </div>
+
+                  <!-- Rapport : pourquoi il n'est pas encore disponible (stage prolongé) / autorisation anticipée -->
+                  <p *ngIf="demande.statutAffiche === 'PROLONGE' && demande.rapportInfo && !demande.rapportInfo.peutSoumettre && !demande.rapportInfo.rapportExiste && demande.rapportInfo.message"
+                     class="mt-2 text-[11px] text-indigo-600 flex items-start gap-1">
+                    <svg class="w-3 h-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    {{ demande.rapportInfo.message }}
+                  </p>
+                  <p *ngIf="demande.rapportInfo?.autorisation"
+                     class="mt-2 text-[11px] text-green-700 flex items-start gap-1">
+                    <svg class="w-3 h-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Rapport autorisé par l'administration jusqu'au {{ demande.rapportInfo?.autorisation?.expiresAt | date:'dd/MM/yyyy' }}.
+                  </p>
                 </div>
 
                 <!-- Actions -->
@@ -400,9 +416,10 @@
                     Re-soumettre
                   </button>
 
-                  <!-- Soumettre rapport -->
-                  <button *ngIf="demande.statusStage === 'EN_COURS' || demande.statusStage === 'EXPIRE' || demande.statusStage === 'TERMINE'"
+                  <!-- Soumettre rapport : point d'entrée unique, sur la demande initiale, selon la règle du serveur -->
+                  <button *ngIf="demande.rapportInfo?.peutSoumettre"
                     (click)="soumettreRapport(demande.idstage)"
+                    [title]="demande.rapportInfo?.autorisation ? 'Autorisé par l\'administration jusqu\'au ' + (demande.rapportInfo?.autorisation?.expiresAt | date:'dd/MM/yyyy') : 'Soumettre le rapport de stage'"
                     class="text-[11px] px-2.5 py-1.5 rounded-lg border flex items-center gap-1 transition-colors
                            border-green-200 bg-green-50 text-green-600 hover:bg-green-100">
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -412,7 +429,7 @@
                   </button>
 
                   <!-- Rapport déjà soumis -->
-                  <div *ngIf="demande.statusStage === 'RAPPORT_SOUMIS'"
+                  <div *ngIf="demande.statusStage === 'RAPPORT_SOUMIS' || demande.rapportInfo?.rapportExiste"
                     class="text-[11px] px-2.5 py-1.5 rounded-lg border flex items-center gap-1
                            border-indigo-200 bg-indigo-50 text-indigo-600">
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1626,7 +1643,12 @@
       <!-- Section : Actions disponibles -->
       <div class="flex flex-col gap-2">
         <!-- Soumettre rapport -->
-        <button *ngIf="selectedDemandeDetail.statusStage === 'EN_COURS' || selectedDemandeDetail.statusStage === 'EXPIRE' || selectedDemandeDetail.statusStage === 'TERMINE'"
+        <!-- Point d'entrée unique : demande initiale, selon la règle du serveur (fin de chaîne ou autorisation) -->
+        <div *ngIf="selectedDemandeDetail.rapportInfo && !selectedDemandeDetail.rapportInfo.peutSoumettre && !selectedDemandeDetail.rapportInfo.rapportExiste && selectedDemandeDetail.rapportInfo.message && (selectedDemandeDetail.statutAffiche === 'PROLONGE' || selectedDemandeDetail.statusStage === 'EN_COURS')"
+             class="px-3 py-2.5 bg-indigo-50 border border-indigo-200 rounded-xl text-[11px] text-indigo-700">
+          {{ selectedDemandeDetail.rapportInfo.message }}
+        </div>
+        <button *ngIf="selectedDemandeDetail.rapportInfo?.peutSoumettre"
           (click)="fermerDetail(); soumettreRapport(selectedDemandeDetail.idstage)"
           class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border
                  border-green-200 bg-green-50 text-green-700 text-xs font-semibold hover:bg-green-100 transition-colors">

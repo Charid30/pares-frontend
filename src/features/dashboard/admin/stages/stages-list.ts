@@ -1065,6 +1065,49 @@ export class StagesList implements OnInit, OnDestroy {
     return valid || null;
   }
 
+  // ── Autorisation de rapport (soumission anticipée, portée par la demande initiale) ──
+  soumissionAutorisationRapport = false;
+  errorAutorisationRapport = '';
+
+  /** Demande initiale validée, sans rapport encore soumis */
+  peutAutoriserRapport(s: Stage): boolean {
+    return !s.stage_parent_idstage && !s.rapport
+      && ['ACCEPTE', 'EN_COURS', 'SUSPENDU', 'EXPIRE', 'TERMINE'].includes(s.statusStage);
+  }
+
+  getAutorisationRapportActive(s: Stage): AutorisationRenouvellement | null {
+    const a = s.autorisationsRapport;
+    if (!a || a.length === 0) return null;
+    const now = new Date();
+    return a.find(x => new Date(x.expiresAt) > now) || null;
+  }
+
+  autoriserRapport(s: Stage): void {
+    if (this.soumissionAutorisationRapport) return;
+    this.soumissionAutorisationRapport = true;
+    this.errorAutorisationRapport = '';
+    this.http.put<any>(`${environment.apiUrl}/stages/${s.idstage}/autoriser-rapport`, {}).subscribe({
+      next: (res) => {
+        this.ngZone.run(() => {
+          this.soumissionAutorisationRapport = false;
+          const autorisation: AutorisationRenouvellement = { id: res.data?.id, expiresAt: res.data?.expiresAt };
+          if (this.selectedStage && this.selectedStage.idstage === s.idstage) {
+            this.selectedStage = { ...this.selectedStage, autorisationsRapport: [autorisation] };
+          }
+          this.showToast('success', 'Rapport autorisé', 'Valide 7 jours. Le candidat a été notifié.');
+          this.cdr.detectChanges();
+        });
+      },
+      error: (err) => {
+        this.ngZone.run(() => {
+          this.errorAutorisationRapport = err.error?.message || 'Erreur lors de l\'autorisation';
+          this.soumissionAutorisationRapport = false;
+          this.cdr.detectChanges();
+        });
+      }
+    });
+  }
+
   autoriserRenouvellement(s: Stage): void {
     if (this.soumissionAutorisation) return;
     this.soumissionAutorisation = true;

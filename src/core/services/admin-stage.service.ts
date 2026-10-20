@@ -103,6 +103,9 @@ export interface Stage {
   service_idservice?: number | null;
   direction?: { iddirection: number; nom: string; accronyme: string };
   autorisationsRenouvellement?: AutorisationRenouvellement[];
+  /** Autorisation de soumission anticipée du rapport (portée par la demande initiale) */
+  autorisationsRapport?: AutorisationRenouvellement[];
+  stage_parent_idstage?: number | null;
 }
 
 export interface AutorisationRenouvellement {

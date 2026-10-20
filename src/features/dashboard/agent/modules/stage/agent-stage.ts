@@ -40,6 +40,11 @@ interface Stage {
   typeStage: string;
   statusStage: 'EN_ATTENTE' | 'PROGRAMMATION_EN_COURS' | 'ACCEPTE' | 'EN_COURS' | 'RAPPORT_SOUMIS' | 'TERMINE' | 'EXPIRE' | 'REJETE' | 'ANNULE' | 'SUSPENDU';
   autorisationsRenouvellement?: AutorisationRenouvellement[];
+  /** Autorisation de soumission anticipée du rapport (portée par la demande initiale) */
+  autorisationsRapport?: AutorisationRenouvellement[];
+  /** 'PROLONGE' quand un renouvellement prolonge ce stage (calculé par le backend) */
+  statutAffiche?: string;
+  stage_parent_idstage?: number | null;
   // Calculé côté backend : false si ce stage n'est visible que via un rôle "lecture globale"
   // et n'appartient pas à la direction de l'agent connecté (actions alors masquées).
   peutAgir?: boolean;
@@ -236,6 +241,45 @@ export class AgentStage implements OnInit, OnDestroy {
     const now = new Date();
     const valid = a.find(x => new Date(x.expiresAt) > now);
     return valid || null;
+  }
+
+  // ── Autorisation de rapport (soumission anticipée, portée par la demande initiale) ──
+  soumissionAutorisationRapport = false;
+  errorAutorisationRapport = '';
+
+  /** Demande initiale validée, sans rapport encore soumis */
+  peutAutoriserRapport(s: Stage): boolean {
+    return !s.stage_parent_idstage && !s.rapport
+      && ['ACCEPTE', 'EN_COURS', 'SUSPENDU', 'EXPIRE', 'TERMINE'].includes(s.statusStage);
+  }
+
+  getAutorisationRapportActive(s: Stage): AutorisationRenouvellement | null {
+    const a = s.autorisationsRapport;
+    if (!a || a.length === 0) return null;
+    const now = new Date();
+    return a.find(x => new Date(x.expiresAt) > now) || null;
+  }
+
+  autoriserRapport(s: Stage): void {
+    if (this.soumissionAutorisationRapport) return;
+    this.soumissionAutorisationRapport = true;
+    this.errorAutorisationRapport = '';
+    this.http.put<any>(`${this.apiUrl}/stages/${s.idstage}/autoriser-rapport`, {}).subscribe({
+      next: (res) => {
+        this.soumissionAutorisationRapport = false;
+        const autorisation: AutorisationRenouvellement = { id: res.data?.id, expiresAt: res.data?.expiresAt };
+        if (this.detailStage && this.detailStage.idstage === s.idstage) {
+          this.detailStage = { ...this.detailStage, autorisationsRapport: [autorisation] };
+        }
+        this.showSuccessMessage('Rapport autorisé — valide 7 jours. Le candidat a été notifié.');
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.errorAutorisationRapport = err.error?.message || 'Erreur lors de l\'autorisation';
+        this.soumissionAutorisationRapport = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   autoriserRenouvellement(s: Stage): void {
@@ -1274,6 +1318,7 @@ export class AgentStage implements OnInit, OnDestroy {
       RAPPORT_SOUMIS:         'Rapport soumis',
       TERMINE:                'Terminé',
       EXPIRE:                 'Expiré',
+      PROLONGE:               'Prolongé',
       REJETE:                 'Rejeté',
       ANNULE:                 'Annulé',
       SUSPENDU:               'Suspendu',
@@ -1298,6 +1343,7 @@ export class AgentStage implements OnInit, OnDestroy {
       RAPPORT_SOUMIS:         'bg-purple-50 text-purple-700 border border-purple-200',
       TERMINE:                'bg-gray-100 text-gray-600 border border-gray-200',
       EXPIRE:                 'bg-slate-100 text-slate-500 border border-slate-200',
+      PROLONGE:               'bg-indigo-50 text-indigo-700 border border-indigo-200',
       REJETE:                 'bg-red-50 text-red-700 border border-red-200',
       ANNULE:                 'bg-orange-50 text-orange-700 border border-orange-200',
       SUSPENDU:               'bg-purple-50 text-purple-700 border border-purple-200',
