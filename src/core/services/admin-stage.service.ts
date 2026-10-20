@@ -67,8 +67,19 @@ export interface DemandeModificationStage {
   candidat?: CandidatInfo;
 }
 
+/** Chaîne stage initial + renouvellements (calculée par le backend pour les stages initiaux) */
+export interface StageChaine {
+  dureeTotaleMois: number;
+  nbRenouvellements: number;
+  finProlongation: string | null;
+  prolonge: boolean;
+}
+
 export interface Stage {
   idstage: number;
+  /** Statut à afficher : 'PROLONGE' quand un renouvellement prolonge un stage expiré */
+  statutAffiche?: string;
+  chaine?: StageChaine;
   typeStage: 'SOUTENANCE' | 'PERFECTIONNEMENT';
   niveau: 'CAP' | 'BEPC' | 'BEP' | 'BAC' | 'LICENCE' | 'MASTER' | 'DOCTORAT' | null;
   dernierDiplome_filename: string | null;
@@ -92,6 +103,9 @@ export interface Stage {
   service_idservice?: number | null;
   direction?: { iddirection: number; nom: string; accronyme: string };
   autorisationsRenouvellement?: AutorisationRenouvellement[];
+  /** Autorisation de soumission anticipée du rapport (portée par la demande initiale) */
+  autorisationsRapport?: AutorisationRenouvellement[];
+  stage_parent_idstage?: number | null;
 }
 
 export interface AutorisationRenouvellement {

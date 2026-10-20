@@ -3,6 +3,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
 import { AuthService } from '../../../../../core/services/auth.service';
 
@@ -11,6 +12,7 @@ interface Candidat {
   nom: string;
   prenom: string;
   email: string;
+  telephone?: string;
 }
 
 interface StageActuel {
@@ -19,6 +21,9 @@ interface StageActuel {
   typeStage?: string;
   dateFinEffective?: string;
   candidat?: Candidat;
+  /** Convention de la demande de stage (celle qui a validé le stage en cours) */
+  documents?: { iddocument: number; document_filename: string }[];
+  direction?: { iddirection: number; nom: string; accronyme?: string };
 }
 
 interface StageNouveau {
@@ -26,10 +31,11 @@ interface StageNouveau {
   statusStage: string;
   dateDebutEffective?: string;
   dateFinEffective?: string;
+  dureeStage?: number;
   documents?: { document_filename: string }[];
 }
 
-type StatusRenouvellement = 'EN_ATTENTE' | 'PROGRAMMATION_EN_COURS' | 'ACCEPTE' | 'REJETE' | 'EN_COURS' | 'EXPIRE' | 'TERMINE' | 'RAPPORT_SOUMIS';
+type StatusRenouvellement = 'EN_ATTENTE' | 'EN_COURS_DE_TRAITEMENT' | 'PROGRAMMATION_EN_COURS' | 'ACCEPTE' | 'REJETE' | 'EN_COURS' | 'EXPIRE' | 'TERMINE' | 'RAPPORT_SOUMIS';
 
 interface Renouvellement {
   idrenouvellement: number;
@@ -37,7 +43,7 @@ interface Renouvellement {
   dureeDemandee: number;
   dateRenouvellement: string;
   lettreMotivationRenouvellement_filename?: string;
-  conventionStageEnCours_filename?: string;
+  peutAgir?: boolean;
   resoumis?: number;
   motifRefus?: string;
   createdBy?: string;
@@ -53,7 +59,7 @@ interface PaginatedResult {
   page: number;
   limit: number;
   totalPages: number;
-  stats: { enAttente: number; enTraitement: number; accepte: number; enCours: number; expire: number; termine: number; rejete: number };
+  stats: { total: number; enAttente: number; enTraitement: number; approuve: number; accepte: number; enCours: number; expire: number; termine: number; rejete: number };
 }
 
 @Component({
@@ -80,7 +86,7 @@ export class AgentRenouvellement implements OnInit {
   limit = 15;
   total = 0;
   totalPages = 0;
-  stats: PaginatedResult['stats'] = { enAttente: 0, enTraitement: 0, accepte: 0, enCours: 0, expire: 0, termine: 0, rejete: 0 };
+  stats: PaginatedResult['stats'] = { total: 0, enAttente: 0, enTraitement: 0, approuve: 0, accepte: 0, enCours: 0, expire: 0, termine: 0, rejete: 0 };
 
   // Modal détail
   showModal = false;
@@ -97,18 +103,20 @@ export class AgentRenouvellement implements OnInit {
   conventionFile: File | null = null;
   soumission = false;
   lettreNonConforme = false;
-  conventionNonConforme = false;
 
   // Modal convention (remplacer/joindre après acceptation)
   showConventionModal = false;
   conventionRemplacement: File | null = null;
   soumissionConvention = false;
+  printingAllDocs = false;
+  downloadingAllDocs = false;
 
   // Permissions
   peutApprouver = false;
   peutValider = false;
   peutRejeter = false;
   peutCreerConvention = false;
+  peutModifier = false;
 
   constructor(
     private http: HttpClient,
@@ -121,6 +129,7 @@ export class AgentRenouvellement implements OnInit {
     this.peutValider         = this.authService.hasPermission('STAGE', 'VALIDER');
     this.peutRejeter         = this.authService.hasPermission('STAGE', 'REJETER');
     this.peutCreerConvention = this.authService.hasPermission('STAGE', 'CREER');
+    this.peutModifier        = this.authService.hasPermission('STAGE', 'MODIFIER');
     this.charger();
   }
 
@@ -144,6 +153,11 @@ export class AgentRenouvellement implements OnInit {
         this.total = data.total;
         this.totalPages = data.totalPages;
         this.stats = data.stats;
+        // Modal ouvert : rafraîchir le renouvellement affiché avec les données à jour
+        if (this.showModal && this.selected) {
+          const id = this.selected.idrenouvellement;
+          this.selected = this.renouvellements.find(r => r.idrenouvellement === id) ?? this.selected;
+        }
         this.isLoading = false;
         this.cdr.detectChanges();
       },
@@ -180,8 +194,68 @@ export class AgentRenouvellement implements OnInit {
   voirDetail(r: Renouvellement): void {
     this.selected = r;
     this.showModal = true;
+    this.editionDates = false;
     this.erreur = '';
     this.successMessage = '';
+  }
+
+  // ── Modification des dates du nouveau stage (permission MODIFIER, dans sa direction) ──
+  editionDates = false;
+  nouvelleDateDebut = '';
+  nouvelleDuree: number | null = null;
+  savingDates = false;
+
+  peutModifierDates(r: Renouvellement): boolean {
+    return this.peutModifier && r.peutAgir !== false
+      && ['ACCEPTE', 'EN_COURS'].includes(r.statusRenouvellement) && !!r.stageNouveau?.idstage;
+  }
+
+  ouvrirEditionDates(): void {
+    if (!this.selected?.stageNouveau) return;
+    this.nouvelleDateDebut = (this.selected.stageNouveau.dateDebutEffective || '').slice(0, 10);
+    this.nouvelleDuree = this.selected.stageNouveau.dureeStage ?? this.selected.dureeDemandee;
+    this.editionDates = true;
+  }
+
+  enregistrerDates(): void {
+    const stageId = this.selected?.stageNouveau?.idstage;
+    if (!stageId || !this.nouvelleDateDebut || !this.nouvelleDuree) return;
+    this.savingDates = true;
+    this.erreur = '';
+    // Même route que la modification des dates d'un stage (fin recalculée, statut ajusté)
+    this.http.put<{ success: boolean; data: any }>(`${this.apiUrl}/stages/${stageId}`, {
+      dateDebutEffective: this.nouvelleDateDebut,
+      dureeStage: this.nouvelleDuree,
+    }).subscribe({
+      next: () => {
+        this.savingDates = false;
+        this.editionDates = false;
+        this.successMessage = 'Dates du renouvellement mises à jour.';
+        this.charger();
+        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
+      },
+      error: (err) => {
+        this.savingDates = false;
+        this.erreur = err.error?.message || 'Impossible de modifier les dates.';
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  /** Début prévu du renouvellement : lendemain de la fin du stage actuel (même règle que le backend) */
+  getDebutPrevu(r: Renouvellement): string | undefined {
+    const fin = r.stageActuel?.dateFinEffective;
+    if (!fin) return undefined;
+    const d = new Date(fin);
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().slice(0, 10);
+  }
+
+  /** Ouvre un fichier sélectionné (avant envoi) pour vérification */
+  voirFichierLocal(file: File): void {
+    const url = URL.createObjectURL(file);
+    window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
   }
 
   fermerModal(): void {
@@ -249,7 +323,6 @@ export class AgentRenouvellement implements OnInit {
     this.motifRefus = '';
     this.conventionFile = null;
     this.lettreNonConforme = false;
-    this.conventionNonConforme = false;
     this.showDecisionModal = true;
   }
 
@@ -258,7 +331,6 @@ export class AgentRenouvellement implements OnInit {
     this.decisionType = null;
     this.motifRefus = '';
     this.lettreNonConforme = false;
-    this.conventionNonConforme = false;
     this.conventionFile = null;
   }
 
@@ -275,7 +347,6 @@ export class AgentRenouvellement implements OnInit {
     if (this.decisionType === 'REJETE') {
       body['motifRefus'] = this.motifRefus.trim();
       body['lettreNonConforme'] = this.lettreNonConforme;
-      body['conventionNonConforme'] = this.conventionNonConforme;
     }
 
     this.http.put<{ success: boolean; data: any }>(
@@ -289,6 +360,8 @@ export class AgentRenouvellement implements OnInit {
             const fd = new FormData();
             fd.append('stage_idstage', String(nouveauStageId));
             fd.append('typeDocument', 'CONVENTION');
+            // Date d'émission requise par l'API (createDocumentStageSchema)
+            fd.append('dateEmission', new Date().toISOString().slice(0, 10));
             fd.append('document', this.conventionFile, this.conventionFile.name);
             this.http.post(`${this.apiUrl}/stages/documents`, fd).subscribe({
               next: () => {
@@ -303,7 +376,7 @@ export class AgentRenouvellement implements OnInit {
                 this.soumission = false;
                 this.showDecisionModal = false;
                 this.showModal = false;
-                this.successMessage = 'Renouvellement accepté. L\'upload de la convention a échoué.';
+                this.erreur = 'Renouvellement accepté, mais la convention n\'a pas pu être enregistrée : utilisez « Joindre la convention ».';
                 this.charger();
                 setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 6000);
               },
@@ -360,15 +433,27 @@ export class AgentRenouvellement implements OnInit {
       return;
     }
     this.soumissionConvention = true;
+    // Convention déjà jointe → remplacement (même route que pour une demande de stage) ;
+    // sinon → ajout d'un document CONVENTION sur le nouveau stage.
+    const remplacement = !!this.selected.stageNouveau?.documents?.length;
     const fd = new FormData();
-    fd.append('stage_idstage', String(stageId));
-    fd.append('typeDocument', 'CONVENTION');
-    fd.append('document', this.conventionRemplacement, this.conventionRemplacement.name);
-    this.http.post(`${this.apiUrl}/stages/documents`, fd).subscribe({
+    let requete$;
+    if (remplacement) {
+      fd.append('conventionStage', this.conventionRemplacement, this.conventionRemplacement.name);
+      requete$ = this.http.put(`${this.apiUrl}/stages/${stageId}/convention`, fd);
+    } else {
+      fd.append('stage_idstage', String(stageId));
+      fd.append('typeDocument', 'CONVENTION');
+      // Date d'émission requise par l'API (createDocumentStageSchema)
+      fd.append('dateEmission', new Date().toISOString().slice(0, 10));
+      fd.append('document', this.conventionRemplacement, this.conventionRemplacement.name);
+      requete$ = this.http.post(`${this.apiUrl}/stages/documents`, fd);
+    }
+    requete$.subscribe({
       next: () => {
         this.soumissionConvention = false;
         this.showConventionModal = false;
-        this.successMessage = 'Convention uploadée avec succès.';
+        this.successMessage = remplacement ? 'Convention remplacée avec succès.' : 'Convention jointe avec succès.';
         this.charger();
         setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
       },
@@ -387,7 +472,7 @@ export class AgentRenouvellement implements OnInit {
     const filename = this.selected.lettreMotivationRenouvellement_filename || `lettre_${this.selected.idrenouvellement}.pdf`;
     this.http.get(`${this.apiUrl}/stages/renouvellements/${this.selected.idrenouvellement}/lettre`, { responseType: 'blob' }).subscribe({
       next: (blob) => this.ouvrirOuTelechargerBlob(blob, filename, mode),
-      error: () => { this.erreur = 'Impossible de charger la lettre.'; this.cdr.detectChanges(); },
+      error: () => { this.erreur = 'Lettre de renouvellement introuvable sur le serveur (fichier absent).'; this.cdr.detectChanges(); },
     });
   }
 
@@ -398,11 +483,26 @@ export class AgentRenouvellement implements OnInit {
 
   accederConventionRow(r: Renouvellement, mode: 'voir' | 'telecharger', event?: Event): void {
     event?.stopPropagation();
-    const filename = r.conventionStageEnCours_filename || `convention_${r.idrenouvellement}.pdf`;
+    const filename = r.stageNouveau?.documents?.[0]?.document_filename || `convention_renouvellement_${r.idrenouvellement}.pdf`;
     this.http.get(`${this.apiUrl}/stages/renouvellements/${r.idrenouvellement}/convention`, { responseType: 'blob' }).subscribe({
       next: (blob) => this.ouvrirOuTelechargerBlob(blob, filename, mode),
       error: () => { this.erreur = 'Impossible de charger la convention.'; this.cdr.detectChanges(); },
     });
+  }
+
+  /** Convention de la demande de stage à laquelle le renouvellement est rattaché */
+  accederConventionDemande(mode: 'voir' | 'telecharger'): void {
+    if (!this.selected) return;
+    const filename = this.selected.stageActuel?.documents?.[0]?.document_filename || `convention_stage_${this.selected.stageActuel?.idstage}.pdf`;
+    this.http.get(`${this.apiUrl}/stages/renouvellements/${this.selected.idrenouvellement}/convention-demande`, { responseType: 'blob' }).subscribe({
+      next: (blob) => this.ouvrirOuTelechargerBlob(blob, filename, mode),
+      error: () => { this.erreur = 'Impossible de charger la convention de la demande de stage.'; this.cdr.detectChanges(); },
+    });
+  }
+
+  /** Statuts où un refus est encore possible (avant décision) */
+  estAvantDecision(r: Renouvellement): boolean {
+    return ['EN_ATTENTE', 'EN_COURS_DE_TRAITEMENT', 'PROGRAMMATION_EN_COURS'].includes(r.statusRenouvellement);
   }
 
   private ouvrirOuTelechargerBlob(blob: Blob, filename: string, mode: 'voir' | 'telecharger'): void {
@@ -420,6 +520,88 @@ export class AgentRenouvellement implements OnInit {
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
 
+  async imprimerDocuments(): Promise<void> {
+    if (!this.selected || this.printingAllDocs) return;
+    const c = this.selected.stageActuel?.candidat;
+    const candidatNom = c ? `${c.prenom || ''} ${c.nom || ''}`.trim() : 'Candidat';
+    const id = this.selected.idrenouvellement;
+    const items: { label: string; url: string }[] = [];
+    this.printingAllDocs = true;
+    this.cdr.detectChanges();
+    try {
+      if (this.selected.lettreMotivationRenouvellement_filename) {
+        const blob = await firstValueFrom(
+          this.http.get(`${this.apiUrl}/stages/renouvellements/${id}/lettre`, { responseType: 'blob' })
+        ).catch(() => null);
+        if (blob) items.push({ label: 'Lettre de renouvellement', url: window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' })) });
+      }
+      if (this.selected.stageActuel?.documents?.length) {
+        const blob = await firstValueFrom(
+          this.http.get(`${this.apiUrl}/stages/renouvellements/${id}/convention-demande`, { responseType: 'blob' })
+        ).catch(() => null);
+        if (blob) items.push({ label: 'Convention de la demande de stage', url: window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' })) });
+      }
+    } finally {
+      this.printingAllDocs = false;
+      this.cdr.detectChanges();
+    }
+    if (items.length === 0) return;
+    const printWindow = window.open('', '_blank', 'width=960,height=700');
+    if (!printWindow) { items.forEach(it => window.URL.revokeObjectURL(it.url)); return; }
+    const embedsHtml = items.map((it, idx) =>
+      `<div class="doc-page"><div class="doc-label">${idx + 1} / ${items.length} — ${it.label}</div><embed src="${it.url}" type="application/pdf" width="100%" height="100%"/></div>`
+    ).join('');
+    printWindow.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
+<title>Impression renouvellement — ${candidatNom}</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;background:#f3f4f6}
+.notice{display:flex;align-items:flex-start;gap:10px;background:#fffbeb;border:1px solid #f59e0b;border-radius:8px;padding:12px 16px;margin:16px;font-size:13px;color:#92400e;line-height:1.5}.notice strong{color:#78350f}
+.doc-page{background:white;margin:16px;border-radius:8px;box-shadow:0 1px 6px rgba(0,0,0,.12);overflow:hidden;height:calc(100vh - 48px)}
+.doc-label{padding:9px 16px;background:#1e293b;color:white;font-size:12px;font-weight:600;letter-spacing:.3px}
+embed{display:block;height:calc(100% - 36px);width:100%}
+@media print{@page{size:A4 portrait;margin:8mm}body{background:white}.notice{display:none}
+.doc-page{margin:0;box-shadow:none;border-radius:0;height:100vh;page-break-after:always;break-after:page}.doc-label{display:none}embed{height:100vh}}</style></head>
+<body><div class="notice"><svg width="18" height="18" fill="none" stroke="#d97706" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:1px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+<span><strong>Important :</strong> Sélectionnez <strong>Recto simple</strong> dans la boîte d'impression.</span></div>
+${embedsHtml}<script>let n=0;document.querySelectorAll('embed').forEach(e=>e.addEventListener('load',()=>{if(++n>=${items.length})setTimeout(()=>window.print(),500)}));setTimeout(()=>window.print(),4000);<\/script></body></html>`);
+    printWindow.document.close();
+  }
+
+  async telechargerZip(): Promise<void> {
+    if (!this.selected || this.downloadingAllDocs) return;
+    const c = this.selected.stageActuel?.candidat;
+    const candidatNom = c ? `${c.prenom || ''}_${c.nom || ''}`.replace(/\s+/g, '_') : 'Candidat';
+    const id = this.selected.idrenouvellement;
+    this.downloadingAllDocs = true;
+    this.cdr.detectChanges();
+    try {
+      const { default: JSZip } = await import('jszip');
+      const zip = new JSZip();
+      if (this.selected.lettreMotivationRenouvellement_filename) {
+        const blob = await firstValueFrom(
+          this.http.get(`${this.apiUrl}/stages/renouvellements/${id}/lettre`, { responseType: 'blob' })
+        ).catch(() => null);
+        if (blob) zip.file(this.selected.lettreMotivationRenouvellement_filename, blob as Blob);
+      }
+      if (this.selected.stageActuel?.documents?.length) {
+        const blob = await firstValueFrom(
+          this.http.get(`${this.apiUrl}/stages/renouvellements/${id}/convention-demande`, { responseType: 'blob' })
+        ).catch(() => null);
+        const fname = this.selected.stageActuel.documents[0]?.document_filename || `convention_stage_${this.selected.stageActuel.idstage}.pdf`;
+        if (blob) zip.file(fname, blob as Blob);
+      }
+      const content: Blob = await zip.generateAsync({ type: 'blob' });
+      const url = window.URL.createObjectURL(content);
+      const a = document.createElement('a');
+      a.href = url; a.download = `Renouvellement_${candidatNom}.zip`; a.click();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      this.erreur = 'Erreur lors de la génération du ZIP.';
+    } finally {
+      this.downloadingAllDocs = false;
+      this.cdr.detectChanges();
+    }
+  }
+
   getInitiales(r: Renouvellement): string {
     const c = r.stageActuel?.candidat;
     if (!c) return '?';
@@ -429,6 +611,7 @@ export class AgentRenouvellement implements OnInit {
   getStatutBadge(statut: string): string {
     switch (statut) {
       case 'EN_ATTENTE':             return 'bg-amber-100 text-amber-700';
+      case 'EN_COURS_DE_TRAITEMENT': return 'bg-orange-100 text-orange-700';
       case 'PROGRAMMATION_EN_COURS': return 'bg-blue-100 text-blue-700';
       case 'ACCEPTE':                return 'bg-green-100 text-green-700';
       case 'REJETE':                 return 'bg-red-100 text-red-700';
@@ -443,7 +626,8 @@ export class AgentRenouvellement implements OnInit {
   getStatutLabel(statut: string): string {
     switch (statut) {
       case 'EN_ATTENTE':             return 'En attente';
-      case 'PROGRAMMATION_EN_COURS': return 'Programmation en cours';
+      case 'EN_COURS_DE_TRAITEMENT': return 'En traitement';
+      case 'PROGRAMMATION_EN_COURS': return 'Approuvé';
       case 'ACCEPTE':                return 'Accepté';
       case 'REJETE':                 return 'Rejeté';
       case 'EN_COURS':               return 'En cours';

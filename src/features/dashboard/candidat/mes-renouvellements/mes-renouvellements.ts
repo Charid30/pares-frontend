@@ -23,14 +23,14 @@ interface MesRenouvellement {
   lastModifiedBy: string | null;
   lastModifiedDate: string | null;
   lettreNonConforme: boolean | null;
-  conventionNonConforme: boolean | null;
   lettreMotivationFilename: string | null;
+  /** Convention du renouvellement, jointe par l'agent/admin sur le nouveau stage */
   conventionFilename: string | null;
   stageActuel: StageInfo | null;
   stageNouveau: StageInfo | null;
 }
 
-type StatusRenouv = 'EN_ATTENTE' | 'PROGRAMMATION_EN_COURS' | 'ACCEPTE' | 'REJETE' | 'EN_COURS' | 'EXPIRE' | 'TERMINE' | 'RAPPORT_SOUMIS';
+type StatusRenouv = 'EN_ATTENTE' | 'EN_COURS_DE_TRAITEMENT' | 'PROGRAMMATION_EN_COURS' | 'ACCEPTE' | 'REJETE' | 'EN_COURS' | 'EXPIRE' | 'TERMINE' | 'RAPPORT_SOUMIS';
 
 @Component({
   selector: 'app-mes-renouvellements',
@@ -41,13 +41,17 @@ export class MesRenouvellements implements OnInit {
   renouvellements: MesRenouvellement[] = [];
   loading = true;
   error: string | null = null;
-  expanded: Set<number> = new Set();
+
+  // Onglets de filtre (même principe que « Mes stages »)
+  activeFilter: 'tous' | 'en_cours' | 'rejetes' = 'tous';
+
+  // Modal détail
+  selectedDetail: MesRenouvellement | null = null;
 
   // Re-soumission modal
   showResoumissionModal = false;
   resoumissionTarget: MesRenouvellement | null = null;
   resoumissionLettreFile: File | null = null;
-  resoumissionConventionFile: File | null = null;
   resoumissionSubmitting = false;
   resoumissionError: string | null = null;
   resoumissionSuccess = false;
@@ -78,16 +82,27 @@ export class MesRenouvellements implements OnInit {
       });
   }
 
-  toggleExpand(id: number): void {
-    if (this.expanded.has(id)) {
-      this.expanded.delete(id);
-    } else {
-      this.expanded.add(id);
-    }
+  setFilter(f: 'tous' | 'en_cours' | 'rejetes'): void {
+    this.activeFilter = f;
   }
 
-  isExpanded(id: number): boolean {
-    return this.expanded.has(id);
+  get renouvellementsFiltres(): MesRenouvellement[] {
+    if (this.activeFilter === 'en_cours') {
+      return this.renouvellements.filter(r =>
+        ['EN_ATTENTE', 'EN_COURS_DE_TRAITEMENT', 'PROGRAMMATION_EN_COURS', 'ACCEPTE', 'EN_COURS'].includes(r.statusRenouvellement));
+    }
+    if (this.activeFilter === 'rejetes') {
+      return this.renouvellements.filter(r => r.statusRenouvellement === 'REJETE');
+    }
+    return this.renouvellements;
+  }
+
+  ouvrirDetail(r: MesRenouvellement): void {
+    this.selectedDetail = r;
+  }
+
+  fermerDetail(): void {
+    this.selectedDetail = null;
   }
 
   // ─── Re-soumission ───────────────────────────────────────
@@ -95,7 +110,6 @@ export class MesRenouvellements implements OnInit {
   ouvrirResoumission(r: MesRenouvellement): void {
     this.resoumissionTarget = r;
     this.resoumissionLettreFile = null;
-    this.resoumissionConventionFile = null;
     this.resoumissionError = null;
     this.resoumissionSuccess = false;
     this.showResoumissionModal = true;
@@ -112,28 +126,18 @@ export class MesRenouvellements implements OnInit {
     this.resoumissionLettreFile = input.files?.[0] ?? null;
   }
 
-  onConventionChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.resoumissionConventionFile = input.files?.[0] ?? null;
-  }
-
   soumettreDossier(): void {
     if (!this.resoumissionTarget) return;
     const r = this.resoumissionTarget;
 
-    // Vérifier que les fichiers non conformes sont remplacés
+    // La lettre est le seul document fourni par le candidat (la convention est jointe par l'agent/admin)
     if (r.lettreNonConforme && !this.resoumissionLettreFile) {
       this.resoumissionError = 'Vous devez fournir une nouvelle lettre de motivation (signalée non conforme).';
-      return;
-    }
-    if (r.conventionNonConforme && !this.resoumissionConventionFile) {
-      this.resoumissionError = 'Vous devez fournir une nouvelle convention (signalée non conforme).';
       return;
     }
 
     const fd = new FormData();
     if (this.resoumissionLettreFile) fd.append('lettreRenouvellement', this.resoumissionLettreFile);
-    if (this.resoumissionConventionFile) fd.append('conventionRenouvellement', this.resoumissionConventionFile);
 
     this.resoumissionSubmitting = true;
     this.resoumissionError = null;
@@ -161,12 +165,27 @@ export class MesRenouvellements implements OnInit {
 
   // ─── Téléchargements ─────────────────────────────────────
 
+  // Via HttpClient (et non window.open) pour que l'intercepteur ajoute le jeton JWT
   telechargerLettre(id: number): void {
-    window.open(`${this.api}/candidat/renouvellements/${id}/lettre`, '_blank');
+    this.ouvrirPdf(`${this.api}/candidat/renouvellements/${id}/lettre`, 'Impossible de charger la lettre.');
   }
 
   telechargerConvention(id: number): void {
-    window.open(`${this.api}/candidat/renouvellements/${id}/convention`, '_blank');
+    this.ouvrirPdf(`${this.api}/candidat/renouvellements/${id}/convention`, 'Impossible de charger la convention.');
+  }
+
+  private ouvrirPdf(url: string, messageErreur: string): void {
+    this.http.get(url, { responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        const objectUrl = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+        window.open(objectUrl, '_blank');
+        setTimeout(() => window.URL.revokeObjectURL(objectUrl), 60000);
+      },
+      error: () => {
+        this.error = messageErreur;
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   // ─── Statuts ─────────────────────────────────────────────
@@ -174,6 +193,7 @@ export class MesRenouvellements implements OnInit {
   getStatutBadge(status: string): string {
     const map: Record<string, string> = {
       EN_ATTENTE:           'bg-amber-100 text-amber-700 border-amber-200',
+      EN_COURS_DE_TRAITEMENT: 'bg-orange-100 text-orange-700 border-orange-200',
       PROGRAMMATION_EN_COURS: 'bg-blue-100 text-blue-700 border-blue-200',
       ACCEPTE:              'bg-green-100 text-green-700 border-green-200',
       EN_COURS:             'bg-indigo-100 text-indigo-700 border-indigo-200',
@@ -188,6 +208,7 @@ export class MesRenouvellements implements OnInit {
   getStatutLabel(status: string): string {
     const map: Record<string, string> = {
       EN_ATTENTE:             'En attente',
+      EN_COURS_DE_TRAITEMENT: 'En traitement',
       PROGRAMMATION_EN_COURS: 'Approuvé',
       ACCEPTE:                'Accepté',
       EN_COURS:               'En cours',
@@ -202,6 +223,7 @@ export class MesRenouvellements implements OnInit {
   getTimelineColor(status: string): string {
     const map: Record<string, string> = {
       EN_ATTENTE:             'bg-amber-400',
+      EN_COURS_DE_TRAITEMENT: 'bg-orange-500',
       PROGRAMMATION_EN_COURS: 'bg-blue-500',
       ACCEPTE:                'bg-green-500',
       EN_COURS:               'bg-indigo-500',
@@ -215,7 +237,7 @@ export class MesRenouvellements implements OnInit {
 
   get totalActifs(): number {
     return this.renouvellements.filter(r =>
-      ['EN_ATTENTE', 'PROGRAMMATION_EN_COURS', 'ACCEPTE', 'EN_COURS'].includes(r.statusRenouvellement)
+      ['EN_ATTENTE', 'EN_COURS_DE_TRAITEMENT', 'PROGRAMMATION_EN_COURS', 'ACCEPTE', 'EN_COURS'].includes(r.statusRenouvellement)
     ).length;
   }
 
@@ -223,7 +245,9 @@ export class MesRenouvellements implements OnInit {
 
   isStepReached(current: string, step: string): boolean {
     if (current === 'REJETE') return false;
-    const ci = this.STEP_ORDER.indexOf(current === 'RAPPORT_SOUMIS' ? 'TERMINE' : current);
+    // « En traitement » est une sous-étape de « Soumis » (avant approbation)
+    const normalise = current === 'RAPPORT_SOUMIS' ? 'TERMINE' : current === 'EN_COURS_DE_TRAITEMENT' ? 'EN_ATTENTE' : current;
+    const ci = this.STEP_ORDER.indexOf(normalise);
     const si = this.STEP_ORDER.indexOf(step);
     return si !== -1 && ci !== -1 && si <= ci;
   }

@@ -17,7 +17,6 @@ interface RenouvellementInfo {
   statusRenouvellement: string;
   motifRefus: string | null;
   lettreNonConforme: boolean;
-  conventionNonConforme: boolean;
   lettreFilename: string | null;
   conventionFilename: string | null;
   stageNouveauId: number | null;
@@ -27,6 +26,18 @@ interface RenouvellementInfo {
 }
 
 interface DemandeStage {
+  /** 'PROLONGE' quand un renouvellement prolonge ce stage (calculé par le backend) */
+  statutAffiche?: string;
+  chaine?: { dureeTotaleMois: number; nbRenouvellements: number; finProlongation: string | null; prolonge: boolean };
+  /** État du rapport (calculé par le backend, uniquement sur la demande initiale — null sur un renouvellement) :
+   *  un seul rapport pour toute la chaîne, après la fin du dernier stage ou sur autorisation de l'admin */
+  rapportInfo?: {
+    peutSoumettre: boolean;
+    message: string | null;
+    rapportExiste: boolean;
+    autorisation: { id: number; expiresAt: string } | null;
+    finChaine: string | null;
+  } | null;
   idstage: number;
   typeStage: string;
   niveau: string | null;
@@ -174,7 +185,6 @@ export class Stages implements OnInit {
   stageForResoumission: DemandeStage | null = null;
   isSubmittingResoumission = false;
   resoumissionLettreFile: FileInfo = { file: null, name: '', size: 0, error: '' };
-  resoumissionConventionFile: FileInfo = { file: null, name: '', size: 0, error: '' };
 
   // Demande de modification
   showDemandeModifModal = false;
@@ -366,10 +376,28 @@ export class Stages implements OnInit {
   }
 
   /** Liste des documents joints pour le récapitulatif */
-  get fichiersRecap(): { label: string; name: string }[] {
+  get fichiersRecap(): { key: string; label: string; name: string }[] {
     return Object.keys(this.files)
       .filter(key => this.files[key].file)
-      .map(key => ({ label: this.documentLabels[key] || key, name: this.files[key].name }));
+      .map(key => ({ key, label: this.documentLabels[key] || key, name: this.files[key].name }));
+  }
+
+  /** Ouvre la lettre de renouvellement sélectionnée (avant envoi) */
+  voirLettreRenouvellementLocale(): void {
+    const file = this.lettreRenouvellementFile.file;
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }
+
+  /** Ouvre dans un nouvel onglet un fichier sélectionné (avant envoi) pour que le candidat le vérifie */
+  voirFichierLocal(key: string): void {
+    const file = this.files[key]?.file;
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
   }
 
   /** Ouvre la popup de confirmation avant l'envoi définitif */
@@ -1043,10 +1071,7 @@ export class Stages implements OnInit {
     ).subscribe({
       next: (response) => {
         if (response.success) {
-          const msg = response.data.conventionJointe
-            ? 'Demande de renouvellement soumise avec succès ! La convention a été jointe automatiquement.'
-            : 'Demande de renouvellement soumise avec succès ! (Aucune convention trouvée dans le système)';
-          this.showToast(msg, 'success');
+          this.showToast('Demande de renouvellement soumise avec succès ! La convention du renouvellement sera jointe par l\'administration.', 'success');
           this.fermerRenouvellementModal();
           this.loadMesDemandesStage();
         }
@@ -1075,6 +1100,7 @@ export class Stages implements OnInit {
       'TERMINE':              'bg-gray-100 text-gray-600 border-gray-200',
       'RAPPORT_SOUMIS':       'bg-indigo-100 text-indigo-700 border-indigo-200',
       'EXPIRE':               'bg-orange-100 text-orange-700 border-orange-200',
+      'PROLONGE':             'bg-indigo-100 text-indigo-700 border-indigo-200',
       'PROGRAMMATION_EN_COURS': 'bg-blue-100 text-blue-700 border-blue-200',
       'SUSPENDU':             'bg-orange-100 text-orange-700 border-orange-200',
       'ANNULE':               'bg-gray-100 text-gray-500 border-gray-200',
@@ -1095,6 +1121,7 @@ export class Stages implements OnInit {
       'TERMINE': 'Terminé',
       'RAPPORT_SOUMIS': 'Rapport soumis',
       'EXPIRE': 'Expiré',
+      'PROLONGE': 'Prolongé',
       'PROGRAMMATION_EN_COURS': 'Programmation en cours',
       'SUSPENDU': 'Suspendu',
       'ANNULE': 'Annulé',
@@ -1204,7 +1231,7 @@ export class Stages implements OnInit {
 
   /**
    * Vérifier si le renouvellement est possible :
-   * - EN_COURS : dans la fenêtre des 2 semaines avant la fin
+   * - EN_COURS : dans la semaine précédant la fin
    * - TERMINE / EXPIRE : si une autorisation admin active existe
    */
   peutRenouveler(stage: DemandeStage): boolean {
@@ -1218,7 +1245,7 @@ export class Stages implements OnInit {
       return new Date(stage.autorisationRenouvellement.expiresAt) > new Date();
     }
 
-    // Cas EN_COURS : fenêtre des 2 semaines
+    // Cas EN_COURS : fenêtre d'une semaine avant la fin (aligné sur DELAI_RENOUVELLEMENT_JOURS backend)
     if (stage.statusStage !== 'EN_COURS' || !stage.dateFinEffective) {
       return false;
     }
@@ -1226,10 +1253,10 @@ export class Stages implements OnInit {
     dateFin.setHours(0, 0, 0, 0);
     const aujourdhui = new Date();
     aujourdhui.setHours(0, 0, 0, 0);
-    const deuxSemainesAvant = new Date(dateFin);
-    deuxSemainesAvant.setDate(deuxSemainesAvant.getDate() - 14);
+    const debutFenetre = new Date(dateFin);
+    debutFenetre.setDate(debutFenetre.getDate() - 7);
 
-    return aujourdhui >= deuxSemainesAvant && aujourdhui <= dateFin;
+    return aujourdhui >= debutFenetre && aujourdhui <= dateFin;
   }
 
   /**
@@ -1410,7 +1437,6 @@ export class Stages implements OnInit {
   ouvrirResoumissionModal(stage: DemandeStage): void {
     this.stageForResoumission = stage;
     this.resoumissionLettreFile = { file: null, name: '', size: 0, error: '' };
-    this.resoumissionConventionFile = { file: null, name: '', size: 0, error: '' };
     this.showResoumissionModal = true;
     this.cdr.detectChanges();
   }
@@ -1419,7 +1445,6 @@ export class Stages implements OnInit {
     this.showResoumissionModal = false;
     this.stageForResoumission = null;
     this.resoumissionLettreFile = { file: null, name: '', size: 0, error: '' };
-    this.resoumissionConventionFile = { file: null, name: '', size: 0, error: '' };
   }
 
   onResoumissionLettreSelect(event: Event): void {
@@ -1438,28 +1463,11 @@ export class Stages implements OnInit {
     this.cdr.detectChanges();
   }
 
-  onResoumissionConventionSelect(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) { this.resoumissionConventionFile = { file: null, name: '', size: 0, error: '' }; return; }
-    if (file.type !== 'application/pdf') {
-      this.resoumissionConventionFile = { file: null, name: file.name, size: file.size, error: 'Seuls les fichiers PDF sont autorisés' };
-      input.value = ''; return;
-    }
-    if (file.size > this.MAX_RAPPORT_SIZE) {
-      this.resoumissionConventionFile = { file: null, name: file.name, size: file.size, error: 'Le fichier dépasse 5 Mo' };
-      input.value = ''; return;
-    }
-    this.resoumissionConventionFile = { file, name: file.name, size: file.size, error: '' };
-    this.cdr.detectChanges();
-  }
-
   get resoumissionValide(): boolean {
     const r = this.stageForResoumission?.renouvellement;
     if (!r) return false;
     if (r.lettreNonConforme && !this.resoumissionLettreFile.file) return false;
-    if (r.conventionNonConforme && !this.resoumissionConventionFile.file) return false;
-    if (this.resoumissionLettreFile.error || this.resoumissionConventionFile.error) return false;
+    if (this.resoumissionLettreFile.error) return false;
     return true;
   }
 
@@ -1471,9 +1479,6 @@ export class Stages implements OnInit {
     const formData = new FormData();
     if (this.resoumissionLettreFile.file) {
       formData.append('lettreRenouvellement', this.resoumissionLettreFile.file, this.resoumissionLettreFile.name);
-    }
-    if (this.resoumissionConventionFile.file) {
-      formData.append('conventionRenouvellement', this.resoumissionConventionFile.file, this.resoumissionConventionFile.name);
     }
 
     this.http.put<any>(`${this.apiUrl}/candidat/renouvellements/${idrenouvellement}/ressoumettre`, formData).subscribe({
