@@ -4,9 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { firstValueFrom, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
 import { saveAs } from 'file-saver';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { AuthService } from '../../../../../core/services/auth.service';
+import { SearchService } from '../../../../../core/services/search.service';
 import { environment } from '../../../../../environments/environment';
 import { StatCard } from '../../../../../shared/components/stat-card/stat-card';
 
@@ -44,6 +46,8 @@ interface Stage {
   autorisationsRapport?: AutorisationRenouvellement[];
   /** 'PROLONGE' quand un renouvellement prolonge ce stage (calculé par le backend) */
   statutAffiche?: string;
+  /** Chaîne demande + renouvellements (durée totale, fin de prolongation) */
+  chaine?: { dureeTotaleMois: number; nbRenouvellements: number; finProlongation: string | null; prolonge: boolean };
   stage_parent_idstage?: number | null;
   // Calculé côté backend : false si ce stage n'est visible que via un rôle "lecture globale"
   // et n'appartient pas à la direction de l'agent connecté (actions alors masquées).
@@ -117,14 +121,29 @@ export class AgentStage implements OnInit, OnDestroy {
   filtreStatut = '';
   filtreType = '';
 
-  // Une demande REJETEE est archivée automatiquement (sortie de la liste par
-  // défaut) ; reste consultable via ce bascule.
-  voirArchives = false;
+  showFiltres = false;
 
-  toggleArchives(): void {
-    this.voirArchives = !this.voirArchives;
+  // Onglets de vue (écran « Stage [DIRECTION] » uniquement — les écrans « Vue globale »
+  // ont leur statut imposé par la route). Une demande REJETEE est archivée : absente de
+  // « Toutes », consultable dans « Rejetées ».
+  readonly vues: { key: string; label: string; statut: string }[] = [
+    { key: 'toutes',   label: 'Toutes',     statut: '' },
+    { key: 'attente',  label: 'En attente', statut: 'EN_ATTENTE' },
+    { key: 'approuve', label: 'Approuvées', statut: 'PROGRAMMATION_EN_COURS' },
+    { key: 'encours',  label: 'En cours',   statut: 'ACCEPTE,EN_COURS' },
+    { key: 'termine',  label: 'Terminées',  statut: 'RAPPORT_SOUMIS,TERMINE' },
+    { key: 'rejetees', label: 'Rejetées',   statut: 'REJETE' },
+  ];
+  vueActive = 'toutes';
+
+  changerVue(key: string): void {
+    this.vueActive = key;
     this.filtreStatut = '';
     this.onFiltreChange();
+  }
+
+  get nbFiltresActifs(): number {
+    return (this.filtreStatut ? 1 : 0) + (this.filtreType ? 1 : 0);
   }
 
   page = 1;
@@ -371,13 +390,15 @@ export class AgentStage implements OnInit, OnDestroy {
   }
 
   private routeDataSub?: Subscription;
+  private searchSub?: Subscription;
 
   constructor(
     private http: HttpClient,
     private authService: AuthService,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private searchService: SearchService,
   ) {}
 
   ngOnInit(): void {
@@ -397,7 +418,18 @@ export class AgentStage implements OnInit, OnDestroy {
     // de la recréer d'un onglet à l'autre (le constructeur ne se relance pas). On
     // s'abonne à route.data (au lieu d'une lecture ponctuelle du snapshot) pour que
     // le composant réagisse à chaque changement d'onglet sans nécessiter un F5.
+    // Recherche : barre « Rechercher… » du header (comme l'admin), plus de champ local
+    this.searchSub = this.searchService.term$.pipe(skip(1), debounceTime(300), distinctUntilChanged())
+      .subscribe(term => {
+        this.search = term.trim();
+        if (this.peutConsulter) this.onFiltreChange();
+      });
+
     this.routeDataSub = this.route.data.subscribe((data) => {
+      // SearchService désactive la recherche du header à chaque navigation : la réactiver ici
+      this.searchService.activer();
+      this.search = '';
+      this.vueActive = 'toutes';
       this.scope = data['scope'] === 'global' ? 'global' : 'direction';
       this.readOnly = !!data['readOnly'];
       this.statusFilter = data['statusFilter'] || null;
@@ -414,6 +446,7 @@ export class AgentStage implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.routeDataSub?.unsubscribe();
+    this.searchSub?.unsubscribe();
   }
 
   // ── Chargement ────────────────────────────────────────────
@@ -424,12 +457,11 @@ export class AgentStage implements OnInit, OnDestroy {
     // Le statut de l'écran (route "Vue globale") reste prioritaire ; le filtre du
     // sélecteur ne s'applique que s'il correspond à un sous-ensemble cohérent —
     // sinon on respecte simplement le statut choisi par l'agent.
-    const statusStage = this.filtreStatut || this.statusFilter || '';
+    const statutVue = this.statusFilter ? '' : (this.vues.find(v => v.key === this.vueActive)?.statut || '');
+    const statusStage = this.filtreStatut || this.statusFilter || statutVue;
     // Archivage automatique des demandes REJETEES : masquées par défaut de la
-    // liste principale, sauf si un filtre explicite (dropdown ou route) les cible déjà.
-    const archiveParam: Record<string, string> = statusStage
-      ? {}
-      : (this.voirArchives ? { statusStage: 'REJETE' } : { excludeStatus: 'REJETE' });
+    // liste principale, sauf si un filtre explicite (filtre, onglet ou route) les cible déjà.
+    const archiveParam: Record<string, string> = statusStage ? {} : { excludeStatus: 'REJETE' };
 
     const params = new URLSearchParams({
       page: String(this.page),
@@ -582,11 +614,10 @@ export class AgentStage implements OnInit, OnDestroy {
     this.onFiltreChange();
   }
 
+  /** Réinitialise les filtres du panneau (la recherche reste pilotée par le header). */
   effacerFiltres(): void {
-    this.search = '';
     this.filtreStatut = '';
     this.filtreType = '';
-    this.voirArchives = false;
     this.onFiltreChange();
   }
 
@@ -1328,8 +1359,7 @@ export class AgentStage implements OnInit, OnDestroy {
 
   getTypeLabel(t: string): string {
     const l: Record<string, string> = {
-      ACADEMIQUE: 'Académique', PROFESSIONNEL: 'Professionnel',
-      PRE_EMPLOI: 'Pré-emploi', PERFECTIONNEMENT: 'Perfectionnement',
+      SOUTENANCE: 'Soutenance', PERFECTIONNEMENT: 'Perfectionnement',
     };
     return l[t] || t;
   }
@@ -1340,13 +1370,13 @@ export class AgentStage implements OnInit, OnDestroy {
       PROGRAMMATION_EN_COURS: 'bg-blue-50 text-blue-700 border border-blue-200',
       ACCEPTE:                'bg-emerald-50 text-emerald-700 border border-emerald-200',
       EN_COURS:               'bg-green-50 text-green-700 border border-green-200',
-      RAPPORT_SOUMIS:         'bg-purple-50 text-purple-700 border border-purple-200',
+      RAPPORT_SOUMIS:         'bg-sky-50 text-sky-700 border border-sky-200',
       TERMINE:                'bg-gray-100 text-gray-600 border border-gray-200',
       EXPIRE:                 'bg-slate-100 text-slate-500 border border-slate-200',
-      PROLONGE:               'bg-indigo-50 text-indigo-700 border border-indigo-200',
+      PROLONGE:               'bg-teal-50 text-teal-700 border border-teal-200',
       REJETE:                 'bg-red-50 text-red-700 border border-red-200',
       ANNULE:                 'bg-orange-50 text-orange-700 border border-orange-200',
-      SUSPENDU:               'bg-purple-50 text-purple-700 border border-purple-200',
+      SUSPENDU:               'bg-yellow-50 text-yellow-700 border border-yellow-200',
     };
     return c[s] || 'bg-gray-100 text-gray-600 border border-gray-200';
   }
@@ -1360,7 +1390,7 @@ export class AgentStage implements OnInit, OnDestroy {
       TERMINE:                'bg-gray-400',
       REJETE:                 'bg-red-500',
       ANNULE:                 'bg-orange-400',
-      SUSPENDU:               'bg-purple-400',
+      SUSPENDU:               'bg-yellow-400',
     };
     return c[s] || 'bg-gray-300';
   }

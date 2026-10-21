@@ -2,11 +2,14 @@
 // Layout générique pour les rôles personnalisés (non système)
 // Le menu est construit dynamiquement selon les permissions du rôle connecté
 import { Component, OnInit, OnDestroy, HostListener, ChangeDetectorRef } from '@angular/core';
-import { Router, RouterModule, RouterOutlet } from '@angular/router';
+import { Router, RouterModule, RouterOutlet, NavigationStart } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { SearchService } from '../../core/services/search.service';
 import { NotificationBellComponent } from '../../shared/components/notification-bell/notification-bell';
 import { environment } from '../../environments/environment';
 
@@ -89,7 +92,7 @@ const MODULE_ROUTE_MAP: Record<string, string> = {
 
 @Component({
   selector: 'app-agent-layout',
-  imports: [RouterOutlet, CommonModule, RouterModule, NotificationBellComponent],
+  imports: [RouterOutlet, CommonModule, RouterModule, FormsModule, NotificationBellComponent],
   templateUrl: './agent-layout.html',
 })
 export class AgentLayout implements OnInit, OnDestroy {
@@ -100,6 +103,11 @@ export class AgentLayout implements OnInit, OnDestroy {
   userMenuOpen = false;
   menuItems: MenuItem[] = [];
   expandedMenuLabel: string | null = null;
+
+  // ── Recherche du header (diffusée aux pages via SearchService, comme l'admin) ──
+  globalSearchTerm = '';
+  showMobileSearch = false;
+  private routerSub?: Subscription;
 
   toggleSubmenu(item: MenuItem): void {
     this.expandedMenuLabel = this.expandedMenuLabel === item.label ? null : item.label;
@@ -140,6 +148,7 @@ export class AgentLayout implements OnInit, OnDestroy {
     private http: HttpClient,
     private cdr: ChangeDetectorRef,
     public notificationService: NotificationService,
+    public searchService: SearchService,
   ) {}
 
   ngOnInit(): void {
@@ -169,10 +178,36 @@ export class AgentLayout implements OnInit, OnDestroy {
 
     // Démarrer le polling des notifications in-app (toutes les 30s)
     this.notificationService.startPolling(30000);
+
+    // Le terme est remis à zéro par SearchService à chaque navigation : vider aussi le champ
+    this.routerSub = this.router.events.subscribe(event => {
+      if (event instanceof NavigationStart) {
+        this.globalSearchTerm = '';
+        this.showMobileSearch = false;
+      }
+    });
   }
 
   ngOnDestroy(): void {
     this.notificationService.stopPolling();
+    this.routerSub?.unsubscribe();
+  }
+
+  onGlobalSearch(): void {
+    this.searchService.setTerm(this.globalSearchTerm);
+  }
+
+  toggleMobileSearch(): void {
+    this.showMobileSearch = !this.showMobileSearch;
+    if (!this.showMobileSearch) this.clearSearch();
+    this.cdr.detectChanges();
+  }
+
+  clearSearch(): void {
+    this.globalSearchTerm = '';
+    this.searchService.clear();
+    this.showMobileSearch = false;
+    this.cdr.detectChanges();
   }
 
   private buildMenu(): void {

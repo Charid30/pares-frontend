@@ -1,9 +1,12 @@
 // src/features/dashboard/agent/modules/agents/agent-agents.ts
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../../../core/services/auth.service';
+import { SearchService } from '../../../../../core/services/search.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
 
 interface DirectionInfo {
@@ -139,14 +142,6 @@ interface Service {
 
             <!-- Filtres -->
             <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row gap-3">
-              <div class="relative flex-1">
-                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
-                </svg>
-                <input type="text" [(ngModel)]="search" (ngModelChange)="filtrer()"
-                       placeholder="Rechercher un agent..."
-                       class="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 rounded-xl focus:ring-2 focus:ring-red-400 outline-none"/>
-              </div>
               <select [(ngModel)]="filtreActif" (ngModelChange)="filtrer()"
                       class="px-3 py-2 text-sm bg-gray-50 border border-gray-200 text-gray-700 rounded-xl focus:ring-2 focus:ring-red-400 outline-none">
                 <option value="">Tous</option>
@@ -621,6 +616,16 @@ interface Service {
   `,
 })
 export class AgentAgents implements OnInit {
+
+  // Recherche : barre « Rechercher… » du header de l'espace agent (comme l'admin)
+  private readonly rechercheHeader = (() => {
+    const searchService = inject(SearchService);
+    const cdr = inject(ChangeDetectorRef);
+    searchService.activer();
+    return searchService.term$
+      .pipe(skip(1), debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
+      .subscribe(term => { this.search = term.trim(); this.filtrer(); cdr.markForCheck(); });
+  })();
 
   agents: Agent[] = [];
   agentsFiltres: Agent[] = [];

@@ -18,68 +18,85 @@
   </div>
 
   <!-- Header -->
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+  <div class="flex items-start sm:items-center justify-between gap-3">
     <div>
       <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">{{ readOnly ? 'Tous les stages' : 'Gestion des Stages' }}</h1>
-      <p class="text-xs sm:text-sm text-gray-500 mt-0.5">{{ total }} demande(s) de stage</p>
+      <p class="text-xs sm:text-sm text-gray-500 mt-0.5">
+        <span class="font-semibold text-gray-700">{{ total }}</span> demande{{ total > 1 ? 's' : '' }} de stage
+      </p>
     </div>
-    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+    <div class="flex items-center gap-2 flex-shrink-0">
+      <!-- Filtres : icône entonnoir + panneau déroulant (comme l'écran admin) -->
       <div class="relative">
-        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
-             fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
-        </svg>
-        <input type="text" [(ngModel)]="search" (ngModelChange)="onFiltreChange()"
-               placeholder="Rechercher par nom, prénom, email..."
-               class="w-full sm:w-64 pl-9 pr-9 py-2 rounded-xl text-sm bg-white border border-gray-200 text-gray-700
-                      focus:outline-none focus:ring-2 focus:ring-primary-400 focus:bg-white transition-all"/>
-        <button *ngIf="search" (click)="search = ''; onFiltreChange()"
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+        <button (click)="showFiltres = !showFiltres"
+                class="relative flex items-center gap-1.5 px-3 sm:px-4 py-2 font-medium rounded-xl active:scale-95 transition-all text-sm shadow-sm cursor-pointer border"
+                [ngClass]="nbFiltresActifs ? 'bg-red-50 border-red-200 text-[#c0392b]' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'"
+                [attr.aria-expanded]="showFiltres" title="Filtrer la liste">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
           </svg>
+          <span class="hidden sm:inline">Filtres</span>
+          <span *ngIf="nbFiltresActifs"
+                class="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold text-white flex items-center justify-center"
+                style="background:#c0392b;">{{ nbFiltresActifs }}</span>
         </button>
+
+        <!-- Fond transparent : ferme le panneau au clic extérieur -->
+        <div *ngIf="showFiltres" class="fixed inset-0 z-30" (click)="showFiltres = false"></div>
+
+        <div *ngIf="showFiltres"
+             class="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-gray-100 z-40 overflow-hidden">
+          <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+            <p class="text-xs font-bold text-gray-700 uppercase tracking-wide">Filtrer</p>
+            <button *ngIf="nbFiltresActifs" (click)="effacerFiltres()"
+                    class="text-[11px] font-semibold text-[#c0392b] hover:text-[#96281b] transition-colors">
+              Réinitialiser
+            </button>
+          </div>
+          <div class="p-4 space-y-3">
+            <div *ngIf="!statusFilter">
+              <label class="block text-[11px] font-semibold text-gray-500 mb-1">Statut</label>
+              <select [(ngModel)]="filtreStatut" (change)="onFiltreChange()"
+                      class="w-full px-3 py-2 rounded-xl text-xs border border-gray-200 bg-gray-50 text-gray-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-[#c0392b]">
+                <option value="">Selon l'onglet</option>
+                <option value="EN_ATTENTE">En attente</option>
+                <option value="RESOUMISE">Resoumise</option>
+                <option value="PROGRAMMATION_EN_COURS">Programmation en cours</option>
+                <option value="ACCEPTE">Accepté</option>
+                <option value="EN_COURS">En cours</option>
+                <option value="SUSPENDU">Suspendu</option>
+                <option value="EXPIRE">Expiré</option>
+                <option value="RAPPORT_SOUMIS">Rapport soumis</option>
+                <option value="TERMINE">Terminé</option>
+                <option value="REJETE">Rejeté</option>
+                <option value="ANNULE">Annulé</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-gray-500 mb-1">Type de stage</label>
+              <select [(ngModel)]="filtreType" (change)="onFiltreChange()"
+                      class="w-full px-3 py-2 rounded-xl text-xs border border-gray-200 bg-gray-50 text-gray-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-[#c0392b]">
+                <option value="">Tous les types</option>
+                <option value="SOUTENANCE">Soutenance</option>
+                <option value="PERFECTIONNEMENT">Perfectionnement</option>
+              </select>
+            </div>
+          </div>
+          <div class="px-4 py-3 border-t border-gray-100 bg-gray-50/60 flex items-center justify-between">
+            <span class="text-[11px] text-gray-500"><span class="font-semibold text-gray-700">{{ total }}</span> résultat{{ total > 1 ? 's' : '' }}</span>
+            <button (click)="showFiltres = false"
+                    class="px-3 py-1.5 text-xs font-semibold text-white rounded-lg hover:bg-[#96281b] transition-colors"
+                    style="background:#c0392b;">
+              Fermer
+            </button>
+          </div>
+        </div>
       </div>
 
-      <select [(ngModel)]="filtreStatut" (change)="onFiltreChange()"
-              class="px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-400 cursor-pointer flex-shrink-0">
-        <option value="">Tous les statuts</option>
-        <option value="EN_ATTENTE">En attente</option>
-        <option value="EN_TRAITEMENT">En traitement</option>
-        <option value="ACCEPTE">Accepté</option>
-        <option value="EN_COURS">En cours</option>
-        <option value="TERMINE">Terminé</option>
-        <option value="REJETE">Rejeté</option>
-      </select>
-
-      <select [(ngModel)]="filtreType" (change)="onFiltreChange()"
-              class="px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-400 cursor-pointer flex-shrink-0">
-        <option value="">Tous les types</option>
-        <option value="ACADEMIQUE">Académique</option>
-        <option value="PROFESSIONNEL">Professionnel</option>
-        <option value="PRE_EMPLOI">Pré-emploi</option>
-        <option value="PERFECTIONNEMENT">Perfectionnement</option>
-      </select>
-
-      <button *ngIf="filtreStatut || filtreType || search" (click)="effacerFiltres()"
-              class="px-3 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors flex-shrink-0">
-        Effacer
-      </button>
-
-      <!-- Archives : demandes rejetées, masquées par défaut -->
-      <button *ngIf="!statusFilter" (click)="toggleArchives()"
-              class="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-xl transition-all shadow-sm flex-shrink-0"
-              [ngClass]="voirArchives ? 'bg-slate-700 text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M5 8h14M5 8a2 2 0 01-2-2V4a2 2 0 012-2h14a2 2 0 012 2v2a2 2 0 01-2 2M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
-        </svg>
-        <span class="hidden sm:inline">{{ voirArchives ? 'Demandes actives' : 'Voir les archives' }}</span>
-      </button>
-
       <button (click)="charger()"
-              class="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 active:scale-95 transition-all text-sm shadow-sm flex-shrink-0">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              class="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 active:scale-95 transition-all text-sm shadow-sm"
+              title="Actualiser">
+        <svg class="w-4 h-4" [class.animate-spin]="isLoading" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
         </svg>
@@ -88,20 +105,57 @@
     </div>
   </div>
 
-  <!-- Stats Cards -->
+  <!-- Stats Cards (cliquables : ouvrent l'onglet correspondant) -->
   <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-    <app-stat-card accent="red" label="Total" [value]="stats.total"
-      iconPath="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></app-stat-card>
-    <app-stat-card accent="amber" label="En attente" [value]="stats.enAttente"
-      iconPath="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></app-stat-card>
-    <app-stat-card accent="emerald" label="En cours" [value]="stats.enCours"
-      iconPath="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></app-stat-card>
-    <app-stat-card accent="slate" label="Terminés" [value]="stats.termine"
-      iconPath="M5 13l4 4L19 7"></app-stat-card>
+    <button type="button" class="text-left" [disabled]="!!statusFilter" (click)="changerVue('toutes')">
+      <app-stat-card accent="red" label="Total" [value]="stats.total" sublabel="Demandes de vos directions"
+        [active]="!statusFilter && vueActive === 'toutes'"
+        iconPath="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></app-stat-card>
+    </button>
+    <button type="button" class="text-left" [disabled]="!!statusFilter" (click)="changerVue('attente')">
+      <app-stat-card accent="amber" label="En attente" [value]="stats.enAttente" sublabel="À approuver"
+        [active]="!statusFilter && vueActive === 'attente'"
+        iconPath="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></app-stat-card>
+    </button>
+    <button type="button" class="text-left" [disabled]="!!statusFilter" (click)="changerVue('approuve')">
+      <app-stat-card accent="blue" label="Approuvées" [value]="stats.accepte" sublabel="Convention à joindre"
+        [active]="!statusFilter && vueActive === 'approuve'"
+        iconPath="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></app-stat-card>
+    </button>
+    <button type="button" class="text-left" [disabled]="!!statusFilter" (click)="changerVue('encours')">
+      <app-stat-card accent="emerald" label="En cours" [value]="stats.enCours" sublabel="Acceptés et en stage"
+        [active]="!statusFilter && vueActive === 'encours'"
+        iconPath="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></app-stat-card>
+    </button>
+  </div>
+
+  <!-- Filtres actifs (rappel discret — la saisie se fait via l'entonnoir et la recherche du header) -->
+  <div *ngIf="nbFiltresActifs || search" class="flex flex-wrap items-center gap-2 text-xs">
+    <span class="text-gray-400"><span class="font-semibold text-gray-600">{{ total }}</span> résultat{{ total > 1 ? 's' : '' }}</span>
+    <span *ngIf="search" class="px-2 py-1 rounded-full bg-gray-100 text-gray-600">Recherche : « {{ search }} »</span>
+    <span *ngIf="filtreStatut" class="px-2 py-1 rounded-full bg-red-50 text-[#c0392b] font-medium">{{ filtreStatut === 'RESOUMISE' ? 'Resoumise' : getStatutLabel(filtreStatut) }}</span>
+    <span *ngIf="filtreType" class="px-2 py-1 rounded-full bg-red-50 text-[#c0392b] font-medium">{{ getTypeLabel(filtreType) }}</span>
+    <button *ngIf="nbFiltresActifs" (click)="effacerFiltres()" class="font-semibold text-[#c0392b] hover:text-[#96281b] transition-colors">
+      Réinitialiser
+    </button>
   </div>
 
   <!-- Contenu principal -->
   <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+
+    <!-- Onglets de vue (pas sur les écrans « Vue globale », dont le statut est imposé) -->
+    <div *ngIf="peutConsulter && !statusFilter"
+         class="flex items-center gap-1 px-3 pt-2 border-b border-gray-100 overflow-x-auto" role="tablist">
+      <button *ngFor="let v of vues" role="tab" [attr.aria-selected]="vueActive === v.key"
+              (click)="changerVue(v.key)"
+              class="relative flex items-center gap-1.5 px-3 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors"
+              [ngClass]="vueActive === v.key ? 'text-[#c0392b]' : 'text-gray-500 hover:text-gray-700'">
+        {{ v.label }}
+        <span *ngIf="vueActive === v.key && !isLoading"
+              class="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-[#c0392b]">{{ total }}</span>
+        <span *ngIf="vueActive === v.key" class="absolute left-2 right-2 -bottom-px h-0.5 rounded-full" style="background:#c0392b;"></span>
+      </button>
+    </div>
 
     <!-- Accès refusé -->
     <div *ngIf="!peutConsulter" class="p-8 text-center">
@@ -117,90 +171,84 @@
 
     <!-- Chargement -->
     <div *ngIf="peutConsulter && isLoading" class="p-8 text-center">
-      <div class="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-      <p class="text-gray-500">Chargement des stages...</p>
+      <div class="w-10 h-10 border-4 border-[#c0392b] border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+      <p class="text-sm text-gray-500">Chargement des stages...</p>
     </div>
 
     <!-- État vide -->
-    <div *ngIf="peutConsulter && !isLoading && stagesFiltres.length === 0" class="p-8 text-center">
-      <div class="w-16 h-16 bg-yellow-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-        <svg class="w-8 h-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/>
+    <div *ngIf="peutConsulter && !isLoading && stagesFiltres.length === 0" class="p-10 text-center">
+      <div class="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+        <svg class="w-7 h-7 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
         </svg>
       </div>
-      <h3 class="text-lg font-semibold text-gray-900 mb-2">
-        {{ search || filtreStatut || filtreType ? 'Aucun résultat pour ce filtre' : 'Aucune demande de stage' }}
+      <h3 class="text-sm font-bold text-gray-700 mb-1">
+        {{ search || nbFiltresActifs ? 'Aucun résultat pour ces critères' : 'Aucune demande de stage dans cet onglet' }}
       </h3>
-      <p class="text-gray-500">
-        {{ search || filtreStatut || filtreType
-          ? 'Essayez de modifier vos critères.'
-          : 'Les demandes soumises par les candidats apparaîtront ici.' }}
+      <p class="text-xs text-gray-400">
+        {{ search || nbFiltresActifs
+          ? 'Modifiez la recherche ou les filtres.'
+          : 'Les demandes de vos directions apparaîtront ici.' }}
       </p>
     </div>
 
     <!-- TABLE DESKTOP -->
     <div *ngIf="peutConsulter && !isLoading && stagesFiltres.length > 0" class="hidden md:block overflow-x-auto">
       <table class="w-full">
-        <thead class="bg-gray-50 border-b border-gray-100">
+        <thead class="bg-gray-50/70 border-b border-gray-100">
           <tr>
-            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Candidat</th>
-            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
-            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Domaine</th>
-            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date souhaitée</th>
-            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date effective</th>
-            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Statut</th>
-            <th class="px-4 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+            <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-400">Candidat</th>
+            <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-400">Domaine</th>
+            <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-400">Date souhaitée / proposée</th>
+            <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-400">Statut</th>
+            <th class="px-4 py-3.5 text-right text-xs font-semibold text-gray-400">Actions</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-100">
-          <tr *ngFor="let s of stagesFiltres" class="hover:bg-gray-50 transition-colors">
+        <tbody class="divide-y divide-gray-50">
+          <tr *ngFor="let s of stagesFiltres" class="group hover:bg-red-50/30 transition-colors duration-150">
 
             <!-- Candidat -->
             <td class="px-4 py-4">
               <div class="flex items-center gap-3">
-                <div class="w-9 h-9 bg-gradient-to-br from-red-100 to-red-200 rounded-full flex items-center justify-center text-red-700 font-semibold text-sm flex-shrink-0">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm flex-shrink-0 shadow-sm text-white"
+                     style="background: linear-gradient(135deg, #c0392b, #96281b)">
                   {{ getInitiales(s) }}
                 </div>
                 <div class="min-w-0">
-                  <p class="text-sm font-medium text-gray-900 truncate">{{ s.candidat?.prenom || '—' }} {{ s.candidat?.nom || '' }}</p>
-                  <p class="text-xs text-gray-500 truncate">{{ s.candidat?.email || '—' }}</p>
+                  <p class="text-sm font-semibold text-gray-900 truncate">{{ s.candidat?.prenom || '—' }} {{ s.candidat?.nom || '' }}</p>
+                  <p class="text-xs text-gray-400 truncate">{{ s.candidat?.email || '—' }}</p>
+                  <p *ngIf="s.direction" class="text-[10px] text-gray-400 mt-0.5">
+                    <span class="bg-gray-100 px-1.5 py-0.5 rounded font-mono">{{ s.direction.accronyme }}</span>
+                  </p>
                 </div>
               </div>
             </td>
 
-            <!-- Type -->
+            <!-- Domaine + type -->
             <td class="px-4 py-4">
-              <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-indigo-100 text-indigo-700 whitespace-nowrap">
+              <p *ngIf="s.domaineStage" class="text-xs font-medium text-gray-700 leading-relaxed">{{ s.domaineStage }}</p>
+              <p *ngIf="!s.domaineStage" class="text-xs text-gray-300">—</p>
+              <span class="inline-block mt-0.5 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-gray-100 text-gray-600">
                 {{ getTypeLabel(s.typeStage) }}
               </span>
             </td>
 
-            <!-- Domaine -->
+            <!-- Dates : proposée (après approbation), sinon souhaitée ; date effective si connue -->
             <td class="px-4 py-4">
-              <span *ngIf="s.domaineStage" class="px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">
-                {{ s.domaineStage }}
-              </span>
-              <span *ngIf="!s.domaineStage" class="text-xs text-gray-300">—</span>
-            </td>
-
-            <!-- Date souhaitée -->
-            <td class="px-4 py-4">
-              <span *ngIf="s.dateDebutSouhaitee" class="text-xs text-gray-600 whitespace-nowrap">
-                {{ s.dateDebutSouhaitee | date:'dd/MM/yyyy' }}
-              </span>
-              <span *ngIf="!s.dateDebutSouhaitee" class="text-xs text-gray-300">—</span>
-            </td>
-
-            <!-- Date effective -->
-            <td class="px-4 py-4">
-              <span *ngIf="s.dateDebutEffective" class="inline-flex items-center gap-1 text-xs font-medium text-green-700 whitespace-nowrap">
-                <svg class="w-3 h-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                </svg>
-                {{ s.dateDebutEffective | date:'dd/MM/yyyy' }}
-              </span>
-              <span *ngIf="!s.dateDebutEffective" class="text-xs text-gray-300">—</span>
+              <ng-container *ngIf="s.statusStage === 'PROGRAMMATION_EN_COURS' && s.dateDebutProposee; else dateSouhaitee">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 border border-blue-100 text-[10px] font-bold text-blue-700 whitespace-nowrap mb-0.5">
+                  Proposée
+                </span>
+                <p class="text-xs text-gray-700">{{ s.dateDebutProposee | date:'dd/MM/yyyy' }}</p>
+              </ng-container>
+              <ng-template #dateSouhaitee>
+                <span *ngIf="s.dateDebutSouhaitee" class="text-xs text-gray-600 whitespace-nowrap">{{ s.dateDebutSouhaitee | date:'dd/MM/yyyy' }}</span>
+                <span *ngIf="!s.dateDebutSouhaitee" class="text-xs text-gray-300">—</span>
+              </ng-template>
+              <p *ngIf="s.dateDebutEffective" class="text-[10px] text-green-700 mt-0.5 whitespace-nowrap">
+                Effective : {{ s.dateDebutEffective | date:'dd/MM/yyyy' }}
+              </p>
             </td>
 
             <!-- Statut -->
@@ -210,11 +258,16 @@
                   {{ getStatutLabel(s.statutAffiche || s.statusStage) }}
                 </span>
                 <span *ngIf="s.statusStage === 'EN_ATTENTE' && s.dateResoumission"
-                      class="px-2 py-1 text-[10px] font-semibold rounded-full bg-indigo-100 text-indigo-700"
+                      class="px-2 py-1 text-[10px] font-semibold rounded-full bg-amber-50 text-amber-700 border border-amber-200"
                       title="Resoumise après un rejet">
                   Resoumise
                 </span>
               </div>
+              <!-- Stage prolongé par renouvellement : fin de prolongation + durée totale -->
+              <p *ngIf="s.chaine?.nbRenouvellements" class="text-[10px] text-gray-400 mt-1">
+                <ng-container *ngIf="s.statutAffiche === 'PROLONGE' && s.chaine?.finProlongation">jusqu'au {{ s.chaine!.finProlongation | date:'dd/MM/yyyy' }} · </ng-container>
+                {{ s.chaine!.dureeTotaleMois }} mois au total
+              </p>
             </td>
 
             <!-- Actions -->
@@ -258,7 +311,7 @@
                 <!-- Voir le rapport de stage soumis (avant évaluation ou avant de joindre l'attestation) -->
                 <button *ngIf="(s.statusStage === 'RAPPORT_SOUMIS' || s.statusStage === 'TERMINE') && s.rapport"
                         (click)="accederRapportBlob(s, 'voir')"
-                        class="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                        class="p-2 text-gray-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-colors"
                         title="Voir le rapport de stage">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -285,7 +338,7 @@
                 <!-- Convention : CREER requis (stage ACCEPTE ou EN_COURS) -->
                 <button *ngIf="peutCreer && peutAgirSur(s) && actionAutorisee('DOC') && (s.statusStage === 'ACCEPTE' || s.statusStage === 'EN_COURS')"
                         (click)="ouvrirDocModal(s)"
-                        class="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                        class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         title="Créer document">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -368,7 +421,7 @@
                 {{ getStatutLabel(s.statutAffiche || s.statusStage) }}
               </span>
               <span *ngIf="s.statusStage === 'EN_ATTENTE' && s.dateResoumission"
-                    class="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                    class="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700">
                 Resoumise
               </span>
             </div>
@@ -376,7 +429,7 @@
 
           <!-- Badges -->
           <div class="flex items-center gap-2 flex-wrap">
-            <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-indigo-100 text-indigo-700">
+            <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
               {{ getTypeLabel(s.typeStage) }}
             </span>
             <span *ngIf="s.domaineStage" class="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">
@@ -416,7 +469,7 @@
             </button>
             <!-- Approuver — Approbateur -->
             <button *ngIf="peutApprouver && peutAgirSur(s) && actionAutorisee('APPROUVER') && s.statusStage === 'EN_ATTENTE'"
-                    (click)="approuverStage(s)"
+                    (click)="ouvrirApprobation(s)"
                     [disabled]="soumission"
                     class="flex items-center gap-1.5 py-2 px-3 text-xs font-semibold text-blue-600 bg-blue-50 rounded-xl hover:bg-blue-100 active:scale-95 transition-all disabled:opacity-50">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -472,7 +525,7 @@
             <!-- Voir le rapport de stage soumis (avant évaluation ou avant de joindre l'attestation) -->
             <button *ngIf="(s.statusStage === 'RAPPORT_SOUMIS' || s.statusStage === 'TERMINE') && s.rapport"
                     (click)="accederRapportBlob(s, 'voir')"
-                    class="flex items-center gap-1.5 py-2 px-3 text-xs font-semibold text-purple-600 bg-purple-50 rounded-xl hover:bg-purple-100 active:scale-95 transition-all">
+                    class="flex items-center gap-1.5 py-2 px-3 text-xs font-semibold text-sky-600 bg-sky-50 rounded-xl hover:bg-sky-100 active:scale-95 transition-all">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M9 12h6m-6 4h6M9 8h6M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16z"/>
@@ -499,7 +552,7 @@
             <!-- Convention : CREER requis -->
             <button *ngIf="peutCreer && peutAgirSur(s) && actionAutorisee('DOC') && (s.statusStage === 'ACCEPTE' || s.statusStage === 'EN_COURS')"
                     (click)="ouvrirDocModal(s)"
-                    class="flex items-center gap-1.5 py-2 px-3 text-xs font-semibold text-indigo-600 bg-indigo-50 rounded-xl hover:bg-indigo-100 active:scale-95 transition-all">
+                    class="flex items-center gap-1.5 py-2 px-3 text-xs font-semibold text-red-600 bg-red-50 rounded-xl hover:bg-red-100 active:scale-95 transition-all">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -957,13 +1010,13 @@
 
       <!-- Autorisation de renouvellement (TERMINE / EXPIRE — ADMIN seulement) -->
       <div *ngIf="peutAutoriserRenouvellement && (detailStage.statusStage === 'TERMINE' || detailStage.statusStage === 'EXPIRE')"
-           class="border border-indigo-200 rounded-xl overflow-hidden">
-        <div class="px-4 py-3 bg-indigo-50 flex items-center gap-2">
-          <svg class="w-4 h-4 text-indigo-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+           class="border border-red-200 rounded-xl overflow-hidden">
+        <div class="px-4 py-3 bg-red-50 flex items-center gap-2">
+          <svg class="w-4 h-4 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
           </svg>
-          <p class="text-xs font-semibold text-indigo-700 uppercase tracking-widest">Autorisation de renouvellement</p>
+          <p class="text-xs font-semibold text-red-700 uppercase tracking-widest">Autorisation de renouvellement</p>
         </div>
         <div class="px-4 py-3">
           <!-- Autorisation active -->
@@ -982,14 +1035,14 @@
               </div>
               <button (click)="autoriserRenouvellement(detailStage)"
                       [disabled]="soumissionAutorisation"
-                      class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-700 bg-white
-                             border border-indigo-300 rounded-lg hover:bg-indigo-50 transition-colors
+                      class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-700 bg-white
+                             border border-red-300 rounded-lg hover:bg-red-50 transition-colors
                              disabled:opacity-60 disabled:cursor-not-allowed">
                 <svg *ngIf="!soumissionAutorisation" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                 </svg>
-                <div *ngIf="soumissionAutorisation" class="w-3 h-3 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                <div *ngIf="soumissionAutorisation" class="w-3 h-3 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
                 Renouveler +7j
               </button>
             </div>
@@ -1008,8 +1061,8 @@
               </div>
               <button (click)="autoriserRenouvellement(detailStage)"
                       [disabled]="soumissionAutorisation"
-                      class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600
-                             rounded-lg hover:bg-indigo-700 transition-colors
+                      class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-[#c0392b]
+                             rounded-lg hover:bg-[#96281b] transition-colors
                              disabled:opacity-60 disabled:cursor-not-allowed">
                 <svg *ngIf="!soumissionAutorisation" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -1669,7 +1722,7 @@
      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
   <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
 
-    <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-3 bg-indigo-600">
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-3" style="background: linear-gradient(135deg, #c0392b, #96281b)">
       <div class="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -1690,7 +1743,7 @@
     <div class="p-6 space-y-4">
 
       <div *ngIf="checkingConvention" class="flex items-center gap-2 text-sm text-gray-400">
-        <div class="w-4 h-4 border-2 border-gray-300 border-t-indigo-500 rounded-full animate-spin"></div>
+        <div class="w-4 h-4 border-2 border-gray-300 border-t-red-500 rounded-full animate-spin"></div>
         Vérification des documents...
       </div>
 
@@ -1717,7 +1770,7 @@
         </label>
         <select [(ngModel)]="docType"
                 class="w-full px-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl
-                       focus:border-indigo-500 focus:bg-white focus:ring-0 outline-none transition-all">
+                       focus:border-red-500 focus:bg-white focus:ring-0 outline-none transition-all">
           <option value="CONVENTION" [disabled]="stageHasConvention">
             Convention de stage{{ stageHasConvention ? ' (déjà jointe)' : '' }}
           </option>
@@ -1731,7 +1784,7 @@
         </label>
         <input type="date" [(ngModel)]="docDateEmission"
                class="w-full px-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl
-                      focus:border-indigo-500 focus:bg-white focus:ring-0 outline-none transition-all"/>
+                      focus:border-red-500 focus:bg-white focus:ring-0 outline-none transition-all"/>
       </div>
 
       <div>
@@ -1739,13 +1792,13 @@
           Fichier PDF <span class="text-primary-500">*</span>
         </label>
         <label class="flex items-center gap-3 px-4 py-3 bg-gray-50 border-2 border-dashed border-gray-200
-                      rounded-xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 transition-all group">
-          <svg class="w-5 h-5 text-gray-400 group-hover:text-indigo-500 transition-colors flex-shrink-0"
+                      rounded-xl cursor-pointer hover:border-red-400 hover:bg-red-50/50 transition-all group">
+          <svg class="w-5 h-5 text-gray-400 group-hover:text-red-500 transition-colors flex-shrink-0"
                fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
           </svg>
-          <span class="text-sm" [ngClass]="docFile ? 'text-indigo-700 font-medium' : 'text-gray-400'">
+          <span class="text-sm" [ngClass]="docFile ? 'text-red-700 font-medium' : 'text-gray-400'">
             {{ docFile ? docFile.name : 'Cliquer pour sélectionner un PDF' }}
           </span>
           <input type="file" accept="application/pdf" class="hidden" (change)="onDocFileChange($event)"/>
@@ -1760,7 +1813,7 @@
         Annuler
       </button>
       <button (click)="creerDocument()" [disabled]="soumissionDoc || (stageHasConvention && docType === 'CONVENTION')"
-              class="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all shadow-md shadow-indigo-500/25 disabled:opacity-50 disabled:cursor-not-allowed">
+              class="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-[#c0392b] hover:bg-[#96281b] rounded-xl transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
         <div *ngIf="soumissionDoc" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
         {{ soumissionDoc ? 'Création...' : 'Créer le document' }}
       </button>

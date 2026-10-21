@@ -1,8 +1,11 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../../../core/services/auth.service';
+import { SearchService } from '../../../../../core/services/search.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
 import { StatCard } from '../../../../../shared/components/stat-card/stat-card';
 
@@ -47,6 +50,16 @@ interface Stats {
   templateUrl: './agent-candidats.html',
 })
 export class AgentCandidats implements OnInit {
+
+  // Recherche : barre « Rechercher… » du header de l'espace agent (comme l'admin)
+  private readonly rechercheHeader = (() => {
+    const searchService = inject(SearchService);
+    const cdr = inject(ChangeDetectorRef);
+    searchService.activer();
+    return searchService.term$
+      .pipe(skip(1), debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
+      .subscribe(term => { this.search = term.trim(); this.onSearch(); cdr.markForCheck(); });
+  })();
 
   // ── Données ─────────────────────────────────────────────────
   candidats: Candidat[] = [];

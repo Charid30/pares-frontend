@@ -1,10 +1,13 @@
 // src/features/dashboard/agent/modules/suivi-stage/agent-suivi-stage.ts
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../../../core/services/auth.service';
+import { SearchService } from '../../../../../core/services/search.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
 import { StatCard } from '../../../../../shared/components/stat-card/stat-card';
 
@@ -32,6 +35,16 @@ interface SuiviStage {
   templateUrl: './agent-suivi-stage.html',
 })
 export class AgentSuiviStage implements OnInit {
+
+  // Recherche : barre « Rechercher… » du header de l'espace agent (comme l'admin)
+  private readonly rechercheHeader = (() => {
+    const searchService = inject(SearchService);
+    const cdr = inject(ChangeDetectorRef);
+    searchService.activer();
+    return searchService.term$
+      .pipe(skip(1), debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
+      .subscribe(term => { this.search = term.trim(); this.filtrer(); cdr.markForCheck(); });
+  })();
 
   stages: SuiviStage[] = [];
   stagesFiltres: SuiviStage[] = [];
@@ -85,7 +98,6 @@ export class AgentSuiviStage implements OnInit {
   }
 
   effacerFiltres(): void {
-    this.search = '';
     this.filtreType = '';
     this.filtrer();
   }
@@ -107,9 +119,7 @@ export class AgentSuiviStage implements OnInit {
 
   getTypeLabel(type: string): string {
     const labels: Record<string, string> = {
-      ACADEMIQUE: 'Académique',
-      PROFESSIONNEL: 'Professionnel',
-      PRE_EMPLOI: 'Pré-emploi',
+      SOUTENANCE: 'Soutenance',
       PERFECTIONNEMENT: 'Perfectionnement',
     };
     return labels[type] || type;

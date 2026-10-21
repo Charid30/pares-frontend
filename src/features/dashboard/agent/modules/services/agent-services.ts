@@ -1,9 +1,12 @@
 // src/features/dashboard/agent/modules/services/agent-services.ts
-import { ChangeDetectorRef, Component, NgZone, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, NgZone, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../../../core/services/auth.service';
+import { SearchService } from '../../../../../core/services/search.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
 
 interface Service {
@@ -112,25 +115,6 @@ interface Service {
 
           <!-- Main (2/3) -->
           <div class="lg:col-span-2 space-y-4">
-
-            <!-- Filtre -->
-            <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex gap-2">
-              <div class="relative flex-1">
-                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
-                </svg>
-                <input type="text" [(ngModel)]="search" (ngModelChange)="filtrer()"
-                       placeholder="Rechercher un service..."
-                       class="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 rounded-xl focus:ring-2 focus:ring-red-400 outline-none"/>
-              </div>
-              <button (click)="search = ''; filtrer()"
-                      class="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-200 hover:border-gray-300 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors flex items-center gap-1.5">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-                <span class="hidden sm:inline">Effacer</span>
-              </button>
-            </div>
 
             <div *ngIf="loading" class="flex justify-center py-12">
               <div class="w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin"></div>
@@ -362,6 +346,16 @@ interface Service {
   `,
 })
 export class AgentServices implements OnInit {
+
+  // Recherche : barre « Rechercher… » du header de l'espace agent (comme l'admin)
+  private readonly rechercheHeader = (() => {
+    const searchService = inject(SearchService);
+    const cdr = inject(ChangeDetectorRef);
+    searchService.activer();
+    return searchService.term$
+      .pipe(skip(1), debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
+      .subscribe(term => { this.search = term.trim(); this.filtrer(); cdr.markForCheck(); });
+  })();
 
   services: Service[] = [];
   servicesFiltres: Service[] = [];

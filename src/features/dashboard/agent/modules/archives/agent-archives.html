@@ -12,19 +12,9 @@
     </span>
   </div>
 
-  <!-- Filtres -->
+  <!-- Filtres (la recherche se fait via la barre du header) -->
   <div class="bg-white rounded-xl border border-gray-200 p-4">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div>
-        <label class="block text-xs font-medium text-gray-500 mb-1">Recherche</label>
-        <input
-          type="text"
-          [(ngModel)]="search"
-          (ngModelChange)="onFiltreChange()"
-          placeholder="Nom, prénom, email…"
-          class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-        />
-      </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
         <label class="block text-xs font-medium text-gray-500 mb-1">Type de stage</label>
         <select
@@ -33,9 +23,8 @@
           class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
         >
           <option value="">Tous les types</option>
-          <option value="ACADEMIQUE">Académique</option>
-          <option value="PROFESSIONNEL">Professionnel</option>
-          <option value="AUTRE">Autre</option>
+          <option value="SOUTENANCE">Soutenance</option>
+          <option value="PERFECTIONNEMENT">Perfectionnement</option>
         </select>
       </div>
       <div class="flex items-end">

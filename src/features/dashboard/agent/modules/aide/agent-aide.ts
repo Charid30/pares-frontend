@@ -1,10 +1,13 @@
 // src/features/dashboard/agent/modules/aide/agent-aide.ts
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { AuthService } from '../../../../../core/services/auth.service';
+import { SearchService } from '../../../../../core/services/search.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
 import { StatCard } from '../../../../../shared/components/stat-card/stat-card';
 
@@ -41,6 +44,16 @@ interface Aide {
   templateUrl: './agent-aide.html',
 })
 export class AgentAide implements OnInit {
+
+  // Recherche : barre « Rechercher… » du header de l'espace agent (comme l'admin)
+  private readonly rechercheHeader = (() => {
+    const searchService = inject(SearchService);
+    const cdr = inject(ChangeDetectorRef);
+    searchService.activer();
+    return searchService.term$
+      .pipe(skip(1), debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
+      .subscribe(term => { this.search = term.trim(); this.filtrer(); cdr.markForCheck(); });
+  })();
 
   aides: Aide[] = [];
   aidesFiltrees: Aide[] = [];
@@ -219,7 +232,6 @@ export class AgentAide implements OnInit {
   }
 
   effacerFiltres(): void {
-    this.search = '';
     this.filtreStatut = '';
     this.filtreType = '';
     this.filtrer();

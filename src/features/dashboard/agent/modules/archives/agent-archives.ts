@@ -1,9 +1,12 @@
 // agent-archives.ts — Stages archivés (EXPIRE + sans parent)
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
+import { SearchService } from '../../../../../core/services/search.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
 
 interface Candidat {
   idcandidats: number;
@@ -38,6 +41,16 @@ interface StageArchive {
   templateUrl: './agent-archives.html',
 })
 export class AgentArchives implements OnInit {
+
+  // Recherche : barre « Rechercher… » du header de l'espace agent (comme l'admin)
+  private readonly rechercheHeader = (() => {
+    const searchService = inject(SearchService);
+    const cdr = inject(ChangeDetectorRef);
+    searchService.activer();
+    return searchService.term$
+      .pipe(skip(1), debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
+      .subscribe(term => { this.search = term.trim(); this.onFiltreChange(); cdr.markForCheck(); });
+  })();
 
   private readonly apiUrl = environment.apiUrl;
 
@@ -99,7 +112,6 @@ export class AgentArchives implements OnInit {
   }
 
   effacerFiltres(): void {
-    this.search = '';
     this.filtreType = '';
     this.page = 1;
     this.charger();

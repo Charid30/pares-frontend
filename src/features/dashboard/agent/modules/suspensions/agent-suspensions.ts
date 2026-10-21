@@ -1,10 +1,13 @@
 // src/features/dashboard/agent/modules/suspensions/agent-suspensions.ts
 // Agent — Demandes de suspension / annulation de stage (module SUSPENSION_STAGE)
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../../../core/services/auth.service';
+import { SearchService } from '../../../../../core/services/search.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
 import { StatCard } from '../../../../../shared/components/stat-card/stat-card';
 
@@ -31,6 +34,16 @@ interface DemandeModification {
   templateUrl: './agent-suspensions.html',
 })
 export class AgentSuspensions implements OnInit {
+
+  // Recherche : barre « Rechercher… » du header de l'espace agent (comme l'admin)
+  private readonly rechercheHeader = (() => {
+    const searchService = inject(SearchService);
+    const cdr = inject(ChangeDetectorRef);
+    searchService.activer();
+    return searchService.term$
+      .pipe(skip(1), debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
+      .subscribe(term => { this.searchTerm = term.trim(); this.appliquerFiltres(); cdr.markForCheck(); });
+  })();
 
   demandes: DemandeModification[] = [];
   demandesFiltrees: DemandeModification[] = [];
@@ -107,7 +120,6 @@ export class AgentSuspensions implements OnInit {
   }
 
   effacerFiltres(): void {
-    this.searchTerm = '';
     this.filtreType = '';
     this.filtreStatut = '';
     this.appliquerFiltres();
