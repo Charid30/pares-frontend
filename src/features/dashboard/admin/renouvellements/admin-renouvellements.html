@@ -1010,25 +1010,22 @@
 
       <!-- ── ACCEPTATION ── -->
       <ng-container *ngIf="decisionType === 'ACCEPTE'">
-        <!-- Dates (optionnelles) -->
+        <!-- Date de début et durée accordée — la fin est calculée par le serveur (début + durée) -->
         <div class="bg-gray-50 rounded-xl border border-gray-100 p-3 space-y-2">
-          <div class="flex items-center justify-between">
-            <p class="text-[11px] font-bold text-gray-700 uppercase tracking-wide">Dates du nouveau stage</p>
-            <span class="text-[10px] text-gray-400">Optionnel — calculées automatiquement</span>
-          </div>
+          <p class="text-[11px] font-bold text-gray-700 uppercase tracking-wide">Nouveau stage</p>
           <div class="grid grid-cols-2 gap-2">
             <div>
-              <label class="block text-[10px] font-medium text-gray-500 mb-1">Début</label>
+              <label class="block text-[10px] font-medium text-gray-500 mb-1">Date de début</label>
               <input type="date" [(ngModel)]="dateDebutEffective"
                      class="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-200 focus:border-green-500"/>
             </div>
             <div>
-              <label class="block text-[10px] font-medium text-gray-500 mb-1">Fin</label>
-              <input type="date" [(ngModel)]="dateFinEffective" [min]="dateDebutEffective"
+              <label class="block text-[10px] font-medium text-gray-500 mb-1">Durée (mois) <span class="text-red-500">*</span></label>
+              <input type="number" min="1" max="12" step="1" [(ngModel)]="dureeAccordee"
                      class="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-200 focus:border-green-500"/>
             </div>
           </div>
-          <p class="text-[10px] text-gray-400">Par défaut : début le lendemain de la fin du stage actuel, fin = début + {{ selected.dureeDemandee }} mois.</p>
+          <p class="text-[10px] text-gray-400">Début par défaut : le lendemain de la fin du stage actuel. Durée demandée par le candidat : {{ selected.dureeDemandee }} mois. La fin est calculée automatiquement.</p>
         </div>
 
         <!-- Convention du renouvellement -->
@@ -1074,7 +1071,7 @@
         Annuler
       </button>
       <button (click)="confirmerDecision()"
-              [disabled]="soumission || (decisionType === 'REJETE' && !motifRefus.trim()) || (decisionType === 'ACCEPTE' && !conventionFile && selected.stageNouveau?.statusStage !== 'EN_COURS')"
+              [disabled]="soumission || (decisionType === 'REJETE' && !motifRefus.trim()) || (decisionType === 'ACCEPTE' && ((!conventionFile && selected.stageNouveau?.statusStage !== 'EN_COURS') || !dureeValide))"
               class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-semibold text-white rounded-xl disabled:opacity-50 transition-colors"
               [ngClass]="decisionType === 'ACCEPTE' ? 'bg-green-600 hover:bg-green-700' : 'bg-[#c0392b] hover:bg-[#96281b]'">
         <svg *ngIf="soumission" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">

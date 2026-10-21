@@ -110,7 +110,7 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
   conventionFile: File | null = null;
   lettreNonConforme = false;
   dateDebutEffective = '';
-  dateFinEffective = '';
+  dureeAccordee: number | null = null;
   soumission = false;
 
   // Modal convention (remplacer/joindre après acceptation)
@@ -420,7 +420,7 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
     this.conventionFile = null;
     this.lettreNonConforme = false;
     this.dateDebutEffective = '';
-    this.dateFinEffective = '';
+    this.dureeAccordee = this.selected?.dureeDemandee ?? null;
     this.showDecisionModal = true;
   }
 
@@ -431,7 +431,13 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
     this.lettreNonConforme = false;
     this.conventionFile = null;
     this.dateDebutEffective = '';
-    this.dateFinEffective = '';
+    this.dureeAccordee = null;
+  }
+
+  /** Durée accordée : entier de 1 à 12 mois (même règle que l'acceptation d'un stage) */
+  get dureeValide(): boolean {
+    const d = Number(this.dureeAccordee);
+    return Number.isInteger(d) && d >= 1 && d <= 12;
   }
 
   onConventionChange(event: Event): void {
@@ -443,6 +449,7 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
     if (this.decisionType === 'REJETE' && !this.motifRefus.trim()) return;
     const conventionDejaLiee = this.selected?.stageNouveau?.statusStage === 'EN_COURS';
     if (this.decisionType === 'ACCEPTE' && !this.conventionFile && !conventionDejaLiee) return;
+    if (this.decisionType === 'ACCEPTE' && !this.dureeValide) return;
     this.soumission = true;
     const body: Record<string, any> = { statusRenouvellement: this.decisionType };
     if (this.decisionType === 'REJETE') {
@@ -451,7 +458,7 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
     }
     if (this.decisionType === 'ACCEPTE') {
       if (this.dateDebutEffective) body['dateDebutEffective'] = this.dateDebutEffective;
-      if (this.dateFinEffective) body['dateFinEffective'] = this.dateFinEffective;
+      body['dureeAccordee'] = this.dureeAccordee;
     }
 
     this.http.put<{ success: boolean; data: any }>(

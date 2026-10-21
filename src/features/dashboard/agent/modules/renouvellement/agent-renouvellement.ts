@@ -102,6 +102,9 @@ export class AgentRenouvellement implements OnInit {
   motifRefus = '';
   conventionFile: File | null = null;
   soumission = false;
+  // Acceptation : date de début (optionnelle) et durée accordée (par défaut la durée demandée)
+  dateDebutEffective = '';
+  dureeAccordee: number | null = null;
   lettreNonConforme = false;
 
   // Modal convention (remplacer/joindre après acceptation)
@@ -323,6 +326,8 @@ export class AgentRenouvellement implements OnInit {
     this.motifRefus = '';
     this.conventionFile = null;
     this.lettreNonConforme = false;
+    this.dateDebutEffective = '';
+    this.dureeAccordee = this.selected?.dureeDemandee ?? null;
     this.showDecisionModal = true;
   }
 
@@ -332,6 +337,14 @@ export class AgentRenouvellement implements OnInit {
     this.motifRefus = '';
     this.lettreNonConforme = false;
     this.conventionFile = null;
+    this.dateDebutEffective = '';
+    this.dureeAccordee = null;
+  }
+
+  /** Durée accordée : entier de 1 à 12 mois (même règle que l'acceptation d'un stage) */
+  get dureeValide(): boolean {
+    const d = Number(this.dureeAccordee);
+    return Number.isInteger(d) && d >= 1 && d <= 12;
   }
 
   onConventionChange(event: Event): void {
@@ -342,11 +355,16 @@ export class AgentRenouvellement implements OnInit {
     if (!this.selected || !this.decisionType) return;
     if (this.decisionType === 'REJETE' && !this.motifRefus.trim()) return;
     if (this.decisionType === 'ACCEPTE' && this.peutCreerConvention && !this.conventionFile) return;
+    if (this.decisionType === 'ACCEPTE' && !this.dureeValide) return;
     this.soumission = true;
     const body: Record<string, any> = { statusRenouvellement: this.decisionType };
     if (this.decisionType === 'REJETE') {
       body['motifRefus'] = this.motifRefus.trim();
       body['lettreNonConforme'] = this.lettreNonConforme;
+    }
+    if (this.decisionType === 'ACCEPTE') {
+      if (this.dateDebutEffective) body['dateDebutEffective'] = this.dateDebutEffective;
+      body['dureeAccordee'] = this.dureeAccordee;
     }
 
     this.http.put<{ success: boolean; data: any }>(
