@@ -728,8 +728,9 @@
           </svg>
           Annuler l'approbation
         </button>
-        <!-- Joindre la convention du renouvellement si elle manque (le remplacement se fait depuis la carte Documents) -->
-        <button *ngIf="(selected.statusRenouvellement === 'ACCEPTE' || selected.statusRenouvellement === 'EN_COURS') && !selected.stageNouveau?.documents?.length"
+        <!-- Joindre la convention du renouvellement si elle manque, y compris sur un renouvellement terminé
+             (régularisation d'un ancien dossier ; le statut n'est pas modifié). Le remplacement se fait depuis la carte Documents. -->
+        <button *ngIf="peutJoindreConvention(selected) && !selected.stageNouveau?.documents?.length"
                 (click)="ouvrirConventionModal()"
                 class="flex items-center gap-1.5 py-2 px-3 text-xs font-semibold text-blue-600 bg-blue-50 rounded-xl hover:bg-blue-100 active:scale-95 transition-all">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

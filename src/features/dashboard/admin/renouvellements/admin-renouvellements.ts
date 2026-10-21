@@ -647,6 +647,11 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
   }
 
   /** Statuts où une décision (accepter / refuser) est encore possible — comme pour les stages */
+  /** Convention joignable après acceptation : accepté, en cours ou déjà terminé (régularisation) */
+  peutJoindreConvention(r: Renouvellement): boolean {
+    return ['ACCEPTE', 'EN_COURS', 'EXPIRE', 'TERMINE', 'RAPPORT_SOUMIS'].includes(r.statusRenouvellement);
+  }
+
   estAvantDecision(r: Renouvellement): boolean {
     return ['EN_ATTENTE', 'EN_COURS_DE_TRAITEMENT', 'PROGRAMMATION_EN_COURS'].includes(r.statusRenouvellement);
   }
