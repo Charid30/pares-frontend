@@ -65,7 +65,7 @@
                 <option value="EN_ATTENTE">En attente</option>
                 <option value="RESOUMISE">Resoumise</option>
                 <option value="EN_COURS_DE_TRAITEMENT">En traitement</option>
-                <option value="PROGRAMMATION_EN_COURS">Programmation en cours</option>
+                <option value="PROGRAMMATION_EN_COURS">En cours de programmation</option>
                 <option value="ACCEPTE">Accepté</option>
                 <option value="EN_COURS">En cours</option>
                 <option value="TERMINE">Terminé</option>
@@ -346,22 +346,13 @@
                 <div *ngIf="stage.statusStage === 'EN_ATTENTE' || stage.statusStage === 'EN_COURS_DE_TRAITEMENT' || stage.statusStage === 'PROGRAMMATION_EN_COURS' || stage.statusStage === 'ACCEPTE' || stage.statusStage === 'EN_COURS'"
                      class="w-px h-4 bg-gray-200 mx-0.5"></div>
                 <!-- Approuver (rôle spécifique) -->
-                <button *ngIf="canApprouver && stage.statusStage === 'EN_ATTENTE'"
+                <button *ngIf="canApprouver && (stage.statusStage === 'EN_ATTENTE' || stage.statusStage === 'EN_COURS_DE_TRAITEMENT')"
                         (click)="openApprouverModal(stage)"
                         [disabled]="submitting"
                         class="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all cursor-pointer disabled:opacity-40"
                         title="Approuver">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
-                </button>
-                <!-- En traitement -->
-                <button *ngIf="stage.statusStage === 'EN_ATTENTE'"
-                        (click)="mettreEnTraitement(stage)"
-                        class="p-1.5 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all cursor-pointer"
-                        title="Mettre en traitement">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
                 </button>
                 <!-- Accepter -->
@@ -481,14 +472,6 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
               </svg>
               Détails
-            </button>
-            <button *ngIf="stage.statusStage === 'EN_ATTENTE'"
-                    (click)="mettreEnTraitement(stage)"
-                    class="flex items-center gap-1.5 py-2 px-3 text-xs font-semibold text-orange-600 bg-orange-50 rounded-xl hover:bg-orange-100 active:scale-95 transition-all">
-              <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-              </svg>
-              Traiter
             </button>
             <button *ngIf="stage.statusStage === 'EN_ATTENTE' || stage.statusStage === 'EN_COURS_DE_TRAITEMENT' || stage.statusStage === 'PROGRAMMATION_EN_COURS'"
                     (click)="openAcceptModal(stage)"
@@ -1273,15 +1256,6 @@
                 </svg>
                 Modifier le motif
               </button>
-              <!-- Mettre en traitement -->
-              <button *ngIf="selectedStage.statusStage === 'EN_ATTENTE'"
-                      (click)="mettreEnTraitement(selectedStage); closeModal()"
-                      class="flex items-center gap-1.5 py-2 px-3 bg-white border border-gray-300 text-gray-700 text-xs font-semibold rounded-xl hover:bg-gray-100 active:scale-95 transition-all">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                </svg>
-                Traiter
-              </button>
               <!-- Accepter -->
               <button *ngIf="selectedStage.statusStage === 'EN_ATTENTE' || selectedStage.statusStage === 'EN_COURS_DE_TRAITEMENT' || selectedStage.statusStage === 'PROGRAMMATION_EN_COURS'"
                       (click)="openAcceptModal(selectedStage)"
@@ -1569,7 +1543,7 @@
         <div class="p-6 overflow-y-auto flex-1 min-h-0">
           <p class="text-gray-600 mb-4">
             Vous allez approuver la demande de <strong>{{ getCandidatName(selectedStage) }}</strong>.
-            Le statut passera à "Programmation en cours".
+            Le statut passera à « En cours de programmation ».
           </p>
 
           <div class="bg-yellow-50 rounded-xl p-4 mb-4">

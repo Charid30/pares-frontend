@@ -948,42 +948,6 @@ export class StagesList implements OnInit, OnDestroy {
     });
   }
 
-  mettreEnTraitement(stage: Stage): void {
-    this.openConfirmModal({
-      title: 'Mettre en traitement',
-      message: `Confirmez-vous la prise en charge de la demande de <strong>${stage.candidat.prenom} ${stage.candidat.nom}</strong> ?`,
-      confirmText: 'Mettre en traitement',
-      confirmStyle: 'bg-orange-500 hover:bg-orange-600 text-white',
-      iconPath: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
-      iconColor: 'text-orange-500',
-      onConfirm: () => {
-        this.submitting = true;
-        this.adminStageService.updateStatus(stage.idstage, {
-          statusStage: 'EN_COURS_DE_TRAITEMENT'
-        }).subscribe({
-      next: (response) => {
-        this.ngZone.run(() => {
-          if (response.success) {
-            this.loadStages();
-            this.loadStats();
-            this.showToast('success', 'En traitement', `La demande de ${stage.candidat.prenom} ${stage.candidat.nom} est maintenant en cours de traitement`);
-          }
-          this.submitting = false;
-          this.cdr.detectChanges();
-        });
-      },
-      error: (err) => {
-        this.ngZone.run(() => {
-          this.showToast('error', 'Erreur', err.error?.message || 'Erreur lors de la mise en traitement');
-          this.submitting = false;
-          this.cdr.detectChanges();
-        });
-      }
-    });
-      }
-    });
-  }
-
   demarrerStage(stage: Stage): void {
     this.openConfirmModal({
       title: 'Démarrer le stage',
@@ -1347,7 +1311,7 @@ export class StagesList implements OnInit, OnDestroy {
       'EXPIRE': 'Expire',
       'PROLONGE': 'Prolongé',
       'RAPPORT_SOUMIS': 'Rapport soumis',
-      'PROGRAMMATION_EN_COURS': 'Programmation en cours',
+      'PROGRAMMATION_EN_COURS': 'En cours de programmation',
       'SUSPENDU': 'Suspendu',
       'ANNULE': 'Annulé',
     };

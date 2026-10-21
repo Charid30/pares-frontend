@@ -268,7 +268,7 @@ export const routes: Routes = [
             {
                 path: 'stages-global/en-attente',
                 canActivate: [permissionGuard],
-                data: { module: 'STAGE', scope: 'global', readOnly: false, statusFilter: 'EN_ATTENTE', allowedTransitions: ['APPROUVER', 'REJETE'] },
+                data: { module: 'STAGE', scope: 'global', readOnly: false, statusFilter: 'EN_ATTENTE,EN_COURS_DE_TRAITEMENT', allowedTransitions: ['APPROUVER', 'REJETE'] },
                 loadComponent: () => import('../features/dashboard/agent/modules/stage/agent-stage').then(m => m.AgentStage),
             },
             {

@@ -61,7 +61,7 @@
                 <option value="">Tous les statuts</option>
                 <option value="EN_ATTENTE">En attente</option>
                 <option value="EN_COURS_DE_TRAITEMENT">En traitement</option>
-                <option value="PROGRAMMATION_EN_COURS">Approuvé</option>
+                <option value="PROGRAMMATION_EN_COURS">En cours de programmation</option>
                 <option value="ACCEPTE">Accepté</option>
                 <option value="EN_COURS">En cours</option>
                 <option value="EXPIRE">Expiré</option>
@@ -124,7 +124,7 @@
         iconPath="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></app-stat-card>
     </button>
     <button type="button" class="text-left cursor-pointer" (click)="filtrerParStatut('PROGRAMMATION_EN_COURS')">
-      <app-stat-card accent="blue" label="Approuvés" [value]="stats.approuve" [active]="filtreStatut === 'PROGRAMMATION_EN_COURS'"
+      <app-stat-card accent="blue" label="En cours de programmation" [value]="stats.approuve" [active]="filtreStatut === 'PROGRAMMATION_EN_COURS'"
         iconPath="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></app-stat-card>
     </button>
   </div>
@@ -897,7 +897,7 @@
     <div class="px-6 py-5 border-b border-gray-100 bg-blue-50">
       <h3 class="text-base font-bold text-blue-800">Approuver le renouvellement</h3>
       <p class="text-sm mt-1 text-blue-600">
-        La demande passera « Approuvée » ; elle sera validée ensuite en l'acceptant avec sa convention.
+        La demande passera « En cours de programmation » ; elle sera validée ensuite en l'acceptant avec sa convention.
       </p>
     </div>
     <div class="p-6">

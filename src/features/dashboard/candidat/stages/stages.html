@@ -285,6 +285,10 @@
                       </svg>
                       Fin : {{ demande.dateFinEffective | date:'dd/MM/yyyy' }}
                     </span>
+                    <span *ngIf="demande.statusStage === 'ACCEPTE'"
+                      class="flex items-center gap-1 px-2 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-700">
+                      {{ getMessageDebutStage(demande.dateDebutEffective) }}
+                    </span>
                     <span *ngIf="demande.statusStage === 'EN_COURS' && demande.dateFinEffective"
                       class="flex items-center gap-1 px-2 py-0.5 rounded-full font-semibold"
                       [ngClass]="getJoursRestants(demande.dateFinEffective) <= 14 ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'">
@@ -1428,6 +1432,14 @@
           <div *ngIf="selectedDemandeDetail.dateFinEffective" class="flex items-center justify-between px-3 py-2.5">
             <span class="text-xs text-gray-500">Fin prévue</span>
             <span class="text-xs font-semibold text-orange-600">{{ selectedDemandeDetail.dateFinEffective | date:'dd/MM/yyyy' }}</span>
+          </div>
+          <!-- Début du stage si ACCEPTE (convention jointe, stage pas encore commencé) -->
+          <div *ngIf="selectedDemandeDetail.statusStage === 'ACCEPTE' && selectedDemandeDetail.dateDebutEffective"
+            class="flex items-center justify-between px-3 py-2.5">
+            <span class="text-xs text-gray-500">Début du stage</span>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+              {{ getMessageDebutStage(selectedDemandeDetail.dateDebutEffective) }}
+            </span>
           </div>
           <!-- Jours restants si EN_COURS -->
           <div *ngIf="selectedDemandeDetail.statusStage === 'EN_COURS' && selectedDemandeDetail.dateFinEffective"

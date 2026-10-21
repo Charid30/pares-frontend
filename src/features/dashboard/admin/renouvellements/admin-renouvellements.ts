@@ -780,7 +780,7 @@ ${embedsHtml}<script>let n=0;document.querySelectorAll('embed').forEach(e=>e.add
     switch (statut) {
       case 'EN_ATTENTE':             return 'En attente';
       case 'EN_COURS_DE_TRAITEMENT': return 'En traitement';
-      case 'PROGRAMMATION_EN_COURS': return 'Approuvé';
+      case 'PROGRAMMATION_EN_COURS': return 'En cours de programmation';
       case 'ACCEPTE':                return 'Accepté';
       case 'REJETE':                 return 'Rejeté';
       case 'EN_COURS':               return 'En cours';

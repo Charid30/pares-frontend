@@ -209,7 +209,7 @@ export class MesRenouvellements implements OnInit {
     const map: Record<string, string> = {
       EN_ATTENTE:             'En attente',
       EN_COURS_DE_TRAITEMENT: 'En traitement',
-      PROGRAMMATION_EN_COURS: 'Approuvé',
+      PROGRAMMATION_EN_COURS: 'En cours de programmation',
       ACCEPTE:                'Accepté',
       EN_COURS:               'En cours',
       EXPIRE:                 'Expiré',

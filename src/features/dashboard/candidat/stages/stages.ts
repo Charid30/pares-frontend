@@ -1122,7 +1122,7 @@ export class Stages implements OnInit {
       'RAPPORT_SOUMIS': 'Rapport soumis',
       'EXPIRE': 'Expiré',
       'PROLONGE': 'Prolongé',
-      'PROGRAMMATION_EN_COURS': 'Programmation en cours',
+      'PROGRAMMATION_EN_COURS': 'En cours de programmation',
       'SUSPENDU': 'Suspendu',
       'ANNULE': 'Annulé',
     };
@@ -1269,6 +1269,17 @@ export class Stages implements OnInit {
     if (!control.value) return null;
     const jour = new Date(control.value).getUTCDate();
     return (jour === 1 || jour === 15) ? null : { jourInvalide: true };
+  }
+
+  /** Stage accepté (convention jointe) qui n'a pas encore commencé : message au candidat */
+  getMessageDebutStage(dateDebutEffective: string): string {
+    const debut = new Date(dateDebutEffective);
+    debut.setHours(0, 0, 0, 0);
+    const aujourdhui = new Date();
+    aujourdhui.setHours(0, 0, 0, 0);
+    const jours = Math.round((debut.getTime() - aujourdhui.getTime()) / (1000 * 60 * 60 * 24));
+    if (jours <= 0) return "Votre stage commence aujourd'hui";
+    return jours === 1 ? 'Votre stage commence demain' : `Votre stage commence dans ${jours} jours`;
   }
 
   getJoursRestants(dateFinEffective: string): number {

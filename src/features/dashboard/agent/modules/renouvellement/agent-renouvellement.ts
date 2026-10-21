@@ -113,7 +113,7 @@ export class AgentRenouvellement implements OnInit {
   readonly vues: { key: string; label: string; statut: string }[] = [
     { key: 'toutes',   label: 'Toutes',     statut: '' },
     { key: 'attente',  label: 'En attente', statut: 'EN_ATTENTE,EN_COURS_DE_TRAITEMENT' },
-    { key: 'approuve', label: 'Approuvés',  statut: 'PROGRAMMATION_EN_COURS' },
+    { key: 'approuve', label: 'En cours de programmation',  statut: 'PROGRAMMATION_EN_COURS' },
     { key: 'encours',  label: 'En cours',   statut: 'ACCEPTE,EN_COURS' },
     { key: 'termine',  label: 'Terminés',   statut: 'EXPIRE,TERMINE' },
     { key: 'rejetes',  label: 'Rejetés',    statut: 'REJETE' },
@@ -667,7 +667,7 @@ ${embedsHtml}<script>let n=0;document.querySelectorAll('embed').forEach(e=>e.add
     switch (statut) {
       case 'EN_ATTENTE':             return 'En attente';
       case 'EN_COURS_DE_TRAITEMENT': return 'En traitement';
-      case 'PROGRAMMATION_EN_COURS': return 'Approuvé';
+      case 'PROGRAMMATION_EN_COURS': return 'En cours de programmation';
       case 'ACCEPTE':                return 'Accepté';
       case 'REJETE':                 return 'Rejeté';
       case 'EN_COURS':               return 'En cours';

@@ -40,7 +40,7 @@ interface RenouvellementInfo {
 interface Stage {
   idstage: number;
   typeStage: string;
-  statusStage: 'EN_ATTENTE' | 'PROGRAMMATION_EN_COURS' | 'ACCEPTE' | 'EN_COURS' | 'RAPPORT_SOUMIS' | 'TERMINE' | 'EXPIRE' | 'REJETE' | 'ANNULE' | 'SUSPENDU';
+  statusStage: 'EN_ATTENTE' | 'EN_COURS_DE_TRAITEMENT' | 'PROGRAMMATION_EN_COURS' | 'ACCEPTE' | 'EN_COURS' | 'RAPPORT_SOUMIS' | 'TERMINE' | 'EXPIRE' | 'REJETE' | 'ANNULE' | 'SUSPENDU';
   autorisationsRenouvellement?: AutorisationRenouvellement[];
   /** Autorisation de soumission anticipée du rapport (portée par la demande initiale) */
   autorisationsRapport?: AutorisationRenouvellement[];
@@ -128,8 +128,8 @@ export class AgentStage implements OnInit, OnDestroy {
   // « Toutes », consultable dans « Rejetées ».
   readonly vues: { key: string; label: string; statut: string }[] = [
     { key: 'toutes',   label: 'Toutes',     statut: '' },
-    { key: 'attente',  label: 'En attente', statut: 'EN_ATTENTE' },
-    { key: 'approuve', label: 'Approuvées', statut: 'PROGRAMMATION_EN_COURS' },
+    { key: 'attente',  label: 'À approuver', statut: 'EN_ATTENTE,EN_COURS_DE_TRAITEMENT' },
+    { key: 'approuve', label: 'En cours de programmation', statut: 'PROGRAMMATION_EN_COURS' },
     { key: 'encours',  label: 'En cours',   statut: 'ACCEPTE,EN_COURS' },
     { key: 'termine',  label: 'Terminées',  statut: 'RAPPORT_SOUMIS,TERMINE' },
     { key: 'rejetees', label: 'Rejetées',   statut: 'REJETE' },
@@ -599,7 +599,7 @@ export class AgentStage implements OnInit, OnDestroy {
         this.soumission = false;
         this.fermerApprobation();
         this.charger();
-        this.showSuccessMessage('Demande approuvée — statut : Programmation en cours');
+        this.showSuccessMessage('Demande approuvée — statut : En cours de programmation');
       },
       error: (err) => {
         this.erreur = err.error?.message || 'Erreur lors de l\'approbation';
@@ -1343,7 +1343,8 @@ export class AgentStage implements OnInit, OnDestroy {
   getStatutLabel(s: string): string {
     const l: Record<string, string> = {
       EN_ATTENTE:             'En attente',
-      PROGRAMMATION_EN_COURS: 'Programmation en cours',
+      EN_COURS_DE_TRAITEMENT: 'En traitement',
+      PROGRAMMATION_EN_COURS: 'En cours de programmation',
       ACCEPTE:                'Accepté',
       EN_COURS:               'En cours',
       RAPPORT_SOUMIS:         'Rapport soumis',
@@ -1367,6 +1368,7 @@ export class AgentStage implements OnInit, OnDestroy {
   getStatutBadgeClass(s: string): string {
     const c: Record<string, string> = {
       EN_ATTENTE:             'bg-amber-50 text-amber-700 border border-amber-200',
+      EN_COURS_DE_TRAITEMENT: 'bg-orange-50 text-orange-700 border border-orange-200',
       PROGRAMMATION_EN_COURS: 'bg-blue-50 text-blue-700 border border-blue-200',
       ACCEPTE:                'bg-emerald-50 text-emerald-700 border border-emerald-200',
       EN_COURS:               'bg-green-50 text-green-700 border border-green-200',
