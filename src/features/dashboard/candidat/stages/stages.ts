@@ -194,18 +194,6 @@ export class Stages implements OnInit {
   submittingDemandeModif = false;
   stageForDemandeModif: any = null;
 
-  // Options pour le niveau
-  niveauxSoutenance = ['LICENCE', 'MASTER', 'DOCTORAT'];
-  niveauxPerfectionnement = [
-    { value: 'CAP', label: 'CAP' },
-    { value: 'BEPC', label: 'BEPC' },
-    { value: 'BEP', label: 'BEP' },
-    { value: 'BAC', label: 'BAC' },
-    { value: 'LICENCE', label: 'Licence' },
-    { value: 'MASTER', label: 'Master' },
-    { value: 'DOCTORAT', label: 'Doctorat' },
-  ];
-
   /** Getters pratiques pour les valeurs du formulaire */
   get typeStageVal(): string { return this.demandeForm.get('typeStage')?.value ?? ''; }
   get isPerfectionnement(): boolean { return this.typeStageVal === 'PERFECTIONNEMENT'; }
@@ -430,11 +418,6 @@ export class Stages implements OnInit {
         this.calendarPos = { top: rect.bottom + 4, left: rect.left, width: rect.width };
       }
     }
-    this.cdr.detectChanges();
-  }
-
-  closeCalendar(): void {
-    this.showCalendar = false;
     this.cdr.detectChanges();
   }
 
@@ -1184,13 +1167,6 @@ export class Stages implements OnInit {
     });
   }
 
-  /**
-   * Alias conservé pour compatibilité avec les appels existants
-   */
-  telechargerConvention(stageId: number): void {
-    this.accederConvention(stageId, 'telecharger');
-  }
-
   accederDocumentRenouvellement(idrenouvellement: number, type: 'lettre' | 'convention', mode: 'voir' | 'telecharger'): void {
     const url = `${this.apiUrl}/candidat/renouvellements/${idrenouvellement}/${type}`;
     this.http.get(url, { responseType: 'blob' }).subscribe({
@@ -1321,7 +1297,6 @@ export class Stages implements OnInit {
     lettreRecommandation: 'Lettre de recommandation',
     dernierDiplome: 'Dernier diplôme légalisé',
     lettreMotivationRenouvellement: 'Lettre de demande de renouvellement',
-    conventionStageEnCours: 'Convention du stage en cours',
   };
   remplacementEnCours: Record<string, boolean> = {};
 

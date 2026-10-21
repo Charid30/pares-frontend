@@ -34,7 +34,6 @@ interface RenouvellementInfo {
   dureeDemandee?: number;
   dateRenouvellement?: string;
   lettreMotivationRenouvellement_filename?: string;
-  conventionStageEnCours_filename?: string;
 }
 
 interface Stage {
@@ -1045,17 +1044,6 @@ export class AgentStage implements OnInit, OnDestroy {
     this.http.get(`${this.apiUrl}/stages/renouvellements/${renouv.idrenouvellement}/lettre`, { responseType: 'blob' }).subscribe({
       next: (blob) => this.ouvrirOuTelechargerBlob(blob, filename, mode),
       error: () => this.showSuccessMessage('Impossible de charger la lettre de renouvellement'),
-    });
-  }
-
-  /** Voir ou télécharger la convention du stage en cours (renouvellement) */
-  accederConventionRenouvellement(mode: 'voir' | 'telecharger'): void {
-    const renouv = this.detailStage?.renouvellementInfo;
-    if (!renouv) return;
-    const filename = renouv.conventionStageEnCours_filename || `convention_stage_en_cours_${renouv.idrenouvellement}.pdf`;
-    this.http.get(`${this.apiUrl}/stages/renouvellements/${renouv.idrenouvellement}/convention`, { responseType: 'blob' }).subscribe({
-      next: (blob) => this.ouvrirOuTelechargerBlob(blob, filename, mode),
-      error: () => this.showSuccessMessage('Impossible de charger la convention de renouvellement'),
     });
   }
 

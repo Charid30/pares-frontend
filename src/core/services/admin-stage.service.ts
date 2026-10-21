@@ -119,8 +119,6 @@ export interface RenouvellementInfo {
   stage_nouveau_idstage: number;
   lettreMotivationRenouvellement_filename: string | null;
   lettreMotivationRenouvellement_size: number | null;
-  conventionStageEnCours_filename: string | null;
-  conventionStageEnCours_size: number | null;
   dureeDemandee: number;
   statusRenouvellement: 'EN_ATTENTE' | 'ACCEPTE' | 'REJETE';
   motifRefus: string | null;
@@ -452,15 +450,6 @@ export class AdminStageService {
    */
   downloadLettreRenouvellement(renouvellementId: number): Observable<Blob> {
     return this.http.get(`${this.apiUrl}/renouvellements/${renouvellementId}/lettre`, {
-      responseType: 'blob'
-    });
-  }
-
-  /**
-   * Télécharger la convention du stage en cours copiée lors du renouvellement
-   */
-  downloadConventionRenouvellement(renouvellementId: number): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/renouvellements/${renouvellementId}/convention`, {
       responseType: 'blob'
     });
   }

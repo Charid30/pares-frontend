@@ -112,22 +112,10 @@ export class StagesList implements OnInit, OnDestroy {
     return this.filtreStatut === this.STATUTS_EN_COURS;
   }
 
-  toggleFiltreEnCours(): void {
-    this.voirArchives = false;
-    this.filtreStatut = this.filtreEnCoursActif ? '' : this.STATUTS_EN_COURS;
-    this.onFilterChange();
-  }
-
   // ── Archives (demandes de stage rejetées) ────────────────────────────────
   // Une demande REJETEE sort automatiquement de la liste principale, pour ne
   // pas la mélanger avec les demandes encore actives. Reste consultable ici.
   voirArchives = false;
-
-  toggleArchives(): void {
-    this.voirArchives = !this.voirArchives;
-    this.filtreStatut = '';
-    this.onFilterChange();
-  }
 
   // Rapports
   rapports: RapportStage[] = [];
@@ -159,7 +147,6 @@ export class StagesList implements OnInit, OnDestroy {
 
   readonly DOCUMENTS_RENOUVELLEMENT: { key: string; label: string }[] = [
     { key: 'lettreMotivationRenouvellement', label: 'Lettre de renouvellement' },
-    { key: 'conventionStageEnCours', label: 'Convention du stage en cours' },
   ];
 
   /** Pour un renouvellement, seuls les docs du renouvellement sont concernés. */
@@ -461,11 +448,6 @@ export class StagesList implements OnInit, OnDestroy {
   }
 
   // ==================== SEARCH & FILTER ====================
-  onSearch(): void {
-    this.currentPage = 1;
-    this.loadStages();
-  }
-
   onFilterChange(): void {
     this.currentPage = 1;
     this.loadStages();
@@ -1152,23 +1134,6 @@ export class StagesList implements OnInit, OnDestroy {
     });
   }
 
-  /** Voir ou télécharger la convention du renouvellement */
-  accederConventionRenouvellement(mode: 'voir' | 'telecharger'): void {
-    const renouv = this.selectedStage?.renouvellementInfo;
-    if (!renouv) return;
-    const filename = renouv.conventionStageEnCours_filename || `convention_stage_en_cours_${renouv.idrenouvellement}.pdf`;
-
-    this.adminStageService.downloadConventionRenouvellement(renouv.idrenouvellement).subscribe({
-      next: (blob) => this.ouvrirOuTelechargerBlob(blob, filename, mode),
-      error: () => this.showToast('error', 'Erreur', 'Impossible de charger la convention')
-    });
-  }
-
-  /** Alias rétrocompatibilité */
-  downloadDocument(documentType: string): void { this.accederDocument(documentType, `${documentType}_${this.selectedStage?.idstage}.pdf`, 'telecharger'); }
-  downloadLettreRenouvellement(): void { this.accederLettreRenouvellement('telecharger'); }
-  downloadConventionRenouvellement(): void { this.accederConventionRenouvellement('telecharger'); }
-
   /** Imprimer tous les documents soumis — fusion serveur via pdf-lib → un seul PDF natif */
   async printAllDocuments(): Promise<void> {
     if (!this.selectedStage) return;
@@ -1268,15 +1233,6 @@ export class StagesList implements OnInit, OnDestroy {
     });
   }
 
-  formatDateTime(date: string): string {
-    return new Date(date).toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  }
 
   getDureeLabel(duree: number): string {
     return duree === 1 ? '1 mois' : `${duree} mois`;
