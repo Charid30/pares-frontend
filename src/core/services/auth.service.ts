@@ -322,6 +322,16 @@ export class AuthService {
     return user.role || accronymes[0] || '';
   }
 
+  /** Accueil de l'espace de l'utilisateur (admin, candidat ou agent) — une seule règle partout. */
+  getDashboardRoute(user = this.getCurrentUser()): string {
+    if (!user) return '/accueil';
+    switch (this.getEffectiveDashboardRole(user)) {
+      case 'ADMIN':    return '/admin/dashboard';
+      case 'CANDIDAT': return '/dashboard/candidat';
+      default:         return '/dashboard/agent';
+    }
+  }
+
   // ── Session ────────────────────────────────────────────────────────────────
 
   private setSession(token: string, user: User): void {

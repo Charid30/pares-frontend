@@ -3,7 +3,7 @@ import { Routes } from '@angular/router';
 import { PublicLayout } from '../layouts/public-layout/public-layout';
 import { AuthLayout } from '../layouts/auth-layout/auth-layout';
 import { authGuard } from '../core/guards/auth-guard';
-import { roleGuard } from '../core/guards/role-guard';
+import { espaceGuard } from '../core/guards/espace-guard';
 import { noAuthGuard } from '../core/guards/no-auth-guard';
 import { permissionGuard } from '../core/guards/permission-guard';
 import { CandidatLayout } from '../layouts/candidat-layout/candidat-layout';
@@ -71,8 +71,8 @@ export const routes: Routes = [
     {
         path: 'dashboard/candidat',
         component: CandidatLayout,
-        canActivate: [authGuard, roleGuard],
-        data: { roles: ['CANDIDAT'] },
+        canActivate: [authGuard, espaceGuard],
+        data: { espace: 'candidat' },
         children: [
             {
                 path: '',
@@ -116,8 +116,8 @@ export const routes: Routes = [
     {
         path: 'admin',
         component: AdminLayout,
-        canActivate: [authGuard, roleGuard],
-        data: { roles: ['ADMIN'] },
+        canActivate: [authGuard, espaceGuard],
+        data: { espace: 'admin' },
         children: [
             // Dashboard
             {
@@ -250,7 +250,8 @@ export const routes: Routes = [
     {
         path: 'dashboard/agent',
         component: AgentLayout,
-        canActivate: [authGuard],
+        canActivate: [authGuard, espaceGuard],
+        data: { espace: 'agent' },
         children: [
             // Dashboard d'accueil agent
             {

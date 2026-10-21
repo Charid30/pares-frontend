@@ -96,18 +96,7 @@ export class Login {
   }
 
   private redirectToDashboard(): void {
-    const user = this.authService.getCurrentUser();
-
-    if (!user) {
-      this.router.navigate(['/accueil']);
-      return;
-    }
-
-    switch (this.authService.getEffectiveDashboardRole(user)) {
-      case 'CANDIDAT': this.router.navigate(['/dashboard/candidat']); break;
-      case 'ADMIN': this.router.navigate(['/admin/dashboard']); break;
-      default: this.router.navigate(['/dashboard/agent']);
-    }
+    this.router.navigate([this.authService.getDashboardRoute()]);
   }
 
 }

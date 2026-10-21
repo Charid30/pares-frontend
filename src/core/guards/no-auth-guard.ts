@@ -5,14 +5,6 @@ import { inject } from '@angular/core';
 import { Router, CanActivateFn } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
-function getDashboardRoute(role: string): string {
-  switch (role) {
-    case 'CANDIDAT': return '/dashboard/candidat';
-    case 'ADMIN':    return '/admin/dashboard';
-    default:         return '/dashboard/agent';
-  }
-}
-
 export const noAuthGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
@@ -22,8 +14,6 @@ export const noAuthGuard: CanActivateFn = () => {
   }
 
   // Connecté → rediriger vers le bon dashboard (tient compte des rôles multiples)
-  const user = authService.getCurrentUser();
-  const route = user ? getDashboardRoute(authService.getEffectiveDashboardRole(user)) : '/accueil';
-  router.navigate([route]);
+  router.navigate([authService.getDashboardRoute()]);
   return false;
 };
