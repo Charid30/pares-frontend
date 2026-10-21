@@ -111,6 +111,8 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
   lettreNonConforme = false;
   dateDebutEffective = '';
   dureeAccordee: number | null = null;
+  /** Convention déjà envoyée lors d'un essai précédent (l'acceptation avait échoué) */
+  conventionEnvoyee = false;
   soumission = false;
 
   // Modal convention (remplacer/joindre après acceptation)
@@ -421,6 +423,8 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
     this.lettreNonConforme = false;
     this.dateDebutEffective = '';
     this.dureeAccordee = this.selected?.dureeDemandee ?? null;
+    this.conventionEnvoyee = false;
+    this.erreur = '';
     this.showDecisionModal = true;
   }
 
@@ -444,13 +448,20 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
     this.conventionFile = (event.target as HTMLInputElement).files?.[0] ?? null;
   }
 
-  confirmerDecision(): void {
+  /** Le nouveau stage a déjà une convention (jointe auparavant ou lors d'un essai précédent) */
+  get conventionDejaJointe(): boolean {
+    return this.conventionEnvoyee
+      || !!this.selected?.stageNouveau?.documents?.length
+      || this.selected?.stageNouveau?.statusStage === 'EN_COURS';
+  }
+
+  async confirmerDecision(): Promise<void> {
     if (!this.selected || !this.decisionType) return;
     if (this.decisionType === 'REJETE' && !this.motifRefus.trim()) return;
-    const conventionDejaLiee = this.selected?.stageNouveau?.statusStage === 'EN_COURS';
-    if (this.decisionType === 'ACCEPTE' && !this.conventionFile && !conventionDejaLiee) return;
+    if (this.decisionType === 'ACCEPTE' && !this.conventionFile && !this.conventionDejaJointe) return;
     if (this.decisionType === 'ACCEPTE' && !this.dureeValide) return;
     this.soumission = true;
+    this.erreur = '';
     const body: Record<string, any> = { statusRenouvellement: this.decisionType };
     if (this.decisionType === 'REJETE') {
       body['motifRefus'] = this.motifRefus.trim();
@@ -461,61 +472,44 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
       body['dureeAccordee'] = this.dureeAccordee;
     }
 
-    this.http.put<{ success: boolean; data: any }>(
-      `${this.apiUrl}/stages/renouvellements/${this.selected.idrenouvellement}/evaluer`,
-      body
-    ).subscribe({
-      next: (res) => {
-        if (this.decisionType === 'ACCEPTE' && this.conventionFile) {
-          const nouveauStageId = res.data?.stageNouveau?.idstage ?? res.data?.stage_nouveau_idstage;
-          if (nouveauStageId) {
-            const fd = new FormData();
-            fd.append('stage_idstage', String(nouveauStageId));
-            fd.append('typeDocument', 'CONVENTION');
-            // Date d'émission requise par l'API (createDocumentStageSchema)
-            fd.append('dateEmission', new Date().toISOString().slice(0, 10));
-            fd.append('document', this.conventionFile, this.conventionFile.name);
-            this.http.post(`${this.apiUrl}/stages/documents`, fd).subscribe({
-              next: () => {
-                this.soumission = false;
-                this.showDecisionModal = false;
-                this.showModal = false;
-                this.successMessage = 'Renouvellement accepté et convention uploadée avec succès.';
-                this.charger();
-                setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
-              },
-              error: () => {
-                this.soumission = false;
-                this.showDecisionModal = false;
-                this.showModal = false;
-                this.erreur = 'Renouvellement accepté, mais la convention n\'a pas pu être enregistrée : utilisez « Joindre la convention ».';
-                this.charger();
-                setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 6000);
-              },
-            });
-          } else {
-            this.soumission = false;
-            this.showDecisionModal = false;
-            this.showModal = false;
-            this.successMessage = 'Renouvellement accepté avec succès.';
-            this.charger();
-            setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
-          }
-        } else {
-          this.soumission = false;
-          this.showDecisionModal = false;
-          this.showModal = false;
-          this.successMessage = 'Renouvellement rejeté.';
-          this.charger();
-          setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
-        }
-      },
-      error: (err) => {
-        this.soumission = false;
-        this.erreur = err.error?.message || 'Une erreur est survenue.';
-        this.cdr.detectChanges();
-      },
-    });
+    try {
+      // La convention est enregistrée AVANT l'acceptation : si l'envoi échoue, rien n'est accepté
+      // (un renouvellement accepté sans convention ne passerait jamais « En cours »).
+      const stageNouveauId = this.selected.stageNouveau?.idstage;
+      if (this.decisionType === 'ACCEPTE' && this.conventionFile && stageNouveauId) {
+        const fd = new FormData();
+        fd.append('stage_idstage', String(stageNouveauId));
+        fd.append('typeDocument', 'CONVENTION');
+        // Date d'émission requise par l'API (createDocumentStageSchema)
+        fd.append('dateEmission', new Date().toISOString().slice(0, 10));
+        fd.append('document', this.conventionFile, this.conventionFile.name);
+        await firstValueFrom(this.http.post(`${this.apiUrl}/stages/documents`, fd));
+        // Déjà jointe : pas de second envoi si l'acceptation échoue et que l'on réessaie
+        this.conventionEnvoyee = true;
+        this.conventionFile = null;
+      }
+
+      await firstValueFrom(this.http.put<{ success: boolean; data: any }>(
+        `${this.apiUrl}/stages/renouvellements/${this.selected.idrenouvellement}/evaluer`,
+        body
+      ));
+
+      this.showDecisionModal = false;
+      this.showModal = false;
+      this.successMessage = this.decisionType === 'REJETE'
+        ? 'Renouvellement rejeté.'
+        : (this.conventionEnvoyee ? 'Renouvellement accepté, convention jointe.' : 'Renouvellement accepté avec succès.');
+      this.charger();
+      setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
+    } catch (err: any) {
+      // Le modal reste ouvert : l'erreur s'y affiche
+      this.erreur = err?.error?.message || (this.conventionEnvoyee
+        ? "La convention est jointe, mais l'acceptation a échoué. Réessayez."
+        : "La convention n'a pas pu être enregistrée : le renouvellement n'a pas été accepté.");
+    } finally {
+      this.soumission = false;
+      this.cdr.detectChanges();
+    }
   }
 
   ouvrirConventionModal(): void {
