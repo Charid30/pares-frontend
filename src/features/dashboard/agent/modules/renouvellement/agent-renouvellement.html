@@ -869,7 +869,7 @@
             La fin est calculée automatiquement ; le stage passera « En cours » à sa date de début, une fois la convention jointe.
           </p>
         </div>
-        <div *ngIf="peutCreerConvention">
+        <div>
           <label class="block text-xs font-semibold text-gray-700 mb-1">
             Convention du renouvellement <span *ngIf="!conventionDejaJointe" class="text-red-500">*</span>
             <span class="font-normal text-gray-400">(PDF)</span>
@@ -900,9 +900,6 @@
             </label>
           </div>
         </div>
-        <p *ngIf="!peutCreerConvention" class="px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-[11px] text-amber-700">
-          Vous n'avez pas la permission de joindre la convention : un agent habilité ou l'administration devra la joindre.
-        </p>
       </ng-container>
     </div>
 
@@ -913,7 +910,7 @@
         Annuler
       </button>
       <button (click)="confirmerDecision()"
-              [disabled]="soumission || (decisionType === 'REJETE' && !motifRefus.trim()) || (decisionType === 'ACCEPTE' && ((peutCreerConvention && !conventionFile && !conventionDejaJointe) || !dureeValide))"
+              [disabled]="soumission || (decisionType === 'REJETE' && !motifRefus.trim()) || (decisionType === 'ACCEPTE' && ((!conventionFile && !conventionDejaJointe) || !dureeValide))"
               class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-semibold text-white rounded-xl disabled:opacity-50 transition-colors"
               [ngClass]="decisionType === 'ACCEPTE' ? 'bg-green-600 hover:bg-green-700' : 'bg-[#c0392b] hover:bg-[#96281b]'">
         <svg *ngIf="soumission" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">

@@ -105,8 +105,6 @@ export class AgentRenouvellement implements OnInit {
   // Acceptation : date de début (optionnelle) et durée accordée (par défaut la durée demandée)
   dateDebutEffective = '';
   dureeAccordee: number | null = null;
-  /** Convention déjà envoyée lors d'un essai précédent (l'acceptation avait échoué) */
-  conventionEnvoyee = false;
   lettreNonConforme = false;
 
   // Modal convention (remplacer/joindre après acceptation)
@@ -330,7 +328,6 @@ export class AgentRenouvellement implements OnInit {
     this.lettreNonConforme = false;
     this.dateDebutEffective = '';
     this.dureeAccordee = this.selected?.dureeDemandee ?? null;
-    this.conventionEnvoyee = false;
     this.erreur = '';
     this.showDecisionModal = true;
   }
@@ -355,68 +352,59 @@ export class AgentRenouvellement implements OnInit {
     this.conventionFile = (event.target as HTMLInputElement).files?.[0] ?? null;
   }
 
-  /** Le nouveau stage a déjà une convention (jointe auparavant ou lors d'un essai précédent) */
+  /** Le nouveau stage a déjà une convention (jointe auparavant) : elle sera réutilisée */
   get conventionDejaJointe(): boolean {
-    return this.conventionEnvoyee
-      || !!this.selected?.stageNouveau?.documents?.length
+    return !!this.selected?.stageNouveau?.documents?.length
       || this.selected?.stageNouveau?.statusStage === 'EN_COURS';
   }
 
-  async confirmerDecision(): Promise<void> {
+  confirmerDecision(): void {
     if (!this.selected || !this.decisionType) return;
     if (this.decisionType === 'REJETE' && !this.motifRefus.trim()) return;
-    if (this.decisionType === 'ACCEPTE' && this.peutCreerConvention && !this.conventionFile && !this.conventionDejaJointe) return;
+    if (this.decisionType === 'ACCEPTE' && !this.conventionFile && !this.conventionDejaJointe) return;
     if (this.decisionType === 'ACCEPTE' && !this.dureeValide) return;
     this.soumission = true;
     this.erreur = '';
-    const body: Record<string, any> = { statusRenouvellement: this.decisionType };
-    if (this.decisionType === 'REJETE') {
-      body['motifRefus'] = this.motifRefus.trim();
-      body['lettreNonConforme'] = this.lettreNonConforme;
-    }
+
+    // Acceptation : la convention part dans le même appel (champ conventionStage), comme pour
+    // une demande de stage — le renouvellement n'est jamais accepté sans sa convention.
+    let body: FormData | Record<string, any>;
     if (this.decisionType === 'ACCEPTE') {
-      if (this.dateDebutEffective) body['dateDebutEffective'] = this.dateDebutEffective;
-      body['dureeAccordee'] = this.dureeAccordee;
+      const fd = new FormData();
+      fd.append('statusRenouvellement', 'ACCEPTE');
+      fd.append('dureeAccordee', String(this.dureeAccordee));
+      if (this.dateDebutEffective) fd.append('dateDebutEffective', this.dateDebutEffective);
+      if (this.conventionFile) fd.append('conventionStage', this.conventionFile, this.conventionFile.name);
+      body = fd;
+    } else {
+      body = {
+        statusRenouvellement: 'REJETE',
+        motifRefus: this.motifRefus.trim(),
+        lettreNonConforme: this.lettreNonConforme,
+      };
     }
 
-    try {
-      // La convention est enregistrée AVANT l'acceptation : si l'envoi échoue, rien n'est accepté
-      // (un renouvellement accepté sans convention ne passerait jamais « En cours »).
-      const stageNouveauId = this.selected.stageNouveau?.idstage;
-      if (this.decisionType === 'ACCEPTE' && this.conventionFile && this.peutCreerConvention && stageNouveauId) {
-        const fd = new FormData();
-        fd.append('stage_idstage', String(stageNouveauId));
-        fd.append('typeDocument', 'CONVENTION');
-        // Date d'émission requise par l'API (createDocumentStageSchema)
-        fd.append('dateEmission', new Date().toISOString().slice(0, 10));
-        fd.append('document', this.conventionFile, this.conventionFile.name);
-        await firstValueFrom(this.http.post(`${this.apiUrl}/stages/documents`, fd));
-        // Déjà jointe : pas de second envoi si l'acceptation échoue et que l'on réessaie
-        this.conventionEnvoyee = true;
-        this.conventionFile = null;
-      }
-
-      await firstValueFrom(this.http.put<{ success: boolean; data: any }>(
-        `${this.apiUrl}/stages/renouvellements/${this.selected.idrenouvellement}/evaluer`,
-        body
-      ));
-
-      this.showDecisionModal = false;
-      this.showModal = false;
-      this.successMessage = this.decisionType === 'REJETE'
-        ? 'Renouvellement rejeté.'
-        : (this.conventionEnvoyee ? 'Renouvellement accepté, convention jointe.' : 'Renouvellement accepté avec succès.');
-      this.charger();
-      setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
-    } catch (err: any) {
-      // Le modal reste ouvert : l'erreur s'y affiche
-      this.erreur = err?.error?.message || (this.conventionEnvoyee
-        ? "La convention est jointe, mais l'acceptation a échoué. Réessayez."
-        : "La convention n'a pas pu être enregistrée : le renouvellement n'a pas été accepté.");
-    } finally {
-      this.soumission = false;
-      this.cdr.detectChanges();
-    }
+    this.http.put<{ success: boolean; data: any }>(
+      `${this.apiUrl}/stages/renouvellements/${this.selected.idrenouvellement}/evaluer`,
+      body
+    ).subscribe({
+      next: () => {
+        this.soumission = false;
+        this.showDecisionModal = false;
+        this.showModal = false;
+        this.successMessage = this.decisionType === 'ACCEPTE'
+          ? 'Renouvellement accepté, convention jointe.'
+          : 'Renouvellement rejeté.';
+        this.charger();
+        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
+      },
+      error: (err) => {
+        // Le modal reste ouvert : l'erreur s'y affiche, rien n'a été accepté
+        this.soumission = false;
+        this.erreur = err.error?.message || 'Une erreur est survenue.';
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   // ── Convention (post-acceptation) ────────────────────────────────────────────
