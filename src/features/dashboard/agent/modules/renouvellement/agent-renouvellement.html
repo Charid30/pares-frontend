@@ -250,8 +250,8 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                   </svg>
                 </button>
-                <!-- Approuver : EN_ATTENTE + perm APPROUVER + pas re-soumis -->
-                <button *ngIf="peutApprouver && r.statusRenouvellement === 'EN_ATTENTE' && r.peutAgir !== false"
+                <!-- Approuver : EN_ATTENTE / En traitement + perm APPROUVER -->
+                <button *ngIf="peutApprouver && (r.statusRenouvellement === 'EN_ATTENTE' || r.statusRenouvellement === 'EN_COURS_DE_TRAITEMENT') && r.peutAgir !== false"
                         (click)="approuverDirect(r)"
                         class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                         title="Approuver">
@@ -329,7 +329,7 @@
                     class="flex items-center gap-1.5 py-2 px-3 text-xs font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 active:scale-95 transition-all">
               Voir détail
             </button>
-            <button *ngIf="peutApprouver && r.statusRenouvellement === 'EN_ATTENTE' && r.peutAgir !== false"
+            <button *ngIf="peutApprouver && (r.statusRenouvellement === 'EN_ATTENTE' || r.statusRenouvellement === 'EN_COURS_DE_TRAITEMENT') && r.peutAgir !== false"
                     (click)="approuverDirect(r)"
                     class="flex items-center gap-1.5 py-2 px-3 text-xs font-semibold text-blue-700 bg-blue-100 rounded-xl hover:bg-blue-200 active:scale-95 transition-all">
               Approuver
@@ -696,8 +696,8 @@
                 class="py-2 px-3 bg-white border border-gray-200 text-gray-600 text-xs font-semibold rounded-xl hover:bg-gray-50 transition-colors">
           Fermer
         </button>
-        <!-- Approuver : EN_ATTENTE + permission APPROUVER (approbateur de la direction) -->
-        <button *ngIf="selected.statusRenouvellement === 'EN_ATTENTE' && peutApprouver && selected.peutAgir !== false"
+        <!-- Approuver : EN_ATTENTE / En traitement + permission APPROUVER (approbateur de la direction) -->
+        <button *ngIf="(selected.statusRenouvellement === 'EN_ATTENTE' || selected.statusRenouvellement === 'EN_COURS_DE_TRAITEMENT') && peutApprouver && selected.peutAgir !== false"
                 (click)="ouvrirApprobation()"
                 class="flex items-center gap-1.5 py-2 px-3 bg-blue-600 text-white text-xs font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

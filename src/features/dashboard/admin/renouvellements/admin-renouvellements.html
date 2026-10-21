@@ -691,6 +691,15 @@
           </svg>
           Traiter
         </button>
+        <!-- Approuver : EN_ATTENTE / En traitement → Approuvé (comme pour les stages) -->
+        <button *ngIf="peutApprouver(selected)"
+                (click)="ouvrirApprobation()"
+                class="flex items-center gap-1.5 py-2 px-3 bg-blue-600 text-white text-xs font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          Approuver
+        </button>
         <!-- Accepter : EN_ATTENTE / EN_COURS_DE_TRAITEMENT / PROGRAMMATION_EN_COURS -->
         <button *ngIf="estAvantDecision(selected)"
                 (click)="ouvrirDecision('ACCEPTE')"
@@ -872,6 +881,46 @@
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
           </svg>
           {{ soumissionTraitement ? 'Traitement...' : 'Mettre en traitement' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL — APPROBATION (EN_ATTENTE / En traitement → Approuvé)
+     ══════════════════════════════════════════════════════════ -->
+<div *ngIf="showApprobationModal && selected"
+     class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+    <div class="px-6 py-5 border-b border-gray-100 bg-blue-50">
+      <h3 class="text-base font-bold text-blue-800">Approuver le renouvellement</h3>
+      <p class="text-sm mt-1 text-blue-600">
+        La demande passera « Approuvée » ; elle sera validée ensuite en l'acceptant avec sa convention.
+      </p>
+    </div>
+    <div class="p-6">
+      <p class="text-sm text-gray-600 mb-4">
+        Confirmez-vous l'approbation de la demande de renouvellement de
+        <span class="font-semibold text-gray-900">
+          {{ selected.stageActuel?.candidat?.prenom }} {{ selected.stageActuel?.candidat?.nom }}
+        </span> ({{ selected.dureeDemandee }} mois) ?
+      </p>
+      <div *ngIf="erreur" class="mb-3 px-3 py-2 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+        {{ erreur }}
+      </div>
+      <div class="flex justify-end gap-3">
+        <button (click)="fermerApprobation()" [disabled]="soumissionApprobation"
+                class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 transition-colors">
+          Annuler
+        </button>
+        <button (click)="confirmerApprobation()" [disabled]="soumissionApprobation"
+                class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl disabled:opacity-50 active:scale-95 transition-all">
+          <svg *ngIf="soumissionApprobation" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          {{ soumissionApprobation ? 'Approbation...' : 'Approuver' }}
         </button>
       </div>
     </div>

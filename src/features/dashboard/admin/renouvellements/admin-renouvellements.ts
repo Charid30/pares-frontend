@@ -99,6 +99,10 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
   showTraitementModal = false;
   soumissionTraitement = false;
 
+  // Modal approbation (EN_ATTENTE / EN_COURS_DE_TRAITEMENT → PROGRAMMATION_EN_COURS)
+  showApprobationModal = false;
+  soumissionApprobation = false;
+
   // Modal réouverture (REJETE → EN_ATTENTE, admin seulement)
   showRouvrirModal = false;
   soumissionRouvrir = false;
@@ -326,6 +330,44 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.soumissionTraitement = false;
+        this.erreur = err.error?.message || 'Une erreur est survenue.';
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  // ── Approbation (EN_ATTENTE / EN_COURS_DE_TRAITEMENT → PROGRAMMATION_EN_COURS), comme pour les stages ──
+
+  peutApprouver(r: Renouvellement): boolean {
+    return ['EN_ATTENTE', 'EN_COURS_DE_TRAITEMENT'].includes(r.statusRenouvellement);
+  }
+
+  ouvrirApprobation(): void {
+    this.erreur = '';
+    this.showApprobationModal = true;
+  }
+
+  fermerApprobation(): void {
+    this.showApprobationModal = false;
+  }
+
+  confirmerApprobation(): void {
+    if (!this.selected) return;
+    this.soumissionApprobation = true;
+    this.http.put<{ success: boolean; data: any }>(
+      `${this.apiUrl}/stages/renouvellements/${this.selected.idrenouvellement}/approuver`,
+      {}
+    ).subscribe({
+      next: () => {
+        this.soumissionApprobation = false;
+        this.showApprobationModal = false;
+        this.showModal = false;
+        this.successMessage = 'Renouvellement approuvé : il peut maintenant être accepté avec sa convention.';
+        this.charger();
+        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 5000);
+      },
+      error: (err) => {
+        this.soumissionApprobation = false;
         this.erreur = err.error?.message || 'Une erreur est survenue.';
         this.cdr.detectChanges();
       },
