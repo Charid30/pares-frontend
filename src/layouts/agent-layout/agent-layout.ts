@@ -223,10 +223,11 @@ export class AgentLayout implements OnInit, OnDestroy {
     ];
 
     // Ajouter les modules selon les permissions
-    const moduleOrder = ['CANDIDATURES', 'CANDIDATS', 'STAGE', 'SUIVI_STAGE', 'SUSPENSION_STAGE', 'OFFRE', 'AIDE', 'DEMANDE_AUDIENCE', 'AGENTS', 'SERVICES'];
+    const moduleOrder = ['CANDIDATURES', 'CANDIDATS', 'STAGE', 'RENOUVELLEMENT', 'SUIVI_STAGE', 'SUSPENSION_STAGE', 'OFFRE', 'AIDE', 'DEMANDE_AUDIENCE', 'AGENTS', 'SERVICES'];
     for (const mod of moduleOrder) {
-      if (!modules.includes(mod) || !MODULE_MENU_MAP[mod]) continue;
+      if (!modules.includes(mod) || (!MODULE_MENU_MAP[mod] && mod !== 'RENOUVELLEMENT')) continue;
       if (mod === 'STAGE') { this.pushStageMenuItems(); continue; }
+      if (mod === 'RENOUVELLEMENT') { this.pushRenouvellementMenuItems(); continue; }
       if (mod === 'OFFRE' || mod === 'AIDE' || mod === 'DEMANDE_AUDIENCE') {
         this.pushDirectionModuleMenuItem(mod);
         continue;
@@ -246,6 +247,37 @@ export class AgentLayout implements OnInit, OnDestroy {
    * - "Stage" : vue globale en lecture seule, visible uniquement si l'agent a un rôle
    *   "lecture globale" (sous-admin) sur STAGE — aucune action possible.
    */
+  /**
+   * Module RENOUVELLEMENT — même logique que STAGE :
+   * - « Renouvellement [ACCRONYME] » : limité aux directions de l'agent ; avec boutons d'action
+   *   si l'agent a une action sur le module, en lecture seule s'il n'a que CONSULTER ;
+   * - « Renouvellement (Vue globale) » : toutes les directions en lecture seule, pour un rôle
+   *   « lecture globale » ayant CONSULTER sur RENOUVELLEMENT.
+   */
+  private pushRenouvellementMenuItems(): void {
+    const icon = 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15';
+    const hasActionRole = ['APPROUVER', 'VALIDER', 'REJETER', 'CREER', 'MODIFIER']
+      .some(a => this.authService.hasPermission('RENOUVELLEMENT', a));
+    const hasGlobalReadOnly = this.authService.hasLectureGlobale('RENOUVELLEMENT');
+    const accronyme = this.authService.getUserDirectionAccronyme();
+
+    // Entrée de direction : une action, ou CONSULTER sans passer par un rôle « lecture globale »
+    if (hasActionRole || !hasGlobalReadOnly) {
+      this.menuItems.push({
+        label: accronyme ? `Renouvellement ${accronyme}` : 'Renouvellements',
+        icon,
+        route: MODULE_ROUTE_MAP['RENOUVELLEMENTS'],
+      });
+    }
+    if (hasGlobalReadOnly) {
+      this.menuItems.push({
+        label: 'Renouvellement (Vue globale)',
+        icon,
+        route: '/dashboard/agent/renouvellements-global',
+      });
+    }
+  }
+
   private pushStageMenuItems(): void {
     const hasActionRole = ['APPROUVER', 'VALIDER', 'REJETER'].some(a => this.authService.hasPermission('STAGE', a));
     const hasGlobalReadOnly = this.authService.hasLectureGlobale('STAGE');
@@ -275,13 +307,6 @@ export class AgentLayout implements OnInit, OnDestroy {
       // Accès simple (ex. CONSULTER seul, sans rôle d'action ni lecture globale)
       this.menuItems.push({ ...base, route: MODULE_ROUTE_MAP['STAGE'] });
     }
-
-    // Renouvellements de stage — visible dès que l'agent a accès au module STAGE
-    this.menuItems.push({
-      label: 'Renouvellements',
-      icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15',
-      route: MODULE_ROUTE_MAP['RENOUVELLEMENTS'],
-    });
 
     // Archives (stages expirés sans parent)
     this.menuItems.push({

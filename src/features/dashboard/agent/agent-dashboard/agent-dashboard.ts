@@ -35,10 +35,10 @@ const ICONS: Record<string, string> = {
 const RACCOURCIS: Record<string, { label: string; route: string; icon: string }[]> = {
   STAGE: [
     { label: 'Stages',           route: '/dashboard/agent/stages',          icon: ICONS['STAGE'] },
-    { label: 'Renouvellements',  route: '/dashboard/agent/renouvellements', icon: ICONS['RENOUVELLEMENT'] },
     { label: 'Rapports',         route: '/dashboard/agent/rapports',        icon: ICONS['RAPPORT'] },
     { label: 'Archives',         route: '/dashboard/agent/archives',        icon: ICONS['ARCHIVES'] },
   ],
+  RENOUVELLEMENT:   [{ label: 'Renouvellements',      route: '/dashboard/agent/renouvellements', icon: ICONS['RENOUVELLEMENT'] }],
   SUIVI_STAGE:      [{ label: 'Suivi des stages',     route: '/dashboard/agent/suivi-stages', icon: ICONS['SUIVI_STAGE'] }],
   SUSPENSION_STAGE: [{ label: 'Suspensions',          route: '/dashboard/agent/suspensions',  icon: ICONS['SUSPENSION_STAGE'] }],
   OFFRE:            [{ label: 'Offres commerciales',  route: '/dashboard/agent/offres',       icon: ICONS['OFFRE'] }],

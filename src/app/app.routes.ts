@@ -324,11 +324,19 @@ export const routes: Routes = [
                 data: { module: 'SUIVI_STAGE' },
                 loadComponent: () => import('../features/dashboard/agent/modules/suivi-stage/agent-suivi-stage').then(m => m.AgentSuiviStage),
             },
-            // Module Renouvellements de stage
+            // Module Renouvellements de stage — menu « Renouvellement [DIRECTION] », limité aux
+            // directions de l'agent (comme « Stage [DIRECTION] »)
             {
                 path: 'renouvellements',
                 canActivate: [permissionGuard],
-                data: { module: 'STAGE' },
+                data: { module: 'RENOUVELLEMENT', scope: 'direction' },
+                loadComponent: () => import('../features/dashboard/agent/modules/renouvellement/agent-renouvellement').then(m => m.AgentRenouvellement),
+            },
+            // Renouvellements — vue globale en lecture seule (rôle « lecture globale »)
+            {
+                path: 'renouvellements-global',
+                canActivate: [permissionGuard],
+                data: { module: 'RENOUVELLEMENT', scope: 'global', readOnly: true },
                 loadComponent: () => import('../features/dashboard/agent/modules/renouvellement/agent-renouvellement').then(m => m.AgentRenouvellement),
             },
             // Module Archives (stages expirés sans parent)

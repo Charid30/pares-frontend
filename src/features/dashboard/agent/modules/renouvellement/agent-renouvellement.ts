@@ -3,10 +3,12 @@ import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { SearchService } from '../../../../../core/services/search.service';
+import { StatCard } from '../../../../../shared/components/stat-card/stat-card';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
 
@@ -68,7 +70,7 @@ interface PaginatedResult {
 @Component({
   selector: 'app-agent-renouvellement',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, StatCard],
   templateUrl: './agent-renouvellement.html',
 })
 export class AgentRenouvellement implements OnInit {
@@ -92,6 +94,7 @@ export class AgentRenouvellement implements OnInit {
   search = '';
   dateDebut = '';
   dateFin = '';
+  showFiltres = false;
   successMessage = '';
   erreur = '';
   // Pagination
@@ -100,6 +103,32 @@ export class AgentRenouvellement implements OnInit {
   total = 0;
   totalPages = 0;
   stats: PaginatedResult['stats'] = { total: 0, enAttente: 0, enTraitement: 0, approuve: 0, accepte: 0, enCours: 0, expire: 0, termine: 0, rejete: 0 };
+
+  // Portée (route) : 'direction' = « Renouvellement [DIRECTION] » (directions de l'agent) ;
+  // 'global' = « Renouvellement (Vue globale) », toutes les directions en lecture seule.
+  scope: 'direction' | 'global' = 'direction';
+  readOnly = false;
+
+  // Onglets de vue (plusieurs statuts séparés par une virgule, comme pour les stages)
+  readonly vues: { key: string; label: string; statut: string }[] = [
+    { key: 'toutes',   label: 'Toutes',     statut: '' },
+    { key: 'attente',  label: 'En attente', statut: 'EN_ATTENTE,EN_COURS_DE_TRAITEMENT' },
+    { key: 'approuve', label: 'Approuvés',  statut: 'PROGRAMMATION_EN_COURS' },
+    { key: 'encours',  label: 'En cours',   statut: 'ACCEPTE,EN_COURS' },
+    { key: 'termine',  label: 'Terminés',   statut: 'EXPIRE,TERMINE' },
+    { key: 'rejetes',  label: 'Rejetés',    statut: 'REJETE' },
+  ];
+  vueActive = 'toutes';
+
+  changerVue(key: string): void {
+    this.vueActive = key;
+    this.filtreStatut = '';
+    this.onFiltreChange();
+  }
+
+  get nbFiltresActifs(): number {
+    return (this.filtreStatut ? 1 : 0) + (this.dateDebut ? 1 : 0) + (this.dateFin ? 1 : 0);
+  }
 
   // Modal détail
   showModal = false;
@@ -138,14 +167,21 @@ export class AgentRenouvellement implements OnInit {
     private http: HttpClient,
     private cdr: ChangeDetectorRef,
     private authService: AuthService,
+    private route: ActivatedRoute,
   ) {}
 
   ngOnInit(): void {
-    this.peutApprouver       = this.authService.hasPermission('STAGE', 'APPROUVER');
-    this.peutValider         = this.authService.hasPermission('STAGE', 'VALIDER');
-    this.peutRejeter         = this.authService.hasPermission('STAGE', 'REJETER');
-    this.peutCreerConvention = this.authService.hasPermission('STAGE', 'CREER');
-    this.peutModifier        = this.authService.hasPermission('STAGE', 'MODIFIER');
+    const data = this.route.snapshot.data;
+    this.scope = data['scope'] === 'global' ? 'global' : 'direction';
+    // Vue globale : lecture seule. Écran de direction : actions selon les permissions RENOUVELLEMENT
+    // (CONSULTER seul → aucune action, donc lecture seule).
+    this.readOnly = !!data['readOnly'];
+    const peut = (action: string) => !this.readOnly && this.authService.hasPermission('RENOUVELLEMENT', action);
+    this.peutApprouver       = peut('APPROUVER');
+    this.peutValider         = peut('VALIDER');
+    this.peutRejeter         = peut('REJETER');
+    this.peutCreerConvention = peut('CREER');
+    this.peutModifier        = peut('MODIFIER');
     this.charger();
   }
 
@@ -155,8 +191,11 @@ export class AgentRenouvellement implements OnInit {
     const params: Record<string, string> = {
       page:  String(this.page),
       limit: String(this.limit),
+      scope: this.scope,
     };
-    if (this.filtreStatut) params['statusRenouvellement'] = this.filtreStatut;
+    const statutVue = this.vues.find(v => v.key === this.vueActive)?.statut || '';
+    const statut = this.filtreStatut || statutVue;
+    if (statut) params['statusRenouvellement'] = statut;
     if (this.search.trim()) params['search'] = this.search.trim();
     if (this.dateDebut) params['dateDebut'] = this.dateDebut;
     if (this.dateFin)   params['dateFin']   = this.dateFin;
@@ -196,6 +235,7 @@ export class AgentRenouvellement implements OnInit {
     this.charger();
   }
 
+  /** Réinitialise les filtres du panneau (la recherche reste pilotée par le header). */
   effacerFiltres(): void {
     this.filtreStatut = '';
     this.page = 1;
@@ -444,23 +484,12 @@ export class AgentRenouvellement implements OnInit {
       return;
     }
     this.soumissionConvention = true;
-    // Convention déjà jointe → remplacement (même route que pour une demande de stage) ;
-    // sinon → ajout d'un document CONVENTION sur le nouveau stage.
+    // Même route pour joindre ou remplacer : elle crée la convention si le nouveau stage n'en a
+    // pas, et vérifie la permission CREER du module RENOUVELLEMENT (stage de renouvellement).
     const remplacement = !!this.selected.stageNouveau?.documents?.length;
     const fd = new FormData();
-    let requete$;
-    if (remplacement) {
-      fd.append('conventionStage', this.conventionRemplacement, this.conventionRemplacement.name);
-      requete$ = this.http.put(`${this.apiUrl}/stages/${stageId}/convention`, fd);
-    } else {
-      fd.append('stage_idstage', String(stageId));
-      fd.append('typeDocument', 'CONVENTION');
-      // Date d'émission requise par l'API (createDocumentStageSchema)
-      fd.append('dateEmission', new Date().toISOString().slice(0, 10));
-      fd.append('document', this.conventionRemplacement, this.conventionRemplacement.name);
-      requete$ = this.http.post(`${this.apiUrl}/stages/documents`, fd);
-    }
-    requete$.subscribe({
+    fd.append('conventionStage', this.conventionRemplacement, this.conventionRemplacement.name);
+    this.http.put(`${this.apiUrl}/stages/${stageId}/convention`, fd).subscribe({
       next: () => {
         this.soumissionConvention = false;
         this.showConventionModal = false;
@@ -626,10 +655,10 @@ ${embedsHtml}<script>let n=0;document.querySelectorAll('embed').forEach(e=>e.add
       case 'PROGRAMMATION_EN_COURS': return 'bg-blue-100 text-blue-700';
       case 'ACCEPTE':                return 'bg-green-100 text-green-700';
       case 'REJETE':                 return 'bg-red-100 text-red-700';
-      case 'EN_COURS':               return 'bg-indigo-100 text-indigo-700';
+      case 'EN_COURS':               return 'bg-emerald-100 text-emerald-700';
       case 'EXPIRE':                 return 'bg-orange-100 text-orange-700';
       case 'TERMINE':                return 'bg-gray-200 text-gray-600';
-      case 'RAPPORT_SOUMIS':         return 'bg-purple-100 text-purple-700';
+      case 'RAPPORT_SOUMIS':         return 'bg-sky-100 text-sky-700';
       default:                       return 'bg-gray-100 text-gray-500';
     }
   }

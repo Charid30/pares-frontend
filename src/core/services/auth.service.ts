@@ -267,7 +267,7 @@ export class AuthService {
   getAccessibleModules(): string[] {
     const user = this.getCurrentUser();
     if (!user) return [];
-    if (this.isAdminUser(user)) return ['CANDIDATURES', 'CANDIDATS', 'STAGE', 'SUIVI_STAGE', 'SUSPENSION_STAGE', 'OFFRE', 'AIDE', 'DEMANDE_AUDIENCE', 'AGENTS', 'SERVICES'];
+    if (this.isAdminUser(user)) return ['CANDIDATURES', 'CANDIDATS', 'STAGE', 'RENOUVELLEMENT', 'SUIVI_STAGE', 'SUSPENSION_STAGE', 'OFFRE', 'AIDE', 'DEMANDE_AUDIENCE', 'AGENTS', 'SERVICES'];
     if (!user.permissions) return [];
     return Array.from(new Set(user.permissions.map(p => p.module)));
   }
