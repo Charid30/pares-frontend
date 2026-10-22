@@ -121,8 +121,8 @@ export class AuthService {
   /**
    * Inscription
    */
-  getFormToken(): Observable<{ success: boolean; data: { token: string } }> {
-    return this.http.get<{ success: boolean; data: { token: string } }>(`${this.apiUrl}/form-token`);
+  getFormToken(): Observable<{ success: boolean; data: { token: string; expiresIn?: number } }> {
+    return this.http.get<{ success: boolean; data: { token: string; expiresIn?: number } }>(`${this.apiUrl}/form-token`);
   }
 
   register(data: RegisterData): Observable<LoginResponse> {

@@ -191,7 +191,7 @@
                                    : 'border-gray-200 focus:ring-primary-400 focus:border-transparent'">
               </div>
               <p *ngIf="registerForm.get('username')?.invalid && registerForm.get('username')?.touched"
-                class="mt-1.5 text-xs text-red-500">Nom d'utilisateur requis (min. 3 caractères)</p>
+                class="mt-1.5 text-xs text-red-500">Un seul mot de 3 à 30 caractères, sans espace (lettres, chiffres, point, tiret) — ex. jean.ouedraogo</p>
             </div>
 
             <!-- Email -->
@@ -314,7 +314,7 @@
                                    ? 'border-red-300 focus:ring-red-400'
                                    : 'border-gray-200 focus:ring-primary-400 focus:border-transparent'">
                 <p *ngIf="registerForm.get('prenom')?.invalid && registerForm.get('prenom')?.touched"
-                  class="mt-1.5 text-xs text-red-500">Le prénom est requis</p>
+                  class="mt-1.5 text-xs text-red-500">{{ registerForm.get('prenom')?.hasError('pattern') ? 'Lettres, espaces, apostrophes ou tirets, un seul chiffre au plus' : 'Le prénom est requis' }}</p>
               </div>
               <div>
                 <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
@@ -326,7 +326,7 @@
                                    ? 'border-red-300 focus:ring-red-400'
                                    : 'border-gray-200 focus:ring-primary-400 focus:border-transparent'">
                 <p *ngIf="registerForm.get('nom')?.invalid && registerForm.get('nom')?.touched"
-                  class="mt-1.5 text-xs text-red-500">Le nom est requis</p>
+                  class="mt-1.5 text-xs text-red-500">{{ registerForm.get('nom')?.hasError('pattern') ? 'Lettres, espaces, apostrophes ou tirets, un seul chiffre au plus' : 'Le nom est requis' }}</p>
               </div>
             </div>
 

@@ -8,6 +8,12 @@ import {
   parsePhoneNumberFromString, CountryCode,
 } from 'libphonenumber-js';
 
+// Mêmes règles que le backend (auth.validator.js)
+const USERNAME_PATTERN = /^[A-Za-z0-9._-]{3,30}$/;
+const NOM_PATTERN = /^(?!(?:[^0-9]*[0-9]){2})[A-Za-zÀ-ÿ0-9\s'\-]{2,80}$/;
+// Le jeton de formulaire vaut 15 min côté serveur : on le renouvelle sans bruit un peu avant
+const RENOUVELLEMENT_JETON_MS = 14 * 60 * 1000;
+
 interface CountryOption {
   code: CountryCode;
   name: string;
@@ -34,6 +40,8 @@ export class Register implements OnInit, OnDestroy {
   successMessage: string | null = null;
   honeypot = '';
   formToken = '';
+  private jetonTimer: ReturnType<typeof setInterval> | null = null;
+  private renvoiTimer: ReturnType<typeof setTimeout> | null = null;
   showPassword = false;
 
   // ── Pièce d'identité (CNIB/NIP ou Passeport) ─────────────────────────────
@@ -112,20 +120,18 @@ export class Register implements OnInit, OnDestroy {
       return;
     }
 
-    this.authService.getFormToken().subscribe({
-      next: (res) => { if (res.success) this.formToken = res.data.token; },
-      error: () => {}
-    });
+    this.chargerJeton();
+    this.jetonTimer = setInterval(() => this.chargerJeton(), RENOUVELLEMENT_JETON_MS);
 
     this.buildCountryList();
 
     this.registerForm = this.fb.group({
-      username: ['', [Validators.required, Validators.minLength(3)]],
+      username: ['', [Validators.required, Validators.pattern(USERNAME_PATTERN)]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(8), Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/)]],
       confirmPassword: ['', [Validators.required]],
-      prenom: ['', [Validators.required]],
-      nom: ['', [Validators.required]],
+      prenom: ['', [Validators.required, Validators.pattern(NOM_PATTERN)]],
+      nom: ['', [Validators.required, Validators.pattern(NOM_PATTERN)]],
       genre: ['', [Validators.required]],
       telephone: ['', [Validators.required, this.telephoneValidator]],
       nip: ['', [Validators.required, Validators.pattern(/^[0-9]{17}$/)]],
@@ -139,6 +145,16 @@ export class Register implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.stopCamera();
     if (this.ocrTimeoutId) clearTimeout(this.ocrTimeoutId);
+    if (this.jetonTimer) clearInterval(this.jetonTimer);
+    if (this.renvoiTimer) clearTimeout(this.renvoiTimer);
+  }
+
+  /** Jeton anti-robot du formulaire (15 min, lié à ce navigateur), renouvelé sans que le candidat s'en aperçoive. */
+  private chargerJeton(ensuite?: () => void): void {
+    this.authService.getFormToken().subscribe({
+      next: (res) => { if (res.success) this.formToken = res.data.token; ensuite?.(); },
+      error: () => { ensuite?.(); }
+    });
   }
 
   passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
@@ -618,10 +634,22 @@ onSubmit(): void {
     passeport: this.pieceIdentiteType === 'passeport' ? (this.registerForm.value.passeport || undefined) : undefined,
     ifu: this.documentFiscalType === 'ifu' ? (this.registerForm.value.ifu || undefined) : undefined,
     recipisse: this.documentFiscalType === 'recipisse' ? (this.registerForm.value.recipisse || undefined) : undefined,
-    formToken: this.formToken,
   };
 
-  this.authService.register(formData).subscribe({
+  this.envoyerInscription(formData, true);
+} else {
+  ['prenom', 'nom', 'telephone', 'nip', 'passeport', 'ifu', 'acceptTerms'].forEach(f =>
+    this.registerForm.get(f)?.markAsTouched()
+  );
+}
+  }
+
+/**
+ * Envoie l'inscription. Un refus du jeton de formulaire (expiré, envoi trop rapide) est rattrapé une fois sans
+ * intervention du candidat : nouveau jeton ou attente de quelques secondes, puis renvoi automatique.
+ */
+private envoyerInscription(formData: RegisterData, rattrapageJeton: boolean): void {
+  this.authService.register({ ...formData, formToken: this.formToken }).subscribe({
     next: (response) => {
       this.ngZone.run(() => {
         this.isLoading = false;
@@ -634,12 +662,27 @@ onSubmit(): void {
     },
     error: (error) => {
       this.ngZone.run(() => {
+        const code: string = error.error?.code || '';
+        if (error.status === 403 && code.startsWith('FORM_TOKEN_') && rattrapageJeton) {
+          if (code === 'FORM_TOKEN_TROP_RAPIDE') {
+            const attente = (Number(error.error?.retryAfter) || 15) * 1000;
+            this.renvoiTimer = setTimeout(() => this.envoyerInscription(formData, false), attente);
+          } else {
+            // Nouveau jeton : il faut ensuite respecter le délai minimal avant de renvoyer
+            this.chargerJeton(() => {
+              this.renvoiTimer = setTimeout(() => this.envoyerInscription(formData, false), 15000);
+            });
+          }
+          return; // isLoading reste actif pendant le rattrapage
+        }
         this.isLoading = false;
         if (error.status === 409) {
           this.errorMessage = 'Ce nom d\'utilisateur ou cet email est déjà utilisé';
           this.currentStep = 1;
         } else if (error.status === 400) {
-          this.errorMessage = error.error?.message || 'Données invalides.';
+          const details: { message?: string }[] = error.error?.errors || [];
+          const messages = details.map(e => e.message).filter(Boolean);
+          this.errorMessage = messages.length ? messages.join(' • ') : (error.error?.message || 'Données invalides.');
         } else if (error.status === 0) {
           this.errorMessage = 'Impossible de contacter le serveur.';
         } else {
@@ -649,12 +692,7 @@ onSubmit(): void {
       });
     },
   });
-} else {
-  ['prenom', 'nom', 'telephone', 'nip', 'passeport', 'ifu', 'acceptTerms'].forEach(f =>
-    this.registerForm.get(f)?.markAsTouched()
-  );
 }
-  }
 
 togglePasswordVisibility(): void {
   this.showPassword = !this.showPassword;
