@@ -333,11 +333,31 @@ export const routes: Routes = [
                 data: { module: 'RENOUVELLEMENT', scope: 'direction' },
                 loadComponent: () => import('../features/dashboard/agent/modules/renouvellement/agent-renouvellement').then(m => m.AgentRenouvellement),
             },
-            // Renouvellements — vue globale en lecture seule (rôle « lecture globale »)
+            // Renouvellements — vue globale (rôle « lecture globale », ex. agents RH), comme « Stage (Vue globale) » :
+            // les actions dépendent des permissions RENOUVELLEMENT et de l'écran.
+            { path: 'renouvellements-global', redirectTo: 'renouvellements-global/en-attente', pathMatch: 'full' },
             {
-                path: 'renouvellements-global',
+                path: 'renouvellements-global/en-attente',
                 canActivate: [permissionGuard],
-                data: { module: 'RENOUVELLEMENT', scope: 'global', readOnly: true },
+                data: { module: 'RENOUVELLEMENT', scope: 'global', statusFilter: 'EN_ATTENTE', allowedTransitions: ['APPROUVER', 'REJETE'] },
+                loadComponent: () => import('../features/dashboard/agent/modules/renouvellement/agent-renouvellement').then(m => m.AgentRenouvellement),
+            },
+            {
+                path: 'renouvellements-global/programmation',
+                canActivate: [permissionGuard],
+                data: { module: 'RENOUVELLEMENT', scope: 'global', statusFilter: 'PROGRAMMATION_EN_COURS', allowedTransitions: ['ACCEPTE', 'REJETE'] },
+                loadComponent: () => import('../features/dashboard/agent/modules/renouvellement/agent-renouvellement').then(m => m.AgentRenouvellement),
+            },
+            {
+                path: 'renouvellements-global/en-cours',
+                canActivate: [permissionGuard],
+                data: { module: 'RENOUVELLEMENT', scope: 'global', statusFilter: 'ACCEPTE,EN_COURS', readOnly: true },
+                loadComponent: () => import('../features/dashboard/agent/modules/renouvellement/agent-renouvellement').then(m => m.AgentRenouvellement),
+            },
+            {
+                path: 'renouvellements-global/termine',
+                canActivate: [permissionGuard],
+                data: { module: 'RENOUVELLEMENT', scope: 'global', statusFilter: 'EXPIRE,TERMINE,RAPPORT_SOUMIS', readOnly: true },
                 loadComponent: () => import('../features/dashboard/agent/modules/renouvellement/agent-renouvellement').then(m => m.AgentRenouvellement),
             },
             // Module Archives (stages expirés sans parent)

@@ -95,10 +95,6 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
   showModal = false;
   selected: Renouvellement | null = null;
 
-  // Modal mise en traitement (EN_ATTENTE → EN_COURS_DE_TRAITEMENT)
-  showTraitementModal = false;
-  soumissionTraitement = false;
-
   // Modal approbation (EN_ATTENTE / EN_COURS_DE_TRAITEMENT → PROGRAMMATION_EN_COURS)
   showApprobationModal = false;
   soumissionApprobation = false;
@@ -277,12 +273,6 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
 
   // ── Actions directes depuis la liste ────────────────────────────────────────
 
-  traiterDirect(r: Renouvellement): void {
-    this.selected = r;
-    this.showModal = false;
-    this.showTraitementModal = true;
-  }
-
   accepterDirect(r: Renouvellement): void {
     this.selected = r;
     this.showModal = false;
@@ -301,40 +291,7 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
     this.ouvrirRouvrir();
   }
 
-  // ── Mise en traitement (EN_ATTENTE → EN_COURS_DE_TRAITEMENT), comme pour les stages ──
-
-  ouvrirTraitement(): void {
-    this.showTraitementModal = true;
-  }
-
-  fermerTraitement(): void {
-    this.showTraitementModal = false;
-  }
-
-  confirmerTraitement(): void {
-    if (!this.selected) return;
-    this.soumissionTraitement = true;
-    this.http.put<{ success: boolean; data: any }>(
-      `${this.apiUrl}/stages/renouvellements/${this.selected.idrenouvellement}/traiter`,
-      {}
-    ).subscribe({
-      next: () => {
-        this.soumissionTraitement = false;
-        this.showTraitementModal = false;
-        this.showModal = false;
-        this.successMessage = 'Renouvellement mis en traitement.';
-        this.charger();
-        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 5000);
-      },
-      error: (err) => {
-        this.soumissionTraitement = false;
-        this.erreur = err.error?.message || 'Une erreur est survenue.';
-        this.cdr.detectChanges();
-      },
-    });
-  }
-
-  // ── Approbation (EN_ATTENTE / EN_COURS_DE_TRAITEMENT → PROGRAMMATION_EN_COURS), comme pour les stages ──
+  // ── Approbation (EN_ATTENTE → PROGRAMMATION_EN_COURS) — sinon automatique après 48 h ──
 
   peutApprouver(r: Renouvellement): boolean {
     return ['EN_ATTENTE', 'EN_COURS_DE_TRAITEMENT'].includes(r.statusRenouvellement);
@@ -650,6 +607,11 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
   /** Convention joignable après acceptation : accepté, en cours ou déjà terminé (régularisation) */
   peutJoindreConvention(r: Renouvellement): boolean {
     return ['ACCEPTE', 'EN_COURS', 'EXPIRE', 'TERMINE', 'RAPPORT_SOUMIS'].includes(r.statusRenouvellement);
+  }
+
+  /** L'administration peut refuser à tout moment, y compris un renouvellement accepté ou en cours */
+  peutRefuser(r: Renouvellement): boolean {
+    return this.estAvantDecision(r) || ['ACCEPTE', 'EN_COURS', 'SUSPENDU'].includes(r.statusRenouvellement);
   }
 
   estAvantDecision(r: Renouvellement): boolean {

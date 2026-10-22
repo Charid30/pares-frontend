@@ -105,14 +105,23 @@ export class AgentRenouvellement implements OnInit {
   stats: PaginatedResult['stats'] = { total: 0, enAttente: 0, enTraitement: 0, approuve: 0, accepte: 0, enCours: 0, expire: 0, termine: 0, rejete: 0 };
 
   // Portée (route) : 'direction' = « Renouvellement [DIRECTION] » (directions de l'agent) ;
-  // 'global' = « Renouvellement (Vue globale) », toutes les directions en lecture seule.
+  // 'global' = « Renouvellement (Vue globale) », toutes les directions (rôle « lecture globale »).
   scope: 'direction' | 'global' = 'direction';
   readOnly = false;
+  // Écrans de la vue globale (comme « Stage (Vue globale) ») : statut imposé par la route et actions
+  // limitées à certaines transitions (ex. « En cours de programmation » : joindre la convention / refuser).
+  statusFilter: string | null = null;
+  allowedTransitions: string[] | null = null;
+  private readonly dataRoute = (() => {
+    const route = inject(ActivatedRoute);
+    // Le même composant sert plusieurs routes : réagir au changement de sous-écran
+    return route.data.pipe(takeUntilDestroyed()).subscribe(data => this.appliquerRoute(data));
+  })();
 
   // Onglets de vue (plusieurs statuts séparés par une virgule, comme pour les stages)
   readonly vues: { key: string; label: string; statut: string }[] = [
     { key: 'toutes',   label: 'Toutes',     statut: '' },
-    { key: 'attente',  label: 'En attente', statut: 'EN_ATTENTE,EN_COURS_DE_TRAITEMENT' },
+    { key: 'attente',  label: 'En attente', statut: 'EN_ATTENTE' },
     { key: 'approuve', label: 'En cours de programmation',  statut: 'PROGRAMMATION_EN_COURS' },
     { key: 'encours',  label: 'En cours',   statut: 'ACCEPTE,EN_COURS' },
     { key: 'termine',  label: 'Terminés',   statut: 'EXPIRE,TERMINE' },
@@ -171,17 +180,26 @@ export class AgentRenouvellement implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    const data = this.route.snapshot.data;
+    // Chargement déclenché par appliquerRoute (abonnement aux données de la route)
+  }
+
+  /** Portée, statut imposé et actions permises selon la route ; les permissions RENOUVELLEMENT décident du reste. */
+  private appliquerRoute(data: Record<string, any>): void {
     this.scope = data['scope'] === 'global' ? 'global' : 'direction';
-    // Vue globale : lecture seule. Écran de direction : actions selon les permissions RENOUVELLEMENT
-    // (CONSULTER seul → aucune action, donc lecture seule).
     this.readOnly = !!data['readOnly'];
-    const peut = (action: string) => !this.readOnly && this.authService.hasPermission('RENOUVELLEMENT', action);
-    this.peutApprouver       = peut('APPROUVER');
-    this.peutValider         = peut('VALIDER');
-    this.peutRejeter         = peut('REJETER');
-    this.peutCreerConvention = peut('CREER');
-    this.peutModifier        = peut('MODIFIER');
+    this.statusFilter = data['statusFilter'] || null;
+    this.allowedTransitions = data['allowedTransitions'] || null;
+    const permis = (transition: string) => !this.allowedTransitions || this.allowedTransitions.includes(transition);
+    const peut = (action: string, transition: string) =>
+      !this.readOnly && permis(transition) && this.authService.hasPermission('RENOUVELLEMENT', action);
+    this.peutApprouver       = peut('APPROUVER', 'APPROUVER');
+    this.peutValider         = peut('VALIDER', 'ACCEPTE');
+    this.peutRejeter         = peut('REJETER', 'REJETE');
+    this.peutCreerConvention = peut('CREER', 'CONVENTION');
+    this.peutModifier        = peut('MODIFIER', 'MODIFIER');
+    this.vueActive = 'toutes';
+    this.filtreStatut = '';
+    this.page = 1;
     this.charger();
   }
 
@@ -193,8 +211,8 @@ export class AgentRenouvellement implements OnInit {
       limit: String(this.limit),
       scope: this.scope,
     };
-    const statutVue = this.vues.find(v => v.key === this.vueActive)?.statut || '';
-    const statut = this.filtreStatut || statutVue;
+    const statutVue = this.statusFilter ? '' : (this.vues.find(v => v.key === this.vueActive)?.statut || '');
+    const statut = this.filtreStatut || this.statusFilter || statutVue;
     if (statut) params['statusRenouvellement'] = statut;
     if (this.search.trim()) params['search'] = this.search.trim();
     if (this.dateDebut) params['dateDebut'] = this.dateDebut;

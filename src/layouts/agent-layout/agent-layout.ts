@@ -251,8 +251,9 @@ export class AgentLayout implements OnInit, OnDestroy {
    * Module RENOUVELLEMENT — même logique que STAGE :
    * - « Renouvellement [ACCRONYME] » : limité aux directions de l'agent ; avec boutons d'action
    *   si l'agent a une action sur le module, en lecture seule s'il n'a que CONSULTER ;
-   * - « Renouvellement (Vue globale) » : toutes les directions en lecture seule, pour un rôle
-   *   « lecture globale » ayant CONSULTER sur RENOUVELLEMENT.
+   * - « Renouvellement (Vue globale) » : toutes les directions, pour un rôle « lecture globale » ayant
+   *   CONSULTER sur RENOUVELLEMENT (ex. agents RH) ; sous-écrans comme « Stage (Vue globale) », dont
+   *   « En programmation » où la RH (VALIDER) joint les conventions.
    */
   private pushRenouvellementMenuItems(): void {
     const icon = 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15';
@@ -273,7 +274,12 @@ export class AgentLayout implements OnInit, OnDestroy {
       this.menuItems.push({
         label: 'Renouvellement (Vue globale)',
         icon,
-        route: '/dashboard/agent/renouvellements-global',
+        children: [
+          { label: 'Renouvellement En attente',       icon, route: '/dashboard/agent/renouvellements-global/en-attente' },
+          { label: 'Renouvellement En programmation', icon, route: '/dashboard/agent/renouvellements-global/programmation' },
+          { label: 'Renouvellement En cours',         icon, route: '/dashboard/agent/renouvellements-global/en-cours' },
+          { label: 'Renouvellement Terminé',          icon, route: '/dashboard/agent/renouvellements-global/termine' },
+        ],
       });
     }
   }

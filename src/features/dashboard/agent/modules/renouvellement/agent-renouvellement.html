@@ -63,7 +63,6 @@
                       class="w-full px-3 py-2 rounded-xl text-xs border border-gray-200 bg-gray-50 text-gray-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-[#c0392b]">
                 <option value="">Selon l'onglet</option>
                 <option value="EN_ATTENTE">En attente</option>
-                <option value="EN_COURS_DE_TRAITEMENT">En traitement</option>
                 <option value="PROGRAMMATION_EN_COURS">En cours de programmation</option>
                 <option value="ACCEPTE">Accepté</option>
                 <option value="EN_COURS">En cours</option>
@@ -110,25 +109,25 @@
 
   <!-- Stats Cards (cliquables : ouvrent l'onglet correspondant) -->
   <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-    <button type="button" class="text-left" (click)="changerVue('toutes')">
+    <button type="button" class="text-left" [disabled]="!!statusFilter" (click)="changerVue('toutes')">
       <app-stat-card accent="red" label="Total" [value]="stats.total"
         [sublabel]="scope === 'global' ? 'Toutes les directions' : 'Demandes de vos directions'"
-        [active]="vueActive === 'toutes'"
+        [active]="!statusFilter && vueActive === 'toutes'"
         iconPath="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></app-stat-card>
     </button>
-    <button type="button" class="text-left" (click)="changerVue('attente')">
-      <app-stat-card accent="amber" label="En attente" [value]="stats.enAttente + stats.enTraitement" sublabel="À approuver"
-        [active]="vueActive === 'attente'"
+    <button type="button" class="text-left" [disabled]="!!statusFilter" (click)="changerVue('attente')">
+      <app-stat-card accent="amber" label="En attente" [value]="stats.enAttente" sublabel="À approuver, sinon automatique après 48 h"
+        [active]="!statusFilter && vueActive === 'attente'"
         iconPath="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></app-stat-card>
     </button>
-    <button type="button" class="text-left" (click)="changerVue('approuve')">
+    <button type="button" class="text-left" [disabled]="!!statusFilter" (click)="changerVue('approuve')">
       <app-stat-card accent="blue" label="En cours de programmation" [value]="stats.approuve" sublabel="Convention à joindre"
-        [active]="vueActive === 'approuve'"
+        [active]="!statusFilter && vueActive === 'approuve'"
         iconPath="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></app-stat-card>
     </button>
-    <button type="button" class="text-left" (click)="changerVue('encours')">
+    <button type="button" class="text-left" [disabled]="!!statusFilter" (click)="changerVue('encours')">
       <app-stat-card accent="emerald" label="En cours" [value]="stats.accepte + stats.enCours" sublabel="Acceptés et en stage"
-        [active]="vueActive === 'encours'"
+        [active]="!statusFilter && vueActive === 'encours'"
         iconPath="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></app-stat-card>
     </button>
   </div>
@@ -149,7 +148,7 @@
   <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
 
     <!-- Onglets de vue -->
-    <div class="flex items-center gap-1 px-3 pt-2 border-b border-gray-100 overflow-x-auto" role="tablist">
+    <div *ngIf="!statusFilter" class="flex items-center gap-1 px-3 pt-2 border-b border-gray-100 overflow-x-auto" role="tablist">
       <button *ngFor="let v of vues" role="tab" [attr.aria-selected]="vueActive === v.key"
               (click)="changerVue(v.key)"
               class="relative flex items-center gap-1.5 px-3 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors"
