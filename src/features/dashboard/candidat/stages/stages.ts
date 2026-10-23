@@ -276,6 +276,11 @@ export class Stages implements OnInit {
     return !(this.calendarYear === now.getFullYear() && this.calendarMonth === now.getMonth());
   }
 
+  /** Libellé affiché d'un niveau d'études (le code BAC_PRO s'affiche « BAC PRO »). */
+  libelleNiveau(niveau: string | null): string {
+    return niveau === 'BAC_PRO' ? 'BAC PRO' : (niveau || '');
+  }
+
   // ─── Validation par étape ───────────────────────────────────────
   /** Étape 1 valide : type de stage + niveau renseignés */
   get etape1Valide(): boolean {
@@ -492,6 +497,8 @@ export class Stages implements OnInit {
       // Niveau requis pour tous les types de stage
       if (value === 'SOUTENANCE' || value === 'PERFECTIONNEMENT') {
         niveauControl?.setValidators(Validators.required);
+        // BAC PRO n'existe que pour le stage de soutenance (fin d'études)
+        if (value !== 'SOUTENANCE' && niveauControl?.value === 'BAC_PRO') niveauControl.setValue('');
       } else {
         niveauControl?.clearValidators();
         niveauControl?.setValue('');

@@ -253,7 +253,7 @@
                   </div>
 
                   <p class="text-sm font-semibold text-gray-800 truncate group-hover:text-primary-600 transition-colors">{{ demande.domaineStage }}</p>
-                  <p class="text-xs text-gray-500 mt-0.5" *ngIf="demande.niveau">Niveau : {{ demande.niveau }}</p>
+                  <p class="text-xs text-gray-500 mt-0.5" *ngIf="demande.niveau">Niveau : {{ libelleNiveau(demande.niveau) }}</p>
 
                   <!-- Méta : durée + date souhaitée -->
                   <div class="flex flex-wrap items-center gap-3 mt-1.5 text-[11px] text-gray-400">
@@ -752,6 +752,7 @@
                          focus:border-red-400 focus:bg-white focus:ring-0 transition-all appearance-none cursor-pointer">
                   <option value="" disabled>Choisir le niveau</option>
                   <ng-container *ngIf="typeStageVal === 'SOUTENANCE'">
+                    <option value="BAC_PRO">BAC PRO</option>
                     <option value="LICENCE">Licence</option>
                     <option value="MASTER">Master</option>
                     <option value="DOCTORAT">Doctorat</option>
@@ -1385,7 +1386,7 @@
           </div>
           <div *ngIf="selectedDemandeDetail.niveau" class="flex items-center justify-between px-3 py-2.5">
             <span class="text-xs text-gray-500">Niveau d'études</span>
-            <span class="text-xs font-semibold text-gray-800">{{ selectedDemandeDetail.niveau }}</span>
+            <span class="text-xs font-semibold text-gray-800">{{ libelleNiveau(selectedDemandeDetail.niveau) }}</span>
           </div>
           <div class="flex items-center justify-between px-3 py-2.5">
             <span class="text-xs text-gray-500">Durée souhaitée</span>

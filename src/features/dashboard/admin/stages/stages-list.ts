@@ -1285,6 +1285,7 @@ export class StagesList implements OnInit, OnDestroy {
   getNiveauLabel(niveau: string | null): string {
     if (!niveau) return 'N/A';
     const labels: { [key: string]: string } = {
+      'BAC_PRO': 'BAC PRO',
       'LICENCE': 'Licence',
       'MASTER': 'Master',
       'DOCTORAT': 'Doctorat'

@@ -81,7 +81,7 @@ export interface Stage {
   statutAffiche?: string;
   chaine?: StageChaine;
   typeStage: 'SOUTENANCE' | 'PERFECTIONNEMENT';
-  niveau: 'CAP' | 'BEPC' | 'BEP' | 'BAC' | 'LICENCE' | 'MASTER' | 'DOCTORAT' | null;
+  niveau: 'CAP' | 'BEPC' | 'BEP' | 'BAC' | 'BAC_PRO' | 'LICENCE' | 'MASTER' | 'DOCTORAT' | null;
   dernierDiplome_filename: string | null;
   domaineStage: string;
   dureeStage: number;
