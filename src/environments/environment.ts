@@ -2,8 +2,8 @@
 // Ce fichier est automatiquement remplacé par environment.prod.ts lors de : ng build
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:5000/api',
-  // apiUrl: 'http://192.168.1.66:5000/api',
+  // Passe par le proxy de ng serve (proxy.conf.json) : fonctionne depuis localhost comme depuis une autre machine.
+  apiUrl: '/api',
   appName: 'PARES (dev)',
   appVersion: '2.0.0',
 };
