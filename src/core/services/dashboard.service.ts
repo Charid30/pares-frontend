@@ -62,14 +62,30 @@ export interface PendingItem {
 export interface ChartData {
   labels: string[];
   candidats: number[];
-  stagesValides: number[];
   stagesSoumis: number[];
 }
 
-export interface StagesDonut {
+export interface RepartitionStages {
   labels: string[];
   values: number[];
-  colors: string[];
+}
+
+export interface ATraiter {
+  total: number;
+  stages: number;
+  conventions: number;
+  stagesEnRetard: number;
+  renouvellements: number;
+  offres: number;
+  audiences: number;
+  aides: number;
+  rapports: number;
+}
+
+export interface StagesDirection {
+  direction: string;
+  nombre: number;
+  agents: number;
 }
 
 export interface AudiencesStats {
@@ -85,8 +101,11 @@ export interface DashboardData {
   recentActivities: RecentActivity[];
   pendingItems: PendingItem[];
   chartData?: ChartData;
-  stagesDonut?: StagesDonut;
+  repartitionStages?: RepartitionStages;
   audiencesStats?: AudiencesStats;
+  aTraiter?: ATraiter;
+  stagesParDirection?: StagesDirection[];
+  stagesBientotTermines?: number;
 }
 
 export interface ApiResponse<T> {

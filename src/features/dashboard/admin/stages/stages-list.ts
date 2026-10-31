@@ -232,6 +232,8 @@ export class StagesList implements OnInit, OnDestroy {
     this.canValider = this.authService.hasPermission('STAGE', 'VALIDER') || this.authService.hasRole('ADMIN');
     this.isAdmin = this.authService.hasRole('ADMIN');
     if (this.isAdmin) this.loadDemandesModification();
+    // Filtre de statut transmis par le tableau de bord (?statut=...)
+    this.filtreStatut = this.route.snapshot.queryParamMap.get('statut') ?? '';
     this.loadStats();
     this.loadStages();
     this.loadDirections();

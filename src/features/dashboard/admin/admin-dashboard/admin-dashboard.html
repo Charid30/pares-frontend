@@ -1,633 +1,185 @@
 <!--- DASHBOARD ADMIN SONABHY -->
-<div class="space-y-5 pb-4">
+<div class="grid grid-cols-12 gap-3 lg:gap-4 pb-4">
 
   <!-- =====================================================
-       HEADER
+       BANDEAU — dossiers à traiter
        ===================================================== -->
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-    <div>
-      <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Tableau de bord</h1>
-      <p class="text-sm text-gray-400 mt-0.5">
-        {{ currentDate | date:'EEEE d MMMM yyyy':'':'fr-FR' }}
-      </p>
-    </div>
-    <div class="flex items-center gap-2 shrink-0">
-      <button (click)="refreshData()"
-        class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-        </svg>
-        <span class="hidden sm:inline">Actualiser</span>
-      </button>
-      <button (click)="exporterCSV()"
-        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-primary-500 rounded-lg hover:bg-primary-600 transition-all shadow-sm shadow-primary-200 cursor-pointer">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-        </svg>
-        Exporter
-      </button>
-    </div>
-  </div>
+  <section class="relative overflow-hidden col-span-12 lg:col-span-5 lg:row-span-2 rounded-[20px] p-5 lg:p-6 text-white
+                  bg-gradient-to-br from-[#c0392b] to-[#96281b] flex flex-col justify-between gap-6">
+    <span class="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-white/5 pointer-events-none"></span>
 
-  <!-- =====================================================
-       KPI CARDS PRINCIPALES — design avec bandeau coloré
-       ===================================================== -->
-  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-    <a *ngFor="let stat of stats" [routerLink]="stat.route" class="group relative bg-white rounded-2xl shadow-sm border border-gray-100
-              hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer overflow-hidden">
-
-      <!-- Bandeau coloré à gauche -->
-      <div class="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" [ngClass]="stat.accentClass"></div>
-
-      <div class="p-4 sm:p-5 pl-5 sm:pl-6">
-        <!-- Icône + badge tendance -->
-        <div class="flex items-start justify-between mb-4">
-          <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" [ngClass]="stat.bgColor">
-            <svg class="w-[18px] h-[18px]" [ngClass]="stat.color" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" [attr.d]="stat.icon" />
-            </svg>
-          </div>
-          <span class="inline-flex items-center gap-0.5 text-xs font-semibold px-2 py-0.5 rounded-full shrink-0"
-            [ngClass]="{
-                  'bg-secondary-50 text-secondary-700': stat.changeType === 'increase',
-                  'bg-red-50 text-red-600': stat.changeType === 'decrease',
-                  'bg-gray-100 text-gray-400': stat.changeType === 'neutral'
-                }">
-            <svg *ngIf="stat.changeType === 'increase'" class="w-3 h-3" fill="none" stroke="currentColor"
-              viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-            </svg>
-            <svg *ngIf="stat.changeType === 'decrease'" class="w-3 h-3" fill="none" stroke="currentColor"
-              viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-            </svg>
-            {{ stat.changeType === 'neutral' ? 'Stable' : (stat.changeType === 'increase' ? '+' : '') + stat.change +
-            '%' }}
-          </span>
-        </div>
-
-        <!-- Valeur -->
-        <p class="text-3xl sm:text-4xl font-bold text-gray-900 tabular-nums leading-none">
-          {{ stat.value | number }}
-        </p>
-        <!-- Label -->
-        <p class="text-xs sm:text-sm text-gray-500 font-medium mt-2 leading-snug">{{ stat.label }}</p>
-
-        <!-- Footer -->
-        <div class="mt-3 pt-3 border-t border-gray-50 flex items-center gap-1">
-          <svg class="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-          <span class="text-xs text-gray-400">vs mois dernier</span>
-        </div>
-      </div>
-    </a>
-  </div>
-
-  <!-- =====================================================
-       MÉTRIQUES SECONDAIRES
-       ===================================================== -->
-  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-
-    <!-- Aides Sociales -->
-    <a routerLink="/admin/aides-sociales" class="group relative bg-white rounded-2xl shadow-sm border border-gray-100
-             hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer overflow-hidden">
-      <div class="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl bg-primary-400"></div>
-      <div class="p-4 sm:p-5 pl-5 sm:pl-6">
-        <div class="flex items-start justify-between mb-4">
-          <div class="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center flex-shrink-0">
-            <svg class="w-[18px] h-[18px] text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
-                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
-          </div>
-          <span class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full" [ngClass]="secondaryStats.aidesSociales.demandes > 0
-              ? 'bg-amber-50 text-amber-700'
-              : 'bg-gray-100 text-gray-400'">
-            {{ secondaryStats.aidesSociales.demandes > 0
-            ? secondaryStats.aidesSociales.demandes + ' en attente'
-            : 'À jour' }}
-          </span>
-        </div>
-        <p class="text-3xl sm:text-4xl font-bold text-gray-900 tabular-nums leading-none">
-          {{ secondaryStats.aidesSociales.active }}
-        </p>
-        <p class="text-xs sm:text-sm text-gray-500 font-medium mt-2">Aides sociales</p>
-        <div class="mt-3 pt-3 border-t border-gray-50 flex items-center gap-1">
-          <span class="text-xs text-gray-400">Demandes candidats</span>
-        </div>
-      </div>
-    </a>
-
-    <!-- Agents -->
-    <a routerLink="/admin/utilisateurs" class="group relative bg-white rounded-2xl shadow-sm border border-gray-100
-             hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer overflow-hidden">
-      <div class="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl bg-slate-400"></div>
-      <div class="p-4 sm:p-5 pl-5 sm:pl-6">
-        <div class="flex items-start justify-between mb-4">
-          <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0">
-            <svg class="w-[18px] h-[18px] text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
-                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-          </div>
-          <span
-            class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-            {{ secondaryStats.utilisateurs.admins }}
-            {{ secondaryStats.utilisateurs.admins > 1 ? 'admins' : 'admin' }}
-          </span>
-        </div>
-        <p class="text-3xl sm:text-4xl font-bold text-gray-900 tabular-nums leading-none">
-          {{ secondaryStats.utilisateurs.total }}
-        </p>
-        <p class="text-xs sm:text-sm text-gray-500 font-medium mt-2">Agents SONABHY</p>
-        <div class="mt-3 pt-3 border-t border-gray-50 flex items-center gap-1">
-          <span class="text-xs text-gray-400">Utilisateurs internes</span>
-        </div>
-      </div>
-    </a>
-
-    <!-- Stages en attente -->
-    <a routerLink="/admin/stages" class="group relative bg-white rounded-2xl shadow-sm border border-gray-100
-             hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer overflow-hidden">
-      <div class="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl bg-amber-400"></div>
-      <div class="p-4 sm:p-5 pl-5 sm:pl-6">
-        <div class="flex items-start justify-between mb-4">
-          <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0">
-            <svg class="w-[18px] h-[18px] text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <span class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full" [ngClass]="secondaryStats.stagesEnAttente > 0
-              ? 'bg-amber-50 text-amber-700'
-              : 'bg-secondary-50 text-secondary-700'">
-            {{ secondaryStats.stagesEnAttente > 0 ? 'À traiter' : 'À jour' }}
-          </span>
-        </div>
-        <p class="text-3xl sm:text-4xl font-bold text-gray-900 tabular-nums leading-none">
-          {{ secondaryStats.stagesEnAttente }}
-        </p>
-        <p class="text-xs sm:text-sm text-gray-500 font-medium mt-2">Stages en attente</p>
-        <div class="mt-3 pt-3 border-t border-gray-50 flex items-center gap-1">
-          <span class="text-xs text-gray-400">En attente de validation</span>
-        </div>
-      </div>
-    </a>
-
-    <!-- Taux de validation -->
-    <a routerLink="/admin/stages" class="group relative bg-white rounded-2xl shadow-sm border border-gray-100
-             hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer overflow-hidden">
-      <div class="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl bg-secondary-400"></div>
-      <div class="p-4 sm:p-5 pl-5 sm:pl-6">
-        <div class="flex items-start justify-between mb-4">
-          <div class="w-10 h-10 rounded-xl bg-secondary-50 flex items-center justify-center flex-shrink-0">
-            <svg class="w-[18px] h-[18px] text-secondary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <span class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full" [ngClass]="secondaryStats.tauxValidation >= 70
-              ? 'bg-secondary-50 text-secondary-700'
-              : secondaryStats.tauxValidation >= 40
-                ? 'bg-amber-50 text-amber-700'
-                : 'bg-gray-100 text-gray-400'">
-            {{ secondaryStats.tauxValidation >= 70 ? 'Bon' : secondaryStats.tauxValidation >= 40 ? 'Moyen' : 'Faible' }}
-          </span>
-        </div>
-        <p class="text-3xl sm:text-4xl font-bold text-gray-900 tabular-nums leading-none">
-          {{ secondaryStats.tauxValidation }}<span class="text-xl font-semibold text-gray-400">%</span>
-        </p>
-        <p class="text-xs sm:text-sm text-gray-500 font-medium mt-2">Taux de validation</p>
-        <div class="mt-3 pt-3 border-t border-gray-50 flex items-center gap-1">
-          <span class="text-xs text-gray-400">Stages traités positivement</span>
-        </div>
-      </div>
-    </a>
-
-  </div>
-
-  <!-- =====================================================
-       RENOUVELLEMENTS — Récapitulatif
-       ===================================================== -->
-  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-    <div class="flex items-center justify-between mb-4">
-      <div class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
-          <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-          </svg>
-        </div>
-        <h3 class="text-sm font-bold text-gray-800">Renouvellements de stage</h3>
-      </div>
-      <a routerLink="/admin/renouvellements"
-         class="text-xs font-semibold text-indigo-600 hover:underline">Voir tout →</a>
-    </div>
-    <div class="grid grid-cols-4 sm:grid-cols-7 gap-2">
-      <div class="text-center">
-        <p class="text-2xl font-bold text-gray-900">{{ secondaryStats.renouvellements?.total ?? 0 }}</p>
-        <p class="text-[10px] text-gray-400 mt-0.5">Total</p>
-      </div>
-      <div class="text-center">
-        <p class="text-2xl font-bold text-amber-600">{{ secondaryStats.renouvellements?.enAttente ?? 0 }}</p>
-        <p class="text-[10px] text-amber-500 mt-0.5">En attente</p>
-      </div>
-      <div class="text-center">
-        <p class="text-2xl font-bold text-blue-600">{{ secondaryStats.renouvellements?.enTraitement ?? 0 }}</p>
-        <p class="text-[10px] text-blue-500 mt-0.5">À valider</p>
-      </div>
-      <div class="text-center">
-        <p class="text-2xl font-bold text-green-600">{{ secondaryStats.renouvellements?.acceptes ?? 0 }}</p>
-        <p class="text-[10px] text-green-500 mt-0.5">Acceptés</p>
-      </div>
-      <div class="text-center">
-        <p class="text-2xl font-bold text-indigo-600">{{ secondaryStats.renouvellements?.enCours ?? 0 }}</p>
-        <p class="text-[10px] text-indigo-500 mt-0.5">En cours</p>
-      </div>
-      <div class="text-center">
-        <p class="text-2xl font-bold text-orange-600">{{ secondaryStats.renouvellements?.expires ?? 0 }}</p>
-        <p class="text-[10px] text-orange-500 mt-0.5">Expirés</p>
-      </div>
-      <div class="text-center">
-        <p class="text-2xl font-bold text-gray-500">{{ secondaryStats.renouvellements?.termines ?? 0 }}</p>
-        <p class="text-[10px] text-gray-400 mt-0.5">Terminés</p>
-      </div>
-    </div>
-    <div *ngIf="(secondaryStats.renouvellements?.enAttente ?? 0) + (secondaryStats.renouvellements?.enTraitement ?? 0) > 0"
-         class="mt-3 pt-3 border-t border-amber-50 flex items-center gap-2">
-      <span class="flex-shrink-0 w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-      <span class="text-xs text-amber-600 font-medium">
-        {{ (secondaryStats.renouvellements?.enAttente ?? 0) + (secondaryStats.renouvellements?.enTraitement ?? 0) }}
-        demande(s) en attente de traitement
-      </span>
-    </div>
-  </div>
-
-  <!-- =====================================================
-       GRAPHIQUES — DONUT STAGES + AUDIENCES
-       ===================================================== -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
-
-    <!-- DONUT CHART — Répartition des stages (1/3) -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-      <div class="flex items-center gap-2 mb-4">
-        <span class="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block"></span>
-        <h2 class="text-sm font-semibold text-gray-800">Répartition des stages</h2>
-      </div>
-
-      <!-- Canvas + total centré -->
-      <div class="relative h-36 flex items-center justify-center">
-        <canvas #donutCanvas></canvas>
-        <!-- Chiffre central -->
-        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <span class="text-2xl font-bold text-gray-900 tabular-nums leading-none">{{ donutTotal }}</span>
-          <span class="text-xs text-gray-400 mt-0.5">total</span>
-        </div>
-      </div>
-
-      <!-- Légende -->
-      <div class="mt-4 space-y-1.5">
-        <div *ngFor="let label of stagesDonut.labels; let i = index" class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" [style.backgroundColor]="stagesDonut.colors[i]"></span>
-            <span class="text-xs text-gray-500">{{ label }}</span>
-          </div>
-          <span class="text-xs font-semibold text-gray-700 tabular-nums">
-            {{ stagesDonut.values[i] }}
-          </span>
-        </div>
-      </div>
-    </div>
-
-    <!-- AUDIENCES BREAKDOWN (2/3) -->
-    <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-      <div class="flex items-center justify-between mb-4">
-        <div class="flex items-center gap-2">
-          <span class="w-1.5 h-1.5 rounded-full bg-primary-500 inline-block"></span>
-          <h2 class="text-sm font-semibold text-gray-800">Demandes d'audience</h2>
-        </div>
-        <a routerLink="/admin/audiences"
-          class="text-xs font-semibold text-primary-600 hover:text-primary-700 flex items-center gap-1 transition-colors">
-          Voir tout
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-          </svg>
-        </a>
-      </div>
-
-      <!-- 4 mini-stats -->
-      <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <!-- Total -->
-        <div class="bg-gray-50 rounded-xl p-4">
-          <p class="text-xs text-gray-400 font-medium mb-2">Total</p>
-          <p class="text-3xl font-bold text-gray-900 tabular-nums leading-none">{{ audiencesStats.total }}</p>
-          <p class="text-xs text-gray-400 mt-2">demandes</p>
-        </div>
-        <!-- En attente -->
-        <div class="bg-amber-50 rounded-xl p-4">
-          <div class="flex items-center gap-1.5 mb-2">
-            <span class="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0"></span>
-            <p class="text-xs text-amber-600 font-medium">En attente</p>
-          </div>
-          <p class="text-3xl font-bold text-amber-700 tabular-nums leading-none">{{ audiencesStats.enAttente }}</p>
-          <p class="text-xs text-amber-500/70 mt-2">à traiter</p>
-        </div>
-        <!-- Acceptées -->
-        <div class="bg-emerald-50 rounded-xl p-4">
-          <div class="flex items-center gap-1.5 mb-2">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0"></span>
-            <p class="text-xs text-emerald-600 font-medium">Acceptées</p>
-          </div>
-          <p class="text-3xl font-bold text-emerald-700 tabular-nums leading-none">{{ audiencesStats.acceptees }}</p>
-          <p class="text-xs text-emerald-600/60 mt-2">accordées</p>
-        </div>
-        <!-- Rejetées -->
-        <div class="bg-red-50 rounded-xl p-4">
-          <div class="flex items-center gap-1.5 mb-2">
-            <span class="w-2 h-2 rounded-full bg-red-400 flex-shrink-0"></span>
-            <p class="text-xs text-red-500 font-medium">Rejetées</p>
-          </div>
-          <p class="text-3xl font-bold text-red-600 tabular-nums leading-none">{{ audiencesStats.rejetees }}</p>
-          <p class="text-xs text-red-400/70 mt-2">refusées</p>
-        </div>
-      </div>
-
-      <!-- Barre de progression visuelle -->
-      <div class="mt-4">
-        <div class="flex items-center justify-between mb-1.5">
-          <span class="text-xs text-gray-400">Taux de traitement</span>
-          <span class="text-xs font-semibold text-gray-600">
-            {{ audiencesStats.total > 0
-            ? ((audiencesStats.acceptees + audiencesStats.rejetees) / audiencesStats.total * 100 | number:'1.0-0')
-            : 0 }}%
-          </span>
-        </div>
-        <div class="h-2 bg-gray-100 rounded-full overflow-hidden flex gap-0.5">
-          <!-- Acceptées -->
-          <div class="h-full bg-emerald-400 rounded-full transition-all"
-            [style.width.%]="audiencesStats.total > 0 ? (audiencesStats.acceptees / audiencesStats.total * 100) : 0">
-          </div>
-          <!-- Rejetées -->
-          <div class="h-full bg-red-400 rounded-full transition-all"
-            [style.width.%]="audiencesStats.total > 0 ? (audiencesStats.rejetees / audiencesStats.total * 100) : 0">
-          </div>
-        </div>
-        <div class="flex items-center gap-4 mt-2">
-          <div class="flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-            <span class="text-xs text-gray-400">Acceptées</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-red-400"></span>
-            <span class="text-xs text-gray-400">Rejetées</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-            <span class="text-xs text-gray-400">En attente</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- =====================================================
-       ACTIVITÉS + À TRAITER
-       ===================================================== -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-    <!-- ACTIVITÉS RÉCENTES (2/3) -->
-    <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-      <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-        <div class="flex items-center gap-2">
-          <span class="w-1.5 h-1.5 rounded-full bg-primary-500 inline-block"></span>
-          <h2 class="text-sm font-semibold text-gray-800">Activités récentes</h2>
-        </div>
-        <a routerLink="/admin/activites"
-          class="text-xs font-semibold text-primary-600 hover:text-primary-700 flex items-center gap-1 transition-colors">
-          Voir tout
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-          </svg>
-        </a>
-      </div>
-
-      <div class="divide-y divide-gray-50">
-        <div *ngFor="let activity of recentActivities"
-          class="flex items-start gap-3 px-5 py-3.5 hover:bg-gray-50/60 transition-colors cursor-pointer">
-          <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-            [ngClass]="getActivityColor(activity.type)">
+    <div class="relative">
+      <div class="flex items-center justify-between gap-3">
+        <h1 class="text-sm font-medium text-white first-letter:uppercase">{{ currentDate | date:'EEEE d MMMM yyyy':'':'fr-FR' }}</h1>
+        <div class="flex items-center gap-2 shrink-0">
+          <button (click)="refreshData()" aria-label="Actualiser"
+            class="inline-flex items-center justify-center w-11 h-11 lg:w-9 lg:h-9 rounded-lg bg-white/15 [@media(hover:hover)]:hover:bg-white/25 focus-visible:ring-2 focus-visible:ring-white transition-colors">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                [attr.d]="getActivityIcon(activity.type)" />
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-          </div>
-          <div class="flex-1 min-w-0">
-            <div class="flex items-start justify-between gap-3">
-              <div class="min-w-0 flex-1">
-                <p class="text-sm font-semibold text-gray-900 truncate">{{ activity.action }}</p>
-                <p class="text-xs text-gray-400 mt-0.5 truncate">{{ activity.description }}</p>
-              </div>
-              <span class="text-xs text-gray-400 whitespace-nowrap shrink-0 pt-0.5">{{ getTimeAgo(activity.date)
-                }}</span>
-            </div>
-            <div class="flex items-center gap-2 mt-1.5">
-              <span class="text-xs text-gray-400">{{ activity.user }}</span>
-              <span *ngIf="activity.status"
-                class="px-1.5 py-0.5 text-xs font-medium rounded-md bg-gray-100 text-gray-500">
-                {{ activity.status }}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- État vide -->
-        <div *ngIf="recentActivities.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
-          <div class="w-12 h-12 bg-gray-50 border border-gray-100 rounded-2xl flex items-center justify-center mb-3">
-            <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          </button>
+          <button (click)="exporterCSV()"
+            class="inline-flex items-center gap-2 min-h-[44px] lg:min-h-[36px] px-3 text-xs font-semibold rounded-lg bg-white/15 [@media(hover:hover)]:hover:bg-white/25 focus-visible:ring-2 focus-visible:ring-white transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-          </div>
-          <p class="text-sm font-medium text-gray-400">Aucune activité récente</p>
-          <p class="text-xs text-gray-300 mt-1">Les actions apparaîtront ici</p>
+            Exporter
+          </button>
         </div>
       </div>
+
+      <p class="mt-4 text-6xl lg:text-7xl font-bold tabular-nums tracking-tight leading-none">{{ aTraiter.total | number:'1.0-0':'fr-FR' }}</p>
+      <p class="mt-1 text-lg font-semibold">{{ aTraiter.total > 1 ? 'dossiers attendent une action' : 'dossier attend une action' }}</p>
+      <p *ngIf="aTraiter.stagesEnRetard > 0" class="mt-1 text-xs text-white/85">
+        {{ aTraiter.stagesEnRetard }} {{ aTraiter.stagesEnRetard > 1 ? 'demandes de stage attendent' : 'demande de stage attend' }} depuis plus de 7 jours
+      </p>
     </div>
 
-    <!-- À TRAITER (1/3) -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-      <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-        <div class="flex items-center gap-2">
-          <span class="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block"></span>
-          <h2 class="text-sm font-semibold text-gray-800">À traiter</h2>
-        </div>
-        <span class="inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 text-xs font-bold rounded-full"
-          [ngClass]="pendingItems.length > 0 ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-400'">
-          {{ pendingItems.length }}
-        </span>
+    <div class="relative">
+      <div class="flex gap-0.5 h-2.5 rounded-md overflow-hidden bg-white/15">
+        <span class="bg-white" [style.flex-grow]="partStages"></span>
+        <span class="bg-red-200" [style.flex-grow]="aTraiter.renouvellements"></span>
+        <span class="bg-white/45" [style.flex-grow]="autresDemandes"></span>
       </div>
-
-      <div class="flex-1 divide-y divide-gray-50 overflow-y-auto">
-        <div *ngFor="let item of pendingItems"
-          class="flex items-start gap-3 px-4 py-3.5 hover:bg-gray-50/60 transition-colors cursor-pointer">
-          <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-            [ngClass]="getTypeColor(item.type)">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="getTypeIcon(item.type)" />
-            </svg>
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-semibold text-gray-900 truncate">{{ item.title }}</p>
-            <p class="text-xs text-gray-400 mt-0.5 truncate">{{ item.subtitle }}</p>
-            <div class="flex items-center gap-2 mt-2">
-              <span class="px-1.5 py-0.5 text-xs font-semibold rounded-md border"
-                [ngClass]="getPriorityClass(item.priority)">
-                {{ getPriorityLabel(item.priority) }}
-              </span>
-              <span class="text-xs text-gray-400">{{ getTimeAgo(item.date) }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- État vide -->
-        <div *ngIf="pendingItems.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
-          <div class="w-12 h-12 bg-secondary-50 rounded-2xl flex items-center justify-center mb-3">
-            <svg class="w-5 h-5 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <p class="text-sm font-medium text-gray-500">Tout est à jour !</p>
-          <p class="text-xs text-gray-300 mt-1">Aucun élément en attente</p>
-        </div>
-      </div>
-
-      <div class="px-4 py-3 border-t border-gray-100 bg-gray-50/40">
-        <a routerLink="/admin/taches"
-          class="w-full py-1.5 text-xs font-semibold text-primary-600 hover:text-primary-700 inline-flex items-center justify-center gap-1 transition-colors">
-          Toutes les tâches
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-          </svg>
-        </a>
-      </div>
+      <p class="mt-2 text-xs text-white/90">
+        {{ partStages }} stages · {{ aTraiter.renouvellements }} renouvellements · {{ autresDemandes }} autres demandes
+      </p>
     </div>
-  </div>
+  </section>
 
   <!-- =====================================================
-       GRAPHIQUE + ACCÈS RAPIDES
+       ARRIVÉES SUR 6 MOIS
        ===================================================== -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-    <!-- Graphique Chart.js -->
-    <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-5">
-        <div class="flex items-center gap-2">
-          <span class="w-1.5 h-1.5 rounded-full bg-primary-500 inline-block"></span>
-          <h2 class="text-sm font-semibold text-gray-800">Évolution des inscriptions</h2>
-        </div>
-        <div class="flex items-center gap-3 flex-wrap">
-          <div class="flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
-            <span class="text-xs text-gray-400">Candidats</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-secondary-500 inline-block"></span>
-            <span class="text-xs text-gray-400">Stages validés</span>
-          </div>
-          <span class="text-xs font-semibold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-md">6 mois</span>
-        </div>
-      </div>
-      <div class="h-48 sm:h-56">
-        <canvas #chartCanvas></canvas>
+  <section class="col-span-12 lg:col-span-7 bg-white rounded-[20px] p-5">
+    <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+      <h2 class="text-sm font-semibold text-gray-900">Arrivées sur 6 mois</h2>
+      <div class="flex items-center gap-3">
+        <span class="inline-flex items-center gap-1.5 text-xs text-gray-500"><span class="w-2 h-2 rounded-full bg-[#c0392b]"></span>Inscriptions</span>
+        <span class="inline-flex items-center gap-1.5 text-xs text-gray-500"><span class="w-2 h-2 rounded-full bg-slate-400"></span>Demandes de stage</span>
       </div>
     </div>
-
-    <!-- Accès rapides -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-      <div class="flex items-center gap-2 mb-4">
-        <span class="w-1.5 h-1.5 rounded-full bg-secondary-500 inline-block"></span>
-        <h2 class="text-sm font-semibold text-gray-800">Accès rapides</h2>
-      </div>
-
-      <div class="space-y-1">
-
-        <a routerLink="/admin/candidats" class="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-transparent
-                  hover:border-gray-100 hover:bg-gray-50 transition-all group">
-          <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
-            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-            </svg>
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-semibold text-gray-800 group-hover:text-gray-900">Nouveau candidat</p>
-            <p class="text-xs text-gray-400">Ajouter manuellement</p>
-          </div>
-          <svg class="w-4 h-4 text-gray-200 group-hover:text-gray-400 shrink-0 transition-colors" fill="none"
-            stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-          </svg>
-        </a>
-
-        <a routerLink="/admin/offres-commerciales/nouveau" class="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-transparent
-                  hover:border-secondary-100 hover:bg-secondary-50/40 transition-all group">
-          <div class="w-8 h-8 bg-secondary-50 rounded-lg flex items-center justify-center shrink-0">
-            <svg class="w-4 h-4 text-secondary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-semibold text-gray-800 group-hover:text-gray-900">Nouvelle offre</p>
-            <p class="text-xs text-gray-400">Offre commerciale</p>
-          </div>
-          <svg class="w-4 h-4 text-gray-200 group-hover:text-secondary-400 shrink-0 transition-colors" fill="none"
-            stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-          </svg>
-        </a>
-
-        <a routerLink="/admin/aides-sociales/nouveau" class="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-transparent
-                  hover:border-gray-100 hover:bg-gray-50 transition-all group">
-          <div class="w-8 h-8 bg-rose-50 rounded-lg flex items-center justify-center shrink-0">
-            <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-semibold text-gray-800 group-hover:text-gray-900">Nouvelle aide</p>
-            <p class="text-xs text-gray-400">Programme social</p>
-          </div>
-          <svg class="w-4 h-4 text-gray-200 group-hover:text-gray-400 shrink-0 transition-colors" fill="none"
-            stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-          </svg>
-        </a>
-
-        <a routerLink="/admin/rapports" class="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-transparent
-                  hover:border-gray-100 hover:bg-gray-50 transition-all group">
-          <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center shrink-0">
-            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-semibold text-gray-800 group-hover:text-gray-900">Rapports</p>
-            <p class="text-xs text-gray-400">Générer des rapports</p>
-          </div>
-          <svg class="w-4 h-4 text-gray-200 group-hover:text-gray-400 shrink-0 transition-colors" fill="none"
-            stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-          </svg>
-        </a>
-
-      </div>
+    <div class="relative h-40 lg:h-44 mt-3">
+      <canvas #chartCanvas aria-label="Inscriptions et demandes de stage par mois sur les six derniers mois" role="img"></canvas>
     </div>
-  </div>
+  </section>
+
+  <!-- =====================================================
+       CHIFFRES CLÉS
+       ===================================================== -->
+  <section class="col-span-12 lg:col-span-7 grid grid-cols-3 gap-2 lg:gap-4" aria-label="Chiffres clés">
+    <a routerLink="/admin/candidats"
+      class="bg-white rounded-[20px] p-3 lg:p-4 [@media(hover:hover)]:hover:-translate-y-0.5 transition-transform focus-visible:ring-2 focus-visible:ring-[#c0392b]">
+      <p class="text-xs text-gray-500">Candidats</p>
+      <p class="mt-1 text-xl lg:text-3xl font-bold text-gray-900 tabular-nums tracking-tight">{{ chiffres.candidats | number:'1.0-0':'fr-FR' }}</p>
+    </a>
+    <a routerLink="/admin/suivi-stages"
+      class="bg-white rounded-[20px] p-3 lg:p-4 [@media(hover:hover)]:hover:-translate-y-0.5 transition-transform focus-visible:ring-2 focus-visible:ring-[#c0392b]">
+      <p class="text-xs text-gray-500">En stage</p>
+      <p class="mt-1 text-xl lg:text-3xl font-bold text-gray-900 tabular-nums tracking-tight">{{ chiffres.enStage }}</p>
+    </a>
+    <div class="bg-white rounded-[20px] p-3 lg:p-4">
+      <p class="text-xs text-gray-500">Acceptées</p>
+      <p class="mt-1 text-xl lg:text-3xl font-bold text-gray-900 tabular-nums tracking-tight">{{ chiffres.tauxValidation }}&nbsp;%</p>
+    </div>
+  </section>
+
+  <!-- =====================================================
+       PRIORITÉS
+       ===================================================== -->
+  <section class="col-span-12 lg:col-span-5 bg-white rounded-[20px] p-5">
+    <h2 class="text-sm font-semibold text-gray-900 mb-2">Priorités</h2>
+    <a *ngFor="let priorite of priorites" [routerLink]="priorite.route" [queryParams]="priorite.queryParams"
+      class="flex items-center gap-3 min-h-[44px] -mx-2 px-2 rounded-lg border-t border-gray-50 first-of-type:border-t-0 [@media(hover:hover)]:hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-[#c0392b] transition-colors">
+      <span class="w-2 h-2 rounded-full flex-shrink-0" [ngClass]="classesStatut(priorite.statut, 'point')"></span>
+      <span class="min-w-0 flex-1 text-sm text-gray-800 truncate">{{ priorite.libelle }}
+        <span class="text-xs text-gray-400">· {{ priorite.detail }}</span></span>
+      <span class="text-base font-bold tabular-nums" [ngClass]="priorite.nombre > 0 ? 'text-gray-900' : 'text-gray-300'">{{ priorite.nombre }}</span>
+    </a>
+  </section>
+
+  <!-- =====================================================
+       DEMANDES PAR DIRECTION
+       ===================================================== -->
+  <section class="col-span-12 sm:col-span-7 lg:col-span-4 bg-white rounded-[20px] p-5">
+    <h2 class="text-sm font-semibold text-gray-900 mb-3">Stages à examiner par direction</h2>
+    <div class="space-y-3">
+      <div *ngFor="let ligne of directions">
+        <div class="flex items-center justify-between gap-2 text-sm">
+          <span class="flex items-center gap-1.5 min-w-0">
+            <span class="text-gray-800 truncate">{{ ligne.direction }}</span>
+            <span *ngIf="ligne.agents === 0"
+              class="px-1.5 py-0.5 text-[11px] font-semibold rounded-md bg-red-50 text-[#c0392b] whitespace-nowrap">Sans agent</span>
+          </span>
+          <span class="font-bold text-gray-900 tabular-nums">{{ ligne.nombre }}</span>
+        </div>
+        <div class="mt-1 h-2 rounded-full bg-gray-100 overflow-hidden">
+          <div class="h-full rounded-full bg-[#c0392b]" [style.width.%]="ligne.nombre / maxDirection * 100"></div>
+        </div>
+      </div>
+      <p *ngIf="charge && directions.length === 0" class="py-6 text-center text-sm text-gray-400">Aucune demande à examiner</p>
+    </div>
+  </section>
+
+  <!-- =====================================================
+       BIENTÔT TERMINÉS
+       ===================================================== -->
+  <a routerLink="/admin/suivi-stages"
+    class="col-span-12 sm:col-span-5 lg:col-span-3 bg-[#0f172a] rounded-[20px] p-5 flex flex-col justify-between gap-4 focus-visible:ring-2 focus-visible:ring-[#c0392b]">
+    <h2 class="text-sm font-semibold text-white">Bientôt terminés</h2>
+    <div>
+      <p class="text-5xl font-bold text-white tabular-nums leading-none">{{ stagesBientotTermines }}</p>
+      <p class="mt-2 text-xs text-slate-300">{{ stagesBientotTermines > 1 ? 'stages finissent' : 'stage finit' }} dans les 7 prochains jours</p>
+    </div>
+  </a>
+
+  <!-- =====================================================
+       ACTIVITÉS RÉCENTES
+       ===================================================== -->
+  <section class="col-span-12 lg:col-span-8 bg-white rounded-[20px] overflow-hidden">
+    <div class="flex items-center justify-between px-5 pt-5 pb-2">
+      <h2 class="text-sm font-semibold text-gray-900">Activités récentes</h2>
+      <a routerLink="/admin/activites" class="text-xs font-semibold text-[#c0392b] [@media(hover:hover)]:hover:text-[#96281b] focus-visible:ring-2 focus-visible:ring-[#c0392b] rounded">Voir tout</a>
+    </div>
+    <a *ngFor="let activity of recentActivities" [routerLink]="getActivityRoute(activity.type)"
+      class="flex items-center gap-3 min-h-[44px] px-5 py-2.5 [@media(hover:hover)]:hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#c0392b] transition-colors">
+      <span class="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center flex-shrink-0">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="getActivityIcon(activity.type)" />
+        </svg>
+      </span>
+      <span class="min-w-0 flex-1">
+        <span class="block text-sm font-medium text-gray-900 truncate">{{ activity.action }}</span>
+        <span class="block text-xs text-gray-400 truncate">{{ activity.description }}</span>
+      </span>
+      <span *ngIf="activity.status" class="hidden sm:inline-flex px-2 py-0.5 text-xs font-medium rounded-full whitespace-nowrap"
+        [ngClass]="classesStatut(activity.status)">{{ getStatusLabel(activity.status) }}</span>
+      <span class="text-xs text-gray-400 whitespace-nowrap">{{ getTimeAgo(activity.date) }}</span>
+    </a>
+    <p *ngIf="charge && recentActivities.length === 0" class="px-5 pb-6 pt-3 text-sm text-gray-400">Aucune activité ces 3 derniers jours</p>
+    <div class="h-3"></div>
+  </section>
+
+  <!-- =====================================================
+       ACCÈS RAPIDES
+       ===================================================== -->
+  <section class="col-span-12 lg:col-span-4 bg-white rounded-[20px] p-5">
+    <h2 class="text-sm font-semibold text-gray-900 mb-2">Accès rapides</h2>
+    <a routerLink="/admin/offres-commerciales/nouveau"
+      class="flex items-center justify-between min-h-[44px] -mx-2 px-2 rounded-lg text-sm text-gray-800 [@media(hover:hover)]:hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-[#c0392b] transition-colors">
+      Nouvelle offre
+      <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+    </a>
+    <a routerLink="/admin/aides-sociales/nouveau"
+      class="flex items-center justify-between min-h-[44px] -mx-2 px-2 rounded-lg text-sm text-gray-800 [@media(hover:hover)]:hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-[#c0392b] transition-colors">
+      Nouvelle aide
+      <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+    </a>
+    <a routerLink="/admin/taches"
+      class="flex items-center justify-between min-h-[44px] -mx-2 px-2 rounded-lg text-sm text-gray-800 [@media(hover:hover)]:hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-[#c0392b] transition-colors">
+      Toutes les tâches
+      <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+    </a>
+  </section>
 </div>
