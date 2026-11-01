@@ -231,6 +231,7 @@ export class AgentStage implements OnInit, OnDestroy {
   docRapportId: number | null = null;
   docType: 'CONVENTION' | 'ATTESTATION' = 'CONVENTION';
   docDateEmission = '';
+  docNumeroAttestation = '';
   docFile: File | null = null;
   soumissionDoc = false;
   errorDoc = '';
@@ -895,6 +896,7 @@ export class AgentStage implements OnInit, OnDestroy {
     this.docRapportId = s.rapport?.idrapport ?? null;
     this.docType = s.statusStage === 'TERMINE' ? 'ATTESTATION' : 'CONVENTION';
     this.docDateEmission = new Date().toISOString().substring(0, 10);
+    this.docNumeroAttestation = '';
     this.docFile = null;
     this.errorDoc = '';
     this.stageHasConvention = false;
@@ -958,6 +960,11 @@ export class AgentStage implements OnInit, OnDestroy {
     if (!this.docStageId || this.soumissionDoc) return;
     if (!this.docFile) { this.errorDoc = 'Veuillez sélectionner un fichier PDF'; this.cdr.detectChanges(); return; }
     if (!this.docDateEmission) { this.errorDoc = "La date d'émission est requise"; this.cdr.detectChanges(); return; }
+    if (this.docType === 'ATTESTATION' && !this.docNumeroAttestation.trim()) {
+      this.errorDoc = "Le numéro d'attestation est requis";
+      this.cdr.detectChanges();
+      return;
+    }
     if (this.docType === 'ATTESTATION' && !this.docRapportId) {
       this.errorDoc = "Aucun rapport validé n'est associé à ce stage";
       this.cdr.detectChanges();
@@ -974,6 +981,7 @@ export class AgentStage implements OnInit, OnDestroy {
     formData.append('document', this.docFile);
     if (this.docType === 'ATTESTATION' && this.docRapportId) {
       formData.append('rapport_idrapport', String(this.docRapportId));
+      formData.append('numeroAttestation', this.docNumeroAttestation.trim());
     }
     if (this.agentNomComplet) formData.append('emetteurNom', this.agentNomComplet);
 

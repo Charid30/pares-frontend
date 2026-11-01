@@ -23,6 +23,13 @@ interface StageInfo {
   candidat?: Candidat;
 }
 
+interface Attestation {
+  iddocument: number;
+  document_filename: string;
+  numeroAttestation?: string;
+  dateEmission?: string;
+}
+
 export interface Rapport {
   idrapport: number;
   stage_idstage: number;
@@ -38,6 +45,7 @@ export interface Rapport {
   createdDate?: string;
   stage?: StageInfo;
   moisConsommes?: number;
+  attestations?: Attestation[];
 }
 
 @Component({
@@ -67,12 +75,14 @@ export class AdminRapports implements OnInit {
   decisionType: 'VALIDE' | 'REFUSE' | null = null;
   motifRefus = '';
   commentaire = '';
-  attestationFile: File | null = null;
   soumission = false;
 
-  // Modal attestation (remplacer)
+  // Attestation (fenêtre de décision et fenêtre « Joindre »)
+  attestationFile: File | null = null;
+  attestationNumero = '';
+  attestationDate = '';
+  erreurAttestation = '';
   showAttestationModal = false;
-  attestationRemplacement: File | null = null;
   soumissionAttestation = false;
 
 
@@ -91,6 +101,7 @@ export class AdminRapports implements OnInit {
   charger(): void {
     this.isLoading = true;
     this.erreur = '';
+    this.cdr.markForCheck();
     this.http.get<{ success: boolean; data: Rapport[] }>(`${this.apiUrl}/stages/rapports`).subscribe({
       next: (res) => {
         this.rapports = res.data ?? [];
@@ -137,18 +148,54 @@ export class AdminRapports implements OnInit {
   ouvrirDecision(type: 'VALIDE' | 'REFUSE'): void {
     this.decisionType = type; this.motifRefus = '';
     this.commentaire = '';
-    this.attestationFile = null; this.showDecisionModal = true;
+    this.reinitialiserAttestation(); this.showDecisionModal = true;
   }
   fermerDecision(): void { this.showDecisionModal = false; this.decisionType = null; }
 
+  attestationDe(r: Rapport): Attestation | null {
+    return r.attestations?.[0] ?? null;
+  }
+
+  peutJoindreAttestation(r: Rapport): boolean {
+    return r.statusRapport !== 'REFUSE' && !this.attestationDe(r);
+  }
+
+  /** Une attestation suppose un rapport validé : un rapport soumis passe par la fenêtre de validation. */
+  joindreAttestation(r: Rapport): void {
+    this.selected = r;
+    if (r.statusRapport === 'VALIDE') this.ouvrirRemplacement();
+    else this.ouvrirDecision('VALIDE');
+  }
+
+  private reinitialiserAttestation(): void {
+    this.erreurAttestation = '';
+    this.attestationFile = null;
+    this.attestationNumero = '';
+    this.attestationDate = new Date().toISOString().split('T')[0];
+  }
+
+  get attestationIncomplete(): boolean {
+    return !this.attestationFile || !this.attestationNumero.trim() || !this.attestationDate;
+  }
+
   onAttestationChange(event: Event): void {
-    this.attestationFile = (event.target as HTMLInputElement).files?.[0] ?? null;
+    const input = event.target as HTMLInputElement;
+    const fichier = input.files?.[0] ?? null;
+    if (fichier && fichier.size > 1024 * 1024) {
+      this.erreurAttestation = 'Le fichier de l\'attestation ne doit pas dépasser 1 Mo.';
+      input.value = '';
+      this.attestationFile = null;
+      return;
+    }
+    this.erreurAttestation = '';
+    this.attestationFile = fichier;
   }
 
   confirmerDecision(): void {
     if (!this.selected || !this.decisionType) return;
     if (!this.commentaire.trim()) return;
     if (this.decisionType === 'REFUSE' && !this.motifRefus.trim()) return;
+    if (this.decisionType === 'VALIDE' && this.attestationIncomplete) return;
     this.soumission = true;
 
     const body: Record<string, unknown> = {
@@ -161,12 +208,16 @@ export class AdminRapports implements OnInit {
       `${this.apiUrl}/stages/rapports/${this.selected.idrapport}/evaluer`, body
     ).subscribe({
       next: () => {
-        if (this.decisionType === 'VALIDE' && this.attestationFile && this.selected) {
-          this.uploadAttestation(this.selected, this.attestationFile, () => {
+        if (this.decisionType === 'VALIDE' && this.selected) {
+          this.uploadAttestation(this.selected, () => {
             this.soumission = false; this.showDecisionModal = false; this.showModal = false;
-            this.successMessage = 'Rapport validé et attestation uploadée avec succès.';
+            this.successMessage = 'Rapport validé et attestation jointe avec succès.';
             this.charger();
             setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
+          }, (message) => {
+            this.soumission = false; this.showDecisionModal = false; this.showModal = false;
+            this.charger();
+            this.erreur = `Rapport validé, attestation non enregistrée. Joignez-la depuis la liste des rapports : ${message}`;
           });
         } else {
           this.soumission = false; this.showDecisionModal = false; this.showModal = false;
@@ -183,38 +234,54 @@ export class AdminRapports implements OnInit {
     });
   }
 
-  private uploadAttestation(rapport: Rapport, file: File, onDone: () => void): void {
+  private uploadAttestation(rapport: Rapport, onDone: () => void, onEchec: (message: string) => void): void {
+    if (!this.attestationFile) return;
     const fd = new FormData();
     fd.append('stage_idstage', String(rapport.stage_idstage));
     fd.append('typeDocument', 'ATTESTATION');
     fd.append('rapport_idrapport', String(rapport.idrapport));
-    fd.append('document', file, file.name);
+    fd.append('numeroAttestation', this.attestationNumero.trim());
+    fd.append('dateEmission', this.attestationDate);
+    fd.append('document', this.attestationFile, this.attestationFile.name);
     this.http.post(`${this.apiUrl}/stages/documents`, fd).subscribe({
-      next: onDone,
-      error: () => {
-        this.successMessage = 'Rapport validé. L\'upload de l\'attestation a échoué — réessayez via le bouton "Remplacer l\'attestation".';
-        this.charger();
-        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 6000);
-        onDone();
-      },
+      next: () => onDone(),
+      error: (err) => onEchec(err.error?.message || 'L\'envoi de l\'attestation a échoué.'),
     });
   }
 
-  ouvrirRemplacement(): void { this.attestationRemplacement = null; this.showAttestationModal = true; }
-  fermerRemplacement(): void { this.showAttestationModal = false; }
-
-  onRemplacementChange(event: Event): void {
-    this.attestationRemplacement = (event.target as HTMLInputElement).files?.[0] ?? null;
+  ouvrirRemplacement(): void {
+    this.reinitialiserAttestation();
+    const existante = this.selected ? this.attestationDe(this.selected) : null;
+    if (existante?.numeroAttestation) this.attestationNumero = existante.numeroAttestation;
+    this.showAttestationModal = true;
   }
 
+  fermerRemplacement(): void { this.showAttestationModal = false; }
+
   confirmerRemplacement(): void {
-    if (!this.selected || !this.attestationRemplacement) return;
+    if (!this.selected || this.attestationIncomplete) return;
+    const remplace = !!this.attestationDe(this.selected);
     this.soumissionAttestation = true;
-    this.uploadAttestation(this.selected, this.attestationRemplacement, () => {
-      this.soumissionAttestation = false; this.showAttestationModal = false;
-      this.successMessage = 'Attestation uploadée avec succès.';
+    this.uploadAttestation(this.selected, () => {
+      this.soumissionAttestation = false;
+      this.showAttestationModal = false;
+      this.showModal = false;
+      this.successMessage = remplace ? 'Attestation remplacée avec succès.' : 'Attestation jointe avec succès.';
       this.charger();
       setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
+    }, (message) => {
+      this.soumissionAttestation = false;
+      this.erreurAttestation = message;
+      this.cdr.detectChanges();
+    });
+  }
+
+  telechargerAttestation(mode: 'voir' | 'telecharger'): void {
+    const attestation = this.selected ? this.attestationDe(this.selected) : null;
+    if (!attestation) return;
+    this.http.get(`${this.apiUrl}/stages/documents/${attestation.iddocument}/download`, { responseType: 'blob' }).subscribe({
+      next: (blob) => this.ouvrirBlob(blob, attestation.document_filename, mode),
+      error: () => { this.erreur = 'Impossible de charger l\'attestation.'; this.cdr.detectChanges(); },
     });
   }
 

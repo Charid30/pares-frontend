@@ -1752,6 +1752,16 @@
         </select>
       </div>
 
+      <div *ngIf="docType === 'ATTESTATION'">
+        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
+          Numéro de l'attestation <span class="text-primary-500">*</span>
+        </label>
+        <input type="text" [(ngModel)]="docNumeroAttestation" maxlength="100"
+               placeholder="Ex. 0125/MICA/SONABHY/DG/DCS/DRH/SAGC"
+               class="w-full px-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl
+                      focus:border-red-500 focus:bg-white focus:ring-0 outline-none transition-all"/>
+      </div>
+
       <div>
         <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
           Date d'émission <span class="text-primary-500">*</span>

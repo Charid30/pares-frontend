@@ -163,14 +163,28 @@
             </td>
 
             <td class="px-4 py-4">
-              <button (click)="voirDetail(r)"
-                      class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
-                      title="Voir détail">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                </svg>
-              </button>
+              <div class="flex items-center justify-end gap-1">
+                <button *ngIf="peutJoindreAttestation(r)" (click)="joindreAttestation(r)"
+                        [title]="r.statusRapport === 'VALIDE' ? 'Joindre l\'attestation de stage' : 'Valider le rapport et joindre l\'attestation'"
+                        aria-label="Joindre l'attestation"
+                        class="p-2 text-[#c0392b] [@media(hover:hover)]:hover:bg-red-50 rounded-lg active:scale-95 transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c0392b]">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                </button>
+                <button *ngIf="attestationDe(r)" (click)="voirDetail(r)"
+                        title="Attestation jointe : voir"
+                        aria-label="Attestation jointe"
+                        class="p-2 text-gray-500 [@media(hover:hover)]:hover:bg-gray-100 rounded-lg transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c0392b]">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13l2 2 4-4M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                </button>
+                <button (click)="voirDetail(r)"
+                        class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                        title="Voir détail">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                </button>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -204,6 +218,15 @@
             <span class="text-red-700 font-semibold">Cumul : {{ getCumulMois(r) }} mois</span>
             <span class="ml-auto">{{ formatDate(r.createdDate) }}</span>
           </div>
+          <button *ngIf="peutJoindreAttestation(r)" (click)="$event.stopPropagation(); joindreAttestation(r)"
+                  class="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 min-h-[44px] text-xs font-medium text-white bg-[#c0392b] rounded-lg active:scale-95 transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c0392b]">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+            Joindre l'attestation
+          </button>
+          <p *ngIf="attestationDe(r)" class="flex items-center gap-1.5 text-xs font-medium text-gray-500">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            Attestation jointe
+          </p>
         </div>
       </div>
     </div>
@@ -318,20 +341,47 @@
         </div>
       </div>
 
-      <!-- Remplacer attestation -->
+      <!-- Attestation de stage -->
       <div *ngIf="selected.statusRapport === 'VALIDE'"
-           class="flex items-center justify-between p-3 bg-blue-50 rounded-xl border border-blue-100">
-        <div>
-          <p class="text-xs font-semibold text-blue-800">Attestation de stage</p>
-          <p class="text-[10px] text-blue-600 mt-0.5">Uploader ou remplacer l'attestation PDF</p>
+           class="bg-gray-50 rounded-xl border border-gray-100 overflow-hidden">
+        <div class="px-3 py-2 border-b border-gray-100">
+          <p class="text-[11px] font-bold text-gray-700 uppercase tracking-wide">Attestation de stage</p>
         </div>
-        <button (click)="ouvrirRemplacement()"
-                class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 active:scale-95 transition-all cursor-pointer">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-          </svg>
-          Remplacer
-        </button>
+        <ng-container *ngIf="attestationDe(selected) as attestation; else sansAttestation">
+          <div class="divide-y divide-gray-100">
+            <div class="flex items-center justify-between gap-3 px-3 py-2.5">
+              <span class="text-xs text-gray-500">Numéro</span>
+              <span class="text-xs font-semibold text-gray-800 truncate">{{ attestation.numeroAttestation || '—' }}</span>
+            </div>
+            <div class="flex items-center justify-between px-3 py-2.5">
+              <span class="text-xs text-gray-500">Date d'émission</span>
+              <span class="text-xs font-semibold text-gray-800">{{ formatDate(attestation.dateEmission) }}</span>
+            </div>
+          </div>
+          <div class="flex gap-2 p-3 border-t border-gray-100">
+            <button (click)="telechargerAttestation('voir')"
+                    class="flex-1 py-1.5 px-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-600 text-xs font-medium hover:bg-gray-100 active:scale-95 transition-all cursor-pointer">
+              Voir
+            </button>
+            <button (click)="telechargerAttestation('telecharger')"
+                    class="flex-1 py-1.5 px-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-600 text-xs font-medium hover:bg-gray-100 active:scale-95 transition-all cursor-pointer">
+              Télécharger
+            </button>
+            <button (click)="ouvrirRemplacement()"
+                    class="flex-1 py-1.5 px-3 bg-[#c0392b] rounded-lg text-white text-xs font-medium hover:bg-[#96281b] active:scale-95 transition-all cursor-pointer">
+              Remplacer
+            </button>
+          </div>
+        </ng-container>
+        <ng-template #sansAttestation>
+          <div class="flex items-center justify-between gap-3 p-3">
+            <p class="text-xs text-gray-500">Aucune attestation jointe pour le moment.</p>
+            <button (click)="ouvrirRemplacement()"
+                    class="flex-shrink-0 px-3 py-1.5 bg-[#c0392b] text-white text-xs font-medium rounded-lg hover:bg-[#96281b] active:scale-95 transition-all cursor-pointer">
+              Joindre l'attestation
+            </button>
+          </div>
+        </ng-template>
       </div>
 
     </div>
@@ -375,7 +425,7 @@
       </h3>
       <p class="text-sm mt-1" [ngClass]="decisionType === 'VALIDE' ? 'text-green-600' : 'text-red-600'">
         {{ decisionType === 'VALIDE'
-          ? 'La validation enregistrera la note et permettra de soumettre l\'attestation de stage.'
+          ? 'Le stage passera à Terminé et l\'attestation sera mise à disposition du candidat.'
           : 'Le candidat sera informé du refus avec le motif saisi.' }}
       </p>
     </div>
@@ -394,7 +444,23 @@
       <ng-container *ngIf="decisionType === 'VALIDE'">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">
-            Attestation de stage (PDF) <span class="text-red-500">*</span>
+            Numéro de l'attestation <span class="text-red-500">*</span>
+          </label>
+          <input type="text" [(ngModel)]="attestationNumero" maxlength="100"
+                 placeholder="Ex. 0125/MICA/SONABHY/DG/DCS/DRH/SAGC"
+                 class="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#c0392b]"/>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Date d'émission <span class="text-red-500">*</span>
+          </label>
+          <input type="date" [(ngModel)]="attestationDate"
+                 class="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#c0392b]"/>
+        </div>
+        <div>
+          <p *ngIf="erreurAttestation" class="mb-2 text-xs font-medium text-red-600">{{ erreurAttestation }}</p>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Attestation signée (PDF, 1 Mo max.) <span class="text-red-500">*</span>
           </label>
           <label class="flex items-center gap-3 p-3 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-green-400 hover:bg-green-50 transition-all">
             <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -424,7 +490,7 @@
                 [disabled]="soumission
                   || !commentaire.trim()
                   || (decisionType === 'REFUSE' && !motifRefus.trim())
-                  || (decisionType === 'VALIDE' && !attestationFile)"
+                  || (decisionType === 'VALIDE' && attestationIncomplete)"
                 class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-xl disabled:opacity-50 active:scale-95 transition-all cursor-pointer"
                 [ngClass]="decisionType === 'VALIDE' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'">
           <svg *ngIf="soumission" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -440,37 +506,58 @@
 
 
 <!-- ══════════════════════════════════════════════════════════
-     MODAL — REMPLACER ATTESTATION
+     MODAL — JOINDRE / REMPLACER ATTESTATION
      ══════════════════════════════════════════════════════════ -->
-<div *ngIf="showAttestationModal"
+<div *ngIf="showAttestationModal && selected"
      class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-    <div class="px-6 py-5 border-b border-gray-100 bg-blue-50">
-      <h3 class="text-base font-bold text-blue-800">Remplacer l'attestation</h3>
-      <p class="text-sm text-blue-600 mt-1">Sélectionnez le nouveau PDF d'attestation de stage.</p>
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden">
+    <div class="px-6 py-5 flex-shrink-0" style="background: linear-gradient(135deg, #c0392b, #96281b)">
+      <h3 class="text-base font-bold text-white">{{ attestationDe(selected) ? 'Remplacer l\'attestation' : 'Joindre l\'attestation' }}</h3>
+      <p class="text-sm text-white/80 mt-1">{{ selected.stage?.candidat?.prenom }} {{ selected.stage?.candidat?.nom }} — le candidat sera notifié.</p>
     </div>
-    <div class="p-6 space-y-4">
-      <label class="flex items-center gap-3 p-4 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all">
-        <svg class="w-6 h-6 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-        </svg>
-        <span class="text-sm text-gray-500 truncate">
-          {{ attestationRemplacement ? attestationRemplacement.name : 'Choisir le PDF de l\'attestation...' }}
-        </span>
-        <input type="file" accept="application/pdf" (change)="onRemplacementChange($event)" class="hidden"/>
-      </label>
+    <div class="p-6 space-y-4 overflow-y-auto">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Numéro de l'attestation <span class="text-red-500">*</span>
+        </label>
+        <input type="text" [(ngModel)]="attestationNumero" maxlength="100"
+               placeholder="Ex. 0125/MICA/SONABHY/DG/DCS/DRH/SAGC"
+               class="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#c0392b]"/>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Date d'émission <span class="text-red-500">*</span>
+        </label>
+        <input type="date" [(ngModel)]="attestationDate"
+               class="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#c0392b]"/>
+      </div>
+      <div>
+        <p *ngIf="erreurAttestation" class="mb-2 text-xs font-medium text-red-600">{{ erreurAttestation }}</p>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Attestation signée (PDF, 1 Mo max.) <span class="text-red-500">*</span>
+        </label>
+        <label class="flex items-center gap-3 p-4 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-[#c0392b] hover:bg-red-50 transition-all">
+          <svg class="w-6 h-6 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+          </svg>
+          <span class="text-sm text-gray-500 truncate">
+            {{ attestationFile ? attestationFile.name : 'Choisir le PDF de l\'attestation...' }}
+          </span>
+          <input type="file" accept="application/pdf" (change)="onAttestationChange($event)" class="hidden"/>
+        </label>
+      </div>
       <div class="flex justify-end gap-3">
         <button (click)="fermerRemplacement()" [disabled]="soumissionAttestation"
                 class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 cursor-pointer">
           Annuler
         </button>
-        <button (click)="confirmerRemplacement()" [disabled]="soumissionAttestation || !attestationRemplacement"
-                class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl disabled:opacity-50 active:scale-95 transition-all cursor-pointer">
+        <button (click)="confirmerRemplacement()" [disabled]="soumissionAttestation || attestationIncomplete"
+                class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-[#c0392b] hover:bg-[#96281b] rounded-xl disabled:opacity-50 active:scale-95 transition-all cursor-pointer">
           <svg *ngIf="soumissionAttestation" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
           </svg>
-          {{ soumissionAttestation ? 'Upload...' : 'Uploader l\'attestation' }}
+          {{ soumissionAttestation ? 'Envoi...' : (attestationDe(selected) ? 'Remplacer' : 'Joindre') }}
         </button>
       </div>
     </div>

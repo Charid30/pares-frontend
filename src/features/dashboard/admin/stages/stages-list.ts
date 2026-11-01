@@ -173,6 +173,7 @@ export class StagesList implements OnInit, OnDestroy {
 
   // Formulaire d'attestation
   attestationForm = {
+    numeroAttestation: '',
     dateEmission: '',
     attestationFile: null as File | null
   };
@@ -803,7 +804,7 @@ export class StagesList implements OnInit, OnDestroy {
     this.rejectForm = { motifRefus: '' };
     this.documentsRejetesSelection = [];
     this.evaluateRapportForm = { statusRapport: '', motifRefus: '' };
-    this.attestationForm = { dateEmission: '', attestationFile: null };
+    this.attestationForm = { numeroAttestation: '', dateEmission: '', attestationFile: null };
     this.editingDateDebut = false;
     this.nouvelleDateDebut = '';
     this.nouvelleDureeStage = null;
@@ -1494,6 +1495,7 @@ export class StagesList implements OnInit, OnDestroy {
     this.selectedRapport = rapport;
     this.modalMode = 'attestation';
     this.attestationForm = {
+      numeroAttestation: '',
       dateEmission: new Date().toISOString().split('T')[0],
       attestationFile: null
     };
@@ -1509,8 +1511,8 @@ export class StagesList implements OnInit, OnDestroy {
         input.value = '';
         return;
       }
-      if (file.size > 5 * 1024 * 1024) {
-        this.showToast('error', 'Erreur', 'Le fichier ne doit pas depasser 5 Mo');
+      if (file.size > 1024 * 1024) {
+        this.showToast('error', 'Erreur', 'Le fichier ne doit pas depasser 1 Mo');
         input.value = '';
         return;
       }
@@ -1529,6 +1531,11 @@ export class StagesList implements OnInit, OnDestroy {
       return;
     }
 
+    if (!this.attestationForm.numeroAttestation.trim()) {
+      this.showToast('error', 'Erreur', 'Le numero de l\'attestation est obligatoire');
+      return;
+    }
+
     if (!this.attestationForm.dateEmission) {
       this.showToast('error', 'Erreur', 'La date d\'emission est obligatoire');
       return;
@@ -1539,6 +1546,7 @@ export class StagesList implements OnInit, OnDestroy {
       stage_idstage: this.selectedRapport.stage_idstage,
       rapport_idrapport: this.selectedRapport.idrapport,
       typeDocument: 'ATTESTATION' as const,
+      numeroAttestation: this.attestationForm.numeroAttestation.trim(),
       dateEmission: this.attestationForm.dateEmission
     };
 

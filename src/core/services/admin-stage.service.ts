@@ -40,6 +40,7 @@ export interface CreateAttestationData {
   stage_idstage: number;
   rapport_idrapport: number;
   typeDocument: 'ATTESTATION';
+  numeroAttestation: string;
   dateEmission: string;
 }
 
@@ -334,6 +335,7 @@ export class AdminStageService {
     formData.append('stage_idstage', data.stage_idstage.toString());
     formData.append('rapport_idrapport', data.rapport_idrapport.toString());
     formData.append('typeDocument', 'ATTESTATION');
+    formData.append('numeroAttestation', data.numeroAttestation);
     formData.append('dateEmission', data.dateEmission);
     formData.append('document', attestationFile, attestationFile.name);
 
