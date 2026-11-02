@@ -3,6 +3,7 @@ import { FormGroup, FormBuilder, Validators, AbstractControl, ValidationErrors, 
 import { Router, RouterModule } from '@angular/router';
 import { AuthService, RegisterData } from '../../../core/services/auth.service';
 import { CommonModule } from '@angular/common';
+import { chargerTurnstile, TurnstileApi } from '../../../shared/utils/turnstile';
 import {
   getCountries, getCountryCallingCode, isValidPhoneNumber,
   parsePhoneNumberFromString, CountryCode,
@@ -33,6 +34,8 @@ export class Register implements OnInit, OnDestroy {
   @ViewChild('canvasEl') canvasEl!: ElementRef<HTMLCanvasElement>;
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
+  @ViewChild('turnstileEl') turnstileEl?: ElementRef<HTMLElement>;
+
   registerForm!: FormGroup;
   currentStep = 1;
   isLoading = false;
@@ -43,6 +46,15 @@ export class Register implements OnInit, OnDestroy {
   private jetonTimer: ReturnType<typeof setInterval> | null = null;
   private renvoiTimer: ReturnType<typeof setTimeout> | null = null;
   showPassword = false;
+
+  // ── Captcha Turnstile (activé par le serveur, qui transmet la clé publique) ─
+  turnstileSiteKey: string | null = null;
+  turnstileToken = '';
+  /** Fenêtre ouverte seulement si Cloudflare demande une action au candidat. */
+  turnstileFenetre = false;
+  private turnstile: TurnstileApi | null = null;
+  private turnstileWidget: string | null = null;
+  private inscriptionEnAttente: RegisterData | null = null;
 
   // ── Pièce d'identité (CNIB/NIP ou Passeport) ─────────────────────────────
   pieceIdentiteType: 'cnib' | 'passeport' = 'cnib';
@@ -147,14 +159,91 @@ export class Register implements OnInit, OnDestroy {
     if (this.ocrTimeoutId) clearTimeout(this.ocrTimeoutId);
     if (this.jetonTimer) clearInterval(this.jetonTimer);
     if (this.renvoiTimer) clearTimeout(this.renvoiTimer);
+    this.retirerTurnstile();
   }
 
   /** Jeton anti-robot du formulaire (15 min, lié à ce navigateur), renouvelé sans que le candidat s'en aperçoive. */
   private chargerJeton(ensuite?: () => void): void {
     this.authService.getFormToken().subscribe({
-      next: (res) => { if (res.success) this.formToken = res.data.token; ensuite?.(); },
+      next: (res) => {
+        if (res.success) {
+          this.formToken = res.data.token;
+          const cle = res.data.turnstileSiteKey || null;
+          if (cle !== this.turnstileSiteKey) {
+            this.turnstileSiteKey = cle;
+            this.cdr.detectChanges();
+          }
+        }
+        ensuite?.();
+      },
       error: () => { ensuite?.(); }
     });
+  }
+
+  /**
+   * Captcha lancé à l'envoi du formulaire : invisible le plus souvent, la fenêtre ne s'ouvre que si Cloudflare
+   * demande une action. L'inscription part toute seule dès que le captcha a abouti.
+   */
+  private lancerTurnstile(formData: RegisterData): void {
+    this.inscriptionEnAttente = formData;
+    const element = this.turnstileEl?.nativeElement;
+    if (!element) { this.echecTurnstile(); return; }
+
+    const fenetre = (ouverte: boolean) => {
+      this.turnstileFenetre = ouverte;
+      this.cdr.detectChanges();
+    };
+
+    chargerTurnstile().then((api) => {
+      if (!this.inscriptionEnAttente) return; // annulé pendant le chargement du script
+      this.retirerTurnstile();
+      this.turnstile = api;
+      this.turnstileWidget = api.render(element, {
+        sitekey: this.turnstileSiteKey,
+        language: 'fr',
+        theme: 'light',
+        size: 'flexible',
+        appearance: 'interaction-only',
+        'before-interactive-callback': () => fenetre(true),
+        'after-interactive-callback': () => fenetre(false),
+        callback: (jeton: string) => this.ngZone.run(() => {
+          const inscription = this.inscriptionEnAttente;
+          if (!inscription) return; // jeton renouvelé après l'envoi
+          this.inscriptionEnAttente = null;
+          this.turnstileToken = jeton;
+          fenetre(false);
+          this.envoyerInscription(inscription, true);
+        }),
+        'error-callback': () => this.echecTurnstile(),
+        'timeout-callback': () => this.echecTurnstile(),
+      });
+    }).catch(() => this.echecTurnstile());
+  }
+
+  private echecTurnstile(): void {
+    this.terminerTurnstile();
+    this.errorMessage = 'La vérification anti-robot n\'a pas pu aboutir. Vérifiez votre connexion puis réessayez.';
+    this.cdr.detectChanges();
+  }
+
+  /** Le candidat ferme la fenêtre du captcha : il retrouve son formulaire tel quel. */
+  annulerTurnstile(): void {
+    this.terminerTurnstile();
+    this.cdr.detectChanges();
+  }
+
+  private terminerTurnstile(): void {
+    this.inscriptionEnAttente = null;
+    this.isLoading = false;
+    this.turnstileFenetre = false;
+    this.retirerTurnstile();
+  }
+
+  /** Un jeton Turnstile ne sert qu'une fois : après un refus, le prochain envoi relance le captcha. */
+  private retirerTurnstile(): void {
+    if (this.turnstileWidget) this.turnstile?.remove(this.turnstileWidget);
+    this.turnstileWidget = null;
+    this.turnstileToken = '';
   }
 
   passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
@@ -636,7 +725,8 @@ onSubmit(): void {
     recipisse: this.documentFiscalType === 'recipisse' ? (this.registerForm.value.recipisse || undefined) : undefined,
   };
 
-  this.envoyerInscription(formData, true);
+  if (this.turnstileSiteKey) this.lancerTurnstile(formData);
+  else this.envoyerInscription(formData, true);
 } else {
   ['prenom', 'nom', 'telephone', 'nip', 'passeport', 'ifu', 'acceptTerms'].forEach(f =>
     this.registerForm.get(f)?.markAsTouched()
@@ -649,7 +739,7 @@ onSubmit(): void {
  * intervention du candidat : nouveau jeton ou attente de quelques secondes, puis renvoi automatique.
  */
 private envoyerInscription(formData: RegisterData, rattrapageJeton: boolean): void {
-  this.authService.register({ ...formData, formToken: this.formToken }).subscribe({
+  this.authService.register({ ...formData, formToken: this.formToken, turnstileToken: this.turnstileToken || undefined }).subscribe({
     next: (response) => {
       this.ngZone.run(() => {
         this.isLoading = false;
@@ -676,6 +766,7 @@ private envoyerInscription(formData: RegisterData, rattrapageJeton: boolean): vo
           return; // isLoading reste actif pendant le rattrapage
         }
         this.isLoading = false;
+        this.retirerTurnstile();
         if (error.status === 409) {
           this.errorMessage = 'Ce nom d\'utilisateur ou cet email est déjà utilisé';
           this.currentStep = 1;

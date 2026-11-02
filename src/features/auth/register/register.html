@@ -843,4 +843,23 @@
     </div>
   </div>
 
+  <!-- Captcha Turnstile : transparent (jamais display:none, le widget doit tourner) tant que Cloudflare ne demande rien -->
+  <div *ngIf="turnstileSiteKey" class="fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity"
+    [ngClass]="turnstileFenetre ? 'opacity-100 bg-black/50' : 'opacity-0 pointer-events-none'"
+    role="dialog" aria-modal="true" aria-labelledby="titre-turnstile" [attr.aria-hidden]="!turnstileFenetre">
+    <div class="w-full max-w-sm bg-white rounded-2xl shadow-xl overflow-hidden">
+      <div class="px-5 py-4" style="background: linear-gradient(135deg, #c0392b, #96281b)">
+        <h2 id="titre-turnstile" class="text-base font-semibold text-white">Vérification de sécurité</h2>
+        <p class="text-xs text-white/80 mt-0.5">Une dernière étape avant de créer votre compte.</p>
+      </div>
+      <div class="p-5">
+        <div #turnstileEl></div>
+        <button type="button" (click)="annulerTurnstile()" [tabindex]="turnstileFenetre ? 0 : -1"
+          class="mt-4 w-full min-h-[44px] lg:min-h-[36px] py-2 px-3 text-xs font-semibold text-gray-600 bg-white border border-gray-200 rounded-xl [@media(hover:hover)]:hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-[#c0392b]">
+          Annuler
+        </button>
+      </div>
+    </div>
+  </div>
+
 </div>

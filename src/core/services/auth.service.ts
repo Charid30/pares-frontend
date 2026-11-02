@@ -66,6 +66,7 @@ export interface RegisterData {
   ifu?: string;
   recipisse?: string;
   formToken?: string;
+  turnstileToken?: string;
 }
 
 // Rôles système avec layout dédié (tous les autres → /dashboard/agent)
@@ -121,8 +122,8 @@ export class AuthService {
   /**
    * Inscription
    */
-  getFormToken(): Observable<{ success: boolean; data: { token: string; expiresIn?: number } }> {
-    return this.http.get<{ success: boolean; data: { token: string; expiresIn?: number } }>(`${this.apiUrl}/form-token`);
+  getFormToken(): Observable<{ success: boolean; data: { token: string; expiresIn?: number; turnstileSiteKey?: string | null } }> {
+    return this.http.get<{ success: boolean; data: { token: string; expiresIn?: number; turnstileSiteKey?: string | null } }>(`${this.apiUrl}/form-token`);
   }
 
   register(data: RegisterData): Observable<LoginResponse> {
