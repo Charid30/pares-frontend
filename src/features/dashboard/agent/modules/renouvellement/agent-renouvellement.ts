@@ -1,5 +1,5 @@
 // agent-renouvellement.ts — Liste et traitement des demandes de renouvellement
-import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, DestroyRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -112,11 +112,7 @@ export class AgentRenouvellement implements OnInit {
   // limitées à certaines transitions (ex. « En cours de programmation » : joindre la convention / refuser).
   statusFilter: string | null = null;
   allowedTransitions: string[] | null = null;
-  private readonly dataRoute = (() => {
-    const route = inject(ActivatedRoute);
-    // Le même composant sert plusieurs routes : réagir au changement de sous-écran
-    return route.data.pipe(takeUntilDestroyed()).subscribe(data => this.appliquerRoute(data));
-  })();
+  private readonly destroyRef = inject(DestroyRef);
 
   // Onglets de vue (plusieurs statuts séparés par une virgule, comme pour les stages)
   readonly vues: { key: string; label: string; statut: string }[] = [
@@ -180,7 +176,11 @@ export class AgentRenouvellement implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Chargement déclenché par appliquerRoute (abonnement aux données de la route)
+    // Le même composant sert plusieurs routes : réagir au changement de sous-écran.
+    // Abonnement ICI et non dans un initialiseur de champ : route.data émet tout de suite, et un
+    // initialiseur s'exécute avant que le constructeur ait reçu http / authService (bug du 2026-10-24 :
+    // « En cours » et « Terminé » tournaient sans fin, les autres écrans ne chargeaient rien).
+    this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(data => this.appliquerRoute(data));
   }
 
   /** Portée, statut imposé et actions permises selon la route ; les permissions RENOUVELLEMENT décident du reste. */
