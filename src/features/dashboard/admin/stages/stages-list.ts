@@ -1667,7 +1667,7 @@ export class StagesList implements OnInit, OnDestroy {
     this.showModal = true;
     if (this.agentsListe.length === 0) {
       this.adminStageService.getAgentsListe().subscribe({
-        next: (res) => { this.agentsListe = res.data || []; },
+        next: (res) => { this.agentsListe = res.data || []; this.cdr.detectChanges(); },
         error: () => {}
       });
     }

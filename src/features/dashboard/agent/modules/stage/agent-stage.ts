@@ -408,6 +408,7 @@ export class AgentStage implements OnInit, OnDestroy {
         const agent = res.data?.agents?.[0];
         if (agent) {
           this.agentNomComplet = `${agent.prenom || ''} ${agent.nom || ''}`.trim();
+          this.cdr.detectChanges();
         }
       },
       error: () => {} // non bloquant
@@ -423,6 +424,7 @@ export class AgentStage implements OnInit, OnDestroy {
       .subscribe(term => {
         this.search = term.trim();
         if (this.peutConsulter) this.onFiltreChange();
+        this.cdr.detectChanges();
       });
 
     this.routeDataSub = this.route.data.subscribe((data) => {
@@ -550,7 +552,7 @@ export class AgentStage implements OnInit, OnDestroy {
     this.agentsFiltres = [];
     if (this.agentsListe.length === 0) {
       this.http.get<any>(`${this.apiUrl}/stages/agents-liste`).subscribe({
-        next: (res) => { this.agentsListe = res.data || []; },
+        next: (res) => { this.agentsListe = res.data || []; this.cdr.detectChanges(); },
         error: () => {}
       });
     }

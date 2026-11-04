@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../../core/services/auth.service';
 import { Router, RouterModule } from '@angular/router';
@@ -27,7 +27,8 @@ export class CandidatDashboard implements OnInit {
   constructor(
     private authService: AuthService,
     private router: Router,
-    private http: HttpClient
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -54,6 +55,7 @@ export class CandidatDashboard implements OnInit {
           this.renouvRejetes   = list.filter(r => r.statusRenouvellement === 'REJETE').length;
           this.renouvTermines  = list.filter(r => ['TERMINE', 'RAPPORT_SOUMIS'].includes(r.statusRenouvellement)).length;
           this.renouvActifs    = list.filter(r => ['PROGRAMMATION_EN_COURS', 'ACCEPTE', 'EN_COURS'].includes(r.statusRenouvellement)).length;
+          this.cdr.detectChanges();
         },
         error: () => { /* silencieux */ }
       });

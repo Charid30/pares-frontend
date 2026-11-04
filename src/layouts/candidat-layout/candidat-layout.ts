@@ -71,6 +71,7 @@ export class CandidatLayout implements OnInit, OnDestroy {
       next: (res) => {
         if (res.success && !res.data?.genre) {
           this.showGenrePopup = true;
+          this.cdr.detectChanges();
         }
       },
       error: () => {} // Silencieux

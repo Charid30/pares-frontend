@@ -165,6 +165,7 @@ export class AgentLayout implements OnInit, OnDestroy {
       next: () => {
         this.currentUser = this.authService.getCurrentUser();
         this.buildMenu(); // Reconstruire avec les permissions à jour
+        this.cdr.detectChanges();
       },
       error: () => { /* On garde les permissions en cache si le serveur est inaccessible */ },
     });

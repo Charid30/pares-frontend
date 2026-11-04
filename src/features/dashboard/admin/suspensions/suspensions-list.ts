@@ -65,6 +65,7 @@ export class SuspensionsList implements OnInit, OnDestroy {
     ).subscribe(term => {
       this.searchTerm = term;
       this.appliquerFiltres();
+      this.cdr.detectChanges();
     });
   }
 

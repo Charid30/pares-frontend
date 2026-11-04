@@ -151,6 +151,7 @@ export class AudiencesList implements OnInit, OnDestroy {
     ).subscribe(term => {
       this.searchTerm = term;
       this.appliquerFiltres();
+      this.cdr.detectChanges();
     });
   }
 

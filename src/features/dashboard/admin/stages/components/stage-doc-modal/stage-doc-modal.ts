@@ -96,6 +96,7 @@ export class StageDocModal implements OnChanges {
       next: () => {
         this.soumissionDoc = false;
         this.documentCreated.emit(stageId!);
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.errorDoc = err.error?.message || 'Erreur lors de la création du document';

@@ -276,6 +276,7 @@ export class AidesList implements OnInit {
       next: (res) => {
         if (res.success && Array.isArray(res.data)) {
           this.directions = res.data;
+          this.cdr.detectChanges();
         }
       },
       error: () => {},

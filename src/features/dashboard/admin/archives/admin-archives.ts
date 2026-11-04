@@ -84,7 +84,7 @@ export class AdminArchives implements OnInit, OnDestroy {
     this.charger();
     this.http.get<{ success: boolean; data: Direction[] }>(`${this.apiUrl}/stages/directions`).subscribe({
       next: (res) => { this.directions = res.data ?? []; this.cdr.detectChanges(); },
-      error: () => { this.directions = []; },
+      error: () => { this.directions = []; this.cdr.detectChanges(); },
     });
     // La recherche se fait via la barre globale du haut (comme la page Stages)
     this.searchSub = this.searchService.term$.pipe(
@@ -94,6 +94,7 @@ export class AdminArchives implements OnInit, OnDestroy {
       if (term === this.search) return;
       this.search = term;
       this.onFiltreChange();
+      this.cdr.detectChanges();
     });
   }
 

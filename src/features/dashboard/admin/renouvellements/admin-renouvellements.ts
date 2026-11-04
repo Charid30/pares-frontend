@@ -140,6 +140,7 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
       if (term === this.search) return;
       this.search = term;
       this.onFiltreChange();
+      this.cdr.detectChanges();
     });
   }
 
