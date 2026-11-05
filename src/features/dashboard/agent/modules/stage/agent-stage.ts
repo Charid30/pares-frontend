@@ -221,8 +221,10 @@ export class AgentStage implements OnInit, OnDestroy {
 
   // Un stage rejeté/annulé, ou déjà commencé/terminé/suspendu, ne peut plus être transféré
   // vers une autre direction (le transfert n'a de sens qu'avant le début effectif du stage).
+  /** Transfert vers une autre direction possible sans approbation préalable, dès le dépôt (En attente,
+   *  En traitement) et jusqu'à l'acceptation ; le statut est conservé (transfererStage, stage.service.js). */
   peutTransfererStatut(s: Stage): boolean {
-    return ['EN_ATTENTE', 'PROGRAMMATION_EN_COURS', 'ACCEPTE'].includes(s.statusStage);
+    return ['EN_ATTENTE', 'EN_COURS_DE_TRAITEMENT', 'PROGRAMMATION_EN_COURS', 'ACCEPTE'].includes(s.statusStage);
   }
 
   // ── Modal CREER document ──────────────────────────────────
@@ -385,6 +387,12 @@ export class AgentStage implements OnInit, OnDestroy {
 
   // Un écran dédié "Vue globale" peut restreindre l'action disponible à une transition précise
   // (ex. seul "Accepter" sur l'écran "Stage Approuvé"), indépendamment des permissions du rôle.
+  /** Rejet possible tant que la convention n'est pas jointe (même règle que le serveur, STATUTS_AVANT_CONVENTION) :
+   *  l'agent vérifie les pièces et rejette un dossier non conforme à n'importe quelle étape avant la convention. */
+  peutEtreRejete(s: Stage): boolean {
+    return ['EN_ATTENTE', 'EN_COURS_DE_TRAITEMENT', 'PROGRAMMATION_EN_COURS'].includes(s.statusStage);
+  }
+
   actionAutorisee(transition: string): boolean {
     return !this.allowedTransitions || this.allowedTransitions.includes(transition);
   }
