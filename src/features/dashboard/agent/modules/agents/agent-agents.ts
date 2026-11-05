@@ -752,7 +752,7 @@ export class AgentAgents implements OnInit {
       },
       error: () => { this.loadingRoles = false; this.cdr.detectChanges(); },
     });
-    this.http.get<any>(`${this.apiUrl}/services?limit=100`).subscribe({
+    this.http.get<any>(`${this.apiUrl}/users/services`).subscribe({
       next: (res) => {
         const raw: any[] = res.data?.items || res.data || [];
         this.servicesListe = raw.map(s => ({ idservice: s.idservice, nomService: s.description || s.accronyme }));

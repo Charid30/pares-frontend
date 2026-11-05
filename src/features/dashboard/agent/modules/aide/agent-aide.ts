@@ -156,7 +156,7 @@ export class AgentAide implements OnInit {
   }
 
   chargerDirections(): void {
-    this.http.get<any>(`${this.apiUrl}/directions`).subscribe({
+    this.http.get<any>(`${this.apiUrl}/users/directions`).subscribe({
       next: (res) => { this.directions = res.data || []; this.cdr.detectChanges(); },
       error: () => {},
     });

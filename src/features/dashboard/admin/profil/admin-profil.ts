@@ -76,7 +76,7 @@ export class AdminProfil implements OnInit {
     this.isLoadingPwd = true;
     this.cdr.detectChanges();
 
-    this.http.put<any>(`${environment.apiUrl}/settings/change-password`, {
+    this.http.put<any>(`${environment.apiUrl}/admin/settings/change-password`, {
       currentPassword: this.ancienMotDePasse,
       newPassword:     this.nouveauMotDePasse,
       confirmPassword: this.confirmerMotDePasse,

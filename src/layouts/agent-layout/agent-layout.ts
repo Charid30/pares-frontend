@@ -224,7 +224,8 @@ export class AgentLayout implements OnInit, OnDestroy {
     ];
 
     // Ajouter les modules selon les permissions
-    const moduleOrder = ['CANDIDATURES', 'CANDIDATS', 'STAGE', 'RENOUVELLEMENT', 'SUIVI_STAGE', 'SUSPENSION_STAGE', 'OFFRE', 'AIDE', 'DEMANDE_AUDIENCE', 'AGENTS', 'SERVICES'];
+    // CANDIDATURES (« Candidatures reçues ») retiré du menu : l'écran appelle /recrutement/…, absent du serveur
+    const moduleOrder = ['CANDIDATS', 'STAGE', 'RENOUVELLEMENT', 'SUIVI_STAGE', 'SUSPENSION_STAGE', 'OFFRE', 'AIDE', 'DEMANDE_AUDIENCE', 'AGENTS', 'SERVICES'];
     for (const mod of moduleOrder) {
       if (!modules.includes(mod) || (!MODULE_MENU_MAP[mod] && mod !== 'RENOUVELLEMENT')) continue;
       if (mod === 'STAGE') { this.pushStageMenuItems(); continue; }
