@@ -1,12 +1,4 @@
-<!-- Messages globaux -->
-<div *ngIf="successMessage"
-     class="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 px-5 py-3.5 bg-green-50 border border-green-200 rounded-2xl text-green-700 text-sm shadow-lg">
-  <svg class="w-5 h-5 flex-shrink-0 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-  </svg>
-  <span class="font-medium">{{ successMessage }}</span>
-</div>
-<div *ngIf="errorMessage && !showCreateModal && !showEditModal && !showDeleteModal"
+<div *ngIf="errorMessage && !showCreateModal && !showEditModal"
      class="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 px-5 py-3.5 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-sm shadow-lg">
   <svg class="w-5 h-5 flex-shrink-0 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -575,38 +567,3 @@
 </div>
 
 
-<!-- MODAL — CONFIRMER SUPPRESSION -->
-<div *ngIf="showDeleteModal && candidatASupprimer"
-     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-    <div class="px-6 py-4 flex items-center justify-between rounded-t-2xl"
-         style="background:linear-gradient(135deg,#dc2626,#991b1b)">
-      <div>
-        <h3 class="font-bold text-white text-lg">Supprimer ce candidat ?</h3>
-        <p class="text-red-200 text-xs mt-0.5">Cette action est irréversible</p>
-      </div>
-    </div>
-    <div class="p-6">
-      <p class="text-sm text-gray-700 mb-1">
-        Vous êtes sur le point de supprimer le profil de
-        <span class="font-semibold text-gray-900">{{ candidatASupprimer.prenom }} {{ candidatASupprimer.nom }}</span>.
-      </p>
-      <p class="text-xs text-red-600 font-medium mt-3 px-4 py-2 bg-red-50 rounded-xl border border-red-100">
-        ⚠️ Cette action désactivera également son compte utilisateur.
-      </p>
-    </div>
-    <div class="px-6 pb-6 flex gap-3">
-      <button (click)="supprimerCandidat()" [disabled]="isDeleting"
-              class="flex-1 flex items-center justify-center gap-2 py-3 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-50">
-        <svg *ngIf="isDeleting" class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-        </svg>
-        {{ isDeleting ? 'Suppression...' : 'Oui, supprimer' }}
-      </button>
-      <button (click)="fermerDeleteModal()" [disabled]="isDeleting"
-              class="flex-1 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:border-gray-300 rounded-xl transition-colors">
-        Annuler
-      </button>
-    </div>
-  </div>
-</div>

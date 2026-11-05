@@ -1,9 +1,10 @@
 // admin-db-explorer.ts
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
+import { ConfirmService } from '../../../../core/services/confirm.service';
 
 interface QueryResult {
   rows: Record<string, any>[];
@@ -23,6 +24,7 @@ const DESTRUCTIVE = /^\s*(DELETE|DROP|TRUNCATE|ALTER|UPDATE)\b/i;
   templateUrl: './admin-db-explorer.html',
 })
 export class AdminDbExplorer implements OnInit {
+  private readonly confirmService = inject(ConfirmService);
   private api = environment.apiUrl;
 
   tables: string[] = [];
@@ -95,14 +97,17 @@ export class AdminDbExplorer implements OnInit {
     this.cdr.detectChanges();
   }
 
-  execute(): void {
+  async execute(): Promise<void> {
     const q = this.sqlInput.trim();
     if (!q) return;
 
     if (DESTRUCTIVE.test(q)) {
-      const confirmed = window.confirm(
-        '⚠️ Cette requête va modifier ou supprimer des données.\n\nÊtes-vous sûr de vouloir continuer ?'
-      );
+      const confirmed = await this.confirmService.demander({
+        titre: 'Requête de modification',
+        message: 'Cette requête va modifier ou supprimer des données de la base. Êtes-vous sûr de vouloir continuer ?',
+        confirmer: 'Exécuter',
+        danger: true,
+      });
       if (!confirmed) return;
     }
 

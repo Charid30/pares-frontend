@@ -1,5 +1,5 @@
 // admin-archives.ts — Stages archivés (EXPIRE + sans parent)
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -7,6 +7,8 @@ import { Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import { SearchService } from '../../../../core/services/search.service';
+import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../core/services/confirm.service';
 
 interface Candidat {
   idcandidats: number;
@@ -43,6 +45,8 @@ interface StageArchive {
   templateUrl: './admin-archives.html',
 })
 export class AdminArchives implements OnInit, OnDestroy {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
 
   private readonly apiUrl = environment.apiUrl;
 
@@ -50,7 +54,6 @@ export class AdminArchives implements OnInit, OnDestroy {
   stagesFiltres: StageArchive[] = [];
   isLoading = false;
   erreur = '';
-  successMessage = '';
   search = '';
   filtreType = '';
   filtreDomaine = '';
@@ -71,7 +74,6 @@ export class AdminArchives implements OnInit, OnDestroy {
   selected: StageArchive | null = null;
 
   // Modal confirmation suppression définitive
-  showConfirmSuppression = false;
   suppressionEnCours = false;
 
   constructor(
@@ -182,43 +184,39 @@ export class AdminArchives implements OnInit, OnDestroy {
     this.selected = s;
     this.showModal = true;
     this.erreur = '';
-    this.successMessage = '';
   }
 
   fermerModal(): void {
     this.showModal = false;
     this.selected = null;
-    this.showConfirmSuppression = false;
   }
 
   // ── Suppression définitive ──────────────────────────────────────────────────
 
-  ouvrirConfirmSuppression(): void {
-    this.showConfirmSuppression = true;
-  }
-
-  annulerSuppression(): void {
-    this.showConfirmSuppression = false;
-  }
-
-  confirmerSuppression(): void {
+  async confirmerSuppression(): Promise<void> {
     if (!this.selected) return;
+    const ok = await this.confirmService.demander({
+      titre: 'Supprimer définitivement le stage',
+      message: 'Toutes les données liées à ce stage (documents, rapport, renouvellements) seront supprimées définitivement. Cette action ne peut pas être annulée.',
+      detail: this.selected.candidat ? `${this.selected.candidat.prenom} ${this.selected.candidat.nom}` : undefined,
+      confirmer: 'Supprimer définitivement',
+      danger: true,
+    });
+    if (!ok) return;
     this.suppressionEnCours = true;
     this.http.delete<{ success: boolean }>(
       `${this.apiUrl}/stages/${this.selected.idstage}/permanent`
     ).subscribe({
       next: () => {
         this.suppressionEnCours   = false;
-        this.showConfirmSuppression = false;
         this.showModal            = false;
-        this.successMessage       = 'Stage supprimé définitivement.';
+        this.toastService.succes('Stage supprimé définitivement.');
         this.selected             = null;
         this.charger();
-        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
       },
       error: (err) => {
         this.suppressionEnCours = false;
-        this.erreur = err.error?.message || 'Une erreur est survenue lors de la suppression.';
+        this.toastService.erreur(err.error?.message || 'Une erreur est survenue lors de la suppression.');
         this.cdr.detectChanges();
       },
     });

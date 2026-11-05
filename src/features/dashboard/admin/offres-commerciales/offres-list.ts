@@ -4,7 +4,7 @@
 //   PUT  /api/offres/:id/evaluer   → évaluer (body: { statusOffre, motifRefus })
 import { CommonModule, DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, ChangeDetectorRef, OnInit, OnDestroy, NgZone } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit, OnDestroy, NgZone, inject } from '@angular/core';
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
@@ -13,6 +13,8 @@ import { environment } from '../../../../environments/environment';
 import { Loader } from '../../../../shared/components/loader/loader';
 import { StatCard } from '../../../../shared/components/stat-card/stat-card';
 import { SearchService } from '../../../../core/services/search.service';
+import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../core/services/confirm.service';
 
 interface DirectionInfo {
   iddirection: number;
@@ -52,6 +54,8 @@ interface OffreCandidat {
   styleUrl: './offres-list.css',
 })
 export class OffresList implements OnInit, OnDestroy {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
 
   private searchSub?: Subscription;
 
@@ -60,7 +64,6 @@ export class OffresList implements OnInit, OnDestroy {
   offresFiltrees: OffreCandidat[] = []; // après filtres locaux
   isLoading = false;
   errorMessage = '';
-  successMessage = '';
 
   // ── Filtres ───────────────────────────────────────────────────────────────
   searchTerm = '';
@@ -214,7 +217,7 @@ export class OffresList implements OnInit, OnDestroy {
     this.errorEval = '';
   }
 
-  enregistrerDecision(): void {
+  async enregistrerDecision(): Promise<void> {
     if (!this.evaluation.statusOffre) {
       this.errorEval = 'Veuillez choisir une décision.';
       return;
@@ -225,6 +228,7 @@ export class OffresList implements OnInit, OnDestroy {
     }
     if (!this.selectedOffre) return;
 
+    if (!(await this.confirmService.demander({ titre: 'Enregistrer la décision', message: 'La décision sera enregistrée et le demandeur notifié.', confirmer: 'Enregistrer' }))) return;
     this.isSubmitting = true;
     this.errorEval = '';
 
@@ -245,8 +249,7 @@ export class OffresList implements OnInit, OnDestroy {
           if (res.success) {
             this.fermerTraitement();
             this.loadOffres();
-            this.successMessage = 'Décision enregistrée avec succès !';
-            setTimeout(() => this.successMessage = '', 4000);
+            this.toastService.succes('Décision enregistrée avec succès !');
           }
           this.isSubmitting = false;
           this.cdr.detectChanges();
@@ -340,8 +343,7 @@ export class OffresList implements OnInit, OnDestroy {
       },
       error: () => {
         this.ngZone.run(() => {
-          this.errorMessage = 'Impossible de récupérer le fichier.';
-          setTimeout(() => this.errorMessage = '', 4000);
+          this.toastService.erreur('Impossible de récupérer le fichier.');
           this.cdr.detectChanges();
         });
       },
@@ -426,8 +428,7 @@ export class OffresList implements OnInit, OnDestroy {
       },
       error: () => {
         this.ngZone.run(() => {
-          this.errorMessage = 'Erreur lors de l\'export CSV.';
-          setTimeout(() => this.errorMessage = '', 4000);
+          this.toastService.erreur('Erreur lors de l\'export CSV.');
           this.cdr.detectChanges();
         });
       },
@@ -446,8 +447,7 @@ export class OffresList implements OnInit, OnDestroy {
       },
       error: () => {
         this.ngZone.run(() => {
-          this.errorMessage = 'Erreur lors de la génération du rapport PDF.';
-          setTimeout(() => this.errorMessage = '', 4000);
+          this.toastService.erreur('Erreur lors de la génération du rapport PDF.');
           this.cdr.detectChanges();
         });
       },

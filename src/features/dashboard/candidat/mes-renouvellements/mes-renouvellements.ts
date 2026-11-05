@@ -1,8 +1,9 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { environment } from '../../../../environments/environment';
+import { ConfirmService } from '../../../../core/services/confirm.service';
 
 interface StageInfo {
   idstage: number;
@@ -38,6 +39,7 @@ type StatusRenouv = 'EN_ATTENTE' | 'EN_COURS_DE_TRAITEMENT' | 'PROGRAMMATION_EN_
   templateUrl: './mes-renouvellements.html',
 })
 export class MesRenouvellements implements OnInit {
+  private readonly confirmService = inject(ConfirmService);
   renouvellements: MesRenouvellement[] = [];
   loading = true;
   error: string | null = null;
@@ -126,7 +128,7 @@ export class MesRenouvellements implements OnInit {
     this.resoumissionLettreFile = input.files?.[0] ?? null;
   }
 
-  soumettreDossier(): void {
+  async soumettreDossier(): Promise<void> {
     if (!this.resoumissionTarget) return;
     const r = this.resoumissionTarget;
 
@@ -137,6 +139,7 @@ export class MesRenouvellements implements OnInit {
     }
 
     const fd = new FormData();
+    if (!(await this.confirmService.demander({ titre: 'Soumettre à nouveau', message: 'Votre demande de renouvellement sera de nouveau envoyée pour traitement.', confirmer: 'Soumettre' }))) return;
     if (this.resoumissionLettreFile) fd.append('lettreRenouvellement', this.resoumissionLettreFile);
 
     this.resoumissionSubmitting = true;

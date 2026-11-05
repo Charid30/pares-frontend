@@ -8,6 +8,8 @@ import { AuthService } from '../../../../../core/services/auth.service';
 import { SearchService } from '../../../../../core/services/search.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
+import { ToastService } from '../../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../../core/services/confirm.service';
 
 interface Candidat {
   idcandidats: number;
@@ -59,6 +61,8 @@ interface Rapport {
   templateUrl: './agent-rapports.html',
 })
 export class AgentRapports implements OnInit {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
 
   // Recherche : barre « Rechercher… » du header de l'espace agent (comme l'admin)
   private readonly rechercheHeader = (() => {
@@ -77,7 +81,6 @@ export class AgentRapports implements OnInit {
   isLoading = false;
   filtreStatut = '';
   search = '';
-  successMessage = '';
   erreur = '';
 
   // Modal détail
@@ -95,7 +98,6 @@ export class AgentRapports implements OnInit {
   attestationFile: File | null = null;
   attestationNumero = '';
   attestationDate = '';
-  erreurAttestation = '';
   showAttestationModal = false;
   soumissionAttestation = false;
 
@@ -173,7 +175,6 @@ export class AgentRapports implements OnInit {
     this.selected = r;
     this.showModal = true;
     this.erreur = '';
-    this.successMessage = '';
   }
 
   fermerModal(): void { this.showModal = false; this.selected = null; }
@@ -206,7 +207,6 @@ export class AgentRapports implements OnInit {
   }
 
   private reinitialiserAttestation(): void {
-    this.erreurAttestation = '';
     this.attestationFile = null;
     this.attestationNumero = '';
     this.attestationDate = new Date().toISOString().split('T')[0];
@@ -220,20 +220,20 @@ export class AgentRapports implements OnInit {
     const input = event.target as HTMLInputElement;
     const fichier = input.files?.[0] ?? null;
     if (fichier && fichier.size > 1024 * 1024) {
-      this.erreurAttestation = 'Le fichier de l\'attestation ne doit pas dépasser 1 Mo.';
+      this.toastService.erreur('Le fichier de l\'attestation ne doit pas dépasser 1 Mo.');
       input.value = '';
       this.attestationFile = null;
       return;
     }
-    this.erreurAttestation = '';
     this.attestationFile = fichier;
   }
 
-  confirmerDecision(): void {
+  async confirmerDecision(): Promise<void> {
     if (!this.selected || !this.decisionType) return;
     if (!this.commentaire.trim()) return;
     if (this.decisionType === 'REFUSE' && !this.motifRefus.trim()) return;
     if (this.decisionType === 'VALIDE' && this.peutCreerAttestation && this.attestationIncomplete) return;
+    if (!(await this.confirmService.demander({ titre: this.decisionType === 'VALIDE' ? 'Valider le rapport' : 'Rejeter le rapport', message: this.decisionType === 'VALIDE' ? 'Le rapport sera validé et le candidat notifié.' : 'Le rapport sera rejeté et le candidat notifié.', confirmer: this.decisionType === 'VALIDE' ? 'Valider' : 'Rejeter', danger: this.decisionType !== 'VALIDE' }))) return;
     this.soumission = true;
 
     const body: Record<string, unknown> = {
@@ -251,30 +251,28 @@ export class AgentRapports implements OnInit {
             this.soumission = false;
             this.showDecisionModal = false;
             this.showModal = false;
-            this.successMessage = 'Rapport validé et attestation jointe avec succès.';
+            this.toastService.succes('Rapport validé et attestation jointe avec succès.');
             this.charger();
-            setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
           }, (message) => {
             this.soumission = false;
             this.showDecisionModal = false;
             this.showModal = false;
+            this.toastService.avertissement('Rapport validé, attestation non enregistrée', `Joignez-la depuis la liste des rapports : ${message}`);
             this.charger();
-            this.erreur = `Rapport validé, attestation non enregistrée. Joignez-la depuis la liste des rapports : ${message}`;
           });
         } else {
           this.soumission = false;
           this.showDecisionModal = false;
           this.showModal = false;
-          this.successMessage = this.decisionType === 'VALIDE'
+          this.toastService.succes(this.decisionType === 'VALIDE'
             ? 'Rapport validé avec succès.'
-            : 'Rapport rejeté.';
+            : 'Rapport rejeté.');
           this.charger();
-          setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
         }
       },
       error: (err) => {
         this.soumission = false;
-        this.erreur = err.error?.message || 'Une erreur est survenue.';
+        this.toastService.erreur(err.error?.message || 'Une erreur est survenue.');
         this.cdr.detectChanges();
       },
     });
@@ -306,20 +304,24 @@ export class AgentRapports implements OnInit {
 
   fermerRemplacement(): void { this.showAttestationModal = false; }
 
-  confirmerRemplacement(): void {
+  async confirmerRemplacement(): Promise<void> {
     if (!this.selected || this.attestationIncomplete) return;
     const remplace = !!this.attestationDe(this.selected);
+    if (!(await this.confirmService.demander({
+      titre: remplace ? 'Remplacer l\'attestation' : 'Joindre l\'attestation',
+      message: remplace ? 'L\'attestation actuelle sera remplacée et le candidat notifié.' : 'L\'attestation sera ajoutée au dossier et le candidat notifié.',
+      confirmer: remplace ? 'Remplacer' : 'Joindre',
+    }))) return;
     this.soumissionAttestation = true;
     this.uploadAttestation(this.selected, () => {
       this.soumissionAttestation = false;
       this.showAttestationModal = false;
       this.showModal = false;
-      this.successMessage = remplace ? 'Attestation remplacée avec succès.' : 'Attestation jointe avec succès.';
+      this.toastService.succes(remplace ? 'Attestation remplacée avec succès.' : 'Attestation jointe avec succès.');
       this.charger();
-      setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
     }, (message) => {
       this.soumissionAttestation = false;
-      this.erreurAttestation = message;
+      this.toastService.erreur(message);
       this.cdr.detectChanges();
     });
   }
@@ -329,7 +331,7 @@ export class AgentRapports implements OnInit {
     if (!attestation) return;
     this.http.get(`${this.apiUrl}/stages/documents/${attestation.iddocument}/download`, { responseType: 'blob' }).subscribe({
       next: (blob) => this.ouvrirBlob(blob, attestation.document_filename, mode),
-      error: () => { this.erreur = 'Impossible de charger l\'attestation.'; this.cdr.detectChanges(); },
+      error: () => { this.toastService.erreur('Impossible de charger l\'attestation.'); this.cdr.detectChanges(); },
     });
   }
 
@@ -340,7 +342,7 @@ export class AgentRapports implements OnInit {
     const filename = this.selected.rapportPdf_filename || `rapport_${this.selected.idrapport}.pdf`;
     this.http.get(`${this.apiUrl}/stages/rapports/${this.selected.idrapport}/download`, { responseType: 'blob' }).subscribe({
       next: (blob) => this.ouvrirBlob(blob, filename, mode),
-      error: () => { this.erreur = 'Impossible de charger le rapport.'; this.cdr.detectChanges(); },
+      error: () => { this.toastService.erreur('Impossible de charger le rapport.'); this.cdr.detectChanges(); },
     });
   }
 
@@ -371,6 +373,7 @@ export class AgentRapports implements OnInit {
       default:              return 'bg-gray-100 text-gray-600';
     }
   }
+
 
   getStatutLabel(statut: string): string {
     switch (statut) {

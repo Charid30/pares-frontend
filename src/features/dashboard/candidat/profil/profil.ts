@@ -1,9 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit, inject } from '@angular/core';
 import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { environment } from '../../../../environments/environment';
+import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../core/services/confirm.service';
 
 @Component({
   selector: 'app-profil',
@@ -12,11 +14,12 @@ import { environment } from '../../../../environments/environment';
   styleUrl: './profil.css',
 })
 export class Profil implements OnInit {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
 
   profilForm: FormGroup;
   profil: any = null;
   isEditMode = false;
-  successMessage = '';
   errorMessage = '';
 
   // ── Type de document fiscal sélectionné en mode édition ────────────────
@@ -140,7 +143,6 @@ export class Profil implements OnInit {
     if (this.isEditMode) {
       this.patchForm();
       this.errorMessage = '';
-      this.successMessage = '';
     }
     this.isEditMode = !this.isEditMode;
     this.cdr.detectChanges();
@@ -149,17 +151,16 @@ export class Profil implements OnInit {
   annuler(): void {
     this.patchForm();
     this.errorMessage = '';
-    this.successMessage = '';
     this.isEditMode = false;
     this.cdr.detectChanges();
   }
 
-  sauvegarder(): void {
+  async sauvegarder(): Promise<void> {
     if (this.profilForm.invalid) return;
 
     this.errorMessage = '';
-    this.successMessage = '';
 
+    if (!(await this.confirmService.demander({ titre: 'Enregistrer le profil', message: 'Vos informations seront mises à jour.', confirmer: 'Enregistrer' }))) return;
     const raw = this.profilForm.getRawValue();
     const payload: any = {
       nom:       raw.nom,
@@ -174,20 +175,19 @@ export class Profil implements OnInit {
     this.http.put<any>(`${this.apiUrl}/candidat/profil`, payload).subscribe({
       next: (response) => {
         if (response.success) {
-          this.successMessage = 'Profil mis à jour avec succès !';
+          this.toastService.succes('Profil mis à jour avec succès !');
           this.profil = { ...this.profil, ...response.data };
           this.documentFiscalType = this.profil.recipisse ? 'recipisse' : 'ifu';
           this.patchForm();
           this.isEditMode = false;
           this.cdr.detectChanges();
-          setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 3000);
         } else {
-          this.errorMessage = response.message || 'Erreur lors de la mise à jour';
+          this.toastService.erreur(response.message || 'Erreur lors de la mise à jour');
           this.cdr.detectChanges();
         }
       },
       error: (err) => {
-        this.errorMessage = err.error?.message || 'Erreur lors de la mise à jour du profil';
+        this.toastService.erreur(err.error?.message || 'Erreur lors de la mise à jour du profil');
         this.cdr.detectChanges();
       }
     });

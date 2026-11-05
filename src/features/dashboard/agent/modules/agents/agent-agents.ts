@@ -8,6 +8,8 @@ import { SearchService } from '../../../../../core/services/search.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
+import { ToastService } from '../../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../../core/services/confirm.service';
 
 interface DirectionInfo {
   iddirection: number;
@@ -47,24 +49,6 @@ interface Service {
   imports: [CommonModule, FormsModule],
   template: `
     <div>
-
-      <!-- Toasts -->
-      <div class="fixed top-4 right-4 z-[9999] flex flex-col gap-2" style="pointer-events:none">
-        <div *ngFor="let t of toasts"
-             class="flex items-start gap-3 px-4 py-3 rounded-xl shadow-lg text-white text-sm w-80"
-             [ngClass]="{'bg-green-600': t.type==='success','bg-red-600': t.type==='error','bg-amber-500': t.type==='warning'}"
-             style="pointer-events:auto">
-          <div class="flex-1">
-            <p class="font-semibold">{{ t.title }}</p>
-            <p class="opacity-90">{{ t.message }}</p>
-          </div>
-          <button (click)="dismissToast(t.id)" class="text-white/70 hover:text-white mt-0.5 flex-shrink-0">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
-        </div>
-      </div>
 
       <!-- Hero -->
       <div class="bg-slate-900 relative overflow-hidden">
@@ -576,46 +560,13 @@ interface Service {
         </div>
       </div>
 
-      <!-- Modal Suppression -->
-      <div *ngIf="showDeleteModal"
-           class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
-          <div class="px-6 py-4 flex items-center gap-3 bg-red-600">
-            <div class="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center">
-              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-              </svg>
-            </div>
-            <div class="flex-1">
-              <p class="font-semibold text-white text-sm">Supprimer l'agent</p>
-              <p class="text-xs text-white/70 mt-0.5">{{ agentASupprimer?.username }}</p>
-            </div>
-            <button (click)="fermerDeleteModal()" class="text-white/70 hover:text-white">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-              </svg>
-            </button>
-          </div>
-          <div class="p-6 text-center">
-            <p class="text-sm text-gray-600">Supprimer l'agent <strong>{{ agentASupprimer?.username }}</strong> ?</p>
-            <p class="text-xs text-red-500 font-medium mt-1">Cette action est irréversible.</p>
-          </div>
-          <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
-            <button (click)="fermerDeleteModal()" [disabled]="soumissionDelete"
-                    class="px-4 py-2 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors disabled:opacity-50">Annuler</button>
-            <button (click)="supprimerAgent()" [disabled]="soumissionDelete"
-                    class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-xl disabled:opacity-50">
-              <div *ngIf="soumissionDelete" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              {{ soumissionDelete ? 'Suppression...' : 'Supprimer' }}
-            </button>
-          </div>
-        </div>
-      </div>
 
     </div>
   `,
 })
 export class AgentAgents implements OnInit {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
 
   // Recherche : barre « Rechercher… » du header de l'espace agent (comme l'admin)
   private readonly rechercheHeader = (() => {
@@ -676,13 +627,8 @@ export class AgentAgents implements OnInit {
   detailAgent: Agent | null = null;
 
   // ── Modal suppression ──────────────────────────────────────
-  showDeleteModal = false;
   agentASupprimer: Agent | null = null;
   soumissionDelete = false;
-
-  // Toasts
-  toasts: { id: number; title: string; message: string; type: 'success' | 'error' | 'warning' }[] = [];
-  private toastIdCounter = 0;
 
   private apiUrl = environment.apiUrl;
 
@@ -866,7 +812,7 @@ export class AgentAgents implements OnInit {
     this.showDirectionDropdown = false;
   }
 
-  soumettre(): void {
+  async soumettre(): Promise<void> {
     if (!this.form.prenom.trim()) { this.formErreur = 'Le prénom est requis'; return; }
     if (!this.form.nom.trim()) { this.formErreur = 'Le nom est requis'; return; }
     if (!this.form.role_idrole) { this.formErreur = 'Le rôle est requis'; return; }
@@ -881,6 +827,7 @@ export class AgentAgents implements OnInit {
     }
 
     this.formErreur = '';
+    if (!(await this.confirmService.demander({ titre: 'Enregistrer l\'agent', message: 'Les informations de l\'agent seront enregistrées.', confirmer: 'Enregistrer' }))) return;
     this.soumission = true;
 
     if (this.modalMode === 'create') {
@@ -960,14 +907,13 @@ export class AgentAgents implements OnInit {
     this.detailAgent = null;
   }
 
-  ouvrirDeleteModal(a: Agent): void {
+  async ouvrirDeleteModal(a: Agent): Promise<void> {
     this.agentASupprimer = a;
-    this.showDeleteModal = true;
-    this.cdr.detectChanges();
+    if (!(await this.confirmService.demander({ titre: 'Supprimer l\'agent', message: 'Son compte ne pourra plus se connecter. Cette action est irréversible.', detail: `${a.prenom} ${a.nom}`, confirmer: 'Supprimer', danger: true }))) { this.fermerDeleteModal(); return; }
+    this.supprimerAgent();
   }
 
   fermerDeleteModal(): void {
-    this.showDeleteModal = false;
     this.agentASupprimer = null;
     this.soumissionDelete = false;
     this.cdr.detectChanges();
@@ -994,12 +940,7 @@ export class AgentAgents implements OnInit {
   }
 
   showToast(title: string, message: string, type: 'success' | 'error' | 'warning' = 'success'): void {
-    const id = ++this.toastIdCounter;
-    this.toasts.push({ id, title, message, type });
-    setTimeout(() => this.dismissToast(id), 4000);
+    this.toastService.afficher(type, title, message);
   }
 
-  dismissToast(id: number): void {
-    this.toasts = this.toasts.filter(t => t.id !== id);
-  }
 }

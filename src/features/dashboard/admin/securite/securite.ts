@@ -1,11 +1,13 @@
 // securite.ts — Admin : Surveillance sécurité (IPs bannies + tentatives d'injection)
 import { CommonModule, DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../../../environments/environment';
 import { Loader } from '../../../../shared/components/loader/loader';
 import { StatCard } from '../../../../shared/components/stat-card/stat-card';
+import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../core/services/confirm.service';
 
 interface GeoInfo {
   country: string | null;
@@ -75,13 +77,13 @@ interface UserMatch {
   templateUrl: './securite.html',
 })
 export class Securite implements OnInit {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
 
   bannedIps: BannedIp[] = [];
   stats: SecurityStats | null = null;
   isLoading = false;
   isLoadingAction = false;
-  errorMessage = '';
-  successMessage = '';
 
   // ─── Modale détails (requêtes suspectes + profil éventuel) ─────────────
   detailsIp: BannedIp | null = null;
@@ -104,7 +106,6 @@ export class Securite implements OnInit {
 
   load(): void {
     this.isLoading = true;
-    this.errorMessage = '';
 
     this.http.get<{ success: boolean; data: BannedIp[] }>(`${this.base}/banned`).subscribe({
       next: (res) => {
@@ -124,40 +125,40 @@ export class Securite implements OnInit {
     });
   }
 
-  unban(ip: BannedIp): void {
+  async unban(ip: BannedIp): Promise<void> {
+    if (!(await this.confirmService.demander({ titre: 'Débannir l\'adresse IP', message: 'Cette adresse pourra de nouveau accéder à l\'application.', detail: ip.ip_address, confirmer: 'Débannir' }))) return;
     this.isLoadingAction = true;
     this.http.put<{ success: boolean }>(`${this.base}/banned/${ip.id}/unban`, {}).subscribe({
       next: () => {
-        this.successMessage = `IP ${ip.ip_address} débannie avec succès.`;
+        this.toastService.succes(`IP ${ip.ip_address} débannie avec succès.`);
         this.isLoadingAction = false;
         this.load();
-        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 3000);
       },
       error: () => { this.isLoadingAction = false; this.cdr.detectChanges(); }
     });
   }
 
-  banPermanently(ip: BannedIp): void {
+  async banPermanently(ip: BannedIp): Promise<void> {
+    if (!(await this.confirmService.demander({ titre: 'Bannir définitivement', message: 'Cette adresse ne pourra plus jamais accéder à l\'application.', detail: ip.ip_address, confirmer: 'Bannir', danger: true }))) return;
     this.isLoadingAction = true;
     this.http.put<{ success: boolean }>(`${this.base}/banned/${ip.id}/ban-permanent`, {}).subscribe({
       next: () => {
-        this.successMessage = `IP ${ip.ip_address} bannie définitivement.`;
+        this.toastService.succes(`IP ${ip.ip_address} bannie définitivement.`);
         this.isLoadingAction = false;
         this.load();
-        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 3000);
       },
       error: () => { this.isLoadingAction = false; this.cdr.detectChanges(); }
     });
   }
 
-  deleteEntry(ip: BannedIp): void {
+  async deleteEntry(ip: BannedIp): Promise<void> {
+    if (!(await this.confirmService.demander({ titre: 'Supprimer l\'entrée', message: 'L\'historique de cette adresse IP sera supprimé.', detail: ip.ip_address, confirmer: 'Supprimer', danger: true }))) return;
     this.isLoadingAction = true;
     this.http.delete<{ success: boolean }>(`${this.base}/banned/${ip.id}`).subscribe({
       next: () => {
-        this.successMessage = `Entrée ${ip.ip_address} supprimée.`;
+        this.toastService.succes(`Entrée ${ip.ip_address} supprimée.`);
         this.isLoadingAction = false;
         this.load();
-        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 3000);
       },
       error: () => { this.isLoadingAction = false; this.cdr.detectChanges(); }
     });
@@ -204,22 +205,21 @@ export class Securite implements OnInit {
     this.showBanManualModal = false;
   }
 
-  soumettreBanManuel(): void {
+  async soumettreBanManuel(): Promise<void> {
     if (!this.banManualForm.ip_address.trim()) return;
+    if (!(await this.confirmService.demander({ titre: 'Bannir l\'adresse IP', message: 'Cette adresse ne pourra plus accéder à l\'application.', detail: this.banManualForm.ip_address, confirmer: 'Bannir', danger: true }))) return;
     this.banManualLoading = true;
     this.http.post<{ success: boolean }>(`${this.base}/ban-manual`, this.banManualForm).subscribe({
       next: () => {
-        this.successMessage = `IP ${this.banManualForm.ip_address} bannie avec succès.`;
+        this.toastService.succes(`IP ${this.banManualForm.ip_address} bannie avec succès.`);
         this.banManualLoading = false;
         this.showBanManualModal = false;
         this.load();
-        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 3000);
       },
       error: (err) => {
-        this.errorMessage = err.error?.message || "Erreur lors du bannissement";
+        this.toastService.erreur(err.error?.message || "Erreur lors du bannissement");
         this.banManualLoading = false;
         this.cdr.detectChanges();
-        setTimeout(() => { this.errorMessage = ''; this.cdr.detectChanges(); }, 4000);
       }
     });
   }

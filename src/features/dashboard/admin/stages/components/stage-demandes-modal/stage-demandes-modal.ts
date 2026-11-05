@@ -1,7 +1,9 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectorRef, NgZone, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectorRef, NgZone, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminStageService } from '../../../../../../core/services/admin-stage.service';
+import { ToastService } from '../../../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../../../core/services/confirm.service';
 
 @Component({
   selector: 'app-stage-demandes-modal',
@@ -10,6 +12,8 @@ import { AdminStageService } from '../../../../../../core/services/admin-stage.s
   templateUrl: './stage-demandes-modal.html',
 })
 export class StageDemandesModal implements OnChanges {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
   @Input() show = false;
   @Input() demande: any = null;
   @Output() close = new EventEmitter<void>();
@@ -17,7 +21,6 @@ export class StageDemandesModal implements OnChanges {
 
   form = { status: '' as 'APPROUVEE' | 'REJETEE' | '', reponse_drh: '' };
   submitting = false;
-  errorMessage = '';
 
   constructor(
     private adminStageService: AdminStageService,
@@ -29,7 +32,6 @@ export class StageDemandesModal implements OnChanges {
     if (changes['show'] && this.show) {
       this.form = { status: '', reponse_drh: '' };
       this.submitting = false;
-      this.errorMessage = '';
     }
   }
 
@@ -41,10 +43,10 @@ export class StageDemandesModal implements OnChanges {
     this.close.emit();
   }
 
-  confirmer(): void {
+  async confirmer(): Promise<void> {
     if (!this.demande || !this.form.status) return;
+    if (!(await this.confirmService.demander({ titre: 'Enregistrer la décision', message: 'La décision sur la demande de modification sera enregistrée et le candidat notifié.', confirmer: 'Enregistrer' }))) return;
     this.submitting = true;
-    this.errorMessage = '';
 
     this.adminStageService.evaluerDemandeModification(this.demande.id, {
       status: this.form.status as 'APPROUVEE' | 'REJETEE',
@@ -56,7 +58,7 @@ export class StageDemandesModal implements OnChanges {
             this.submitting = false;
             this.evaluated.emit();
           } else {
-            this.errorMessage = 'Une erreur est survenue';
+            this.toastService.erreur('Une erreur est survenue');
             this.submitting = false;
           }
           this.cdr.detectChanges();
@@ -64,7 +66,7 @@ export class StageDemandesModal implements OnChanges {
       },
       error: (err) => {
         this.ngZone.run(() => {
-          this.errorMessage = err.error?.message || 'Erreur lors du traitement';
+          this.toastService.erreur(err.error?.message || 'Erreur lors du traitement');
           this.submitting = false;
           this.cdr.detectChanges();
         });

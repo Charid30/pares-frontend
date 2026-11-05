@@ -7,11 +7,13 @@
 //   DELETE /api/admin/api-keys/:id            → révoquer
 import { CommonModule, DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, ChangeDetectorRef, OnInit, NgZone } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit, NgZone, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../../../environments/environment';
 import { Loader } from '../../../../shared/components/loader/loader';
 import { StatCard } from '../../../../shared/components/stat-card/stat-card';
+import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../core/services/confirm.service';
 
 interface ApiKeyItem {
   idapikey: number;
@@ -34,11 +36,12 @@ interface ApiKeyItem {
   styleUrl: './api-keys.css',
 })
 export class ApiKeys implements OnInit {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
 
   keys: ApiKeyItem[] = [];
   isLoading = false;
   errorMessage = '';
-  successMessage = '';
 
   // ── Modal création ────────────────────────────────────────────────────────
   showCreateModal = false;
@@ -107,11 +110,12 @@ export class ApiKeys implements OnInit {
     this.errorCreate = '';
   }
 
-  creerCle(): void {
+  async creerCle(): Promise<void> {
     if (!this.form.nomApplication.trim()) {
       this.errorCreate = 'Le nom de l\'application est obligatoire.';
       return;
     }
+    if (!(await this.confirmService.demander({ titre: 'Créer la clé API', message: 'Une nouvelle clé d\'accès à l\'API sera générée pour cette application.', confirmer: 'Créer' }))) return;
     this.isSubmitting = true;
     this.errorCreate = '';
 
@@ -161,7 +165,8 @@ export class ApiKeys implements OnInit {
   }
 
   // ─── Activer / désactiver ────────────────────────────────────────────────
-  toggleActif(key: ApiKeyItem): void {
+  async toggleActif(key: ApiKeyItem): Promise<void> {
+    if (!(await this.confirmService.demander({ titre: key.actif ? 'Désactiver la clé' : 'Activer la clé', message: key.actif ? 'L\'application ne pourra plus utiliser l\'API avec cette clé.' : 'L\'application pourra de nouveau utiliser l\'API.', detail: key.nomApplication, confirmer: key.actif ? 'Désactiver' : 'Activer', danger: key.actif }))) return;
     this.http.put<any>(`${this.apiUrl}/admin/api-keys/${key.idapikey}`, { actif: !key.actif }).subscribe({
       next: (res) => {
         this.ngZone.run(() => {
@@ -174,15 +179,26 @@ export class ApiKeys implements OnInit {
       },
       error: (err) => {
         this.ngZone.run(() => {
-          this.errorMessage = err.error?.message || 'Erreur lors de la modification.';
-          setTimeout(() => { this.errorMessage = ''; this.cdr.detectChanges(); }, 4000);
+          this.toastService.erreur(err.error?.message || 'Erreur lors de la modification.');
           this.cdr.detectChanges();
         });
       },
     });
   }
 
-  changerScope(key: ApiKeyItem, scope: string): void {
+  async changerScope(key: ApiKeyItem, scope: string): Promise<void> {
+    const ok = await this.confirmService.demander({
+      titre: 'Changer le scope', message: 'Les droits d\'accès de cette clé à l\'API seront modifiés.', detail: key.nomApplication, confirmer: 'Changer',
+    });
+    if (!ok) {
+      // La liste affiche déjà le nouveau choix : on la ramène à la valeur enregistrée
+      const actuel = key.scope;
+      key.scope = null as unknown as ApiKeyItem['scope'];
+      this.cdr.detectChanges();
+      key.scope = actuel;
+      this.cdr.detectChanges();
+      return;
+    }
     this.http.put<any>(`${this.apiUrl}/admin/api-keys/${key.idapikey}`, { scope }).subscribe({
       next: (res) => {
         this.ngZone.run(() => {
@@ -195,8 +211,7 @@ export class ApiKeys implements OnInit {
       },
       error: (err) => {
         this.ngZone.run(() => {
-          this.errorMessage = err.error?.message || 'Erreur lors de la modification.';
-          setTimeout(() => { this.errorMessage = ''; this.cdr.detectChanges(); }, 4000);
+          this.toastService.erreur(err.error?.message || 'Erreur lors de la modification.');
           this.cdr.detectChanges();
         });
       },
@@ -204,9 +219,14 @@ export class ApiKeys implements OnInit {
   }
 
   // ─── Confirmation (révocation / régénération) ────────────────────────────
-  demanderConfirmation(action: 'revoke' | 'regenerate', key: ApiKeyItem): void {
+  async demanderConfirmation(action: 'revoke' | 'regenerate', key: ApiKeyItem): Promise<void> {
+    const ok = await this.confirmService.demander(action === 'revoke'
+      ? { titre: 'Révoquer cette clé ?', message: 'La clé cessera immédiatement de fonctionner. Cette action est définitive.', detail: key.nomApplication, confirmer: 'Révoquer', danger: true }
+      : { titre: 'Régénérer cette clé ?', message: "L'ancienne clé cessera immédiatement de fonctionner et une nouvelle valeur sera générée.", detail: key.nomApplication, confirmer: 'Régénérer', danger: true });
+    if (!ok) return;
     this.confirmAction = action;
     this.confirmTarget = key;
+    this.executerConfirmation();
   }
 
   annulerConfirmation(): void {
@@ -233,8 +253,7 @@ export class ApiKeys implements OnInit {
         },
         error: (err) => {
           this.ngZone.run(() => {
-            this.errorMessage = err.error?.message || 'Erreur lors de la révocation.';
-            setTimeout(() => { this.errorMessage = ''; this.cdr.detectChanges(); }, 4000);
+            this.toastService.erreur(err.error?.message || 'Erreur lors de la révocation.');
             this.cdr.detectChanges();
           });
         },
@@ -254,8 +273,7 @@ export class ApiKeys implements OnInit {
         },
         error: (err) => {
           this.ngZone.run(() => {
-            this.errorMessage = err.error?.message || 'Erreur lors de la régénération.';
-            setTimeout(() => { this.errorMessage = ''; this.cdr.detectChanges(); }, 4000);
+            this.toastService.erreur(err.error?.message || 'Erreur lors de la régénération.');
             this.cdr.detectChanges();
           });
         },
@@ -265,8 +283,7 @@ export class ApiKeys implements OnInit {
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
   private flashSuccess(msg: string): void {
-    this.successMessage = msg;
-    setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
+    this.toastService.succes(msg);
   }
 
   getScopeLabel(scope: string): string {

@@ -1,6 +1,6 @@
 // src/features/dashboard/admin/suspensions/suspensions-list.ts
 // Admin — Gestion des demandes de suspension / annulation de stage
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
@@ -8,6 +8,8 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { AdminStageService, DemandeModificationStage } from '../../../../core/services/admin-stage.service';
 import { SearchService } from '../../../../core/services/search.service';
 import { StatCard } from '../../../../shared/components/stat-card/stat-card';
+import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../core/services/confirm.service';
 
 interface Toast {
   id: number;
@@ -23,6 +25,8 @@ interface Toast {
   templateUrl: './suspensions-list.html',
 })
 export class SuspensionsList implements OnInit, OnDestroy {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
 
   demandes: DemandeModificationStage[] = [];
   demandesFiltrees: DemandeModificationStage[] = [];
@@ -46,8 +50,6 @@ export class SuspensionsList implements OnInit, OnDestroy {
   isSubmitting = false;
   errorEval = '';
 
-  toasts: Toast[] = [];
-  private toastId = 0;
   private searchSub?: Subscription;
 
   constructor(
@@ -134,11 +136,12 @@ export class SuspensionsList implements OnInit, OnDestroy {
     this.errorEval = '';
   }
 
-  evaluer(): void {
+  async evaluer(): Promise<void> {
     if (!this.selectedDemande || !this.evalForm.status) {
       this.errorEval = 'Veuillez choisir une décision.';
       return;
     }
+    if (!(await this.confirmService.demander({ titre: 'Enregistrer la décision', message: 'La décision sur la demande sera enregistrée et le candidat notifié.', confirmer: 'Enregistrer' }))) return;
     this.isSubmitting = true;
     this.errorEval = '';
     this.adminStageService.evaluerDemandeModification(this.selectedDemande.id, {
@@ -217,14 +220,7 @@ export class SuspensionsList implements OnInit, OnDestroy {
   }
 
   showToast(type: Toast['type'], title: string, message: string): void {
-    const toast: Toast = { id: ++this.toastId, type, title, message };
-    this.toasts.push(toast);
-    this.cdr.detectChanges();
-    setTimeout(() => this.ngZone.run(() => this.removeToast(toast.id)), 5000);
+    this.toastService.afficher(type, title, message);
   }
 
-  removeToast(id: number): void {
-    this.toasts = this.toasts.filter(t => t.id !== id);
-    this.cdr.detectChanges();
-  }
 }

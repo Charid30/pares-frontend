@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { Router, RouterModule, RouterOutlet } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/services/auth.service';
@@ -6,6 +6,7 @@ import { NotificationService } from '../../core/services/notification.service';
 import { NotificationBellComponent } from '../../shared/components/notification-bell/notification-bell';
 import { CommonModule } from '@angular/common';
 import { environment } from '../../environments/environment';
+import { ConfirmService } from '../../core/services/confirm.service';
 
 @Component({
   selector: 'app-candidat-layout',
@@ -14,6 +15,7 @@ import { environment } from '../../environments/environment';
   styleUrl: './candidat-layout.css',
 })
 export class CandidatLayout implements OnInit, OnDestroy {
+  private readonly confirmService = inject(ConfirmService);
 
   currentUser: any = null;
   mobileMenuOpen = false;
@@ -78,8 +80,9 @@ export class CandidatLayout implements OnInit, OnDestroy {
     });
   }
 
-  sauvegarderGenre(): void {
+  async sauvegarderGenre(): Promise<void> {
     if (!this.genreSelection) return;
+    if (!(await this.confirmService.demander({ titre: 'Enregistrer le genre', message: 'Votre genre sera enregistré sur votre profil.', confirmer: 'Enregistrer' }))) return;
     this.savingGenre = true;
     this.genreSuccess = false;
     this.http.put<any>(`${this.apiUrl}/candidat/profil`, { genre: this.genreSelection }).subscribe({

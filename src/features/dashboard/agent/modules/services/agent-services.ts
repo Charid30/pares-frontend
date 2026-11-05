@@ -8,6 +8,8 @@ import { SearchService } from '../../../../../core/services/search.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
+import { ToastService } from '../../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../../core/services/confirm.service';
 
 interface Service {
   idservice: number;
@@ -23,24 +25,6 @@ interface Service {
   imports: [CommonModule, FormsModule],
   template: `
     <div>
-
-      <!-- Toasts -->
-      <div class="fixed top-4 right-4 z-[9999] flex flex-col gap-2" style="pointer-events:none">
-        <div *ngFor="let t of toasts"
-             class="flex items-start gap-3 px-4 py-3 rounded-xl shadow-lg text-white text-sm w-80"
-             [ngClass]="{'bg-green-600': t.type==='success','bg-red-600': t.type==='error','bg-amber-500': t.type==='warning'}"
-             style="pointer-events:auto">
-          <div class="flex-1">
-            <p class="font-semibold">{{ t.title }}</p>
-            <p class="opacity-90">{{ t.message }}</p>
-          </div>
-          <button (click)="dismissToast(t.id)" class="text-white/70 hover:text-white mt-0.5 flex-shrink-0">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
-        </div>
-      </div>
 
       <!-- Hero -->
       <div class="bg-slate-900 relative overflow-hidden">
@@ -310,42 +294,13 @@ interface Service {
         </div>
       </div>
 
-      <!-- Modal confirmation suppression -->
-      <div *ngIf="serviceASupprimer"
-           class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-           (click)="annulerSuppression()">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6" (click)="$event.stopPropagation()">
-          <div class="flex flex-col items-center text-center">
-            <div class="w-14 h-14 bg-red-100 rounded-2xl flex items-center justify-center mb-4">
-              <svg class="w-7 h-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-              </svg>
-            </div>
-            <h3 class="text-base font-bold text-gray-900">Supprimer ce service ?</h3>
-            <p class="text-sm text-gray-500 mt-2">
-              Vous êtes sur le point de supprimer le service
-              <span class="font-semibold text-gray-700">{{ serviceASupprimer.nomService }}</span>.
-              Cette action est irréversible.
-            </p>
-            <div class="flex gap-3 w-full mt-6">
-              <button type="button" (click)="annulerSuppression()"
-                      class="flex-1 py-3 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-2xl hover:bg-gray-100 transition-colors">
-                Annuler
-              </button>
-              <button type="button" (click)="confirmerSuppression()"
-                      class="flex-1 py-3 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-2xl transition-colors shadow-sm">
-                Supprimer
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
 
     </div>
   `,
 })
 export class AgentServices implements OnInit {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
 
   // Recherche : barre « Rechercher… » du header de l'espace agent (comme l'admin)
   private readonly rechercheHeader = (() => {
@@ -368,10 +323,6 @@ export class AgentServices implements OnInit {
   form = { accronyme: '', description: '' };
   showDetailModal = false;
   detailService: Service | null = null;
-
-  // Toasts
-  toasts: { id: number; title: string; message: string; type: 'success' | 'error' | 'warning' }[] = [];
-  private toastIdCounter = 0;
 
   // Permissions (réactives)
   get peutConsulter(): boolean { return this.authService.hasPermission('SERVICES', 'CONSULTER'); }
@@ -458,8 +409,9 @@ export class AgentServices implements OnInit {
     this.form = { accronyme: '', description: '' };
   }
 
-  enregistrer(): void {
+  async enregistrer(): Promise<void> {
     if (!this.form.accronyme.trim()) return;
+    if (!(await this.confirmService.demander({ titre: 'Enregistrer le service', message: 'Le service sera enregistré.', confirmer: 'Enregistrer' }))) return;
     this.soumission = true;
     const payload = {
       accronyme: this.form.accronyme.trim(),
@@ -491,8 +443,10 @@ export class AgentServices implements OnInit {
 
   serviceASupprimer: Service | null = null;
 
-  supprimer(s: Service): void {
+  async supprimer(s: Service): Promise<void> {
     this.serviceASupprimer = s;
+    if (!(await this.confirmService.demander({ titre: 'Supprimer le service', message: 'Cette action est irréversible.', detail: s.nomService, confirmer: 'Supprimer', danger: true }))) { this.annulerSuppression(); return; }
+    this.confirmerSuppression();
   }
 
   annulerSuppression(): void {
@@ -522,12 +476,7 @@ export class AgentServices implements OnInit {
   }
 
   showToast(title: string, message: string, type: 'success' | 'error' | 'warning' = 'success'): void {
-    const id = ++this.toastIdCounter;
-    this.toasts.push({ id, title, message, type });
-    setTimeout(() => this.dismissToast(id), 4000);
+    this.toastService.afficher(type, title, message);
   }
 
-  dismissToast(id: number): void {
-    this.toasts = this.toasts.filter(t => t.id !== id);
-  }
 }

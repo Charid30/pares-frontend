@@ -1,17 +1,12 @@
 // parametres.ts - PAGE DES PARAMETRES ADMIN
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
-
-interface Toast {
-  id: number;
-  type: 'success' | 'error' | 'info';
-  title: string;
-  message: string;
-}
+import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../core/services/confirm.service';
 
 interface Tab {
   id: string;
@@ -93,26 +88,17 @@ interface SystemInfo {
   selector: 'app-parametres',
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule],
-  templateUrl: './parametres.html',
-  styles: [`
-    .toast-enter {
-      animation: slideIn 0.3s ease-out;
-    }
-    @keyframes slideIn {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-  `]
+  templateUrl: './parametres.html'
 })
 export class Parametres implements OnInit {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
   private apiUrl = environment.apiUrl;
 
   loading = false;
   saving = false;
   changingPassword = false;
   activeTab = 'general';
-  toasts: Toast[] = [];
-  private toastCounter = 0;
 
   tabs: Tab[] = [
     { id: 'general', label: 'Général', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' },
@@ -317,7 +303,8 @@ export class Parametres implements OnInit {
     });
   }
 
-  saveSettings(): void {
+  async saveSettings(): Promise<void> {
+    if (!(await this.confirmService.demander({ titre: 'Enregistrer les paramètres', message: 'Les paramètres de l\'application seront modifiés pour tous les utilisateurs.', confirmer: 'Enregistrer' }))) return;
     this.saving = true;
     this.http.put<any>(`${this.apiUrl}/admin/settings`, this.settings).subscribe({
       next: (r) => {
@@ -341,7 +328,7 @@ export class Parametres implements OnInit {
     }
   }
 
-  changePassword(): void {
+  async changePassword(): Promise<void> {
     if (!this.passwordForm.currentPassword || !this.passwordForm.newPassword || !this.passwordForm.confirmPassword) {
       this.showToast('error', 'Erreur', 'Veuillez remplir tous les champs');
       return;
@@ -357,6 +344,7 @@ export class Parametres implements OnInit {
       return;
     }
 
+    if (!(await this.confirmService.demander({ titre: 'Changer le mot de passe', message: 'Votre mot de passe sera remplacé.', confirmer: 'Changer' }))) return;
     this.changingPassword = true;
     this.http.put<any>(`${this.apiUrl}/admin/settings/change-password`, this.passwordForm).subscribe({
       next: (r) => {
@@ -373,11 +361,12 @@ export class Parametres implements OnInit {
     });
   }
 
-  sendNotification(): void {
+  async sendNotification(): Promise<void> {
     if (!this.notifForm.sujet.trim() || !this.notifForm.message.trim()) {
       this.showToast('error', 'Erreur', 'Le sujet et le message sont obligatoires');
       return;
     }
+    if (!(await this.confirmService.demander({ titre: 'Envoyer la notification', message: 'La notification sera envoyée à tous les destinataires choisis.', confirmer: 'Envoyer' }))) return;
     this.sendingNotif = true;
     this.notifResult = null;
     this.http.post<any>(`${this.apiUrl}/admin/settings/notify`, this.notifForm, {
@@ -408,18 +397,7 @@ export class Parametres implements OnInit {
 
   // === Toast notifications ===
   showToast(type: 'success' | 'error' | 'info', title: string, message: string): void {
-    const toast: Toast = {
-      id: ++this.toastCounter,
-      type,
-      title,
-      message
-    };
-    this.toasts.push(toast);
-
-    setTimeout(() => this.removeToast(toast.id), 5000);
+    this.toastService.afficher(type, title, message);
   }
 
-  removeToast(id: number): void {
-    this.toasts = this.toasts.filter(t => t.id !== id);
-  }
 }

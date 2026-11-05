@@ -1,17 +1,12 @@
 // permissions-list.ts
-import { ChangeDetectorRef, Component, NgZone, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, NgZone, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { PermissionService } from '../../../../core/services/permission.service';
 import { ModuleAction, RoleWithPermissions } from '../../../../core/models/user.model';
-
-interface Toast {
-  id: number;
-  type: 'success' | 'error';
-  title: string;
-  message: string;
-}
+import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../core/services/confirm.service';
 
 @Component({
   selector: 'app-permissions-list',
@@ -20,6 +15,8 @@ interface Toast {
   templateUrl: './permissions-list.html',
 })
 export class PermissionsList implements OnInit {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
 
   // Données
   roles: RoleWithPermissions[] = [];
@@ -50,7 +47,6 @@ export class PermissionsList implements OnInit {
   savingPerms = false;
 
   // ── Modal suppression ────────────────────────────────────────────────────
-  showDeleteModal = false;
   deletingRole: RoleWithPermissions | null = null;
   deleting = false;
 
@@ -58,10 +54,6 @@ export class PermissionsList implements OnInit {
   showPermsModal = false;
   permsRole: RoleWithPermissions | null = null;
   savingPermsStandalone = false;
-
-  // Toasts
-  toasts: Toast[] = [];
-  private toastId = 0;
 
   constructor(
     private permService: PermissionService,
@@ -222,7 +214,7 @@ export class PermissionsList implements OnInit {
   }
 
   // Étape 1 → Étape 2 (création) ou Enregistrer (édition)
-  submitStep1(): void {
+  async submitStep1(): Promise<void> {
     this.formError = '';
     if (!this.formAccronyme.trim()) { this.formError = "L'acronyme est requis"; return; }
     if (!this.formDescription.trim()) { this.formError = 'La description est requise'; return; }
@@ -232,6 +224,7 @@ export class PermissionsList implements OnInit {
       this.modalStep = 2;
     } else {
       // Édition : enregistrer directement
+      if (!(await this.confirmService.demander({ titre: 'Enregistrer le rôle', message: 'Les informations du rôle seront mises à jour.', confirmer: 'Enregistrer' }))) return;
       this.submitting = true;
       this.permService.updateRole(this.editingRole!.idrole, this.formAccronyme, this.formDescription, this.formLectureGlobale).subscribe({
         next: (res) => {
@@ -258,7 +251,8 @@ export class PermissionsList implements OnInit {
   }
 
   // Étape 2 → Créer le rôle + affecter les permissions
-  submitStep2(): void {
+  async submitStep2(): Promise<void> {
+    if (!(await this.confirmService.demander({ titre: 'Enregistrer les permissions', message: 'Les permissions du rôle seront enregistrées. Les agents concernés devront se reconnecter.', confirmer: 'Enregistrer' }))) return;
     this.savingPerms = true;
     const permissions = this.collectPermissions();
 
@@ -333,8 +327,9 @@ export class PermissionsList implements OnInit {
     this.savingPermsStandalone = false;
   }
 
-  savePermsStandalone(): void {
+  async savePermsStandalone(): Promise<void> {
     if (!this.permsRole) return;
+    if (!(await this.confirmService.demander({ titre: 'Enregistrer les permissions', message: 'Les permissions du rôle seront modifiées. Les agents concernés devront se reconnecter.', confirmer: 'Enregistrer' }))) return;
     this.savingPermsStandalone = true;
     const permissions = this.collectPermissions();
 
@@ -363,13 +358,13 @@ export class PermissionsList implements OnInit {
 
   // ── Suppression ───────────────────────────────────────────────────────────
 
-  openDeleteModal(role: RoleWithPermissions): void {
+  async openDeleteModal(role: RoleWithPermissions): Promise<void> {
     this.deletingRole = role;
-    this.showDeleteModal = true;
+    if (!(await this.confirmService.demander({ titre: 'Supprimer le rôle', message: `Ses ${this.countRolePerms(role)} permission(s) seront supprimées. Impossible si des agents ont ce rôle.`, detail: role.description, confirmer: 'Supprimer', danger: true }))) { this.closeDeleteModal(); return; }
+    this.confirmDelete();
   }
 
   closeDeleteModal(): void {
-    this.showDeleteModal = false;
     this.deletingRole = null;
     this.deleting = false;
   }
@@ -404,13 +399,7 @@ export class PermissionsList implements OnInit {
   // ── Toasts ────────────────────────────────────────────────────────────────
 
   showToast(title: string, message: string, type: 'success' | 'error'): void {
-    const toast: Toast = { id: ++this.toastId, type, title, message };
-    this.toasts.push(toast);
-    setTimeout(() => this.removeToast(toast.id), 4000);
+    this.toastService.afficher(type, title, message);
   }
 
-  removeToast(id: number): void {
-    this.toasts = this.toasts.filter(t => t.id !== id);
-    this.cdr.detectChanges();
-  }
 }

@@ -11,6 +11,8 @@ import { SearchService } from '../../../../../core/services/search.service';
 import { StatCard } from '../../../../../shared/components/stat-card/stat-card';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
+import { ToastService } from '../../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../../core/services/confirm.service';
 
 interface Candidat {
   idcandidats: number;
@@ -74,6 +76,8 @@ interface PaginatedResult {
   templateUrl: './agent-renouvellement.html',
 })
 export class AgentRenouvellement implements OnInit {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
 
   // Recherche : barre « Rechercher… » du header de l'espace agent (comme l'admin)
   private readonly rechercheHeader = (() => {
@@ -95,7 +99,6 @@ export class AgentRenouvellement implements OnInit {
   dateDebut = '';
   dateFin = '';
   showFiltres = false;
-  successMessage = '';
   erreur = '';
   // Pagination
   page = 1;
@@ -269,7 +272,6 @@ export class AgentRenouvellement implements OnInit {
     this.showModal = true;
     this.editionDates = false;
     this.erreur = '';
-    this.successMessage = '';
   }
 
   // ── Modification des dates du nouveau stage (permission MODIFIER, dans sa direction) ──
@@ -290,9 +292,10 @@ export class AgentRenouvellement implements OnInit {
     this.editionDates = true;
   }
 
-  enregistrerDates(): void {
+  async enregistrerDates(): Promise<void> {
     const stageId = this.selected?.stageNouveau?.idstage;
     if (!stageId || !this.nouvelleDateDebut || !this.nouvelleDuree) return;
+    if (!(await this.confirmService.demander({ titre: 'Modifier les dates', message: 'Les dates du renouvellement seront mises à jour.', confirmer: 'Enregistrer' }))) return;
     this.savingDates = true;
     this.erreur = '';
     // Même route que la modification des dates d'un stage (fin recalculée, statut ajusté)
@@ -303,13 +306,12 @@ export class AgentRenouvellement implements OnInit {
       next: () => {
         this.savingDates = false;
         this.editionDates = false;
-        this.successMessage = 'Dates du renouvellement mises à jour.';
+        this.toastService.succes('Dates du renouvellement mises à jour.');
         this.charger();
-        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
       },
       error: (err) => {
         this.savingDates = false;
-        this.erreur = err.error?.message || 'Impossible de modifier les dates.';
+        this.toastService.erreur(err.error?.message || 'Impossible de modifier les dates.');
         this.cdr.detectChanges();
       },
     });
@@ -366,8 +368,9 @@ export class AgentRenouvellement implements OnInit {
     this.showApprobationModal = false;
   }
 
-  confirmerApprobation(): void {
+  async confirmerApprobation(): Promise<void> {
     if (!this.selected) return;
+    if (!(await this.confirmService.demander({ titre: 'Approuver le renouvellement', message: 'Le renouvellement passera « En cours de programmation » et les agents RH seront prévenus.', confirmer: 'Approuver' }))) return;
     this.soumissionApprobation = true;
     this.http.put<{ success: boolean; data: any }>(
       `${this.apiUrl}/stages/renouvellements/${this.selected.idrenouvellement}/approuver`,
@@ -377,13 +380,12 @@ export class AgentRenouvellement implements OnInit {
         this.soumissionApprobation = false;
         this.showApprobationModal = false;
         this.showModal = false;
-        this.successMessage = 'Renouvellement approuvé — en attente de validation par l\'administration.';
+        this.toastService.succes('Renouvellement approuvé — en attente de validation par l\'administration.');
         this.charger();
-        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 5000);
       },
       error: (err) => {
         this.soumissionApprobation = false;
-        this.erreur = err.error?.message || 'Une erreur est survenue.';
+        this.toastService.erreur(err.error?.message || 'Une erreur est survenue.');
         this.cdr.detectChanges();
       },
     });
@@ -428,11 +430,12 @@ export class AgentRenouvellement implements OnInit {
       || this.selected?.stageNouveau?.statusStage === 'EN_COURS';
   }
 
-  confirmerDecision(): void {
+  async confirmerDecision(): Promise<void> {
     if (!this.selected || !this.decisionType) return;
     if (this.decisionType === 'REJETE' && !this.motifRefus.trim()) return;
     if (this.decisionType === 'ACCEPTE' && !this.conventionFile && !this.conventionDejaJointe) return;
     if (this.decisionType === 'ACCEPTE' && !this.dureeValide) return;
+    if (!(await this.confirmService.demander({ titre: this.decisionType === 'ACCEPTE' ? 'Accepter le renouvellement' : 'Rejeter le renouvellement', message: this.decisionType === 'ACCEPTE' ? 'Le renouvellement sera accepté avec sa convention et le candidat notifié.' : 'Le renouvellement sera rejeté et le candidat notifié.', confirmer: this.decisionType === 'ACCEPTE' ? 'Accepter' : 'Rejeter', danger: this.decisionType !== 'ACCEPTE' }))) return;
     this.soumission = true;
     this.erreur = '';
 
@@ -462,16 +465,15 @@ export class AgentRenouvellement implements OnInit {
         this.soumission = false;
         this.showDecisionModal = false;
         this.showModal = false;
-        this.successMessage = this.decisionType === 'ACCEPTE'
+        this.toastService.succes(this.decisionType === 'ACCEPTE'
           ? 'Renouvellement accepté, convention jointe.'
-          : 'Renouvellement rejeté.';
+          : 'Renouvellement rejeté.');
         this.charger();
-        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
       },
       error: (err) => {
         // Le modal reste ouvert : l'erreur s'y affiche, rien n'a été accepté
         this.soumission = false;
-        this.erreur = err.error?.message || 'Une erreur est survenue.';
+        this.toastService.erreur(err.error?.message || 'Une erreur est survenue.');
         this.cdr.detectChanges();
       },
     });
@@ -493,14 +495,15 @@ export class AgentRenouvellement implements OnInit {
     this.conventionRemplacement = (event.target as HTMLInputElement).files?.[0] ?? null;
   }
 
-  confirmerConvention(): void {
+  async confirmerConvention(): Promise<void> {
     if (!this.selected || !this.conventionRemplacement) return;
     const stageId = this.selected.stageNouveau?.idstage;
     if (!stageId) {
-      this.erreur = 'Impossible de trouver le nouveau stage associé.';
+      this.toastService.erreur('Impossible de trouver le nouveau stage associé.');
       this.cdr.detectChanges();
       return;
     }
+    if (!(await this.confirmService.demander({ titre: 'Joindre la convention', message: 'La convention sera jointe au renouvellement.', confirmer: 'Joindre' }))) return;
     this.soumissionConvention = true;
     // Même route pour joindre ou remplacer : elle crée la convention si le nouveau stage n'en a
     // pas, et vérifie la permission CREER du module RENOUVELLEMENT (stage de renouvellement).
@@ -511,13 +514,12 @@ export class AgentRenouvellement implements OnInit {
       next: () => {
         this.soumissionConvention = false;
         this.showConventionModal = false;
-        this.successMessage = remplacement ? 'Convention remplacée avec succès.' : 'Convention jointe avec succès.';
+        this.toastService.succes(remplacement ? 'Convention remplacée avec succès.' : 'Convention jointe avec succès.');
         this.charger();
-        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
       },
       error: (err) => {
         this.soumissionConvention = false;
-        this.erreur = err.error?.message || 'Erreur lors de l\'upload de la convention.';
+        this.toastService.erreur(err.error?.message || 'Erreur lors de l\'upload de la convention.');
         this.cdr.detectChanges();
       },
     });
@@ -530,7 +532,7 @@ export class AgentRenouvellement implements OnInit {
     const filename = this.selected.lettreMotivationRenouvellement_filename || `lettre_${this.selected.idrenouvellement}.pdf`;
     this.http.get(`${this.apiUrl}/stages/renouvellements/${this.selected.idrenouvellement}/lettre`, { responseType: 'blob' }).subscribe({
       next: (blob) => this.ouvrirOuTelechargerBlob(blob, filename, mode),
-      error: () => { this.erreur = 'Lettre de renouvellement introuvable sur le serveur (fichier absent).'; this.cdr.detectChanges(); },
+      error: () => { this.toastService.erreur('Lettre de renouvellement introuvable sur le serveur (fichier absent).'); this.cdr.detectChanges(); },
     });
   }
 
@@ -544,7 +546,7 @@ export class AgentRenouvellement implements OnInit {
     const filename = r.stageNouveau?.documents?.[0]?.document_filename || `convention_renouvellement_${r.idrenouvellement}.pdf`;
     this.http.get(`${this.apiUrl}/stages/renouvellements/${r.idrenouvellement}/convention`, { responseType: 'blob' }).subscribe({
       next: (blob) => this.ouvrirOuTelechargerBlob(blob, filename, mode),
-      error: () => { this.erreur = 'Impossible de charger la convention.'; this.cdr.detectChanges(); },
+      error: () => { this.toastService.erreur('Impossible de charger la convention.'); this.cdr.detectChanges(); },
     });
   }
 
@@ -554,7 +556,7 @@ export class AgentRenouvellement implements OnInit {
     const filename = this.selected.stageActuel?.documents?.[0]?.document_filename || `convention_stage_${this.selected.stageActuel?.idstage}.pdf`;
     this.http.get(`${this.apiUrl}/stages/renouvellements/${this.selected.idrenouvellement}/convention-demande`, { responseType: 'blob' }).subscribe({
       next: (blob) => this.ouvrirOuTelechargerBlob(blob, filename, mode),
-      error: () => { this.erreur = 'Impossible de charger la convention de la demande de stage.'; this.cdr.detectChanges(); },
+      error: () => { this.toastService.erreur('Impossible de charger la convention de la demande de stage.'); this.cdr.detectChanges(); },
     });
   }
 
@@ -653,7 +655,7 @@ ${embedsHtml}<script>let n=0;document.querySelectorAll('embed').forEach(e=>e.add
       a.href = url; a.download = `Renouvellement_${candidatNom}.zip`; a.click();
       window.URL.revokeObjectURL(url);
     } catch {
-      this.erreur = 'Erreur lors de la génération du ZIP.';
+      this.toastService.erreur('Erreur lors de la génération du ZIP.');
     } finally {
       this.downloadingAllDocs = false;
       this.cdr.detectChanges();

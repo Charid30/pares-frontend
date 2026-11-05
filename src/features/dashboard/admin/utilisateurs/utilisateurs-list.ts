@@ -1,5 +1,5 @@
 // src/features/dashboard/admin/utilisateurs/utilisateurs-list.ts
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -9,13 +9,8 @@ import { UserService, AgentFilters } from '../../../../core/services/user.servic
 import { Agent, Role, Service, Direction, UserStats } from '../../../../core/models/user.model';
 import { SearchService } from '../../../../core/services/search.service';
 import { StatCard } from '../../../../shared/components/stat-card/stat-card';
-
-interface Toast {
-  id: number;
-  type: 'success' | 'error' | 'warning' | 'info';
-  title: string;
-  message: string;
-}
+import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../core/services/confirm.service';
 
 @Component({
   selector: 'app-utilisateurs-list',
@@ -23,20 +18,6 @@ interface Toast {
   imports: [CommonModule, RouterModule, FormsModule, StatCard],
   templateUrl: './utilisateurs-list.html',
   styles: [`
-    .toast-enter {
-      animation: slideInRight 0.3s ease-out;
-    }
-    .toast-leave {
-      animation: slideOutRight 0.3s ease-in;
-    }
-    @keyframes slideInRight {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-    @keyframes slideOutRight {
-      from { transform: translateX(0); opacity: 1; }
-      to { transform: translateX(100%); opacity: 0; }
-    }
     .step-active {
       background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
     }
@@ -49,6 +30,8 @@ interface Toast {
   `]
 })
 export class UtilisateursList implements OnInit, OnDestroy {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
   // Données
   agents: Agent[] = [];
   roles: Role[] = [];
@@ -70,10 +53,6 @@ export class UtilisateursList implements OnInit, OnDestroy {
   // État
   submitting = false;
   error = '';
-
-  // Toast notifications
-  toasts: Toast[] = [];
-  private toastId = 0;
 
   // Modal
   showModal = false;
@@ -149,49 +128,7 @@ export class UtilisateursList implements OnInit, OnDestroy {
 
   // ==================== TOAST NOTIFICATIONS ====================
   showToast(type: 'success' | 'error' | 'warning' | 'info', title: string, message: string): void {
-    const toast: Toast = {
-      id: ++this.toastId,
-      type,
-      title,
-      message
-    };
-    this.toasts.push(toast);
-    this.cdr.detectChanges();
-
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-      this.ngZone.run(() => {
-        this.removeToast(toast.id);
-      });
-    }, 5000);
-  }
-
-  removeToast(id: number): void {
-    const index = this.toasts.findIndex(t => t.id === id);
-    if (index > -1) {
-      this.toasts.splice(index, 1);
-      this.cdr.detectChanges();
-    }
-  }
-
-  getToastIcon(type: string): string {
-    switch (type) {
-      case 'success': return 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z';
-      case 'error': return 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z';
-      case 'warning': return 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z';
-      case 'info': return 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z';
-      default: return '';
-    }
-  }
-
-  getToastBgClass(type: string): string {
-    switch (type) {
-      case 'success': return 'bg-green-500';
-      case 'error': return 'bg-red-500';
-      case 'warning': return 'bg-yellow-500';
-      case 'info': return 'bg-blue-500';
-      default: return 'bg-gray-500';
-    }
+    this.toastService.afficher(type, title, message);
   }
 
   // ==================== DATA LOADING ====================
@@ -591,7 +528,8 @@ export class UtilisateursList implements OnInit, OnDestroy {
     return this.directions.find(d => d.iddirection === id);
   }
 
-  createAgent(): void {
+  async createAgent(): Promise<void> {
+    if (!(await this.confirmService.demander({ titre: 'Créer l\'agent', message: 'Le compte de l\'agent sera créé.', confirmer: 'Créer' }))) return;
     this.submitting = true;
     const agentName = `${this.agentInfo.prenom} ${this.agentInfo.nom}`;
 
@@ -630,9 +568,10 @@ export class UtilisateursList implements OnInit, OnDestroy {
     });
   }
 
-  updateAgent(): void {
+  async updateAgent(): Promise<void> {
     if (!this.selectedAgent) return;
 
+    if (!(await this.confirmService.demander({ titre: 'Enregistrer les modifications', message: 'Les informations de l\'agent seront mises à jour.', confirmer: 'Enregistrer' }))) return;
     this.submitting = true;
     const agentName = `${this.agentInfo.prenom} ${this.agentInfo.nom}`;
 
@@ -667,7 +606,7 @@ export class UtilisateursList implements OnInit, OnDestroy {
     });
   }
 
-  changePassword(): void {
+  async changePassword(): Promise<void> {
     if (!this.selectedAgent) return;
 
     if (this.newPassword !== this.confirmNewPassword) {
@@ -680,6 +619,7 @@ export class UtilisateursList implements OnInit, OnDestroy {
       return;
     }
 
+    if (!(await this.confirmService.demander({ titre: 'Changer le mot de passe', message: 'L\'agent devra utiliser ce nouveau mot de passe pour se connecter.', confirmer: 'Changer', danger: true }))) return;
     this.submitting = true;
     this.userService.changePassword(this.selectedAgent.idagents, this.newPassword, this.confirmNewPassword).subscribe({
       next: (response) => {
@@ -706,14 +646,28 @@ export class UtilisateursList implements OnInit, OnDestroy {
   confirmAction: 'delete' | 'toggle' | null = null;
   confirmTarget: Agent | null = null;
 
-  demanderSuppression(agent: Agent): void {
+  async demanderSuppression(agent: Agent): Promise<void> {
+    const ok = await this.confirmService.demander({
+      titre: 'Supprimer cet agent ?', message: 'Son compte ne pourra plus se connecter. Cette action est irréversible.',
+      detail: `${agent.prenom} ${agent.nom}`, confirmer: 'Supprimer', danger: true,
+    });
+    if (!ok) return;
     this.confirmAction = 'delete';
     this.confirmTarget = agent;
+    this.executerConfirmation();
   }
 
-  demanderToggleActif(agent: Agent): void {
+  async demanderToggleActif(agent: Agent): Promise<void> {
+    const actif = agent.actif ?? true;
+    const ok = await this.confirmService.demander({
+      titre: actif ? 'Désactiver ce compte ?' : 'Réactiver ce compte ?',
+      message: actif ? "L'agent ne pourra plus se connecter tant que son compte est désactivé." : "L'agent pourra de nouveau se connecter.",
+      detail: `${agent.prenom} ${agent.nom}`, confirmer: actif ? 'Désactiver' : 'Réactiver', danger: actif,
+    });
+    if (!ok) return;
     this.confirmAction = 'toggle';
     this.confirmTarget = agent;
+    this.executerConfirmation();
   }
 
   annulerConfirmation(): void {
@@ -734,9 +688,6 @@ export class UtilisateursList implements OnInit, OnDestroy {
     }
   }
 
-  get confirmTargetActif(): boolean {
-    return this.confirmTarget ? (this.confirmTarget.actif ?? true) : true;
-  }
 
   private deleteAgent(agent: Agent): void {
     this.submitting = true;

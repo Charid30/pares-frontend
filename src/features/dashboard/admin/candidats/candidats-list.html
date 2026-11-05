@@ -1,25 +1,5 @@
 <!-- candidats-list.html - LISTE DES CANDIDATS ADMIN (RESPONSIVE) -->
 
-<!-- Toast Notifications -->
-<div class="fixed top-4 right-4 z-50 space-y-2">
-  <div *ngFor="let toast of toasts"
-       class="toast-enter flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white min-w-[300px] max-w-md"
-       [ngClass]="getToastBgClass(toast.type)">
-    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="getToastIcon(toast.type)" />
-    </svg>
-    <div class="flex-1">
-      <p class="font-semibold text-sm">{{ toast.title }}</p>
-      <p class="text-sm opacity-90">{{ toast.message }}</p>
-    </div>
-    <button (click)="removeToast(toast.id)" class="text-white/80 hover:text-white" aria-label="Fermer la notification">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-      </svg>
-    </button>
-  </div>
-</div>
-
 <div class="space-y-4 md:space-y-6 overflow-x-hidden max-w-full">
   <!-- Header -->
   <div class="flex items-start sm:items-center justify-between gap-3">
@@ -671,84 +651,6 @@
   </div>
 </div>
 
-<!-- ===== MODAL SUPPRESSION ===== -->
-<div *ngIf="showDeleteModal && candidatToDelete" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-  <!-- Backdrop -->
-  <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm" (click)="closeDeleteModal()"></div>
-
-  <!-- Contenu -->
-  <div class="relative bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col">
-
-    <!-- Header rouge -->
-    <div class="relative bg-gradient-to-br from-red-500 to-rose-600 px-6 pt-6 pb-8">
-      <button (click)="closeDeleteModal()"
-              class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 text-white transition-all">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-      <div class="flex items-center gap-4">
-        <div class="w-14 h-14 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center flex-shrink-0">
-          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-        </div>
-        <div>
-          <p class="text-red-100 text-xs font-medium uppercase tracking-widest mb-1">Action irréversible</p>
-          <h3 class="text-lg font-bold text-white">Supprimer le candidat</h3>
-        </div>
-      </div>
-    </div>
-
-    <!-- Corps -->
-    <div class="px-6 py-5 space-y-4">
-
-      <!-- Candidat ciblé -->
-      <div class="flex items-center gap-3 bg-red-50 border border-red-100 rounded-2xl p-4">
-        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-red-400 to-rose-500 text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
-          {{ getInitials(candidatToDelete) }}
-        </div>
-        <div class="min-w-0">
-          <p class="font-bold text-gray-900 text-sm">{{ candidatToDelete.prenom }} {{ candidatToDelete.nom }}</p>
-          <p class="text-xs text-gray-500 truncate">{{ candidatToDelete.email }}</p>
-          <p class="text-xs text-gray-400">#{{ candidatToDelete.idcandidats }}</p>
-        </div>
-      </div>
-
-      <!-- Avertissement -->
-      <div class="flex items-start gap-3 bg-amber-50 border border-amber-100 rounded-2xl p-4">
-        <svg class="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-        </svg>
-        <div class="space-y-1">
-          <p class="text-sm font-semibold text-amber-800">Attention</p>
-          <p class="text-xs text-amber-700 leading-relaxed">Cette action supprimera définitivement le candidat ainsi que son compte utilisateur. Toutes ses données associées (candidatures, stages) seront également supprimées.</p>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- Footer -->
-    <div class="px-6 pb-6 flex gap-3">
-      <button (click)="confirmDelete()"
-              [disabled]="submitting"
-              class="flex-1 group relative flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-red-500 to-rose-600 text-white font-semibold rounded-xl shadow-sm hover:shadow-md hover:from-red-600 hover:to-rose-700 active:scale-95 transition-all overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed">
-        <div class="absolute inset-0 bg-white/10 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-        <span *ngIf="submitting" class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full relative z-10"></span>
-        <svg *ngIf="!submitting" class="w-4 h-4 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-        </svg>
-        <span class="relative z-10 text-sm">{{ submitting ? 'Suppression...' : 'Oui, supprimer' }}</span>
-      </button>
-      <button (click)="closeDeleteModal()"
-              [disabled]="submitting"
-              class="py-3 px-5 bg-gray-100 text-gray-600 font-medium rounded-xl hover:bg-gray-200 active:scale-95 transition-all disabled:opacity-50 text-sm">
-        Annuler
-      </button>
-    </div>
-
-  </div>
-</div>
 
 <!-- ===== MODAL RESET MOT DE PASSE ===== -->
 <div *ngIf="showResetPasswordModal && candidatToReset" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">

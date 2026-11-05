@@ -11,6 +11,8 @@ import { debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
 import { StatCard } from '../../../../../shared/components/stat-card/stat-card';
 import { DirectionConcernee } from '../../../../../shared/components/direction-concernee/direction-concernee';
+import { ToastService } from '../../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../../core/services/confirm.service';
 
 interface DirectionInfo { iddirection: number; nom: string; accronyme: string; }
 
@@ -45,6 +47,8 @@ interface Aide {
   templateUrl: './agent-aide.html',
 })
 export class AgentAide implements OnInit {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
 
   // Recherche : barre « Rechercher… » du header de l'espace agent (comme l'admin)
   private readonly rechercheHeader = (() => {
@@ -114,7 +118,6 @@ export class AgentAide implements OnInit {
   };
 
   // Modal suppression
-  showDeleteModal = false;
   aideASupprimer: Aide | null = null;
   soumissionDelete = false;
 
@@ -136,10 +139,6 @@ export class AgentAide implements OnInit {
   traitementMotif = '';
   soumissionTraitement = false;
   erreurTraitement = '';
-
-  // Toasts
-  toasts: { id: number; title: string; message: string; type: 'success' | 'error' | 'warning' }[] = [];
-  private toastIdCounter = 0;
 
   private apiUrl = environment.apiUrl;
 
@@ -169,8 +168,9 @@ export class AgentAide implements OnInit {
     return d ? `${d.accronyme} — ${d.nom}` : `#${id}`;
   }
 
-  sauvegarderAffectation(): void {
+  async sauvegarderAffectation(): Promise<void> {
     if (!this.detailAide) return;
+    if (!(await this.confirmService.demander({ titre: 'Changer la direction', message: 'La demande d\'aide sera affectée à la direction choisie.', confirmer: 'Affecter' }))) return;
     this.savingAffectation = true;
     this.http.put<any>(
       `${this.apiUrl}/aides/${this.detailAide.idaide}/transferer`,
@@ -254,11 +254,12 @@ export class AgentAide implements OnInit {
     this.formErreur = '';
   }
 
-  soumettre(): void {
+  async soumettre(): Promise<void> {
     if (!this.form.typeAide) { this.formErreur = "Le type d'aide est requis"; return; }
     if (!this.form.titre.trim()) { this.formErreur = 'Le titre est requis'; return; }
 
     this.formErreur = '';
+    if (!(await this.confirmService.demander({ titre: 'Créer l\'aide', message: 'L\'aide sera enregistrée.', confirmer: 'Créer' }))) return;
     this.soumission = true;
 
     const body: any = {
@@ -292,11 +293,12 @@ export class AgentAide implements OnInit {
     });
   }
 
-  evaluer(a: Aide, statut: 'VALIDEE' | 'REJETEE', confirme = false): void {
+  async evaluer(a: Aide, statut: 'VALIDEE' | 'REJETEE', confirme = false): Promise<void> {
     if (!confirme && statut === 'VALIDEE') {
       this.demanderSiConcerne(a.idaide, a.direction_iddirection, () => this.evaluer(a, statut, true));
       return;
     }
+    if (!confirme && !(await this.confirmService.demander({ titre: 'Enregistrer la décision', message: 'La décision sera enregistrée et le demandeur notifié.', confirmer: 'Enregistrer' }))) return;
     this.http.put(`${this.apiUrl}/aides/${a.idaide}/evaluer`, { statusAide: statut }).subscribe({
       next: () => {
         a.statusAide = statut;
@@ -313,15 +315,15 @@ export class AgentAide implements OnInit {
   }
 
   // ── Modal Suppression ──
-  ouvrirDeleteModal(a: Aide): void {
+  async ouvrirDeleteModal(a: Aide): Promise<void> {
     this.aideASupprimer = a;
     this.soumissionDelete = false;
-    this.showDeleteModal = true;
+    if (!(await this.confirmService.demander({ titre: 'Supprimer l\'aide', message: 'Cette action est irréversible.', confirmer: 'Supprimer', danger: true }))) { this.fermerDeleteModal(); return; }
+    this.supprimerAide();
   }
 
   fermerDeleteModal(): void {
     if (this.soumissionDelete) return;
-    this.showDeleteModal = false;
     this.aideASupprimer = null;
   }
 
@@ -372,10 +374,11 @@ export class AgentAide implements OnInit {
     this.erreurEdit = '';
   }
 
-  modifierAide(): void {
+  async modifierAide(): Promise<void> {
     if (!this.aideAModifier) return;
     if (!this.editForm.titre.trim()) { this.erreurEdit = 'Le titre est requis'; return; }
     this.erreurEdit = '';
+    if (!(await this.confirmService.demander({ titre: 'Enregistrer les modifications', message: 'L\'aide sera mise à jour.', confirmer: 'Enregistrer' }))) return;
     this.soumissionEdit = true;
 
     const body: any = {};
@@ -464,13 +467,14 @@ export class AgentAide implements OnInit {
     this.aideATraiter = null;
   }
 
-  confirmerTraitement(confirme = false): void {
+  async confirmerTraitement(confirme = false): Promise<void> {
     if (!this.aideATraiter || !this.traitementDecision) return;
     if (!confirme && this.traitementDecision === 'VALIDEE') {
       this.demanderSiConcerne(this.aideATraiter.idaide, this.aideATraiter.direction_iddirection, () => this.confirmerTraitement(true));
       return;
     }
     this.erreurTraitement = '';
+    if (!confirme && !(await this.confirmService.demander({ titre: 'Enregistrer le traitement', message: 'Le traitement de la demande sera enregistré et le demandeur notifié.', confirmer: 'Enregistrer' }))) return;
     this.soumissionTraitement = true;
     const body: any = { statusAide: this.traitementDecision };
     if (this.traitementDecision === 'REJETEE' && this.traitementMotif.trim()) {
@@ -496,14 +500,7 @@ export class AgentAide implements OnInit {
   }
 
   showToast(title: string, message: string, type: 'success' | 'error' | 'warning' = 'success'): void {
-    const id = ++this.toastIdCounter;
-    this.toasts.push({ id, title, message, type });
-    setTimeout(() => this.dismissToast(id), 4000);
-  }
-
-  dismissToast(id: number): void {
-    this.toasts = this.toasts.filter(t => t.id !== id);
-    this.cdr.detectChanges();
+    this.toastService.afficher(type, title, message);
   }
 
   voirDetail(a: Aide): void {

@@ -1,5 +1,5 @@
 // admin-renouvellements.ts — Liste et traitement des demandes de renouvellement (admin)
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -8,6 +8,8 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import { StatCard } from '../../../../shared/components/stat-card/stat-card';
 import { SearchService } from '../../../../core/services/search.service';
+import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../core/services/confirm.service';
 
 interface Candidat {
   idcandidats: number;
@@ -72,6 +74,8 @@ interface PaginatedResult {
   templateUrl: './admin-renouvellements.html',
 })
 export class AdminRenouvellements implements OnInit, OnDestroy {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
 
   private readonly apiUrl = environment.apiUrl;
 
@@ -82,7 +86,6 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
   search = '';
   dateDebut = '';
   dateFin = '';
-  successMessage = '';
   erreur = '';
   // Pagination
   page = 1;
@@ -220,7 +223,6 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
     this.showModal = true;
     this.editionDates = false;
     this.erreur = '';
-    this.successMessage = '';
   }
 
   // ── Modification des dates du nouveau stage (comme pour une demande de stage) ──
@@ -241,9 +243,10 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
     this.editionDates = true;
   }
 
-  enregistrerDates(): void {
+  async enregistrerDates(): Promise<void> {
     const stageId = this.selected?.stageNouveau?.idstage;
     if (!stageId || !this.nouvelleDateDebut || !this.nouvelleDuree) return;
+    if (!(await this.confirmService.demander({ titre: 'Modifier les dates', message: 'Les dates du renouvellement seront mises à jour.', confirmer: 'Enregistrer' }))) return;
     this.savingDates = true;
     this.erreur = '';
     // Même route que la modification des dates d'un stage : la date de fin est recalculée
@@ -255,13 +258,12 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
       next: () => {
         this.savingDates = false;
         this.editionDates = false;
-        this.successMessage = 'Dates du renouvellement mises à jour.';
+        this.toastService.succes('Dates du renouvellement mises à jour.');
         this.charger();
-        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
       },
       error: (err) => {
         this.savingDates = false;
-        this.erreur = err.error?.message || 'Impossible de modifier les dates.';
+        this.toastService.erreur(err.error?.message || 'Impossible de modifier les dates.');
         this.cdr.detectChanges();
       },
     });
@@ -307,8 +309,9 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
     this.showApprobationModal = false;
   }
 
-  confirmerApprobation(): void {
+  async confirmerApprobation(): Promise<void> {
     if (!this.selected) return;
+    if (!(await this.confirmService.demander({ titre: 'Approuver le renouvellement', message: 'Le renouvellement passera « En cours de programmation » et les agents RH seront prévenus.', confirmer: 'Approuver' }))) return;
     this.soumissionApprobation = true;
     this.http.put<{ success: boolean; data: any }>(
       `${this.apiUrl}/stages/renouvellements/${this.selected.idrenouvellement}/approuver`,
@@ -318,13 +321,12 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
         this.soumissionApprobation = false;
         this.showApprobationModal = false;
         this.showModal = false;
-        this.successMessage = 'Renouvellement approuvé : il peut maintenant être accepté avec sa convention.';
+        this.toastService.succes('Renouvellement approuvé : il peut maintenant être accepté avec sa convention.');
         this.charger();
-        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 5000);
       },
       error: (err) => {
         this.soumissionApprobation = false;
-        this.erreur = err.error?.message || 'Une erreur est survenue.';
+        this.toastService.erreur(err.error?.message || 'Une erreur est survenue.');
         this.cdr.detectChanges();
       },
     });
@@ -340,8 +342,9 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
     this.showRouvrirModal = false;
   }
 
-  confirmerRouvrir(): void {
+  async confirmerRouvrir(): Promise<void> {
     if (!this.selected) return;
+    if (!(await this.confirmService.demander({ titre: 'Rouvrir le renouvellement', message: 'Le renouvellement pourra de nouveau être traité.', confirmer: 'Rouvrir' }))) return;
     this.soumissionRouvrir = true;
     this.http.put<{ success: boolean; data: any }>(
       `${this.apiUrl}/stages/renouvellements/${this.selected.idrenouvellement}/rouvrir`,
@@ -351,64 +354,60 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
         this.soumissionRouvrir = false;
         this.showRouvrirModal = false;
         this.showModal = false;
-        this.successMessage = 'Renouvellement rouvert — il peut maintenant être traité.';
+        this.toastService.succes('Renouvellement rouvert — il peut maintenant être traité.');
         this.charger();
-        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 5000);
       },
       error: (err) => {
         this.soumissionRouvrir = false;
-        this.erreur = err.error?.message || 'Une erreur est survenue.';
+        this.toastService.erreur(err.error?.message || 'Une erreur est survenue.');
         this.cdr.detectChanges();
       },
     });
   }
 
-  annulerApprobation(): void {
+  async annulerApprobation(): Promise<void> {
     if (!this.selected || this.selected.statusRenouvellement !== 'PROGRAMMATION_EN_COURS') return;
-    if (!confirm('Annuler l\'approbation ? Le renouvellement repassera en "En attente".')) return;
+    if (!(await this.confirmService.demander({ titre: 'Annuler l\'approbation', message: 'Le renouvellement repassera « En attente ».', confirmer: 'Annuler l\'approbation' }))) return;
     this.http.put<any>(`${this.apiUrl}/stages/renouvellements/${this.selected.idrenouvellement}/annuler-approbation`, {}).subscribe({
       next: () => {
         this.showModal = false;
-        this.successMessage = 'Approbation annulée — le renouvellement est de nouveau en attente.';
+        this.toastService.succes('Approbation annulée — le renouvellement est de nouveau en attente.');
         this.charger();
-        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 5000);
       },
       error: (err) => {
-        this.erreur = err.error?.message || 'Erreur lors de l\'annulation.';
+        this.toastService.erreur(err.error?.message || 'Erreur lors de l\'annulation.');
         this.cdr.detectChanges();
       },
     });
   }
 
-  expirerRenouvellement(): void {
+  async expirerRenouvellement(): Promise<void> {
     if (!this.selected) return;
-    if (!confirm('Marquer ce renouvellement comme EXPIRÉ ? Le nouveau stage sera également marqué expiré.')) return;
+    if (!(await this.confirmService.demander({ titre: 'Marquer comme expiré', message: 'Le renouvellement et son nouveau stage seront marqués expirés.', confirmer: 'Marquer expiré', danger: true }))) return;
     this.http.put<any>(`${this.apiUrl}/stages/renouvellements/${this.selected.idrenouvellement}/expirer`, {}).subscribe({
       next: () => {
         this.showModal = false;
-        this.successMessage = 'Renouvellement marqué expiré.';
+        this.toastService.succes('Renouvellement marqué expiré.');
         this.charger();
-        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
       },
       error: (err) => {
-        this.erreur = err.error?.message || 'Erreur lors de l\'expiration.';
+        this.toastService.erreur(err.error?.message || 'Erreur lors de l\'expiration.');
         this.cdr.detectChanges();
       },
     });
   }
 
-  supprimerRenouvellement(): void {
+  async supprimerRenouvellement(): Promise<void> {
     if (!this.selected) return;
-    if (!confirm(`Supprimer définitivement cette demande de renouvellement ? Cette action est irréversible.`)) return;
+    if (!(await this.confirmService.demander({ titre: 'Supprimer la demande de renouvellement', message: 'Cette action est irréversible.', confirmer: 'Supprimer', danger: true }))) return;
     this.http.delete<any>(`${this.apiUrl}/stages/renouvellements/${this.selected.idrenouvellement}`).subscribe({
       next: () => {
         this.showModal = false;
-        this.successMessage = 'Demande de renouvellement supprimée.';
+        this.toastService.succes('Demande de renouvellement supprimée.');
         this.charger();
-        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 5000);
       },
       error: (err) => {
-        this.erreur = err.error?.message || 'Erreur lors de la suppression.';
+        this.toastService.erreur(err.error?.message || 'Erreur lors de la suppression.');
         this.cdr.detectChanges();
       },
     });
@@ -451,11 +450,12 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
       || this.selected?.stageNouveau?.statusStage === 'EN_COURS';
   }
 
-  confirmerDecision(): void {
+  async confirmerDecision(): Promise<void> {
     if (!this.selected || !this.decisionType) return;
     if (this.decisionType === 'REJETE' && !this.motifRefus.trim()) return;
     if (this.decisionType === 'ACCEPTE' && !this.conventionFile && !this.conventionDejaJointe) return;
     if (this.decisionType === 'ACCEPTE' && !this.dureeValide) return;
+    if (!(await this.confirmService.demander({ titre: this.decisionType === 'ACCEPTE' ? 'Accepter le renouvellement' : 'Rejeter le renouvellement', message: this.decisionType === 'ACCEPTE' ? 'Le renouvellement sera accepté avec sa convention et le candidat notifié.' : 'Le renouvellement sera rejeté et le candidat notifié.', confirmer: this.decisionType === 'ACCEPTE' ? 'Accepter' : 'Rejeter', danger: this.decisionType !== 'ACCEPTE' }))) return;
     this.soumission = true;
     this.erreur = '';
 
@@ -485,16 +485,15 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
         this.soumission = false;
         this.showDecisionModal = false;
         this.showModal = false;
-        this.successMessage = this.decisionType === 'ACCEPTE'
+        this.toastService.succes(this.decisionType === 'ACCEPTE'
           ? 'Renouvellement accepté, convention jointe.'
-          : 'Renouvellement rejeté.';
+          : 'Renouvellement rejeté.');
         this.charger();
-        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
       },
       error: (err) => {
         // Le modal reste ouvert : l'erreur s'y affiche, rien n'a été accepté
         this.soumission = false;
-        this.erreur = err.error?.message || 'Une erreur est survenue.';
+        this.toastService.erreur(err.error?.message || 'Une erreur est survenue.');
         this.cdr.detectChanges();
       },
     });
@@ -514,14 +513,15 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
     this.conventionRemplacement = (event.target as HTMLInputElement).files?.[0] ?? null;
   }
 
-  confirmerConvention(): void {
+  async confirmerConvention(): Promise<void> {
     if (!this.selected || !this.conventionRemplacement) return;
     const stageId = this.selected.stageNouveau?.idstage;
     if (!stageId) {
-      this.erreur = 'Impossible de trouver le nouveau stage associé.';
+      this.toastService.erreur('Impossible de trouver le nouveau stage associé.');
       this.cdr.detectChanges();
       return;
     }
+    if (!(await this.confirmService.demander({ titre: 'Joindre la convention', message: 'La convention sera jointe au renouvellement.', confirmer: 'Joindre' }))) return;
     this.soumissionConvention = true;
     // Convention déjà jointe → remplacement (même route que pour une demande de stage) ;
     // sinon → ajout d'un document CONVENTION sur le nouveau stage.
@@ -543,13 +543,12 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
       next: () => {
         this.soumissionConvention = false;
         this.showConventionModal = false;
-        this.successMessage = remplacement ? 'Convention remplacée avec succès.' : 'Convention jointe avec succès.';
+        this.toastService.succes(remplacement ? 'Convention remplacée avec succès.' : 'Convention jointe avec succès.');
         this.charger();
-        setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
       },
       error: (err) => {
         this.soumissionConvention = false;
-        this.erreur = err.error?.message || 'Erreur lors de l\'upload de la convention.';
+        this.toastService.erreur(err.error?.message || 'Erreur lors de l\'upload de la convention.');
         this.cdr.detectChanges();
       },
     });
@@ -560,7 +559,7 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
     const filename = this.selected.lettreMotivationRenouvellement_filename || `lettre_${this.selected.idrenouvellement}.pdf`;
     this.http.get(`${this.apiUrl}/stages/renouvellements/${this.selected.idrenouvellement}/lettre`, { responseType: 'blob' }).subscribe({
       next: (blob) => this.ouvrirOuTelechargerBlob(blob, filename, mode),
-      error: () => { this.erreur = 'Lettre de renouvellement introuvable sur le serveur (fichier absent).'; this.cdr.detectChanges(); },
+      error: () => { this.toastService.erreur('Lettre de renouvellement introuvable sur le serveur (fichier absent).'); this.cdr.detectChanges(); },
     });
   }
 
@@ -574,7 +573,7 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
     const filename = r.stageNouveau?.documents?.[0]?.document_filename || `convention_renouvellement_${r.idrenouvellement}.pdf`;
     this.http.get(`${this.apiUrl}/stages/renouvellements/${r.idrenouvellement}/convention`, { responseType: 'blob' }).subscribe({
       next: (blob) => this.ouvrirOuTelechargerBlob(blob, filename, mode),
-      error: () => { this.erreur = 'Impossible de charger la convention.'; this.cdr.detectChanges(); },
+      error: () => { this.toastService.erreur('Impossible de charger la convention.'); this.cdr.detectChanges(); },
     });
   }
 
@@ -584,7 +583,7 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
     const filename = this.selected.stageActuel?.documents?.[0]?.document_filename || `convention_stage_${this.selected.stageActuel?.idstage}.pdf`;
     this.http.get(`${this.apiUrl}/stages/renouvellements/${this.selected.idrenouvellement}/convention-demande`, { responseType: 'blob' }).subscribe({
       next: (blob) => this.ouvrirOuTelechargerBlob(blob, filename, mode),
-      error: () => { this.erreur = 'Impossible de charger la convention de la demande de stage.'; this.cdr.detectChanges(); },
+      error: () => { this.toastService.erreur('Impossible de charger la convention de la demande de stage.'); this.cdr.detectChanges(); },
     });
   }
 
@@ -711,7 +710,7 @@ ${embedsHtml}<script>let n=0;document.querySelectorAll('embed').forEach(e=>e.add
       a.href = url; a.download = `Renouvellement_${candidatNom}.zip`; a.click();
       window.URL.revokeObjectURL(url);
     } catch {
-      this.erreur = 'Erreur lors de la génération du ZIP.';
+      this.toastService.erreur('Erreur lors de la génération du ZIP.');
     } finally {
       this.downloadingAllDocs = false;
       this.cdr.detectChanges();

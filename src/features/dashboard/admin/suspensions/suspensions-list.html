@@ -212,19 +212,3 @@
   </div>
 </div>
 
-<!-- ════ TOASTS ════ -->
-<div class="fixed top-4 right-4 z-[60] space-y-2">
-  <div *ngFor="let t of toasts"
-       class="flex items-start gap-3 px-4 py-3 rounded-xl shadow-lg bg-white border max-w-sm"
-       [ngClass]="t.type === 'success' ? 'border-emerald-200' : t.type === 'error' ? 'border-red-200' : 'border-gray-200'">
-    <div class="flex-1 min-w-0">
-      <p class="text-sm font-semibold text-gray-900">{{ t.title }}</p>
-      <p class="text-xs text-gray-500">{{ t.message }}</p>
-    </div>
-    <button (click)="removeToast(t.id)" class="text-gray-400 hover:text-gray-600">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-      </svg>
-    </button>
-  </div>
-</div>

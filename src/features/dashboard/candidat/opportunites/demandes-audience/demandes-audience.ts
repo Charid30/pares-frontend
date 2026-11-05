@@ -1,8 +1,10 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { environment } from '../../../../../environments/environment';
+import { ToastService } from '../../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../../core/services/confirm.service';
 
 interface DemandeAudience {
   iddemande: number;
@@ -52,6 +54,8 @@ const ACTION_LABELS: Record<string, string> = {
   styleUrl: './demandes-audience.css',
 })
 export class DemandesAudience implements OnInit {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
 
   // ── État ──────────────────────────────────────────────────
   isLoading = false;
@@ -94,11 +98,6 @@ export class DemandesAudience implements OnInit {
   // ── Détail ────────────────────────────────────────────────
   showDetail = false;
   demandeDetail: DemandeAudience | null = null;
-
-  // ── Toast ─────────────────────────────────────────────────
-  toastMessage = '';
-  toastType: 'success' | 'error' = 'success';
-  private toastTimeout: any;
 
   private apiUrl = environment.apiUrl;
 
@@ -258,7 +257,7 @@ export class DemandesAudience implements OnInit {
   }
 
   // ── Soumission ────────────────────────────────────────────
-  soumettreDemande(): void {
+  async soumettreDemande(): Promise<void> {
     if (!this.selectedDirection) {
       this.showToast('Veuillez choisir la direction concernée', 'error');
       return;
@@ -268,6 +267,7 @@ export class DemandesAudience implements OnInit {
       return;
     }
 
+    if (!(await this.confirmService.demander({ titre: 'Envoyer la demande', message: 'Votre demande d\'audience sera envoyée pour traitement.', confirmer: 'Envoyer' }))) return;
     this.isSubmitting = true;
     const formData = new FormData();
     formData.append('direction_iddirection', String(this.selectedDirection));
@@ -321,9 +321,10 @@ export class DemandesAudience implements OnInit {
   }
 
   // ── Annulation ────────────────────────────────────────────
-  annulerDemande(demande: DemandeAudience): void {
+  async annulerDemande(demande: DemandeAudience): Promise<void> {
     if (demande.status !== 'EN_ATTENTE') return;
 
+    if (!(await this.confirmService.demander({ titre: 'Annuler la demande', message: 'Votre demande d\'audience sera annulée.', confirmer: 'Annuler la demande', danger: true }))) return;
     this.http.put<any>(`${this.apiUrl}/demandes-audience/${demande.iddemande}/annuler`, {}).subscribe({
       next: (res) => {
         if (res.success) {
@@ -383,16 +384,7 @@ export class DemandesAudience implements OnInit {
 
   // ── Toast ─────────────────────────────────────────────────
   showToast(message: string, type: 'success' | 'error'): void {
-    this.toastMessage = message;
-    this.toastType = type;
-    if (this.toastTimeout) clearTimeout(this.toastTimeout);
-    this.toastTimeout = setTimeout(() => this.fermerToast(), 5000);
-    this.cdr.detectChanges();
-  }
-
-  fermerToast(): void {
-    this.toastMessage = '';
-    this.cdr.detectChanges();
+    this.toastService.afficher(type, message);
   }
 
   minVal(a: number, b: number): number { return Math.min(a, b); }

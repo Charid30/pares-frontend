@@ -10,6 +10,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
 import { StatCard } from '../../../../../shared/components/stat-card/stat-card';
+import { ToastService } from '../../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../../core/services/confirm.service';
 
 interface DemandeModification {
   id: number;
@@ -34,6 +36,8 @@ interface DemandeModification {
   templateUrl: './agent-suspensions.html',
 })
 export class AgentSuspensions implements OnInit {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
 
   // Recherche : barre « Rechercher… » du header de l'espace agent (comme l'admin)
   private readonly rechercheHeader = (() => {
@@ -62,9 +66,6 @@ export class AgentSuspensions implements OnInit {
   evalForm = { status: '' as 'APPROUVEE' | 'REJETEE' | '', reponse_drh: '' };
   isSubmitting = false;
   errorEval = '';
-
-  toasts: { id: number; title: string; message: string; type: 'success' | 'error' }[] = [];
-  private toastId = 0;
 
   // Permissions
   get peutConsulter(): boolean { return this.authService.hasPermission('SUSPENSION_STAGE', 'CONSULTER'); }
@@ -138,11 +139,12 @@ export class AgentSuspensions implements OnInit {
     this.errorEval = '';
   }
 
-  evaluer(): void {
+  async evaluer(): Promise<void> {
     if (!this.selectedDemande || !this.evalForm.status) {
       this.errorEval = 'Veuillez choisir une décision.';
       return;
     }
+    if (!(await this.confirmService.demander({ titre: 'Enregistrer la décision', message: 'La décision sur la demande sera enregistrée et le candidat notifié.', confirmer: 'Enregistrer' }))) return;
     this.isSubmitting = true;
     this.errorEval = '';
     this.http.put<any>(`${this.apiUrl}/stages/demandes-modification/${this.selectedDemande.id}/evaluer`, {
@@ -209,13 +211,7 @@ export class AgentSuspensions implements OnInit {
   }
 
   showToast(title: string, message: string, type: 'success' | 'error' = 'success'): void {
-    const id = ++this.toastId;
-    this.toasts.push({ id, title, message, type });
-    setTimeout(() => this.dismissToast(id), 4000);
+    this.toastService.afficher(type, title, message);
   }
 
-  dismissToast(id: number): void {
-    this.toasts = this.toasts.filter(t => t.id !== id);
-    this.cdr.detectChanges();
-  }
 }

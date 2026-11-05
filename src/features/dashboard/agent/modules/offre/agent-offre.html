@@ -1,23 +1,5 @@
 <!-- agent-offre.html — Design unifié PARES (style Suivi des Stages) -->
 
-<!-- Toasts -->
-<div class="fixed top-4 right-4 z-[9999] flex flex-col gap-2" style="pointer-events:none">
-  <div *ngFor="let t of toasts"
-       class="flex items-start gap-3 px-4 py-3 rounded-xl shadow-lg text-white text-sm w-80"
-       [ngClass]="{'bg-green-600': t.type==='success','bg-red-600': t.type==='error','bg-amber-500': t.type==='warning'}"
-       style="pointer-events:auto">
-    <div class="flex-1">
-      <p class="font-semibold">{{ t.title }}</p>
-      <p class="opacity-90">{{ t.message }}</p>
-    </div>
-    <button (click)="dismissToast(t.id)" class="text-white/70 hover:text-white mt-0.5 flex-shrink-0">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-      </svg>
-    </button>
-  </div>
-</div>
-
 <!-- ══ CONTENU ════════════════════════════════════════════════════════════ -->
 <div class="space-y-4 md:space-y-6">
 
@@ -819,44 +801,6 @@
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
         </svg>
         Enregistrer
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal Suppression -->
-<div *ngIf="showDeleteModal && offreASupprimer"
-     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-     (click)="fermerDeleteModal()">
-  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md" (click)="$event.stopPropagation()">
-    <div class="px-6 py-4 flex items-center justify-between rounded-t-2xl"
-         style="background:linear-gradient(135deg,#dc2626,#991b1b);">
-      <div>
-        <h3 class="text-lg font-bold text-white">Supprimer l'offre</h3>
-        <p class="text-sm text-white/70">Cette action est irréversible</p>
-      </div>
-      <button (click)="fermerDeleteModal()" [disabled]="soumissionDelete"
-              class="w-8 h-8 flex items-center justify-center rounded-full text-white/70 hover:text-white disabled:opacity-40"
-              style="background:rgba(255,255,255,0.15)">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-      </button>
-    </div>
-    <div class="px-6 py-5">
-      <p class="text-sm text-gray-700 mb-1">Voulez-vous vraiment supprimer l'offre :</p>
-      <p class="text-base font-semibold text-gray-900 mb-1">« {{ offreASupprimer.titre }} »</p>
-      <p class="text-xs text-gray-500">Type : {{ offreASupprimer.typeOffre }} · Statut : {{ getStatutLabel(offreASupprimer.statusOffre) }}</p>
-    </div>
-    <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3">
-      <button (click)="fermerDeleteModal()" [disabled]="soumissionDelete"
-              class="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors disabled:opacity-50">Annuler</button>
-      <button (click)="supprimerOffre()" [disabled]="soumissionDelete"
-              class="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white rounded-xl transition-colors disabled:opacity-50"
-              style="background:#dc2626">
-        <svg *ngIf="soumissionDelete" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-        </svg>
-        Supprimer
       </button>
     </div>
   </div>

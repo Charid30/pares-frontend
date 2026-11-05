@@ -1,27 +1,6 @@
 <!-- directions-list.html -->
 <div class="space-y-4 md:space-y-5">
 
-  <!-- Toast Notifications -->
-  <div class="fixed top-4 right-4 z-50 space-y-2 max-w-[90vw] sm:max-w-[350px]">
-    <div *ngFor="let toast of toasts"
-         class="toast-enter flex items-center gap-3 px-4 py-3 rounded-2xl shadow-lg text-white"
-         [ngClass]="toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'">
-      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path *ngIf="toast.type === 'success'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-        <path *ngIf="toast.type === 'error'"   stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-      </svg>
-      <div class="flex-1 min-w-0">
-        <p class="font-semibold text-sm">{{ toast.title }}</p>
-        <p class="text-xs opacity-90 truncate">{{ toast.message }}</p>
-      </div>
-      <button (click)="removeToast(toast.id)" class="p-1 hover:bg-white/20 rounded-lg transition-colors flex-shrink-0 cursor-pointer" aria-label="Fermer la notification">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-        </svg>
-      </button>
-    </div>
-  </div>
-
   <!-- Header -->
   <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div>
@@ -367,36 +346,3 @@
 <!-- ═══════════════════════════════════════════════
      MODAL SUPPRESSION
      ═══════════════════════════════════════════════ -->
-<div *ngIf="showDeleteModal && selectedDirection" class="fixed inset-0 z-[70] overflow-y-auto">
-  <div class="flex items-center justify-center min-h-screen px-4">
-    <div class="fixed inset-0 bg-gray-900/50" (click)="closeDeleteModal()"></div>
-
-    <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-sm mx-auto z-10 p-6">
-      <div class="text-center">
-        <div class="w-14 h-14 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-          <svg class="w-7 h-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-          </svg>
-        </div>
-        <h3 class="text-lg font-bold text-gray-900 mb-2">Supprimer la direction</h3>
-        <p class="text-gray-500 text-sm mb-1">Vous allez supprimer :</p>
-        <p class="font-bold font-mono text-lg mb-1" style="color:#dc2626;">{{ selectedDirection.accronyme }}</p>
-        <p class="text-gray-500 text-sm mb-4">{{ selectedDirection.nom }}</p>
-        <p class="text-xs text-red-500 mb-5">Les associations avec les services seront supprimées. Les demandes de stage existantes ne seront pas affectées.</p>
-
-        <div class="flex flex-col-reverse sm:flex-row justify-center gap-2">
-          <button (click)="closeDeleteModal()"
-                  class="w-full sm:w-auto px-4 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors text-sm font-medium cursor-pointer">
-            Annuler
-          </button>
-          <button (click)="confirmDelete()"
-                  [disabled]="submitting"
-                  class="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 disabled:opacity-50 transition-colors text-sm font-medium cursor-pointer">
-            <span *ngIf="submitting" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-            {{ submitting ? 'Suppression...' : 'Supprimer' }}
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>

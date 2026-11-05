@@ -10,6 +10,8 @@ import { debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
 import { StatCard } from '../../../../../shared/components/stat-card/stat-card';
 import { DirectionConcernee } from '../../../../../shared/components/direction-concernee/direction-concernee';
+import { ToastService } from '../../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../../core/services/confirm.service';
 
 interface DirectionInfo {
   iddirection: number;
@@ -46,6 +48,8 @@ interface Offre {
   templateUrl: './agent-offre.html',
 })
 export class AgentOffre implements OnInit {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
 
   // Recherche : barre « Rechercher… » du header de l'espace agent (comme l'admin)
   private readonly rechercheHeader = (() => {
@@ -109,7 +113,6 @@ export class AgentOffre implements OnInit {
   detailOffre: Offre | null = null;
 
   // Modal suppression
-  showDeleteModal = false;
   offreASupprimer: Offre | null = null;
   soumissionDelete = false;
 
@@ -131,10 +134,6 @@ export class AgentOffre implements OnInit {
     documentsRequis: '', dateDebut: '', dateFin: '',
     nombreCandidaturesMax: null as number | null, statusOffre: '',
   };
-
-  // Toasts
-  toasts: { id: number; title: string; message: string; type: 'success' | 'error' | 'warning' }[] = [];
-  private toastIdCounter = 0;
 
   private apiUrl = environment.apiUrl;
 
@@ -222,10 +221,11 @@ export class AgentOffre implements OnInit {
     this.formErreur = '';
   }
 
-  soumettre(): void {
+  async soumettre(): Promise<void> {
     if (!this.form.typeOffre) { this.formErreur = "Le type d'offre est requis"; return; }
     if (!this.form.titre.trim()) { this.formErreur = 'Le titre est requis'; return; }
     this.formErreur = '';
+    if (!(await this.confirmService.demander({ titre: 'Créer l\'offre', message: 'L\'offre sera enregistrée.', confirmer: 'Créer' }))) return;
     this.soumission = true;
 
     const body: any = {
@@ -283,7 +283,7 @@ export class AgentOffre implements OnInit {
     this.showTraitementModal = true;
   }
 
-  enregistrerDecision(confirme = false): void {
+  async enregistrerDecision(confirme = false): Promise<void> {
     if (!this.evaluation.statusOffre) { this.erreurEval = 'Veuillez choisir une décision.'; return; }
     if (this.evaluation.statusOffre === 'REJETEE' && !this.evaluation.motifRefus.trim()) {
       this.erreurEval = 'Le motif du refus est obligatoire en cas de rejet.'; return;
@@ -293,6 +293,7 @@ export class AgentOffre implements OnInit {
       this.demanderSiConcerne(this.selectedOffre.idoffres, this.selectedOffre.direction_iddirection, () => this.enregistrerDecision(true));
       return;
     }
+    if (!confirme && !(await this.confirmService.demander({ titre: 'Enregistrer la décision', message: 'La décision sera enregistrée et le demandeur notifié.', confirmer: 'Enregistrer' }))) return;
     this.soumission = true;
     this.erreurEval = '';
 
@@ -320,15 +321,15 @@ export class AgentOffre implements OnInit {
   fermerDetail(): void { this.showDetailModal = false; this.detailOffre = null; }
 
   // ── Modal Suppression ──
-  ouvrirDeleteModal(o: Offre): void {
+  async ouvrirDeleteModal(o: Offre): Promise<void> {
     this.offreASupprimer = o;
     this.soumissionDelete = false;
-    this.showDeleteModal = true;
+    if (!(await this.confirmService.demander({ titre: 'Supprimer l\'offre', message: 'Cette action est irréversible.', confirmer: 'Supprimer', danger: true }))) { this.fermerDeleteModal(); return; }
+    this.supprimerOffre();
   }
 
   fermerDeleteModal(): void {
     if (this.soumissionDelete) return;
-    this.showDeleteModal = false;
     this.offreASupprimer = null;
   }
 
@@ -379,10 +380,11 @@ export class AgentOffre implements OnInit {
     this.erreurEdit = '';
   }
 
-  modifierOffre(): void {
+  async modifierOffre(): Promise<void> {
     if (!this.offreAModifier) return;
     if (!this.editForm.titre.trim()) { this.erreurEdit = 'Le titre est requis'; return; }
     this.erreurEdit = '';
+    if (!(await this.confirmService.demander({ titre: 'Enregistrer les modifications', message: 'L\'offre sera mise à jour.', confirmer: 'Enregistrer' }))) return;
     this.soumissionEdit = true;
 
     const body: any = {};
@@ -477,8 +479,9 @@ export class AgentOffre implements OnInit {
     this.errorTransfert = '';
   }
 
-  confirmerTransfert(): void {
+  async confirmerTransfert(): Promise<void> {
     if (!this.offreATransferer || !this.directionCibleId || this.soumissionTransfert) return;
+    if (!(await this.confirmService.demander({ titre: 'Transférer la demande', message: 'La demande d\'offre sera transférée.', confirmer: 'Transférer' }))) return;
     this.soumissionTransfert = true;
     this.errorTransfert = '';
     this.http.put<any>(`${this.apiUrl}/offres/${this.offreATransferer.idoffres}/transferer`, {
@@ -537,13 +540,7 @@ export class AgentOffre implements OnInit {
   }
 
   showToast(title: string, message: string, type: 'success' | 'error' | 'warning' = 'success'): void {
-    const id = ++this.toastIdCounter;
-    this.toasts.push({ id, title, message, type });
-    setTimeout(() => this.dismissToast(id), 4000);
-  }
-
-  dismissToast(id: number): void {
-    this.toasts = this.toasts.filter(t => t.id !== id);
+    this.toastService.afficher(type, title, message);
   }
 
   getStatutBarClass(s: string): string {

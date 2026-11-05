@@ -4,12 +4,14 @@
 //   PUT  /api/aides/:id/evaluer   → évaluer (body: { statusAide, motifRefus })
 import { CommonModule, DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, ChangeDetectorRef, OnInit, NgZone } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit, NgZone, inject } from '@angular/core';
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../../../environments/environment';
 import { Loader } from '../../../../shared/components/loader/loader';
 import { StatCard } from '../../../../shared/components/stat-card/stat-card';
+import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../core/services/confirm.service';
 
 interface DirectionInfo {
   iddirection: number;
@@ -52,13 +54,14 @@ interface AideCandidat {
   styleUrl: './aides-list.css',
 })
 export class AidesList implements OnInit {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
 
   // ── Données ────────────────────────────────────────────────────────────────
   aides: AideCandidat[] = [];          // toutes les aides chargées
   aidesFiltrees: AideCandidat[] = []; // après filtres locaux
   isLoading = false;
   errorMessage = '';
-  successMessage = '';
 
   // ── Filtres ───────────────────────────────────────────────────────────────
   searchTerm = '';
@@ -190,7 +193,7 @@ export class AidesList implements OnInit {
     this.errorEval = '';
   }
 
-  enregistrerDecision(): void {
+  async enregistrerDecision(): Promise<void> {
     if (!this.evaluation.statusAide) {
       this.errorEval = 'Veuillez choisir une décision.';
       return;
@@ -201,6 +204,7 @@ export class AidesList implements OnInit {
     }
     if (!this.selectedAide) return;
 
+    if (!(await this.confirmService.demander({ titre: 'Enregistrer la décision', message: 'La décision sera enregistrée et le demandeur notifié.', confirmer: 'Enregistrer' }))) return;
     this.isSubmitting = true;
     this.errorEval = '';
 
@@ -221,8 +225,7 @@ export class AidesList implements OnInit {
           if (res.success) {
             this.fermerTraitement();
             this.loadAides();
-            this.successMessage = 'Décision enregistrée avec succès !';
-            setTimeout(() => this.successMessage = '', 4000);
+            this.toastService.succes('Décision enregistrée avec succès !');
           }
           this.isSubmitting = false;
           this.cdr.detectChanges();
@@ -289,18 +292,18 @@ export class AidesList implements OnInit {
     return dir ? `${dir.accronyme} — ${dir.nom}` : `Direction #${id}`;
   }
 
-  sauvegarderAffectation(): void {
+  async sauvegarderAffectation(): Promise<void> {
     if (!this.detailAide || this.savingAffectation) return;
     const newDirId = this.affectationForm.direction_iddirection;
-    if (!newDirId) { this.errorMessage = 'Veuillez sélectionner une direction.'; setTimeout(() => this.errorMessage = '', 3000); return; }
+    if (!newDirId) { this.toastService.erreur('Veuillez sélectionner une direction.'); setTimeout(() => this.errorMessage = '', 3000); return; }
+    if (!(await this.confirmService.demander({ titre: 'Changer la direction', message: 'La demande d\'aide sera affectée à la direction choisie.', confirmer: 'Affecter' }))) return;
     this.savingAffectation = true;
     this.http.put<any>(`${this.apiUrl}/aides/${this.detailAide.idaide}/transferer`, { direction_iddirection: newDirId }).subscribe({
       next: (res) => {
         this.ngZone.run(() => {
           this.savingAffectation = false;
           if (res.success) {
-            this.successMessage = 'Aide affectée avec succès !';
-            setTimeout(() => this.successMessage = '', 4000);
+            this.toastService.succes('Aide affectée avec succès !');
             this.loadAides();
             this.fermerDetail();
           }
@@ -310,8 +313,7 @@ export class AidesList implements OnInit {
       error: (err) => {
         this.ngZone.run(() => {
           this.savingAffectation = false;
-          this.errorMessage = err.error?.message || 'Erreur lors de l\'affectation.';
-          setTimeout(() => this.errorMessage = '', 4000);
+          this.toastService.erreur(err.error?.message || 'Erreur lors de l\'affectation.');
           this.cdr.detectChanges();
         });
       },
@@ -365,8 +367,7 @@ export class AidesList implements OnInit {
       },
       error: () => {
         this.ngZone.run(() => {
-          this.errorMessage = 'Impossible de récupérer le fichier.';
-          setTimeout(() => this.errorMessage = '', 4000);
+          this.toastService.erreur('Impossible de récupérer le fichier.');
           this.cdr.detectChanges();
         });
       },
@@ -448,8 +449,7 @@ export class AidesList implements OnInit {
       },
       error: () => {
         this.ngZone.run(() => {
-          this.errorMessage = 'Erreur lors de l\'export CSV.';
-          setTimeout(() => this.errorMessage = '', 4000);
+          this.toastService.erreur('Erreur lors de l\'export CSV.');
           this.cdr.detectChanges();
         });
       },
@@ -468,8 +468,7 @@ export class AidesList implements OnInit {
       },
       error: () => {
         this.ngZone.run(() => {
-          this.errorMessage = 'Erreur lors de la génération du rapport PDF.';
-          setTimeout(() => this.errorMessage = '', 4000);
+          this.toastService.erreur('Erreur lors de la génération du rapport PDF.');
           this.cdr.detectChanges();
         });
       },

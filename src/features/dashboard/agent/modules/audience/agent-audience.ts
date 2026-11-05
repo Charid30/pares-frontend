@@ -11,6 +11,8 @@ import { debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
 import { StatCard } from '../../../../../shared/components/stat-card/stat-card';
 import { DirectionConcernee } from '../../../../../shared/components/direction-concernee/direction-concernee';
+import { ToastService } from '../../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../../core/services/confirm.service';
 
 interface DirectionInfo {
   iddirection: number;
@@ -50,6 +52,8 @@ interface DemandeAudience {
   templateUrl: './agent-audience.html',
 })
 export class AgentAudience implements OnInit {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
 
   // Recherche : barre « Rechercher… » du header de l'espace agent (comme l'admin)
   private readonly rechercheHeader = (() => {
@@ -125,10 +129,6 @@ export class AgentAudience implements OnInit {
   directionCibleId: number | null = null;
   soumissionTransfert = false;
   errorTransfert = '';
-
-  // Toasts
-  toasts: { id: number; title: string; message: string; type: 'success' | 'error' | 'warning' }[] = [];
-  private toastIdCounter = 0;
 
   statsStatuts = [
     { value: 'EN_ATTENTE', label: 'En attente', dot: 'bg-amber-400', ringClass: 'ring-amber-400', count: 0, accent: 'amber',   icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
@@ -231,8 +231,9 @@ export class AgentAudience implements OnInit {
     return dir ? `${dir.accronyme} — ${dir.nom}` : '—';
   }
 
-  sauvegarderAffectation(): void {
+  async sauvegarderAffectation(): Promise<void> {
     if (!this.detailDemande) return;
+    if (!(await this.confirmService.demander({ titre: 'Changer la direction', message: 'La demande d\'audience sera affectée à la direction choisie.', confirmer: 'Affecter' }))) return;
     this.savingAffectation = true;
     this.http.put<any>(
       `${this.apiUrl}/demandes-audience/${this.detailDemande.iddemande}`,
@@ -321,8 +322,9 @@ export class AgentAudience implements OnInit {
     this.errorTransfert = '';
   }
 
-  confirmerTransfert(): void {
+  async confirmerTransfert(): Promise<void> {
     if (!this.demandeATransferer || !this.directionCibleId || this.soumissionTransfert) return;
+    if (!(await this.confirmService.demander({ titre: 'Transférer la demande', message: 'La demande d\'audience sera transférée.', confirmer: 'Transférer' }))) return;
     this.soumissionTransfert = true;
     this.errorTransfert = '';
     this.http.put<any>(`${this.apiUrl}/demandes-audience/${this.demandeATransferer.iddemande}/transferer`, {
@@ -369,8 +371,9 @@ export class AgentAudience implements OnInit {
     this.demandeAModifier = null;
   }
 
-  sauvegarderModifDate(): void {
+  async sauvegarderModifDate(): Promise<void> {
     if (!this.demandeAModifier || this.soumissionModifDate) return;
+    if (!(await this.confirmService.demander({ titre: 'Modifier la date', message: 'La date de l\'audience sera modifiée et le demandeur notifié.', confirmer: 'Enregistrer' }))) return;
     this.soumissionModifDate = true;
     this.http.put<any>(`${this.apiUrl}/demandes-audience/${this.demandeAModifier.iddemande}/statut`, {
       status: 'ACCEPTE',
@@ -402,8 +405,9 @@ export class AgentAudience implements OnInit {
     });
   }
 
-  remettreEnAttente(d: DemandeAudience): void {
+  async remettreEnAttente(d: DemandeAudience): Promise<void> {
     if (this.soumissionRemise) return;
+    if (!(await this.confirmService.demander({ titre: 'Remettre en attente', message: 'La demande d\'audience repassera « En attente ».', confirmer: 'Remettre en attente' }))) return;
     this.soumissionRemise = true;
     this.http.put<any>(`${this.apiUrl}/demandes-audience/${d.iddemande}/statut`, { status: 'EN_ATTENTE' }).subscribe({
       next: () => {
@@ -435,13 +439,14 @@ export class AgentAudience implements OnInit {
     this.heureAudienceConfirmee = (d.heureAudienceConfirmee || d.heureAudience || '').substring(0, 5);
   }
 
-  confirmerDecision(confirme = false): void {
+  async confirmerDecision(confirme = false): Promise<void> {
     if (!this.demandeEnDecision) return;
     if (this.decisionType === 'REJETE' && !this.commentaire.trim()) return;
     if (!confirme && this.decisionType === 'ACCEPTE') {
       this.demanderSiConcerne(this.demandeEnDecision.iddemande, this.demandeEnDecision.direction_iddirection, () => this.confirmerDecision(true));
       return;
     }
+    if (!confirme && !(await this.confirmService.demander({ titre: 'Enregistrer la décision', message: 'La décision sera enregistrée et le demandeur notifié.', confirmer: 'Enregistrer' }))) return;
     this.soumission = true;
     const body: any = {
       status: this.decisionType,
@@ -535,14 +540,7 @@ export class AgentAudience implements OnInit {
   }
 
   showToast(title: string, message: string, type: 'success' | 'error' | 'warning' = 'success'): void {
-    const id = ++this.toastIdCounter;
-    this.toasts.push({ id, title, message, type });
-    setTimeout(() => this.dismissToast(id), 4000);
-  }
-
-  dismissToast(id: number): void {
-    this.toasts = this.toasts.filter(t => t.id !== id);
-    this.cdr.detectChanges();
+    this.toastService.afficher(type, title, message);
   }
 
   getStatutBarClass(s: string): string {

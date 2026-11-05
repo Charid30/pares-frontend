@@ -1,20 +1,3 @@
-<!-- Toasts -->
-<div class="fixed top-4 right-4 z-[9999] flex flex-col gap-2" style="pointer-events:none">
-  <div *ngFor="let t of toasts"
-       class="flex items-start gap-3 px-4 py-3 rounded-xl shadow-lg text-white text-sm w-80"
-       [ngClass]="{'bg-green-600': t.type==='success','bg-red-600': t.type==='error','bg-amber-500': t.type==='warning'}"
-       style="pointer-events:auto">
-    <div class="flex-1">
-      <p class="font-semibold">{{ t.title }}</p>
-      <p class="opacity-90">{{ t.message }}</p>
-    </div>
-    <button (click)="dismissToast(t.id)" class="text-white/70 hover:text-white mt-0.5 flex-shrink-0">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-      </svg>
-    </button>
-  </div>
-</div>
 
 <div class="space-y-4 md:space-y-6">
 
@@ -78,7 +61,6 @@
         [value]="s.count" [active]="filtreStatut === s.value"></app-stat-card>
     </button>
   </div>
-
 
   <!-- Accès refusé -->
   <div *ngIf="!peutConsulter" class="bg-white border border-gray-100 rounded-2xl p-12 text-center shadow-sm">

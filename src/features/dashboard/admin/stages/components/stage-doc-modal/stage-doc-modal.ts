@@ -1,10 +1,11 @@
-import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AdminStageService } from '../../../../../../core/services/admin-stage.service';
 import { AuthService } from '../../../../../../core/services/auth.service';
 import { environment } from '../../../../../../environments/environment';
+import { ConfirmService } from '../../../../../../core/services/confirm.service';
 
 @Component({
   selector: 'app-stage-doc-modal',
@@ -13,6 +14,7 @@ import { environment } from '../../../../../../environments/environment';
   templateUrl: './stage-doc-modal.html',
 })
 export class StageDocModal implements OnChanges {
+  private readonly confirmService = inject(ConfirmService);
   @Input() show = false;
   @Input() stageId: number | null = null;
   @Output() close = new EventEmitter<void>();
@@ -75,11 +77,12 @@ export class StageDocModal implements OnChanges {
     this.close.emit();
   }
 
-  creerDocument(): void {
+  async creerDocument(): Promise<void> {
     if (!this.stageId || this.soumissionDoc) return;
     if (!this.docFile) { this.errorDoc = 'Veuillez sélectionner un fichier PDF'; this.cdr.detectChanges(); return; }
     if (!this.docDateEmission) { this.errorDoc = "La date d'émission est requise"; this.cdr.detectChanges(); return; }
 
+    if (!(await this.confirmService.demander({ titre: 'Joindre le document', message: 'Le document sera ajouté au dossier de stage.', confirmer: 'Joindre' }))) return;
     this.soumissionDoc = true;
     this.errorDoc = '';
 

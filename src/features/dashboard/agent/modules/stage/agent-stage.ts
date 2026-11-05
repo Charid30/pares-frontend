@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -11,6 +11,8 @@ import { AuthService } from '../../../../../core/services/auth.service';
 import { SearchService } from '../../../../../core/services/search.service';
 import { environment } from '../../../../../environments/environment';
 import { StatCard } from '../../../../../shared/components/stat-card/stat-card';
+import { ToastService } from '../../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../../core/services/confirm.service';
 
 interface Candidat {
   idcandidats: number;
@@ -104,6 +106,8 @@ interface StageStats {
   templateUrl: './agent-stage.html',
 })
 export class AgentStage implements OnInit, OnDestroy {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
 
   // ── Données ────────────────────────────────────────────────
   stages: Stage[] = [];
@@ -113,7 +117,6 @@ export class AgentStage implements OnInit, OnDestroy {
   // ── État ──────────────────────────────────────────────────
   isLoading = false;
   erreur = '';
-  successMessage = '';
 
   // ── Filtres / Pagination ───────────────────────────────────
   search = '';
@@ -202,7 +205,6 @@ export class AgentStage implements OnInit, OnDestroy {
   errorEdit = '';
 
   // ── Modal SUPPRIMER ───────────────────────────────────────
-  showDeleteStageModal = false;
   stageASupprimer: Stage | null = null;
   soumissionSupprimer = false;
 
@@ -281,8 +283,9 @@ export class AgentStage implements OnInit, OnDestroy {
     return a.find(x => new Date(x.expiresAt) > now) || null;
   }
 
-  autoriserRapport(s: Stage): void {
+  async autoriserRapport(s: Stage): Promise<void> {
     if (this.soumissionAutorisationRapport) return;
+    if (!(await this.confirmService.demander({ titre: 'Autoriser le rapport', message: 'Le candidat pourra déposer son rapport de stage pendant 7 jours.', confirmer: 'Autoriser' }))) return;
     this.soumissionAutorisationRapport = true;
     this.errorAutorisationRapport = '';
     this.http.put<any>(`${this.apiUrl}/stages/${s.idstage}/autoriser-rapport`, {}).subscribe({
@@ -303,8 +306,9 @@ export class AgentStage implements OnInit, OnDestroy {
     });
   }
 
-  autoriserRenouvellement(s: Stage): void {
+  async autoriserRenouvellement(s: Stage): Promise<void> {
     if (this.soumissionAutorisation) return;
+    if (!(await this.confirmService.demander({ titre: 'Autoriser le renouvellement', message: 'Le candidat pourra demander un renouvellement pendant 7 jours.', confirmer: 'Autoriser' }))) return;
     this.soumissionAutorisation = true;
     this.errorAutorisation = '';
     this.http.put<any>(`${this.apiUrl}/stages/${s.idstage}/autoriser-renouvellement`, {}).subscribe({
@@ -597,9 +601,10 @@ export class AgentStage implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  approuverStage(s: Stage): void {
+  async approuverStage(s: Stage): Promise<void> {
     if (this.soumission) return;
     if (!this.nomMaitreStageApprobation.trim()) return;
+    if (!(await this.confirmService.demander({ titre: 'Approuver la demande', message: 'La demande passera « En cours de programmation » et les agents RH seront prévenus.', confirmer: 'Approuver' }))) return;
     this.soumission = true;
     this.http.put<any>(`${this.apiUrl}/stages/${s.idstage}/approuver`, {
       dateDebutProposee: this.dateProposeeSelection || null,
@@ -612,7 +617,7 @@ export class AgentStage implements OnInit, OnDestroy {
         this.showSuccessMessage('Demande approuvée — statut : En cours de programmation');
       },
       error: (err) => {
-        this.erreur = err.error?.message || 'Erreur lors de l\'approbation';
+        this.toastService.erreur(err.error?.message || 'Erreur lors de l\'approbation');
         this.soumission = false;
         this.cdr.detectChanges();
       }
@@ -696,7 +701,7 @@ export class AgentStage implements OnInit, OnDestroy {
     this.conventionFile = input.files?.[0] || null;
   }
 
-  confirmerDecision(): void {
+  async confirmerDecision(): Promise<void> {
     if (!this.stageEnDecision || this.soumission) return;
 
     // Validations spécifiques selon le type
@@ -733,6 +738,7 @@ export class AgentStage implements OnInit, OnDestroy {
       return;
     }
 
+    if (!(await this.confirmService.demander({ titre: 'Enregistrer la décision', message: 'La décision sur la demande de stage sera enregistrée et le candidat notifié.', confirmer: 'Enregistrer' }))) return;
     this.soumission = true;
     this.errorDecision = '';
 
@@ -793,8 +799,9 @@ export class AgentStage implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  modifierStage(): void {
+  async modifierStage(): Promise<void> {
     if (!this.stageAModifier || this.soumissionEdit) return;
+    if (!(await this.confirmService.demander({ titre: 'Enregistrer les modifications', message: 'Le stage sera mis à jour.', confirmer: 'Enregistrer' }))) return;
     this.soumissionEdit = true;
     this.errorEdit = '';
 
@@ -817,14 +824,13 @@ export class AgentStage implements OnInit, OnDestroy {
   }
 
   // ── SUPPRIMER ─────────────────────────────────────────────
-  ouvrirDeleteStageModal(s: Stage): void {
+  async ouvrirDeleteStageModal(s: Stage): Promise<void> {
     this.stageASupprimer = s;
-    this.showDeleteStageModal = true;
-    this.cdr.detectChanges();
+    if (!(await this.confirmService.demander({ titre: 'Supprimer la demande de stage', message: 'Cette action est irréversible.', detail: s.candidat ? `${s.candidat.prenom} ${s.candidat.nom}` : undefined, confirmer: 'Supprimer', danger: true }))) { this.fermerDeleteStageModal(); return; }
+    this.supprimerStage();
   }
 
   fermerDeleteStageModal(): void {
-    this.showDeleteStageModal = false;
     this.stageASupprimer = null;
     this.soumissionSupprimer = false;
     this.cdr.detectChanges();
@@ -841,7 +847,7 @@ export class AgentStage implements OnInit, OnDestroy {
         this.showSuccessMessage('Stage supprimé avec succès !');
       },
       error: (err) => {
-        this.erreur = err.error?.message || 'Erreur lors de la suppression';
+        this.toastService.erreur(err.error?.message || 'Erreur lors de la suppression');
         this.soumissionSupprimer = false;
         this.fermerDeleteStageModal();
         this.cdr.detectChanges();
@@ -879,8 +885,9 @@ export class AgentStage implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  confirmerTransfert(): void {
+  async confirmerTransfert(): Promise<void> {
     if (!this.stageATransferer || !this.directionCibleId || this.soumissionTransfert) return;
+    if (!(await this.confirmService.demander({ titre: 'Transférer la demande', message: 'La demande de stage sera transférée à la direction choisie.', confirmer: 'Transférer' }))) return;
     this.soumissionTransfert = true;
     this.errorTransfert = '';
 
@@ -966,7 +973,7 @@ export class AgentStage implements OnInit, OnDestroy {
     this.docFile = file;
   }
 
-  creerDocument(): void {
+  async creerDocument(): Promise<void> {
     if (!this.docStageId || this.soumissionDoc) return;
     if (!this.docFile) { this.errorDoc = 'Veuillez sélectionner un fichier PDF'; this.cdr.detectChanges(); return; }
     if (!this.docDateEmission) { this.errorDoc = "La date d'émission est requise"; this.cdr.detectChanges(); return; }
@@ -981,6 +988,7 @@ export class AgentStage implements OnInit, OnDestroy {
       return;
     }
 
+    if (!(await this.confirmService.demander({ titre: 'Joindre le document', message: 'Le document sera ajouté au dossier de stage.', confirmer: 'Joindre' }))) return;
     this.soumissionDoc = true;
     this.errorDoc = '';
 
@@ -1110,7 +1118,7 @@ export class AgentStage implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  confirmerEvalRapport(): void {
+  async confirmerEvalRapport(): Promise<void> {
     if (!this.rapportEnEvaluation?.rapport || this.soumissionEvalRapport) return;
     if (this.evalRapportDecision === 'REFUSE' && !this.motifRefusRapport.trim()) {
       this.errorEvalRapport = 'Le motif de refus est requis';
@@ -1118,6 +1126,7 @@ export class AgentStage implements OnInit, OnDestroy {
       return;
     }
 
+    if (!(await this.confirmService.demander({ titre: 'Enregistrer l\'évaluation', message: 'L\'évaluation du rapport sera enregistrée et le candidat notifié.', confirmer: 'Enregistrer' }))) return;
     this.soumissionEvalRapport = true;
     this.errorEvalRapport = '';
 
@@ -1335,9 +1344,8 @@ export class AgentStage implements OnInit, OnDestroy {
 
   // ── Messages succès ───────────────────────────────────────
   showSuccessMessage(msg: string): void {
-    this.successMessage = msg;
+    this.toastService.succes(msg);
     this.cdr.detectChanges();
-    setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
   }
 
   // ── Helpers UI ────────────────────────────────────────────

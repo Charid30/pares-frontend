@@ -1,24 +1,5 @@
 <!-- stages-list.html - LISTE DES DEMANDES DE STAGE ADMIN (RESPONSIVE) -->
 <div class="space-y-4 md:space-y-6">
-  <!-- Toast Notifications -->
-  <div class="fixed top-4 right-4 z-50 space-y-2">
-    <div *ngFor="let toast of toasts"
-         class="toast-enter flex items-center gap-3 p-4 rounded-xl shadow-lg text-white min-w-[300px]"
-         [ngClass]="getToastBgClass(toast.type)">
-      <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="getToastIcon(toast.type)" />
-      </svg>
-      <div class="flex-1">
-        <p class="font-semibold">{{ toast.title }}</p>
-        <p class="text-sm opacity-90">{{ toast.message }}</p>
-      </div>
-      <button (click)="removeToast(toast.id)" class="p-1 hover:bg-white/20 rounded-lg transition-colors" aria-label="Fermer la notification">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-    </div>
-  </div>
 
   <!-- Header -->
   <div class="flex items-start sm:items-center justify-between gap-3">
@@ -1992,9 +1973,3 @@
   </div>
 </div>
 
-<!-- ══ Modal de confirmation personnalisé ══════════════════════════════════ -->
-<app-stage-confirm-modal
-  [config]="confirmModal"
-  (confirmed)="executeConfirm()"
-  (cancelled)="closeConfirmModal()"
-></app-stage-confirm-modal>

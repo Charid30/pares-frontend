@@ -1,5 +1,5 @@
 // src/features/dashboard/admin/candidats/candidats-list.ts
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -10,37 +10,18 @@ import { AdminCandidatService, Candidat, CandidatDetails, CandidatStats, Candida
 import { SearchService } from '../../../../core/services/search.service';
 import { environment } from '../../../../environments/environment';
 import { StatCard } from '../../../../shared/components/stat-card/stat-card';
-
-interface Toast {
-  id: number;
-  type: 'success' | 'error' | 'warning' | 'info';
-  title: string;
-  message: string;
-}
+import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../core/services/confirm.service';
 
 @Component({
   selector: 'app-candidats-list',
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule, StatCard],
-  templateUrl: './candidats-list.html',
-  styles: [`
-    .toast-enter {
-      animation: slideInRight 0.3s ease-out;
-    }
-    .toast-leave {
-      animation: slideOutRight 0.3s ease-in;
-    }
-    @keyframes slideInRight {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-    @keyframes slideOutRight {
-      from { transform: translateX(0); opacity: 1; }
-      to { transform: translateX(100%); opacity: 0; }
-    }
-  `]
+  templateUrl: './candidats-list.html'
 })
 export class CandidatsList implements OnInit, OnDestroy {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
   // Données
   candidats: Candidat[] = [];
   stats: CandidatStats | null = null;
@@ -67,7 +48,6 @@ export class CandidatsList implements OnInit, OnDestroy {
   modalMode: 'view' | 'edit' = 'view';
 
   // Modal suppression
-  showDeleteModal = false;
   candidatToDelete: Candidat | null = null;
 
   // Modal reset mot de passe
@@ -83,9 +63,6 @@ export class CandidatsList implements OnInit, OnDestroy {
     telephone: ''
   };
 
-  // Toast notifications
-  toasts: Toast[] = [];
-  private toastId = 0;
   private searchSub?: Subscription;
 
   constructor(
@@ -115,48 +92,7 @@ export class CandidatsList implements OnInit, OnDestroy {
 
   // ==================== TOAST NOTIFICATIONS ====================
   showToast(type: 'success' | 'error' | 'warning' | 'info', title: string, message: string): void {
-    const toast: Toast = {
-      id: ++this.toastId,
-      type,
-      title,
-      message
-    };
-    this.toasts.push(toast);
-    this.cdr.detectChanges();
-
-    setTimeout(() => {
-      this.ngZone.run(() => {
-        this.removeToast(toast.id);
-      });
-    }, 5000);
-  }
-
-  removeToast(id: number): void {
-    const index = this.toasts.findIndex(t => t.id === id);
-    if (index > -1) {
-      this.toasts.splice(index, 1);
-      this.cdr.detectChanges();
-    }
-  }
-
-  getToastIcon(type: string): string {
-    switch (type) {
-      case 'success': return 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z';
-      case 'error': return 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z';
-      case 'warning': return 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z';
-      case 'info': return 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z';
-      default: return '';
-    }
-  }
-
-  getToastBgClass(type: string): string {
-    switch (type) {
-      case 'success': return 'bg-green-500';
-      case 'error': return 'bg-red-500';
-      case 'warning': return 'bg-yellow-500';
-      case 'info': return 'bg-blue-500';
-      default: return 'bg-gray-500';
-    }
+    this.toastService.afficher(type, title, message);
   }
 
   // ==================== DATA LOADING ====================
@@ -313,7 +249,7 @@ export class CandidatsList implements OnInit, OnDestroy {
   }
 
   // ==================== CRUD OPERATIONS ====================
-  saveCandidat(): void {
+  async saveCandidat(): Promise<void> {
     if (!this.selectedCandidat) return;
 
     // Validation simple
@@ -322,6 +258,7 @@ export class CandidatsList implements OnInit, OnDestroy {
       return;
     }
 
+    if (!(await this.confirmService.demander({ titre: 'Enregistrer les modifications', message: 'Les informations du candidat seront mises à jour.', confirmer: 'Enregistrer' }))) return;
     this.submitting = true;
     this.adminCandidatService.updateCandidat(this.selectedCandidat.idcandidats, this.editForm).subscribe({
       next: (response) => {
@@ -345,14 +282,14 @@ export class CandidatsList implements OnInit, OnDestroy {
     });
   }
 
-  openDeleteModal(candidat: Candidat): void {
+  async openDeleteModal(candidat: Candidat): Promise<void> {
     this.candidatToDelete = candidat;
-    this.showDeleteModal = true;
+    if (!(await this.confirmService.demander({ titre: 'Supprimer le candidat', message: 'Cette action est irréversible.', detail: `${candidat.prenom} ${candidat.nom}`, confirmer: 'Supprimer', danger: true }))) { this.closeDeleteModal(); return; }
+    this.confirmDelete();
   }
 
   closeDeleteModal(): void {
     this.candidatToDelete = null;
-    this.showDeleteModal = false;
   }
 
   confirmDelete(): void {
@@ -398,9 +335,10 @@ export class CandidatsList implements OnInit, OnDestroy {
     this.showResetPasswordModal = false;
   }
 
-  confirmResetPassword(): void {
+  async confirmResetPassword(): Promise<void> {
     if (!this.candidatToReset) return;
 
+    if (!(await this.confirmService.demander({ titre: 'Réinitialiser le mot de passe', message: 'Le candidat devra utiliser ce nouveau mot de passe pour se connecter.', confirmer: 'Réinitialiser', danger: true }))) return;
     const { newPassword, confirmPassword } = this.resetPasswordForm;
     if (!newPassword || newPassword.length < 8) {
       this.showToast('error', 'Erreur', 'Le mot de passe doit contenir au moins 8 caractères');

@@ -1,8 +1,9 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, ChangeDetectorRef } from '@angular/core';
+import { Component, ChangeDetectorRef, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { environment } from '../../../../environments/environment';
+import { ToastService } from '../../../../core/services/toast.service';
 
 interface StageRapport {
   idstage: number;
@@ -31,6 +32,7 @@ interface StageRapport {
   styleUrl: './documents.css',
 })
 export class Documents {
+  private readonly toastService = inject(ToastService);
 
   stagesRapports: StageRapport[] = [];
   isLoading = false;
@@ -102,7 +104,7 @@ export class Documents {
       },
       error: (err) => {
         console.error('Erreur téléchargement attestation:', err);
-        this.errorMessage = 'Erreur lors du téléchargement de l\'attestation';
+        this.toastService.erreur('Erreur lors du téléchargement de l\'attestation');
         this.cdr.detectChanges();
       }
     });

@@ -1,10 +1,11 @@
 // admin-profil.ts — Page profil de l'administrateur
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../../core/services/auth.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
+import { ConfirmService } from '../../../../core/services/confirm.service';
 
 @Component({
   selector: 'app-admin-profil',
@@ -13,6 +14,7 @@ import { environment } from '../../../../environments/environment';
   templateUrl: './admin-profil.html',
 })
 export class AdminProfil implements OnInit {
+  private readonly confirmService = inject(ConfirmService);
 
   currentUser: any = null;
 
@@ -53,7 +55,7 @@ export class AdminProfil implements OnInit {
   }
 
   // ── Changement de mot de passe ────────────────────────────────────────────
-  changerMotDePasse(): void {
+  async changerMotDePasse(): Promise<void> {
     this.pwdSuccess = '';
     this.pwdError   = '';
 
@@ -73,6 +75,7 @@ export class AdminProfil implements OnInit {
       return;
     }
 
+    if (!(await this.confirmService.demander({ titre: 'Changer le mot de passe', message: 'Votre mot de passe sera remplacé.', confirmer: 'Changer' }))) return;
     this.isLoadingPwd = true;
     this.cdr.detectChanges();
 

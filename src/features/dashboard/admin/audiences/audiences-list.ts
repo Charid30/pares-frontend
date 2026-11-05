@@ -5,7 +5,7 @@
 //   GET  /api/demandes-audience/:id/fichier   → Blob PDF (mode FICHIER)
 import { CommonModule, DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, ChangeDetectorRef, OnInit, OnDestroy, NgZone } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit, OnDestroy, NgZone, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -14,6 +14,8 @@ import { environment } from '../../../../environments/environment';
 import { SearchService } from '../../../../core/services/search.service';
 import { Loader } from '../../../../shared/components/loader/loader';
 import { StatCard } from '../../../../shared/components/stat-card/stat-card';
+import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../core/services/confirm.service';
 
 interface CandidatInfo {
   idcandidats: number;
@@ -67,13 +69,14 @@ interface DemandeAudience {
   templateUrl: './audiences-list.html',
 })
 export class AudiencesList implements OnInit, OnDestroy {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
 
   // ── Données ────────────────────────────────────────────────────────────────
   demandes: DemandeAudience[] = [];
   demandesFiltrees: DemandeAudience[] = [];
   isLoading = false;
   errorMessage = '';
-  successMessage = '';
 
   // ── Filtres ───────────────────────────────────────────────────────────────
   searchTerm = '';
@@ -282,7 +285,7 @@ export class AudiencesList implements OnInit, OnDestroy {
     this.errorEval = '';
   }
 
-  enregistrerDecision(): void {
+  async enregistrerDecision(): Promise<void> {
     if (!this.traitement.status) {
       this.errorEval = 'Veuillez choisir une décision.';
       return;
@@ -293,6 +296,7 @@ export class AudiencesList implements OnInit, OnDestroy {
     }
     if (!this.selectedDemande) return;
 
+    if (!(await this.confirmService.demander({ titre: 'Enregistrer la décision', message: 'La décision sera enregistrée et le demandeur notifié.', confirmer: 'Enregistrer' }))) return;
     this.isSubmitting = true;
     this.errorEval = '';
 
@@ -314,8 +318,7 @@ export class AudiencesList implements OnInit, OnDestroy {
             this.fermerTraitement();
             this.loadDemandes();
             this.loadStats();
-            this.successMessage = 'Décision enregistrée avec succès !';
-            setTimeout(() => this.successMessage = '', 4000);
+            this.toastService.succes('Décision enregistrée avec succès !');
           }
           this.isSubmitting = false;
           this.cdr.detectChanges();
@@ -391,8 +394,9 @@ export class AudiencesList implements OnInit, OnDestroy {
     return dir ? `${dir.accronyme} — ${dir.nom}` : '—';
   }
 
-  sauvegarderAffectation(): void {
+  async sauvegarderAffectation(): Promise<void> {
     if (!this.detailDemande) return;
+    if (!(await this.confirmService.demander({ titre: 'Changer la direction', message: 'La demande d\'audience sera affectée à la direction choisie.', confirmer: 'Affecter' }))) return;
     this.savingAffectation = true;
     this.http.put<any>(
       `${this.apiUrl}/demandes-audience/${this.detailDemande.iddemande}`,
@@ -404,8 +408,7 @@ export class AudiencesList implements OnInit, OnDestroy {
             this.detailDemande!.direction_iddirection = this.affectationForm.direction_iddirection;
             const dir = this.directions.find(d => d.iddirection === this.affectationForm.direction_iddirection);
             if (dir) this.detailDemande!.direction = dir;
-            this.successMessage = 'Direction affectée avec succès !';
-            setTimeout(() => this.successMessage = '', 4000);
+            this.toastService.succes('Direction affectée avec succès !');
             this.loadDemandes();
           }
           this.savingAffectation = false;
@@ -414,8 +417,7 @@ export class AudiencesList implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.ngZone.run(() => {
-          this.errorMessage = err.error?.message || 'Impossible de mettre à jour l\'affectation.';
-          setTimeout(() => this.errorMessage = '', 4000);
+          this.toastService.erreur(err.error?.message || 'Impossible de mettre à jour l\'affectation.');
           this.savingAffectation = false;
           this.cdr.detectChanges();
         });
@@ -443,8 +445,7 @@ export class AudiencesList implements OnInit, OnDestroy {
       },
       error: () => {
         this.ngZone.run(() => {
-          this.errorMessage = 'Impossible de récupérer le fichier.';
-          setTimeout(() => this.errorMessage = '', 4000);
+          this.toastService.erreur('Impossible de récupérer le fichier.');
           this.cdr.detectChanges();
         });
       },
@@ -535,8 +536,7 @@ export class AudiencesList implements OnInit, OnDestroy {
       },
       error: () => {
         this.ngZone.run(() => {
-          this.errorMessage = 'Erreur lors de l\'export CSV.';
-          setTimeout(() => this.errorMessage = '', 4000);
+          this.toastService.erreur('Erreur lors de l\'export CSV.');
           this.cdr.detectChanges();
         });
       },
@@ -555,8 +555,7 @@ export class AudiencesList implements OnInit, OnDestroy {
       },
       error: () => {
         this.ngZone.run(() => {
-          this.errorMessage = 'Erreur lors de la génération du rapport PDF.';
-          setTimeout(() => this.errorMessage = '', 4000);
+          this.toastService.erreur('Erreur lors de la génération du rapport PDF.');
           this.cdr.detectChanges();
         });
       },

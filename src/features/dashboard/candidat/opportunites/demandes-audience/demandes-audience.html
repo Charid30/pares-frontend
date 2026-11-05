@@ -238,27 +238,6 @@
   </div><!-- /container -->
 </div>
 
-<!-- ── Toast ──────────────────────────────────────────────────── -->
-<div *ngIf="toastMessage"
-     class="fixed bottom-4 right-4 z-50 max-w-[calc(100vw-2rem)] sm:max-w-xs"
-     style="animation: slideUp 0.25s ease-out;">
-  <div class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl shadow-lg text-white text-xs font-medium"
-       [ngClass]="toastType === 'success' ? 'bg-green-600' : 'bg-red-700'">
-    <svg *ngIf="toastType === 'success'" class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
-    </svg>
-    <svg *ngIf="toastType === 'error'" class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
-    </svg>
-    <span class="flex-1">{{ toastMessage }}</span>
-    <button (click)="fermerToast()" class="hover:opacity-70 ml-1">
-      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-      </svg>
-    </button>
-  </div>
-</div>
-
 <!-- =========================================================
      MODAL
      ========================================================= -->

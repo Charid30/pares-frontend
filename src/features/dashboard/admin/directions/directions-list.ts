@@ -1,5 +1,5 @@
 // directions-list.ts
-import { ChangeDetectorRef, Component, NgZone, OnInit, OnDestroy } from '@angular/core';
+import { ChangeDetectorRef, Component, NgZone, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
@@ -11,13 +11,8 @@ import {
 } from '../../../../core/services/admin-direction.service';
 import { ServiceItem } from '../../../../core/services/admin-service.service';
 import { SearchService } from '../../../../core/services/search.service';
-
-interface Toast {
-  id: number;
-  type: 'success' | 'error';
-  title: string;
-  message: string;
-}
+import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../core/services/confirm.service';
 
 @Component({
   selector: 'app-directions-list',
@@ -27,6 +22,8 @@ interface Toast {
   styleUrls: ['./directions-list.css'],
 })
 export class DirectionsList implements OnInit, OnDestroy {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
   // ── Données ───────────────────────────────────────────
   directions: DirectionItem[] = [];
   allServices: ServiceItem[]  = [];   // Pour le multi-sélect dans la modal
@@ -44,7 +41,6 @@ export class DirectionsList implements OnInit, OnDestroy {
 
   // ── Modal créer / éditer ──────────────────────────────
   showModal  = false;
-  showDeleteModal = false;
   modalMode: 'create' | 'edit' = 'create';
   selectedDirection: DirectionItem | null = null;
 
@@ -53,10 +49,6 @@ export class DirectionsList implements OnInit, OnDestroy {
   formAccronyme  = '';
   formServiceIds = new Set<number>();   // Services cochés dans la modal
   formError      = '';
-
-  // ── Toasts ────────────────────────────────────────────
-  toasts: Toast[] = [];
-  private toastId = 0;
 
   private searchSub?: Subscription;
 
@@ -187,11 +179,12 @@ export class DirectionsList implements OnInit, OnDestroy {
     return this.formServiceIds.has(id);
   }
 
-  submitForm(): void {
+  async submitForm(): Promise<void> {
     this.formError = '';
     if (!this.formNom.trim())       { this.formError = 'Le nom est requis';       return; }
     if (!this.formAccronyme.trim()) { this.formError = 'L\'acronyme est requis';  return; }
 
+    if (!(await this.confirmService.demander({ titre: 'Enregistrer la direction', message: 'La direction sera enregistrée.', confirmer: 'Enregistrer' }))) return;
     this.submitting = true;
     const data = {
       nom:        this.formNom.trim(),
@@ -248,13 +241,13 @@ export class DirectionsList implements OnInit, OnDestroy {
   // SUPPRESSION
   // ═══════════════════════════════════════════════════
 
-  openDeleteModal(dir: DirectionItem): void {
+  async openDeleteModal(dir: DirectionItem): Promise<void> {
     this.selectedDirection = dir;
-    this.showDeleteModal = true;
+    if (!(await this.confirmService.demander({ titre: 'Supprimer la direction', message: 'Les associations avec les services seront supprimées. Les demandes de stage existantes ne seront pas affectées.', detail: `${dir.accronyme} — ${dir.nom}`, confirmer: 'Supprimer', danger: true }))) { this.closeDeleteModal(); return; }
+    this.confirmDelete();
   }
 
   closeDeleteModal(): void {
-    this.showDeleteModal = false;
     this.selectedDirection = null;
   }
 
@@ -306,17 +299,10 @@ export class DirectionsList implements OnInit, OnDestroy {
   }
 
   // ═══════════════════════════════════════════════════
-  // TOASTS
   // ═══════════════════════════════════════════════════
 
   showToast(title: string, message: string, type: 'success' | 'error'): void {
-    const toast: Toast = { id: ++this.toastId, type, title, message };
-    this.toasts.push(toast);
-    setTimeout(() => this.removeToast(toast.id), 4000);
+    this.toastService.afficher(type, title, message);
   }
 
-  removeToast(id: number): void {
-    this.toasts = this.toasts.filter(t => t.id !== id);
-    this.cdr.detectChanges();
-  }
 }

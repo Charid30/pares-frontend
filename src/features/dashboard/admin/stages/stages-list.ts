@@ -1,5 +1,5 @@
 // src/features/dashboard/admin/stages/stages-list.ts
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -13,40 +13,19 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { SearchService } from '../../../../core/services/search.service';
 import { environment } from '../../../../environments/environment';
 import { StatCard } from '../../../../shared/components/stat-card/stat-card';
-import { StageConfirmModal, ConfirmModalConfig } from './components/stage-confirm-modal/stage-confirm-modal';
+import { ConfirmService } from '../../../../core/services/confirm.service';
 import { StageDocModal } from './components/stage-doc-modal/stage-doc-modal';
 import { StageDemandesModal } from './components/stage-demandes-modal/stage-demandes-modal';
-
-interface Toast {
-  id: number;
-  type: 'success' | 'error' | 'warning' | 'info';
-  title: string;
-  message: string;
-}
+import { ToastService } from '../../../../core/services/toast.service';
 
 @Component({
   selector: 'app-stages-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, StatCard, StageConfirmModal, StageDocModal, StageDemandesModal],
-  templateUrl: './stages-list.html',
-  styles: [`
-    .toast-enter {
-      animation: slideInRight 0.3s ease-out;
-    }
-    .toast-leave {
-      animation: slideOutRight 0.3s ease-in;
-    }
-    @keyframes slideInRight {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-    @keyframes slideOutRight {
-      from { transform: translateX(0); opacity: 1; }
-      to { transform: translateX(100%); opacity: 0; }
-    }
-  `]
+  imports: [CommonModule, RouterModule, FormsModule, StatCard, StageDocModal, StageDemandesModal],
+  templateUrl: './stages-list.html'
 })
 export class StagesList implements OnInit, OnDestroy {
+  private readonly toastService = inject(ToastService);
   // Donnees
   stages: Stage[] = [];
   stats: StageStats | null = null;
@@ -70,26 +49,16 @@ export class StagesList implements OnInit, OnDestroy {
   submitting = false;
   error = '';
 
-  // Modal de confirmation personnalisé
-  confirmModal: ConfirmModalConfig & { onConfirm: () => void } = {
-    show: false, title: '', message: '', confirmText: '', confirmStyle: '',
-    iconPath: '', iconColor: '', onConfirm: () => {}
-  };
+  // Confirmation commune à l'application (ConfirmService) — le message peut contenir <strong>
+  private readonly confirmService = inject(ConfirmService);
 
-  openConfirmModal(cfg: Omit<ConfirmModalConfig, 'show'> & { onConfirm: () => void }): void {
-    this.confirmModal = { show: true, ...cfg };
-    this.cdr.detectChanges();
-  }
-
-  closeConfirmModal(): void {
-    this.confirmModal.show = false;
-    this.cdr.detectChanges();
-  }
-
-  executeConfirm(): void {
-    this.confirmModal.show = false;
-    this.confirmModal.onConfirm();
-    this.cdr.detectChanges();
+  openConfirmModal(cfg: { title: string; message: string; confirmText: string; onConfirm: () => void; danger?: boolean }): void {
+    this.confirmService.demander({
+      titre: cfg.title,
+      message: cfg.message.replace(/<[^>]+>/g, ''),
+      confirmer: cfg.confirmText,
+      danger: cfg.danger,
+    }).then(ok => { if (ok) cfg.onConfirm(); });
   }
 
   // Modal
@@ -213,9 +182,6 @@ export class StagesList implements OnInit, OnDestroy {
     return dir?.services ?? [];
   }
 
-  // Toast notifications
-  toasts: Toast[] = [];
-  private toastId = 0;
   private searchSub?: Subscription;
 
   constructor(
@@ -269,48 +235,7 @@ export class StagesList implements OnInit, OnDestroy {
 
   // ==================== TOAST NOTIFICATIONS ====================
   showToast(type: 'success' | 'error' | 'warning' | 'info', title: string, message: string): void {
-    const toast: Toast = {
-      id: ++this.toastId,
-      type,
-      title,
-      message
-    };
-    this.toasts.push(toast);
-    this.cdr.detectChanges();
-
-    setTimeout(() => {
-      this.ngZone.run(() => {
-        this.removeToast(toast.id);
-      });
-    }, 5000);
-  }
-
-  removeToast(id: number): void {
-    const index = this.toasts.findIndex(t => t.id === id);
-    if (index > -1) {
-      this.toasts.splice(index, 1);
-      this.cdr.detectChanges();
-    }
-  }
-
-  getToastIcon(type: string): string {
-    switch (type) {
-      case 'success': return 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z';
-      case 'error': return 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z';
-      case 'warning': return 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z';
-      case 'info': return 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z';
-      default: return '';
-    }
-  }
-
-  getToastBgClass(type: string): string {
-    switch (type) {
-      case 'success': return 'bg-green-500';
-      case 'error': return 'bg-red-500';
-      case 'warning': return 'bg-yellow-500';
-      case 'info': return 'bg-blue-500';
-      default: return 'bg-gray-500';
-    }
+    this.toastService.afficher(type, title, message);
   }
 
   // ==================== DATA LOADING ====================
@@ -348,8 +273,9 @@ export class StagesList implements OnInit, OnDestroy {
   }
 
   /** Enregistrer l'affectation direction + service */
-  sauvegarderAffectation(): void {
+  async sauvegarderAffectation(): Promise<void> {
     if (!this.selectedStage) return;
+    if (!(await this.confirmService.demander({ titre: 'Changer l\'affectation', message: 'Le stage sera affecté à la direction et au service choisis.', confirmer: 'Affecter' }))) return;
     this.savingAffectation = true;
     this.adminStageService.updateStage(this.selectedStage.idstage, {
       direction_iddirection: this.affectationForm.direction_iddirection,
@@ -594,9 +520,10 @@ export class StagesList implements OnInit, OnDestroy {
     this.nouvelleDureeStage = null;
   }
 
-  enregistrerDateDebut(): void {
+  async enregistrerDateDebut(): Promise<void> {
     if (!this.selectedStage || !this.nouvelleDateDebut || !this.nouvelleDureeStage) return;
 
+    if (!(await this.confirmService.demander({ titre: 'Modifier la date de début', message: 'La date de début du stage sera mise à jour.', confirmer: 'Enregistrer' }))) return;
     this.savingDateDebut = true;
     this.adminStageService.updateStage(this.selectedStage.idstage, {
       dateDebutEffective: this.nouvelleDateDebut,
@@ -664,13 +591,14 @@ export class StagesList implements OnInit, OnDestroy {
     this.showModal = true;
   }
 
-  exigerDocumentsSubmit(): void {
+  async exigerDocumentsSubmit(): Promise<void> {
     if (!this.selectedStage) return;
     if (this.documentsRejetesSelection.length === 0) {
       this.showToast('error', 'Erreur', 'Veuillez sélectionner au moins un document');
       return;
     }
 
+    if (!(await this.confirmService.demander({ titre: 'Demander des documents', message: 'Le candidat sera notifié et devra fournir les documents demandés.', confirmer: 'Envoyer la demande' }))) return;
     this.submitting = true;
     const stageName = `${this.selectedStage.candidat.prenom} ${this.selectedStage.candidat.nom}`;
 
@@ -754,8 +682,9 @@ export class StagesList implements OnInit, OnDestroy {
     this.replaceConventionError = '';
   }
 
-  confirmerRemplaceConvention(): void {
+  async confirmerRemplaceConvention(): Promise<void> {
     if (!this.selectedStage || !this.replaceConventionFile || this.replacingConvention) return;
+    if (!(await this.confirmService.demander({ titre: 'Remplacer la convention', message: 'La convention actuelle sera remplacée par le nouveau fichier.', confirmer: 'Remplacer', danger: true }))) return;
     this.replacingConvention = true;
     this.replaceConventionError = '';
     this.adminStageService.remplacerConvention(this.selectedStage.idstage, this.replaceConventionFile).subscribe({
@@ -834,7 +763,7 @@ export class StagesList implements OnInit, OnDestroy {
   }
 
   // ==================== ACTIONS ====================
-  accepterStage(): void {
+  async accepterStage(): Promise<void> {
     if (!this.selectedStage) return;
 
     if (!this.acceptForm.dateDebutEffective) {
@@ -852,6 +781,7 @@ export class StagesList implements OnInit, OnDestroy {
       return;
     }
 
+    if (!(await this.confirmService.demander({ titre: 'Accepter le stage', message: 'Le stage sera accepté avec sa convention et le candidat notifié.', confirmer: 'Accepter' }))) return;
     this.submitting = true;
     const stageName = `${this.selectedStage.candidat.prenom} ${this.selectedStage.candidat.nom}`;
 
@@ -886,7 +816,7 @@ export class StagesList implements OnInit, OnDestroy {
     });
   }
 
-  refuserStage(): void {
+  async refuserStage(): Promise<void> {
     if (!this.selectedStage) return;
 
     if (!this.rejectForm.motifRefus.trim()) {
@@ -899,6 +829,7 @@ export class StagesList implements OnInit, OnDestroy {
       return;
     }
 
+    if (!(await this.confirmService.demander({ titre: 'Refuser la demande', message: 'La demande de stage sera refusée et le candidat notifié.', confirmer: 'Refuser', danger: true }))) return;
     this.submitting = true;
     const stageName = `${this.selectedStage.candidat.prenom} ${this.selectedStage.candidat.nom}`;
     const dejaRejete = this.selectedStage.statusStage === 'REJETE';
@@ -938,9 +869,6 @@ export class StagesList implements OnInit, OnDestroy {
       title: 'Démarrer le stage',
       message: `Confirmez-vous le démarrage du stage de <strong>${stage.candidat.prenom} ${stage.candidat.nom}</strong> ?`,
       confirmText: 'Démarrer',
-      confirmStyle: 'bg-green-600 hover:bg-green-700 text-white',
-      iconPath: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
-      iconColor: 'text-green-500',
       onConfirm: () => {
         this.submitting = true;
         this.adminStageService.updateStatus(stage.idstage, {
@@ -974,9 +902,6 @@ export class StagesList implements OnInit, OnDestroy {
       title: 'Marquer comme expiré',
       message: `Confirmez-vous que le stage de <strong>${stage.candidat.prenom} ${stage.candidat.nom}</strong> est expiré ?`,
       confirmText: 'Marquer expiré',
-      confirmStyle: 'bg-gray-600 hover:bg-gray-700 text-white',
-      iconPath: 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
-      iconColor: 'text-gray-500',
       onConfirm: () => {
         this.submitting = true;
         this.adminStageService.updateStatus(stage.idstage, {
@@ -1031,8 +956,9 @@ export class StagesList implements OnInit, OnDestroy {
     return a.find(x => new Date(x.expiresAt) > now) || null;
   }
 
-  autoriserRapport(s: Stage): void {
+  async autoriserRapport(s: Stage): Promise<void> {
     if (this.soumissionAutorisationRapport) return;
+    if (!(await this.confirmService.demander({ titre: 'Autoriser le rapport', message: 'Le candidat pourra déposer son rapport de stage pendant 7 jours.', confirmer: 'Autoriser' }))) return;
     this.soumissionAutorisationRapport = true;
     this.errorAutorisationRapport = '';
     this.http.put<any>(`${environment.apiUrl}/stages/${s.idstage}/autoriser-rapport`, {}).subscribe({
@@ -1057,8 +983,9 @@ export class StagesList implements OnInit, OnDestroy {
     });
   }
 
-  autoriserRenouvellement(s: Stage): void {
+  async autoriserRenouvellement(s: Stage): Promise<void> {
     if (this.soumissionAutorisation) return;
+    if (!(await this.confirmService.demander({ titre: 'Autoriser le renouvellement', message: 'Le candidat pourra demander un renouvellement pendant 7 jours.', confirmer: 'Autoriser' }))) return;
     this.soumissionAutorisation = true;
     this.errorAutorisation = '';
     this.http.put<any>(`${environment.apiUrl}/stages/${s.idstage}/autoriser-renouvellement`, {}).subscribe({
@@ -1235,7 +1162,6 @@ export class StagesList implements OnInit, OnDestroy {
       year: 'numeric'
     });
   }
-
 
   getDureeLabel(duree: number): string {
     return duree === 1 ? '1 mois' : `${duree} mois`;
@@ -1430,7 +1356,7 @@ export class StagesList implements OnInit, OnDestroy {
   /**
    * Evaluer un rapport (valider, refuser, mettre en evaluation)
    */
-  evaluateRapport(): void {
+  async evaluateRapport(): Promise<void> {
     if (!this.selectedRapport) return;
 
     if (!this.evaluateRapportForm.statusRapport) {
@@ -1443,6 +1369,7 @@ export class StagesList implements OnInit, OnDestroy {
       return;
     }
 
+    if (!(await this.confirmService.demander({ titre: 'Enregistrer l\'évaluation', message: 'L\'évaluation du rapport sera enregistrée et le candidat notifié.', confirmer: 'Enregistrer' }))) return;
     this.submitting = true;
     const data: any = {
       statusRapport: this.evaluateRapportForm.statusRapport
@@ -1523,7 +1450,7 @@ export class StagesList implements OnInit, OnDestroy {
   /**
    * Creer une attestation de stage
    */
-  createAttestation(): void {
+  async createAttestation(): Promise<void> {
     if (!this.selectedRapport || !this.selectedRapport.stage) return;
 
     if (!this.attestationForm.attestationFile) {
@@ -1541,6 +1468,7 @@ export class StagesList implements OnInit, OnDestroy {
       return;
     }
 
+    if (!(await this.confirmService.demander({ titre: 'Joindre l\'attestation', message: 'L\'attestation sera ajoutée au dossier et le candidat notifié.', confirmer: 'Joindre' }))) return;
     this.submitting = true;
     const data = {
       stage_idstage: this.selectedRapport.stage_idstage,
@@ -1694,8 +1622,9 @@ export class StagesList implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  confirmerApprouverStage(): void {
+  async confirmerApprouverStage(): Promise<void> {
     if (!this.selectedStage || !this.nomMaitreStageApprobation.trim()) return;
+    if (!(await this.confirmService.demander({ titre: 'Approuver la demande', message: 'La demande passera « En cours de programmation » et les agents RH seront prévenus.', confirmer: 'Approuver' }))) return;
     this.submitting = true;
     const stageName = `${this.selectedStage.candidat.prenom} ${this.selectedStage.candidat.nom}`;
 

@@ -310,28 +310,6 @@
   </div>
 </div>
 
-<!-- Toast Notifications -->
-<div class="fixed top-4 right-4 z-[99999] space-y-3">
-  <div *ngFor="let toast of toasts"
-       class="toast-enter flex items-start gap-3 max-w-sm p-4 bg-white rounded-xl shadow-lg border border-gray-100">
-    <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
-         [ngClass]="getToastBgClass(toast.type)">
-      <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="getToastIcon(toast.type)" />
-      </svg>
-    </div>
-    <div class="flex-1 min-w-0">
-      <p class="text-sm font-semibold text-gray-900">{{ toast.title }}</p>
-      <p class="text-sm text-gray-500 mt-0.5">{{ toast.message }}</p>
-    </div>
-    <button (click)="removeToast(toast.id)" class="flex-shrink-0 p-1 text-gray-400 hover:text-gray-600 transition-colors" aria-label="Fermer la notification">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-      </svg>
-    </button>
-  </div>
-</div>
-
 <!-- Modal Multi-Step -->
 <div *ngIf="showModal" class="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center">
   <!-- Backdrop -->
@@ -877,68 +855,3 @@
   </div>
 </div>
 
-<!-- Modale de confirmation (suppression / activation-désactivation) -->
-<div *ngIf="confirmAction && confirmTarget" class="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-  <!-- Backdrop -->
-  <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" (click)="annulerConfirmation()"></div>
-
-  <!-- Contenu -->
-  <div class="relative z-[10000] w-full max-w-sm bg-white rounded-3xl shadow-2xl p-6">
-    <div class="flex flex-col items-center text-center">
-      <!-- Icône -->
-      <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
-           [ngClass]="confirmAction === 'delete'
-             ? 'bg-red-100'
-             : (confirmTargetActif ? 'bg-amber-100' : 'bg-emerald-100')">
-        <svg *ngIf="confirmAction === 'delete'" class="w-7 h-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-        </svg>
-        <svg *ngIf="confirmAction === 'toggle' && confirmTargetActif" class="w-7 h-7 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
-        </svg>
-        <svg *ngIf="confirmAction === 'toggle' && !confirmTargetActif" class="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
-      </div>
-
-      <!-- Titre -->
-      <h3 class="text-base font-bold text-gray-900">
-        {{ confirmAction === 'delete' ? 'Supprimer cet agent ?' : (confirmTargetActif ? 'Désactiver ce compte ?' : 'Réactiver ce compte ?') }}
-      </h3>
-
-      <!-- Message -->
-      <p class="text-sm text-gray-500 mt-2">
-        <ng-container *ngIf="confirmAction === 'delete'">
-          Vous êtes sur le point de supprimer définitivement le compte de
-          <span class="font-semibold text-gray-700">{{ confirmTarget!.prenom }} {{ confirmTarget!.nom }}</span>.
-          Cette action est irréversible.
-        </ng-container>
-        <ng-container *ngIf="confirmAction === 'toggle' && confirmTargetActif">
-          <span class="font-semibold text-gray-700">{{ confirmTarget!.prenom }} {{ confirmTarget!.nom }}</span>
-          ne pourra plus se connecter à son compte tant qu'il ne sera pas réactivé.
-        </ng-container>
-        <ng-container *ngIf="confirmAction === 'toggle' && !confirmTargetActif">
-          <span class="font-semibold text-gray-700">{{ confirmTarget!.prenom }} {{ confirmTarget!.nom }}</span>
-          pourra de nouveau se connecter à son compte.
-        </ng-container>
-      </p>
-
-      <!-- Boutons -->
-      <div class="flex gap-3 w-full mt-6">
-        <button type="button" (click)="annulerConfirmation()"
-                class="flex-1 py-3 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-2xl hover:bg-gray-100 transition-colors">
-          Annuler
-        </button>
-        <button type="button" (click)="executerConfirmation()"
-                class="flex-1 py-3 text-sm font-semibold text-white rounded-2xl transition-colors shadow-sm"
-                [ngClass]="confirmAction === 'delete'
-                  ? 'bg-red-600 hover:bg-red-700'
-                  : (confirmTargetActif ? 'bg-amber-500 hover:bg-amber-600' : 'bg-emerald-600 hover:bg-emerald-700')">
-          {{ confirmAction === 'delete' ? 'Supprimer' : (confirmTargetActif ? 'Désactiver' : 'Réactiver') }}
-        </button>
-      </div>
-    </div>
-  </div>
-</div>

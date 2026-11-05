@@ -1,7 +1,7 @@
 // src/layouts/agent-layout/agent-layout.ts
 // Layout générique pour les rôles personnalisés (non système)
 // Le menu est construit dynamiquement selon les permissions du rôle connecté
-import { Component, OnInit, OnDestroy, HostListener, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, ChangeDetectorRef, inject } from '@angular/core';
 import { Router, RouterModule, RouterOutlet, NavigationStart } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -12,6 +12,8 @@ import { NotificationService } from '../../core/services/notification.service';
 import { SearchService } from '../../core/services/search.service';
 import { NotificationBellComponent } from '../../shared/components/notification-bell/notification-bell';
 import { environment } from '../../environments/environment';
+import { ToastService } from '../../core/services/toast.service';
+import { ConfirmService } from '../../core/services/confirm.service';
 
 interface MenuItem {
   label: string;
@@ -96,6 +98,8 @@ const MODULE_ROUTE_MAP: Record<string, string> = {
   templateUrl: './agent-layout.html',
 })
 export class AgentLayout implements OnInit, OnDestroy {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
   readonly appVersion = environment.appVersion;
   currentUser: any = null;
   sidebarOpen = true;
@@ -122,7 +126,6 @@ export class AgentLayout implements OnInit, OnDestroy {
   showParamsPanel = false;
   loadingPrefs = false;
   savingPrefs = false;
-  savedOk = false;
   notifPrefs: Record<string, boolean> = {
     STAGE: true, OFFRE: true, AIDE: true, AUDIENCE: true,
   };
@@ -481,7 +484,6 @@ export class AgentLayout implements OnInit, OnDestroy {
 
   openParamsPanel(): void {
     this.showParamsPanel = true;
-    this.savedOk = false;
     this.loadingPrefs = true;
     this.cdr.detectChanges();
     this.http.get<any>(`${environment.apiUrl}/users/agents/me/notifications`).subscribe({
@@ -502,17 +504,20 @@ export class AgentLayout implements OnInit, OnDestroy {
     this.notifPrefs[key] = !this.notifPrefs[key];
   }
 
-  saveNotifPrefs(): void {
+  async saveNotifPrefs(): Promise<void> {
+    if (!(await this.confirmService.demander({ titre: 'Enregistrer les préférences', message: 'Vos préférences de notification seront mises à jour.', confirmer: 'Enregistrer' }))) return;
     this.savingPrefs = true;
-    this.savedOk = false;
     this.http.put<any>(`${environment.apiUrl}/users/agents/me/notifications`, this.notifPrefs).subscribe({
       next: () => {
         this.savingPrefs = false;
-        this.savedOk = true;
+        this.toastService.succes('Préférences enregistrées');
         this.cdr.detectChanges();
-        setTimeout(() => { this.savedOk = false; this.cdr.detectChanges(); }, 3000);
       },
-      error: () => { this.savingPrefs = false; this.cdr.detectChanges(); },
+      error: (err) => {
+        this.savingPrefs = false;
+        this.toastService.erreur(err.error?.message || "Échec de l'enregistrement des préférences");
+        this.cdr.detectChanges();
+      },
     });
   }
 }

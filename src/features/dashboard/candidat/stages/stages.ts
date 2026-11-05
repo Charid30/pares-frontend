@@ -1,9 +1,11 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { environment } from '../../../../environments/environment';
+import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../core/services/confirm.service';
 
 interface FileInfo {
   file: File | null;
@@ -95,13 +97,14 @@ const STATUTS_BLOQUANTS = ['EN_ATTENTE', 'EN_COURS_DE_TRAITEMENT', 'ACCEPTE', 'P
   styleUrl: './stages.css',
 })
 export class Stages implements OnInit {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
 
   readonly stepsCreate = [1, 2, 3, 4, 5];
 
   // Modal demande de stage
   showModal = false;
   etapeCreate: 1 | 2 | 3 | 4 | 5 = 1;
-  showConfirmSubmitPopup = false;
 
   // Popup d'avertissement sur les documents à légaliser, avant ouverture du formulaire
   showLegalisationPopup = false;
@@ -146,11 +149,6 @@ export class Stages implements OnInit {
     }
     return this.mesDemandesStage;
   }
-
-  // Toast notifications
-  toastMessage = '';
-  toastType: 'success' | 'error' = 'success';
-  private toastTimeout: any;
 
   // Formulaire de demande de stage
   demandeForm: FormGroup;
@@ -393,18 +391,18 @@ export class Stages implements OnInit {
     setTimeout(() => URL.revokeObjectURL(url), 60000);
   }
 
-  /** Ouvre la popup de confirmation avant l'envoi définitif */
-  ouvrirConfirmationSoumission(): void {
-    this.showConfirmSubmitPopup = true;
-  }
-
-  fermerConfirmationSoumission(): void {
-    this.showConfirmSubmitPopup = false;
-  }
-
-  confirmerEtSoumettre(): void {
-    this.showConfirmSubmitPopup = false;
-    this.soumettreDemandeStage();
+  /** Confirmation avant l'envoi définitif de la demande */
+  async ouvrirConfirmationSoumission(): Promise<void> {
+    if (!this.isFormValid()) {
+      this.showToast('Veuillez remplir tous les champs obligatoires et joindre tous les documents requis', 'error');
+      return;
+    }
+    const ok = await this.confirmService.demander({
+      titre: 'Confirmer la soumission ?',
+      message: "Vérifiez bien vos informations : elles ne pourront plus être modifiées après l'envoi.",
+      confirmer: 'Envoyer ma demande',
+    });
+    if (ok) this.soumettreDemandeStage();
   }
 
   toggleCalendar(event: Event): void {
@@ -634,7 +632,6 @@ export class Stages implements OnInit {
   fermerModal(): void {
     this.showModal = false;
     this.etapeCreate = 1;
-    this.showConfirmSubmitPopup = false;
   }
 
   /**
@@ -708,26 +705,7 @@ export class Stages implements OnInit {
    * Afficher un toast
    */
   showToast(message: string, type: 'success' | 'error'): void {
-    this.toastMessage = message;
-    this.toastType = type;
-
-    // Auto-fermer le toast après 5 secondes
-    if (this.toastTimeout) {
-      clearTimeout(this.toastTimeout);
-    }
-    this.toastTimeout = setTimeout(() => {
-      this.fermerToast();
-    }, 5000);
-
-    this.cdr.detectChanges();
-  }
-
-  /**
-   * Fermer le toast
-   */
-  fermerToast(): void {
-    this.toastMessage = '';
-    this.cdr.detectChanges();
+    this.toastService.afficher(type, message);
   }
 
   /**
@@ -1008,12 +986,13 @@ export class Stages implements OnInit {
   /**
    * Soumettre le rapport de stage
    */
-  soumettreRapportStage(): void {
+  async soumettreRapportStage(): Promise<void> {
     if (!this.isRapportFormValid() || !this.selectedStageId) {
       this.showToast('Veuillez remplir tous les champs obligatoires et joindre le rapport', 'error');
       return;
     }
 
+    if (!(await this.confirmService.demander({ titre: 'Envoyer le rapport', message: 'Votre rapport de stage sera envoyé. Vérifiez qu\'il s\'agit de la bonne version.', confirmer: 'Envoyer' }))) return;
     this.isSubmittingRapport = true;
 
     const formData = new FormData();
@@ -1043,12 +1022,13 @@ export class Stages implements OnInit {
   /**
    * Soumettre la demande de renouvellement
    */
-  soumettreRenouvellement(): void {
+  async soumettreRenouvellement(): Promise<void> {
     if (!this.isRenouvellementFormValid() || !this.renouvellementStageId) {
       this.showToast('Veuillez renseigner la durée et joindre la lettre de demande (PDF)', 'error');
       return;
     }
 
+    if (!(await this.confirmService.demander({ titre: 'Demander le renouvellement', message: 'Votre demande de renouvellement sera envoyée pour traitement.', confirmer: 'Envoyer' }))) return;
     this.isSubmittingRenouvellement = true;
 
     const formData = new FormData();
@@ -1365,7 +1345,7 @@ export class Stages implements OnInit {
   }
 
   /** Remplacer un document signalé comme non conforme */
-  remplacerDocument(demande: DemandeStage, type: string, event: Event): void {
+  async remplacerDocument(demande: DemandeStage, type: string, event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] || null;
     if (!file) return;
@@ -1381,6 +1361,7 @@ export class Stages implements OnInit {
     }
 
     const key = `${demande.idstage}_${type}`;
+    if (!(await this.confirmService.demander({ titre: 'Remplacer le document', message: 'Le document actuel sera remplacé par le nouveau fichier.', confirmer: 'Remplacer' }))) return;
     this.remplacementEnCours[key] = true;
 
     const formData = new FormData();
@@ -1406,9 +1387,10 @@ export class Stages implements OnInit {
   }
 
   /** Resoumettre la demande après remplacement de tous les documents non conformes */
-  resoumettreDemande(demande: DemandeStage): void {
+  async resoumettreDemande(demande: DemandeStage): Promise<void> {
     if (this.parseDocumentsRejetes(demande.documentsRejetes).length > 0) return;
 
+    if (!(await this.confirmService.demander({ titre: 'Soumettre à nouveau', message: 'Votre demande de stage sera de nouveau envoyée pour traitement.', confirmer: 'Soumettre' }))) return;
     this.http.put<any>(`${this.apiUrl}/stages/${demande.idstage}/resoumettre`, {}).subscribe({
       next: (res) => {
         if (res.success) {
@@ -1464,9 +1446,10 @@ export class Stages implements OnInit {
     return true;
   }
 
-  soumettreResoumission(): void {
+  async soumettreResoumission(): Promise<void> {
     if (!this.stageForResoumission?.renouvellement || !this.resoumissionValide) return;
     const idrenouvellement = this.stageForResoumission.renouvellement.idrenouvellement;
+    if (!(await this.confirmService.demander({ titre: 'Soumettre à nouveau', message: 'Votre demande de renouvellement sera de nouveau envoyée pour traitement.', confirmer: 'Soumettre' }))) return;
     this.isSubmittingResoumission = true;
 
     const formData = new FormData();
@@ -1530,8 +1513,9 @@ export class Stages implements OnInit {
   /**
    * Soumettre la demande de modification (multipart : date + 2 fichiers)
    */
-  soumettreDemandeModif(): void {
+  async soumettreDemandeModif(): Promise<void> {
     if (!this.stageForDemandeModif || !this.demandeModifValide) return;
+    if (!(await this.confirmService.demander({ titre: 'Envoyer la demande', message: 'Votre demande de modification sera envoyée pour traitement.', confirmer: 'Envoyer' }))) return;
     this.submittingDemandeModif = true;
 
     const formData = new FormData();
@@ -1564,9 +1548,10 @@ export class Stages implements OnInit {
   // ── Annulation d'une demande de modification (suspension/annulation) en attente ──
   annulingDemandeModif: Record<number, boolean> = {};
 
-  annulerDemandeModif(demande: DemandeStage): void {
+  async annulerDemandeModif(demande: DemandeStage): Promise<void> {
     if (!demande.demandeModifEnCours) return;
     const demandeId = demande.demandeModifEnCours.id;
+    if (!(await this.confirmService.demander({ titre: 'Annuler la demande', message: 'Votre demande de modification sera annulée.', confirmer: 'Annuler la demande', danger: true }))) return;
     this.annulingDemandeModif[demandeId] = true;
     this.cdr.detectChanges();
 

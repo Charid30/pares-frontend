@@ -9,6 +9,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
 import { StatCard } from '../../../../../shared/components/stat-card/stat-card';
+import { ToastService } from '../../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../../core/services/confirm.service';
 
 interface Document {
   iddocument: number;
@@ -37,6 +39,8 @@ interface Candidature {
   templateUrl: './agent-candidatures.html',
 })
 export class AgentCandidatures implements OnInit {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
 
   // Recherche : barre « Rechercher… » du header de l'espace agent (comme l'admin)
   private readonly rechercheHeader = (() => {
@@ -60,10 +64,6 @@ export class AgentCandidatures implements OnInit {
   showDetailModal = false;
   detailCandidature: Candidature | null = null;
   loadingDetail = false;
-
-  // Toasts
-  toasts: { id: number; title: string; message: string; type: 'success' | 'error' | 'warning' }[] = [];
-  private toastIdCounter = 0;
 
   // Permissions (réactives)
   get peutConsulter(): boolean { return this.authService.hasPermission('CANDIDATURES', 'CONSULTER'); }
@@ -219,7 +219,8 @@ export class AgentCandidatures implements OnInit {
     });
   }
 
-  evaluer(c: Candidature, statut: string): void {
+  async evaluer(c: Candidature, statut: string): Promise<void> {
+    if (!(await this.confirmService.demander({ titre: 'Enregistrer la décision', message: 'La décision sur la candidature sera enregistrée et le candidat notifié.', confirmer: 'Enregistrer' }))) return;
     this.http.put(`${this.apiUrl}/recrutement/candidatures/${c.idcandidature}/evaluer`, { statusCandidature: statut }).subscribe({
       next: () => {
         c.statusCandidature = statut as any;
@@ -240,8 +241,9 @@ export class AgentCandidatures implements OnInit {
     this.motifRefus = '';
   }
 
-  confirmerRefus(): void {
+  async confirmerRefus(): Promise<void> {
     if (!this.candidatureEnRefus || !this.motifRefus.trim()) return;
+    if (!(await this.confirmService.demander({ titre: 'Refuser la candidature', message: 'La candidature sera refusée et le candidat notifié.', confirmer: 'Refuser', danger: true }))) return;
     this.soumission = true;
     this.http.put(`${this.apiUrl}/recrutement/candidatures/${this.candidatureEnRefus.idcandidature}/evaluer`, {
       statusCandidature: 'REJETEE',
@@ -269,14 +271,7 @@ export class AgentCandidatures implements OnInit {
   }
 
   showToast(title: string, message: string, type: 'success' | 'error' | 'warning' = 'success'): void {
-    const id = ++this.toastIdCounter;
-    this.toasts.push({ id, title, message, type });
-    setTimeout(() => this.dismissToast(id), 4000);
-  }
-
-  dismissToast(id: number): void {
-    this.toasts = this.toasts.filter(t => t.id !== id);
-    this.cdr.detectChanges();
+    this.toastService.afficher(type, title, message);
   }
 
   getStatutBarClass(s: string): string {

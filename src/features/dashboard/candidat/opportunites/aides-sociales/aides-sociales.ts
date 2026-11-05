@@ -3,11 +3,13 @@
 // SQL statusAide : BROUILLON | EN_ATTENTE | EN_TRAITEMENT | VALIDEE | REJETEE | ACTIVE | CLOTUREE
 import { CommonModule, DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, ChangeDetectorRef, OnInit, NgZone } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit, NgZone, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../../../../environments/environment';
 import { Loader } from '../../../../../shared/components/loader/loader';
+import { ToastService } from '../../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../../core/services/confirm.service';
 
 // Table `aides` — entrée créée par le candidat (creePar='CANDIDAT')
 interface MaDemandeAide {
@@ -41,6 +43,8 @@ interface Pagination {
   styleUrl: './aides-sociales.css',
 })
 export class AidesSociales implements OnInit {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
 
   // ── Liste des demandes du candidat ────────────────────────────────────────
   mesDemandes: MaDemandeAide[] = [];
@@ -70,7 +74,6 @@ export class AidesSociales implements OnInit {
   showCreateModal = false;
   etapeCreate: 1 | 2 = 1;
   isSubmitting = false;
-  successMessage = '';
   errorCreate = '';
 
   // Formulaire création
@@ -248,7 +251,6 @@ export class AidesSociales implements OnInit {
     if (!this.ifuLoaded || !this.hasDocumentFiscal) return;
     this.form = { direction_iddirection: null, typeAide: '', titre: '', motif: '', cnib: null, demandeAide: null };
     this.errorCreate = '';
-    this.successMessage = '';
     this.etapeCreate = 1;
     this.showCreateModal = true;
   }
@@ -259,7 +261,7 @@ export class AidesSociales implements OnInit {
     this.etapeCreate = 1;
   }
 
-  soumettreDemande(): void {
+  async soumettreDemande(): Promise<void> {
     if (!this.form.direction_iddirection) {
       this.errorCreate = 'Veuillez choisir la direction concernée par votre demande.';
       return;
@@ -277,6 +279,7 @@ export class AidesSociales implements OnInit {
       return;
     }
 
+    if (!(await this.confirmService.demander({ titre: 'Envoyer la demande', message: 'Votre demande d\'aide sera envoyée pour traitement.', confirmer: 'Envoyer' }))) return;
     this.isSubmitting = true;
     this.errorCreate = '';
 
@@ -296,8 +299,7 @@ export class AidesSociales implements OnInit {
             this.pagination.page = 1;
             this.loadMesDemandes();
             this.loadAllCounts();
-            this.successMessage = 'Votre demande d\'aide a été soumise avec succès !';
-            setTimeout(() => this.successMessage = '', 5000);
+            this.toastService.succes('Votre demande d\'aide a été soumise avec succès !');
           }
           this.isSubmitting = false;
           this.cdr.detectChanges();

@@ -8,6 +8,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
 import { StatCard } from '../../../../../shared/components/stat-card/stat-card';
+import { ToastService } from '../../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../../core/services/confirm.service';
 
 interface Candidat {
   idcandidats: number;
@@ -50,6 +52,8 @@ interface Stats {
   templateUrl: './agent-candidats.html',
 })
 export class AgentCandidats implements OnInit {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
 
   // Recherche : barre « Rechercher… » du header de l'espace agent (comme l'admin)
   private readonly rechercheHeader = (() => {
@@ -69,7 +73,6 @@ export class AgentCandidats implements OnInit {
   isLoading = false;
   isLoadingDetail = false;
   errorMessage = '';
-  successMessage = '';
 
   // ── Filtres / Pagination ──────────────────────────────────────
   search = '';
@@ -82,7 +85,6 @@ export class AgentCandidats implements OnInit {
   candidatDetail: CandidatDetail | null = null;
   showCreateModal = false;
   showEditModal = false;
-  showDeleteModal = false;
   candidatAEditer: Candidat | null = null;
   candidatASupprimer: Candidat | null = null;
   tempPassword = '';       // Mot de passe temporaire après création
@@ -224,8 +226,9 @@ export class AgentCandidats implements OnInit {
     this.cdr.detectChanges();
   }
 
-  creerCandidat(): void {
+  async creerCandidat(): Promise<void> {
     if (this.createForm.invalid || this.isSaving) return;
+    if (!(await this.confirmService.demander({ titre: 'Créer le candidat', message: 'Le compte du candidat sera créé.', confirmer: 'Créer' }))) return;
     this.isSaving = true;
     this.errorMessage = '';
 
@@ -243,7 +246,7 @@ export class AgentCandidats implements OnInit {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        this.errorMessage = err.error?.message || 'Erreur lors de la création';
+        this.toastService.erreur(err.error?.message || 'Erreur lors de la création');
         this.isSaving = false;
         this.cdr.detectChanges();
       }
@@ -270,8 +273,9 @@ export class AgentCandidats implements OnInit {
     this.cdr.detectChanges();
   }
 
-  modifierCandidat(): void {
+  async modifierCandidat(): Promise<void> {
     if (this.editForm.invalid || !this.candidatAEditer || this.isSaving) return;
+    if (!(await this.confirmService.demander({ titre: 'Enregistrer les modifications', message: 'Les informations du candidat seront mises à jour.', confirmer: 'Enregistrer' }))) return;
     this.isSaving = true;
     this.errorMessage = '';
 
@@ -286,7 +290,7 @@ export class AgentCandidats implements OnInit {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        this.errorMessage = err.error?.message || 'Erreur lors de la modification';
+        this.toastService.erreur(err.error?.message || 'Erreur lors de la modification');
         this.isSaving = false;
         this.cdr.detectChanges();
       }
@@ -294,14 +298,13 @@ export class AgentCandidats implements OnInit {
   }
 
   // ── Supprimer ─────────────────────────────────────────────────
-  ouvrirDeleteModal(candidat: Candidat): void {
+  async ouvrirDeleteModal(candidat: Candidat): Promise<void> {
     this.candidatASupprimer = candidat;
-    this.showDeleteModal = true;
-    this.cdr.detectChanges();
+    if (!(await this.confirmService.demander({ titre: 'Supprimer le candidat', message: 'Cette action est irréversible.', detail: `${candidat.prenom} ${candidat.nom}`, confirmer: 'Supprimer', danger: true }))) { this.fermerDeleteModal(); return; }
+    this.supprimerCandidat();
   }
 
   fermerDeleteModal(): void {
-    this.showDeleteModal = false;
     this.candidatASupprimer = null;
     this.cdr.detectChanges();
   }
@@ -322,7 +325,7 @@ export class AgentCandidats implements OnInit {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        this.errorMessage = err.error?.message || 'Erreur lors de la suppression';
+        this.toastService.erreur(err.error?.message || 'Erreur lors de la suppression');
         this.isDeleting = false;
         this.cdr.detectChanges();
       }
@@ -331,9 +334,8 @@ export class AgentCandidats implements OnInit {
 
   // ── Helpers ───────────────────────────────────────────────────
   showSuccessMessage(msg: string): void {
-    this.successMessage = msg;
+    this.toastService.succes(msg);
     this.cdr.detectChanges();
-    setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
   }
 
   getInitiale(nom: string): string {

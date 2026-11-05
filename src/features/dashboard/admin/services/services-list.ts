@@ -1,5 +1,5 @@
 // services-list.ts - Composant de gestion des services
-import { ChangeDetectorRef, Component, NgZone, OnInit, OnDestroy } from '@angular/core';
+import { ChangeDetectorRef, Component, NgZone, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
@@ -10,13 +10,8 @@ import {
   ServiceFilters,
 } from '../../../../core/services/admin-service.service';
 import { SearchService } from '../../../../core/services/search.service';
-
-interface Toast {
-  id: number;
-  type: 'success' | 'error';
-  title: string;
-  message: string;
-}
+import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../core/services/confirm.service';
 
 @Component({
   selector: 'app-services-list',
@@ -26,6 +21,8 @@ interface Toast {
   styleUrls: ['./services-list.css'],
 })
 export class ServicesList implements OnInit, OnDestroy {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
   // Données
   services: ServiceItem[] = [];
   totalItems = 0;
@@ -44,7 +41,6 @@ export class ServicesList implements OnInit, OnDestroy {
 
   // Modal
   showModal = false;
-  showDeleteModal = false;
   modalMode: 'create' | 'edit' = 'create';
   selectedService: ServiceItem | null = null;
 
@@ -52,10 +48,6 @@ export class ServicesList implements OnInit, OnDestroy {
   formAccronyme = '';
   formDescription = '';
   formError = '';
-
-  // Toasts
-  toasts: Toast[] = [];
-  private toastId = 0;
 
   private searchSub?: Subscription;
 
@@ -166,7 +158,7 @@ export class ServicesList implements OnInit, OnDestroy {
     this.formError = '';
   }
 
-  submitForm(): void {
+  async submitForm(): Promise<void> {
     this.formError = '';
 
     if (!this.formAccronyme.trim()) {
@@ -182,6 +174,7 @@ export class ServicesList implements OnInit, OnDestroy {
       return;
     }
 
+    if (!(await this.confirmService.demander({ titre: 'Enregistrer le service', message: 'Le service sera enregistré.', confirmer: 'Enregistrer' }))) return;
     this.submitting = true;
     const data = {
       accronyme: this.formAccronyme.trim().toUpperCase(),
@@ -237,13 +230,13 @@ export class ServicesList implements OnInit, OnDestroy {
   // SUPPRESSION
   // =====================================================
 
-  openDeleteModal(service: ServiceItem): void {
+  async openDeleteModal(service: ServiceItem): Promise<void> {
     this.selectedService = service;
-    this.showDeleteModal = true;
+    if (!(await this.confirmService.demander({ titre: 'Supprimer le service', message: 'Cette action est irréversible. Les agents liés à ce service ne seront pas supprimés.', detail: `${service.accronyme} — ${service.description}`, confirmer: 'Supprimer', danger: true }))) { this.closeDeleteModal(); return; }
+    this.confirmDelete();
   }
 
   closeDeleteModal(): void {
-    this.showDeleteModal = false;
     this.selectedService = null;
   }
 
@@ -300,17 +293,10 @@ export class ServicesList implements OnInit, OnDestroy {
   }
 
   // =====================================================
-  // TOASTS
   // =====================================================
 
   showToast(title: string, message: string, type: 'success' | 'error'): void {
-    const toast: Toast = { id: ++this.toastId, type, title, message };
-    this.toasts.push(toast);
-    setTimeout(() => this.removeToast(toast.id), 4000);
+    this.toastService.afficher(type, title, message);
   }
 
-  removeToast(id: number): void {
-    this.toasts = this.toasts.filter((t) => t.id !== id);
-    this.cdr.detectChanges();
-  }
 }

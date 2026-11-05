@@ -1,9 +1,11 @@
 // admin-rapports.ts — Liste et traitement des rapports de stage (admin)
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
+import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../core/services/confirm.service';
 
 interface Candidat {
   idcandidats: number;
@@ -55,6 +57,8 @@ export interface Rapport {
   templateUrl: './admin-rapports.html',
 })
 export class AdminRapports implements OnInit {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly toastService = inject(ToastService);
 
   private readonly apiUrl = environment.apiUrl;
 
@@ -63,7 +67,6 @@ export class AdminRapports implements OnInit {
   isLoading = false;
   filtreStatut = '';
   search = '';
-  successMessage = '';
   erreur = '';
 
   // Modal détail
@@ -81,7 +84,6 @@ export class AdminRapports implements OnInit {
   attestationFile: File | null = null;
   attestationNumero = '';
   attestationDate = '';
-  erreurAttestation = '';
   showAttestationModal = false;
   soumissionAttestation = false;
 
@@ -141,7 +143,7 @@ export class AdminRapports implements OnInit {
 
   voirDetail(r: Rapport): void {
     this.selected = r; this.showModal = true;
-    this.erreur = ''; this.successMessage = '';
+    this.erreur = '';
   }
   fermerModal(): void { this.showModal = false; this.selected = null; }
 
@@ -168,7 +170,6 @@ export class AdminRapports implements OnInit {
   }
 
   private reinitialiserAttestation(): void {
-    this.erreurAttestation = '';
     this.attestationFile = null;
     this.attestationNumero = '';
     this.attestationDate = new Date().toISOString().split('T')[0];
@@ -182,20 +183,20 @@ export class AdminRapports implements OnInit {
     const input = event.target as HTMLInputElement;
     const fichier = input.files?.[0] ?? null;
     if (fichier && fichier.size > 1024 * 1024) {
-      this.erreurAttestation = 'Le fichier de l\'attestation ne doit pas dépasser 1 Mo.';
+      this.toastService.erreur('Le fichier de l\'attestation ne doit pas dépasser 1 Mo.');
       input.value = '';
       this.attestationFile = null;
       return;
     }
-    this.erreurAttestation = '';
     this.attestationFile = fichier;
   }
 
-  confirmerDecision(): void {
+  async confirmerDecision(): Promise<void> {
     if (!this.selected || !this.decisionType) return;
     if (!this.commentaire.trim()) return;
     if (this.decisionType === 'REFUSE' && !this.motifRefus.trim()) return;
     if (this.decisionType === 'VALIDE' && this.attestationIncomplete) return;
+    if (!(await this.confirmService.demander({ titre: this.decisionType === 'VALIDE' ? 'Valider le rapport' : 'Rejeter le rapport', message: this.decisionType === 'VALIDE' ? 'Le rapport sera validé et le candidat notifié.' : 'Le rapport sera rejeté et le candidat notifié.', confirmer: this.decisionType === 'VALIDE' ? 'Valider' : 'Rejeter', danger: this.decisionType !== 'VALIDE' }))) return;
     this.soumission = true;
 
     const body: Record<string, unknown> = {
@@ -211,24 +212,22 @@ export class AdminRapports implements OnInit {
         if (this.decisionType === 'VALIDE' && this.selected) {
           this.uploadAttestation(this.selected, () => {
             this.soumission = false; this.showDecisionModal = false; this.showModal = false;
-            this.successMessage = 'Rapport validé et attestation jointe avec succès.';
+            this.toastService.succes('Rapport validé et attestation jointe avec succès.');
             this.charger();
-            setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
           }, (message) => {
             this.soumission = false; this.showDecisionModal = false; this.showModal = false;
+            this.toastService.avertissement('Rapport validé, attestation non enregistrée', `Joignez-la depuis la liste des rapports : ${message}`);
             this.charger();
-            this.erreur = `Rapport validé, attestation non enregistrée. Joignez-la depuis la liste des rapports : ${message}`;
           });
         } else {
           this.soumission = false; this.showDecisionModal = false; this.showModal = false;
-          this.successMessage = this.decisionType === 'VALIDE' ? 'Rapport validé avec succès.' : 'Rapport rejeté.';
+          this.toastService.succes(this.decisionType === 'VALIDE' ? 'Rapport validé avec succès.' : 'Rapport rejeté.');
           this.charger();
-          setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
         }
       },
       error: (err) => {
         this.soumission = false;
-        this.erreur = err.error?.message || 'Une erreur est survenue.';
+        this.toastService.erreur(err.error?.message || 'Une erreur est survenue.');
         this.cdr.detectChanges();
       },
     });
@@ -258,20 +257,24 @@ export class AdminRapports implements OnInit {
 
   fermerRemplacement(): void { this.showAttestationModal = false; }
 
-  confirmerRemplacement(): void {
+  async confirmerRemplacement(): Promise<void> {
     if (!this.selected || this.attestationIncomplete) return;
     const remplace = !!this.attestationDe(this.selected);
+    if (!(await this.confirmService.demander({
+      titre: remplace ? 'Remplacer l\'attestation' : 'Joindre l\'attestation',
+      message: remplace ? 'L\'attestation actuelle sera remplacée et le candidat notifié.' : 'L\'attestation sera ajoutée au dossier et le candidat notifié.',
+      confirmer: remplace ? 'Remplacer' : 'Joindre',
+    }))) return;
     this.soumissionAttestation = true;
     this.uploadAttestation(this.selected, () => {
       this.soumissionAttestation = false;
       this.showAttestationModal = false;
       this.showModal = false;
-      this.successMessage = remplace ? 'Attestation remplacée avec succès.' : 'Attestation jointe avec succès.';
+      this.toastService.succes(remplace ? 'Attestation remplacée avec succès.' : 'Attestation jointe avec succès.');
       this.charger();
-      setTimeout(() => { this.successMessage = ''; this.cdr.detectChanges(); }, 4000);
     }, (message) => {
       this.soumissionAttestation = false;
-      this.erreurAttestation = message;
+      this.toastService.erreur(message);
       this.cdr.detectChanges();
     });
   }
@@ -281,7 +284,7 @@ export class AdminRapports implements OnInit {
     if (!attestation) return;
     this.http.get(`${this.apiUrl}/stages/documents/${attestation.iddocument}/download`, { responseType: 'blob' }).subscribe({
       next: (blob) => this.ouvrirBlob(blob, attestation.document_filename, mode),
-      error: () => { this.erreur = 'Impossible de charger l\'attestation.'; this.cdr.detectChanges(); },
+      error: () => { this.toastService.erreur('Impossible de charger l\'attestation.'); this.cdr.detectChanges(); },
     });
   }
 
@@ -290,7 +293,7 @@ export class AdminRapports implements OnInit {
     const filename = this.selected.rapportPdf_filename || `rapport_${this.selected.idrapport}.pdf`;
     this.http.get(`${this.apiUrl}/stages/rapports/${this.selected.idrapport}/download`, { responseType: 'blob' }).subscribe({
       next: (blob) => this.ouvrirBlob(blob, filename, mode),
-      error: () => { this.erreur = 'Impossible de charger le rapport.'; this.cdr.detectChanges(); },
+      error: () => { this.toastService.erreur('Impossible de charger le rapport.'); this.cdr.detectChanges(); },
     });
   }
 
@@ -315,6 +318,7 @@ export class AdminRapports implements OnInit {
       default:              return 'bg-gray-100 text-gray-600';
     }
   }
+
 
   getStatutLabel(statut: string): string {
     switch (statut) {
