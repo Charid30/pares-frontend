@@ -10,6 +10,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
 import { StatCard } from '../../../../../shared/components/stat-card/stat-card';
+import { DirectionConcernee } from '../../../../../shared/components/direction-concernee/direction-concernee';
 
 interface DirectionInfo {
   iddirection: number;
@@ -45,7 +46,7 @@ interface DemandeAudience {
 @Component({
   selector: 'app-agent-audience',
   standalone: true,
-  imports: [CommonModule, FormsModule, StatCard],
+  imports: [CommonModule, FormsModule, StatCard, DirectionConcernee],
   templateUrl: './agent-audience.html',
 })
 export class AgentAudience implements OnInit {
@@ -256,8 +257,52 @@ export class AgentAudience implements OnInit {
   }
 
   // ── Modal Transfert ──
+  // Redirection seulement avant la décision (acceptée, rejetée ou annulée : plus de redirection)
   peutTransfererStatut(d: DemandeAudience): boolean {
-    return d.status !== 'REJETE' && d.status !== 'ANNULE';
+    return d.status === 'EN_ATTENTE';
+  }
+
+  // ── Avant de valider : « Cette demande concerne-t-elle votre direction ? » (2026-11-05) ──
+  // Oui → la validation continue ; Non → redirection vers la direction choisie, sans validation.
+  concerne: { id: number; directionId: number | null; suite: () => void } | null = null;
+  soumissionRedirection = false;
+  erreurRedirection = '';
+
+  private demanderSiConcerne(id: number, directionId: number | null | undefined, suite: () => void): void {
+    this.concerne = { id, directionId: directionId ?? null, suite };
+    this.erreurRedirection = '';
+    this.cdr.detectChanges();
+  }
+
+  concerneOui(): void {
+    const suite = this.concerne?.suite;
+    this.concerne = null;
+    suite?.();
+  }
+
+  concerneAnnuler(): void {
+    if (!this.soumissionRedirection) this.concerne = null;
+  }
+
+  concerneRediriger(directionId: number): void {
+    if (!this.concerne || this.soumissionRedirection) return;
+    this.soumissionRedirection = true;
+    this.erreurRedirection = '';
+    this.http.put<any>(`${this.apiUrl}/demandes-audience/${this.concerne.id}/transferer`, { direction_iddirection: directionId }).subscribe({
+      next: () => {
+        this.soumissionRedirection = false;
+        this.concerne = null;
+        this.demandeEnDecision = null;
+        this.showToast('Succès', 'Demande d\'audience redirigée vers la direction concernée');
+        this.charger();
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.soumissionRedirection = false;
+        this.erreurRedirection = err.error?.message || 'Erreur lors de la redirection';
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   ouvrirTransfertModal(d: DemandeAudience): void {
@@ -390,9 +435,13 @@ export class AgentAudience implements OnInit {
     this.heureAudienceConfirmee = (d.heureAudienceConfirmee || d.heureAudience || '').substring(0, 5);
   }
 
-  confirmerDecision(): void {
+  confirmerDecision(confirme = false): void {
     if (!this.demandeEnDecision) return;
     if (this.decisionType === 'REJETE' && !this.commentaire.trim()) return;
+    if (!confirme && this.decisionType === 'ACCEPTE') {
+      this.demanderSiConcerne(this.demandeEnDecision.iddemande, this.demandeEnDecision.direction_iddirection, () => this.confirmerDecision(true));
+      return;
+    }
     this.soumission = true;
     const body: any = {
       status: this.decisionType,

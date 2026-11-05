@@ -875,3 +875,8 @@
   </div>
 
 </div>
+
+<!-- Avant de valider : « Concerne-t-elle votre direction ? » ; sinon redirection sans validation -->
+<app-direction-concernee [ouvert]="!!concerne" [directionActuelleId]="concerne?.directionId" [directions]="directions"
+                         [soumission]="soumissionRedirection" [erreur]="erreurRedirection"
+                         (oui)="concerneOui()" (rediriger)="concerneRediriger($event)" (annuler)="concerneAnnuler()"></app-direction-concernee>

@@ -10,6 +10,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
 import { StatCard } from '../../../../../shared/components/stat-card/stat-card';
+import { DirectionConcernee } from '../../../../../shared/components/direction-concernee/direction-concernee';
 
 interface DirectionInfo { iddirection: number; nom: string; accronyme: string; }
 
@@ -40,7 +41,7 @@ interface Aide {
 @Component({
   selector: 'app-agent-aide',
   standalone: true,
-  imports: [CommonModule, FormsModule, StatCard],
+  imports: [CommonModule, FormsModule, StatCard, DirectionConcernee],
   templateUrl: './agent-aide.html',
 })
 export class AgentAide implements OnInit {
@@ -291,7 +292,11 @@ export class AgentAide implements OnInit {
     });
   }
 
-  evaluer(a: Aide, statut: 'VALIDEE' | 'REJETEE'): void {
+  evaluer(a: Aide, statut: 'VALIDEE' | 'REJETEE', confirme = false): void {
+    if (!confirme && statut === 'VALIDEE') {
+      this.demanderSiConcerne(a.idaide, a.direction_iddirection, () => this.evaluer(a, statut, true));
+      return;
+    }
     this.http.put(`${this.apiUrl}/aides/${a.idaide}/evaluer`, { statusAide: statut }).subscribe({
       next: () => {
         a.statusAide = statut;
@@ -400,6 +405,49 @@ export class AgentAide implements OnInit {
     });
   }
 
+  // ── Avant de valider : « Cette demande concerne-t-elle votre direction ? » (2026-11-05) ──
+  // Oui → la validation continue ; Non → redirection vers la direction choisie, sans validation.
+  concerne: { id: number; directionId: number | null; suite: () => void } | null = null;
+  soumissionRedirection = false;
+  erreurRedirection = '';
+
+  private demanderSiConcerne(id: number, directionId: number | null | undefined, suite: () => void): void {
+    this.concerne = { id, directionId: directionId ?? null, suite };
+    this.erreurRedirection = '';
+    this.cdr.detectChanges();
+  }
+
+  concerneOui(): void {
+    const suite = this.concerne?.suite;
+    this.concerne = null;
+    suite?.();
+  }
+
+  concerneAnnuler(): void {
+    if (!this.soumissionRedirection) this.concerne = null;
+  }
+
+  concerneRediriger(directionId: number): void {
+    if (!this.concerne || this.soumissionRedirection) return;
+    this.soumissionRedirection = true;
+    this.erreurRedirection = '';
+    this.http.put<any>(`${this.apiUrl}/aides/${this.concerne.id}/transferer`, { direction_iddirection: directionId }).subscribe({
+      next: () => {
+        this.soumissionRedirection = false;
+        this.concerne = null;
+        this.fermerTraitementModal();
+        this.showToast('Succès', 'Demande d\'aide redirigée vers la direction concernée');
+        this.charger();
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.soumissionRedirection = false;
+        this.erreurRedirection = err.error?.message || 'Erreur lors de la redirection';
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
   // ── Modal Traitement ──
   ouvrirTraitementModal(a: Aide): void {
     this.aideATraiter = a;
@@ -416,8 +464,12 @@ export class AgentAide implements OnInit {
     this.aideATraiter = null;
   }
 
-  confirmerTraitement(): void {
+  confirmerTraitement(confirme = false): void {
     if (!this.aideATraiter || !this.traitementDecision) return;
+    if (!confirme && this.traitementDecision === 'VALIDEE') {
+      this.demanderSiConcerne(this.aideATraiter.idaide, this.aideATraiter.direction_iddirection, () => this.confirmerTraitement(true));
+      return;
+    }
     this.erreurTraitement = '';
     this.soumissionTraitement = true;
     const body: any = { statusAide: this.traitementDecision };

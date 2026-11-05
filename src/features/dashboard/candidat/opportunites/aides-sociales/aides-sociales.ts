@@ -77,6 +77,7 @@ export class AidesSociales implements OnInit {
   // Champs SQL : typeAide, titre (=objet), description/motif (optionnel)
   // Fichiers SQL : cnib (MEDIUMBLOB), demandeAide (MEDIUMBLOB)
   form = {
+    direction_iddirection: null as number | null,   // direction concernée, obligatoire (2026-11-05)
     typeAide: '',
     titre: '',        // objet de la soumission
     motif: '',        // optionnel
@@ -106,7 +107,14 @@ export class AidesSociales implements OnInit {
     private ngZone: NgZone
   ) {}
 
+  // Directions proposées au candidat (même liste que pour les audiences)
+  directions: { iddirection: number; nom: string; accronyme: string }[] = [];
+
   ngOnInit(): void {
+    this.http.get<any>(`${this.apiUrl}/stages/directions`).subscribe({
+      next: (res) => { if (res.success) { this.directions = res.data; this.cdr.detectChanges(); } },
+      error: () => {},
+    });
     this.loadMesDemandes();
     this.loadAllCounts();
     this.loadProfil();
@@ -238,7 +246,7 @@ export class AidesSociales implements OnInit {
   ouvrirCreateModal(): void {
     // Garde-fou en plus du [disabled] du bouton (défense en profondeur)
     if (!this.ifuLoaded || !this.hasDocumentFiscal) return;
-    this.form = { typeAide: '', titre: '', motif: '', cnib: null, demandeAide: null };
+    this.form = { direction_iddirection: null, typeAide: '', titre: '', motif: '', cnib: null, demandeAide: null };
     this.errorCreate = '';
     this.successMessage = '';
     this.etapeCreate = 1;
@@ -252,6 +260,10 @@ export class AidesSociales implements OnInit {
   }
 
   soumettreDemande(): void {
+    if (!this.form.direction_iddirection) {
+      this.errorCreate = 'Veuillez choisir la direction concernée par votre demande.';
+      return;
+    }
     if (!this.form.typeAide || !this.form.titre) {
       this.errorCreate = 'Le type d\'aide et l\'objet sont obligatoires.';
       return;
@@ -269,6 +281,7 @@ export class AidesSociales implements OnInit {
     this.errorCreate = '';
 
     const formData = new FormData();
+    formData.append('direction_iddirection', String(this.form.direction_iddirection));
     formData.append('typeAide', this.form.typeAide);
     formData.append('titre', this.form.titre);
     if (this.form.motif) formData.append('description', this.form.motif);

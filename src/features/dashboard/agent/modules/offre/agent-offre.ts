@@ -9,6 +9,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
 import { StatCard } from '../../../../../shared/components/stat-card/stat-card';
+import { DirectionConcernee } from '../../../../../shared/components/direction-concernee/direction-concernee';
 
 interface DirectionInfo {
   iddirection: number;
@@ -41,7 +42,7 @@ interface Offre {
 @Component({
   selector: 'app-agent-offre',
   standalone: true,
-  imports: [CommonModule, FormsModule, StatCard],
+  imports: [CommonModule, FormsModule, StatCard, DirectionConcernee],
   templateUrl: './agent-offre.html',
 })
 export class AgentOffre implements OnInit {
@@ -282,12 +283,16 @@ export class AgentOffre implements OnInit {
     this.showTraitementModal = true;
   }
 
-  enregistrerDecision(): void {
+  enregistrerDecision(confirme = false): void {
     if (!this.evaluation.statusOffre) { this.erreurEval = 'Veuillez choisir une décision.'; return; }
     if (this.evaluation.statusOffre === 'REJETEE' && !this.evaluation.motifRefus.trim()) {
       this.erreurEval = 'Le motif du refus est obligatoire en cas de rejet.'; return;
     }
     if (!this.selectedOffre) return;
+    if (!confirme && ['VALIDEE', 'EN_TRAITEMENT'].includes(this.evaluation.statusOffre)) {
+      this.demanderSiConcerne(this.selectedOffre.idoffres, this.selectedOffre.direction_iddirection, () => this.enregistrerDecision(true));
+      return;
+    }
     this.soumission = true;
     this.erreurEval = '';
 
@@ -408,8 +413,52 @@ export class AgentOffre implements OnInit {
   }
 
   // ── Modal Transfert ──
+  // Redirection seulement avant la décision (validée ou rejetée : plus de redirection)
   peutTransfererStatut(o: Offre): boolean {
-    return !['REJETEE', 'CLOTUREE'].includes(o.statusOffre);
+    return ['EN_ATTENTE', 'EN_TRAITEMENT'].includes(o.statusOffre);
+  }
+
+  // ── Avant de valider : « Cette demande concerne-t-elle votre direction ? » (2026-11-05) ──
+  // Oui → la validation continue ; Non → redirection vers la direction choisie, sans validation.
+  concerne: { id: number; directionId: number | null; suite: () => void } | null = null;
+  soumissionRedirection = false;
+  erreurRedirection = '';
+
+  private demanderSiConcerne(id: number, directionId: number | null | undefined, suite: () => void): void {
+    this.concerne = { id, directionId: directionId ?? null, suite };
+    this.erreurRedirection = '';
+    this.cdr.detectChanges();
+  }
+
+  concerneOui(): void {
+    const suite = this.concerne?.suite;
+    this.concerne = null;
+    suite?.();
+  }
+
+  concerneAnnuler(): void {
+    if (!this.soumissionRedirection) this.concerne = null;
+  }
+
+  concerneRediriger(directionId: number): void {
+    if (!this.concerne || this.soumissionRedirection) return;
+    this.soumissionRedirection = true;
+    this.erreurRedirection = '';
+    this.http.put<any>(`${this.apiUrl}/offres/${this.concerne.id}/transferer`, { direction_iddirection: directionId }).subscribe({
+      next: () => {
+        this.soumissionRedirection = false;
+        this.concerne = null;
+        this.fermerTraitement();
+        this.showToast('Succès', 'Offre redirigée vers la direction concernée');
+        this.charger();
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.soumissionRedirection = false;
+        this.erreurRedirection = err.error?.message || 'Erreur lors de la redirection';
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   ouvrirTransfertModal(o: Offre): void {
