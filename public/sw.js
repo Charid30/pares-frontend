@@ -2,7 +2,8 @@
 // Stratégie : Network-first avec cache de secours.
 // IMPORTANT : incrémenter CACHE_VERSION à chaque déploiement majeur
 //             pour forcer le vidage du cache sur tous les clients.
-const CACHE_VERSION = 'sonabhy-v4';
+const CACHE_VERSION = 'sonabhy-v5';
+
 
 // ── Installation : activation immédiate ──────────────────────────────────────
 self.addEventListener('install', () => {
@@ -28,6 +29,11 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
   const url = new URL(event.request.url);
+
+  // Ouverture d'une page : laissée au navigateur. Il affiche ainsi sa propre page d'erreur (certificat, réseau).
+  // Répondre avec index.html en cache donnait une page blanche quand le certificat est refusé : pas d'avertissement,
+  // puis tous les fichiers JS bloqués par ERR_CERT_AUTHORITY_INVALID / ERR_CERT_DATE_INVALID.
+  if (event.request.mode === 'navigate') return;
 
   // Ignorer les appels API (jamais mis en cache)
   if (url.pathname.startsWith('/api')) return;
