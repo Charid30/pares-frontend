@@ -229,6 +229,11 @@ export const routes: Routes = [
                 path: 'rapports',
                 loadComponent: () => import('../features/dashboard/admin/rapports/admin-rapports').then(m => m.AdminRapports)
             },
+            // Notifications push envoyées par l'admin (candidats, agents ou tout le monde)
+            {
+                path: 'notifications-push',
+                loadComponent: () => import('../features/dashboard/admin/notifications-push/admin-notifications-push').then(m => m.AdminNotificationsPush)
+            },
             // Explorateur de base de données (admin uniquement)
             {
                 path: 'db-explorer',
