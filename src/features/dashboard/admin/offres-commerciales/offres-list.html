@@ -62,11 +62,12 @@
   <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 sm:p-4">
     <div class="flex flex-col sm:flex-row gap-2">
       <!-- Selects + bouton clear (la recherche se fait via la barre du haut) -->
-      <div class="flex gap-2 flex-1">
+      <!-- Téléphone : les listes passent à la ligne au lieu de sortir de l'écran -->
+      <div class="flex flex-wrap sm:flex-nowrap gap-2 flex-1">
         <select
           [(ngModel)]="filtreStatut"
           (change)="appliquerFiltres()"
-          class="flex-1 sm:w-40 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-300 focus:bg-white transition-all cursor-pointer">
+          class="flex-1 min-w-[8rem] sm:min-w-0 sm:w-40 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-300 focus:bg-white transition-all cursor-pointer">
           <option value="">Tous statuts</option>
           <option value="EN_ATTENTE">En attente</option>
           <option value="EN_TRAITEMENT">En traitement</option>
@@ -77,7 +78,7 @@
         <select
           [(ngModel)]="filtreType"
           (change)="appliquerFiltres()"
-          class="flex-1 sm:w-40 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-300 focus:bg-white transition-all cursor-pointer">
+          class="flex-1 min-w-[8rem] sm:min-w-0 sm:w-40 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-300 focus:bg-white transition-all cursor-pointer">
           <option value="">Tous types</option>
           <option value="VENTE">Vente</option>
           <option value="PARTENARIAT">Partenariat</option>
@@ -88,7 +89,7 @@
         <select
           [(ngModel)]="filtreDirection"
           (change)="appliquerFiltres()"
-          class="flex-1 sm:w-44 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 focus:bg-white transition-all cursor-pointer"
+          class="flex-1 min-w-[8rem] sm:min-w-0 sm:w-44 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 focus:bg-white transition-all cursor-pointer"
           [ngClass]="filtreDirection ? 'bg-teal-50 border-teal-300 text-teal-800 font-semibold' : ''">
           <option [ngValue]="null">Toutes les directions</option>
           @for (dir of directions; track dir.iddirection) {

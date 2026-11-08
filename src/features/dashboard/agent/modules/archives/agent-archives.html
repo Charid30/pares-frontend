@@ -60,7 +60,26 @@
 
   <!-- Tableau -->
   <div *ngIf="!isLoading && stages.length > 0" class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-    <div class="overflow-x-auto">
+    <!-- Téléphone : une carte par stage (le tableau de 8 colonnes glissait sur le côté) -->
+    <ul class="md:hidden divide-y divide-gray-100">
+      <li *ngFor="let s of stages" class="px-4 py-3 flex items-start gap-3">
+        <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600 flex-shrink-0">
+          {{ getInitiales(s) }}
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium text-gray-900 truncate">{{ s.candidat?.prenom }} {{ s.candidat?.nom }}</p>
+          <p class="text-xs text-gray-400 truncate">{{ s.candidat?.email }}</p>
+          <p class="text-xs text-gray-600 mt-1">{{ s.direction?.accronyme || '—' }} · {{ s.typeStage || '—' }}<span *ngIf="s.domaineStage"> · {{ s.domaineStage }}</span></p>
+          <p class="text-xs text-gray-500">{{ formatDate(s.dateDebutEffective) }} → {{ formatDate(s.dateFinEffective) }}</p>
+        </div>
+        <button (click)="voirDetail(s)"
+                class="shrink-0 min-h-[44px] px-3 text-xs bg-gray-100 text-gray-700 rounded-lg cursor-pointer">
+          Détails
+        </button>
+      </li>
+    </ul>
+
+    <div class="hidden md:block overflow-x-auto">
       <table class="w-full text-sm">
         <thead class="bg-gray-50 border-b border-gray-200">
           <tr>
@@ -93,7 +112,7 @@
             <td class="px-4 py-3 text-gray-500">{{ formatDate(s.dateDebutEffective) }}</td>
             <td class="px-4 py-3 text-gray-500">{{ formatDate(s.dateFinEffective) }}</td>
             <td class="px-4 py-3 text-gray-700">
-              {{ s.dureeStage ? s.dureeStage + ' j.' : '—' }}
+              {{ s.dureeStage ? s.dureeStage + ' mois' : '—' }}
             </td>
             <td class="px-4 py-3 text-center">
               <button
@@ -172,7 +191,7 @@
         </div>
         <div>
           <p class="text-gray-400 text-xs mb-1">Durée</p>
-          <p class="font-medium text-gray-800">{{ selected.dureeStage ? selected.dureeStage + ' jours' : '—' }}</p>
+          <p class="font-medium text-gray-800">{{ selected.dureeStage ? selected.dureeStage + ' mois' : '—' }}</p>
         </div>
         <div>
           <p class="text-gray-400 text-xs mb-1">Début effectif</p>

@@ -141,7 +141,15 @@
   <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
 
     <!-- Onglets de vue -->
-    <div *ngIf="!statusFilter" class="flex items-center gap-1 px-3 pt-2 border-b border-gray-100 overflow-x-auto" role="tablist">
+    <!-- Téléphone : liste déroulante à la place des onglets (qui débordaient de l'écran) -->
+    <div *ngIf="!statusFilter" class="sm:hidden px-3 pt-3 pb-2 border-b border-gray-100">
+      <label class="sr-only" for="vue-mobile">Vue</label>
+      <select id="vue-mobile" [value]="vueActive" (change)="changerVue($any($event.target).value)"
+              class="w-full min-h-[44px] px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-[#c0392b] focus:outline-none focus:border-[#c0392b] focus:ring-2 focus:ring-[#c0392b]/20">
+        <option *ngFor="let v of vues" [value]="v.key" [selected]="vueActive === v.key">{{ v.label }}{{ vueActive === v.key && !isLoading ? ' (' + total + ')' : '' }}</option>
+      </select>
+    </div>
+    <div *ngIf="!statusFilter" class="hidden sm:flex items-center gap-1 px-3 pt-2 border-b border-gray-100 overflow-x-auto" role="tablist">
       <button *ngFor="let v of vues" role="tab" [attr.aria-selected]="vueActive === v.key"
               (click)="changerVue(v.key)"
               class="relative flex items-center gap-1.5 px-3 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors"
