@@ -74,6 +74,8 @@ export interface StageChaine {
   nbRenouvellements: number;
   finProlongation: string | null;
   prolonge: boolean;
+  /** Le stage initial a déjà un renouvellement (quel que soit son statut) */
+  dejaRenouvele?: boolean;
 }
 
 export interface Stage {

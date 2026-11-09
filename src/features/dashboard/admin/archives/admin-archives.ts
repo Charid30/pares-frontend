@@ -33,7 +33,7 @@ interface StageArchive {
   dateFinEffective?: string;
   dureeStage?: number;
   /** Chaîne stage + renouvellements (durée totale, fin du dernier renouvellement) */
-  chaine?: { dureeTotaleMois: number; nbRenouvellements: number; finProlongation: string | null; prolonge: boolean };
+  chaine?: { dureeTotaleMois: number; nbRenouvellements: number; finProlongation: string | null; prolonge: boolean; dejaRenouvele?: boolean };
   candidat?: Candidat;
   direction?: Direction;
 }

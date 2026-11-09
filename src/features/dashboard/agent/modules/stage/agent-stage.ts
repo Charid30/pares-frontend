@@ -48,7 +48,7 @@ interface Stage {
   /** 'PROLONGE' quand un renouvellement prolonge ce stage (calculé par le backend) */
   statutAffiche?: string;
   /** Chaîne demande + renouvellements (durée totale, fin de prolongation) */
-  chaine?: { dureeTotaleMois: number; nbRenouvellements: number; finProlongation: string | null; prolonge: boolean };
+  chaine?: { dureeTotaleMois: number; nbRenouvellements: number; finProlongation: string | null; prolonge: boolean; dejaRenouvele?: boolean };
   stage_parent_idstage?: number | null;
   // Calculé côté backend : false si ce stage n'est visible que via un rôle "lecture globale"
   // et n'appartient pas à la direction de l'agent connecté (actions alors masquées).

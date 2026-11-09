@@ -983,7 +983,7 @@
       </div>
 
       <!-- Autorisation de renouvellement (TERMINE / EXPIRE — ADMIN seulement) -->
-      <div *ngIf="peutAutoriserRenouvellement && (detailStage.statusStage === 'TERMINE' || detailStage.statusStage === 'EXPIRE')"
+      <div *ngIf="peutAutoriserRenouvellement && (detailStage.statusStage === 'TERMINE' || detailStage.statusStage === 'EXPIRE') && !detailStage.chaine?.dejaRenouvele"
            class="border border-red-200 rounded-xl overflow-hidden">
         <div class="px-4 py-3 bg-red-50 flex items-center gap-2">
           <svg class="w-4 h-4 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

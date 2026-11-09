@@ -30,7 +30,7 @@ interface RenouvellementInfo {
 interface DemandeStage {
   /** 'PROLONGE' quand un renouvellement prolonge ce stage (calculé par le backend) */
   statutAffiche?: string;
-  chaine?: { dureeTotaleMois: number; nbRenouvellements: number; finProlongation: string | null; prolonge: boolean };
+  chaine?: { dureeTotaleMois: number; nbRenouvellements: number; finProlongation: string | null; prolonge: boolean; dejaRenouvele?: boolean };
   /** État du rapport (calculé par le backend, uniquement sur la demande initiale — null sur un renouvellement) :
    *  un seul rapport pour toute la chaîne, après la fin du dernier stage ou sur autorisation de l'admin */
   rapportInfo?: {
@@ -66,6 +66,8 @@ interface DemandeStage {
   autorisationRenouvellement: { id: number; expiresAt: string } | null;
   stage_parent_idstage: number | null;
   renouvellement: RenouvellementInfo | null;
+  /** Ce stage a déjà un renouvellement (calculé par le serveur) */
+  dejaRenouvele?: boolean;
 }
 
 interface ConventionRenouvellement {
@@ -1198,9 +1200,10 @@ export class Stages implements OnInit {
    * - TERMINE / EXPIRE : si une autorisation admin active existe
    */
   peutRenouveler(stage: DemandeStage): boolean {
-    // Bloquer si un renouvellement existe déjà (quel que soit son statut)
-    // Le rejet se gère via le bouton "Re-soumettre", pas via une nouvelle demande
-    if (stage.renouvellement) return false;
+    // Bloquer si ce stage a déjà un renouvellement (quel que soit son statut) : la suite de la chaîne
+    // se demande depuis ce renouvellement ; un rejet se gère via « Re-soumettre ».
+    // (`renouvellement` décrit la demande DONT ce stage est issu, pas un renouvellement de ce stage.)
+    if (stage.dejaRenouvele) return false;
 
     // Cas TERMINE / EXPIRE : autorisation admin requise
     if (stage.statusStage === 'TERMINE' || stage.statusStage === 'EXPIRE') {

@@ -38,6 +38,10 @@ interface StageNouveau {
   dateFinEffective?: string;
   dureeStage?: number;
   documents?: { document_filename: string }[];
+  /** Ce stage a déjà été renouvelé (calculé par le serveur) */
+  dejaRenouvele?: boolean;
+  /** Autorisation active pour demander un nouveau renouvellement (stage fini) */
+  autorisationRenouvellement?: { id: number; expiresAt: string } | null;
 }
 
 type StatusRenouvellement = 'EN_ATTENTE' | 'EN_COURS_DE_TRAITEMENT' | 'PROGRAMMATION_EN_COURS' | 'ACCEPTE' | 'REJETE' | 'EN_COURS' | 'EXPIRE' | 'TERMINE' | 'RAPPORT_SOUMIS';
@@ -376,6 +380,40 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.toastService.erreur(err.error?.message || 'Erreur lors de l\'annulation.');
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  // ── Nouveau renouvellement (suite de la chaîne) : autorisation de 7 jours ──
+  soumissionAutorisation = false;
+
+  /** Renouvellement terminé / expiré, pas encore renouvelé lui-même */
+  peutAutoriserNouveauRenouvellement(r: Renouvellement): boolean {
+    const s = r.stageNouveau;
+    return !!s && ['TERMINE', 'EXPIRE'].includes(s.statusStage) && !s.dejaRenouvele;
+  }
+
+  async autoriserNouveauRenouvellement(): Promise<void> {
+    const stage = this.selected?.stageNouveau;
+    if (!stage || this.soumissionAutorisation) return;
+    if (!(await this.confirmService.demander({
+      titre: 'Autoriser un nouveau renouvellement',
+      message: 'Le candidat pourra demander un nouveau renouvellement pendant 7 jours.',
+      detail: 'Il sera notifié. La limite de 6 mois de stage continu reste appliquée.',
+      confirmer: 'Autoriser',
+    }))) return;
+    this.soumissionAutorisation = true;
+    this.http.put<any>(`${this.apiUrl}/stages/${stage.idstage}/autoriser-renouvellement`, {}).subscribe({
+      next: (res) => {
+        this.soumissionAutorisation = false;
+        stage.autorisationRenouvellement = { id: res.data?.id, expiresAt: res.data?.expiresAt };
+        this.toastService.succes('Autorisation accordée pour 7 jours. Le candidat a été notifié.');
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.soumissionAutorisation = false;
+        this.toastService.erreur(err.error?.message || 'Erreur lors de l\'autorisation.');
         this.cdr.detectChanges();
       },
     });

@@ -1091,7 +1091,7 @@
             <div class="flex flex-wrap gap-3 empty:hidden">
 
             <!-- Autorisation de renouvellement (TERMINE / EXPIRE) -->
-            <div *ngIf="canValider && (selectedStage.statusStage === 'TERMINE' || selectedStage.statusStage === 'EXPIRE')"
+            <div *ngIf="canValider && (selectedStage.statusStage === 'TERMINE' || selectedStage.statusStage === 'EXPIRE') && !selectedStage.chaine?.dejaRenouvele"
                  class="flex-1 min-w-[11rem] border border-indigo-200 rounded-xl overflow-hidden">
               <div class="px-3 py-2 bg-indigo-50 flex items-center gap-2">
                 <svg class="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
