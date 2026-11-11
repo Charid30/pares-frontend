@@ -725,6 +725,38 @@ export class StagesList implements OnInit, OnDestroy {
     }
   }
 
+  /** Suppression d'un stage par l'admin, à tout statut (ses renouvellements partent avec lui). */
+  suppressionEnCours = false;
+
+  async supprimerStage(stage: StageDetails): Promise<void> {
+    if (!stage || this.suppressionEnCours) return;
+    const nom = stage.candidat ? `${stage.candidat.prenom} ${stage.candidat.nom}` : undefined;
+    if (!(await this.confirmService.demander({
+      titre: 'Supprimer la demande de stage',
+      message: 'La demande disparaîtra de toutes les listes, ainsi que les renouvellements qui en sont issus.',
+      detail: nom,
+      confirmer: 'Supprimer',
+      danger: true,
+    }))) return;
+    this.suppressionEnCours = true;
+    this.http.delete<any>(`${environment.apiUrl}/stages/${stage.idstage}`).subscribe({
+      next: (res) => {
+        this.suppressionEnCours = false;
+        this.closeModal();
+        this.loadStages();
+        this.loadStats();
+        const n = res?.data?.stagesSupprimes || 1;
+        this.toastService.succes(n > 1 ? `Demande de stage supprimée avec ses ${n - 1} renouvellement(s).` : 'Demande de stage supprimée.');
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.suppressionEnCours = false;
+        this.toastService.erreur(err.error?.message || 'Erreur lors de la suppression.');
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
   closeModal(): void {
     this.showModal = false;
     this.selectedStage = null;

@@ -1175,11 +1175,14 @@
         <div class="flex-shrink-0 px-4 py-3 border-t border-gray-100 bg-gray-50/60">
           <ng-container *ngIf="!loading && selectedStage">
             <!-- Bouton Fermer seul si pas d'action possible -->
-            <button *ngIf="selectedStage.statusStage !== 'EN_ATTENTE' && selectedStage.statusStage !== 'EN_COURS_DE_TRAITEMENT' && selectedStage.statusStage !== 'PROGRAMMATION_EN_COURS' && selectedStage.statusStage !== 'ACCEPTE' && selectedStage.statusStage !== 'EN_COURS' && selectedStage.statusStage !== 'REJETE'"
-                    (click)="closeModal()"
-                    class="w-full px-3 py-2.5 bg-white border border-gray-200 text-gray-600 text-xs font-semibold rounded-xl hover:bg-gray-50 transition-colors">
-              Fermer
-            </button>
+            <div *ngIf="selectedStage.statusStage !== 'EN_ATTENTE' && selectedStage.statusStage !== 'EN_COURS_DE_TRAITEMENT' && selectedStage.statusStage !== 'PROGRAMMATION_EN_COURS' && selectedStage.statusStage !== 'ACCEPTE' && selectedStage.statusStage !== 'EN_COURS' && selectedStage.statusStage !== 'REJETE'"
+                 class="flex gap-2">
+              <button (click)="closeModal()"
+                      class="flex-1 px-3 py-2.5 bg-white border border-gray-200 text-gray-600 text-xs font-semibold rounded-xl hover:bg-gray-50 transition-colors">
+                Fermer
+              </button>
+              <ng-container *ngTemplateOutlet="boutonSupprimerStage"></ng-container>
+            </div>
             <!-- Actions + Fermer si actions disponibles -->
             <div *ngIf="selectedStage.statusStage === 'EN_ATTENTE' || selectedStage.statusStage === 'EN_COURS_DE_TRAITEMENT' || selectedStage.statusStage === 'PROGRAMMATION_EN_COURS' || selectedStage.statusStage === 'ACCEPTE' || selectedStage.statusStage === 'EN_COURS' || selectedStage.statusStage === 'REJETE'"
                  class="flex flex-wrap gap-2">
@@ -1244,8 +1247,20 @@
                 </svg>
                 Expirer
               </button>
+              <ng-container *ngTemplateOutlet="boutonSupprimerStage"></ng-container>
             </div>
           </ng-container>
+          <!-- Supprimer : l'admin peut supprimer un stage à tout statut -->
+          <ng-template #boutonSupprimerStage>
+            <button (click)="supprimerStage(selectedStage!)"
+                    [disabled]="suppressionEnCours"
+                    class="ml-auto flex items-center gap-1.5 py-2 px-3 bg-white border border-red-200 text-[#c0392b] text-xs font-semibold rounded-xl hover:bg-red-50 active:scale-95 transition-all disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-[#c0392b]">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+              Supprimer
+            </button>
+          </ng-template>
           <div *ngIf="loading" class="h-10 bg-gray-100 rounded-xl animate-pulse"></div>
         </div>
       </ng-container>
