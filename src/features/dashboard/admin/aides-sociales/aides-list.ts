@@ -320,6 +320,48 @@ export class AidesList implements OnInit {
     });
   }
 
+  // ─── Retour au statut précédent (admin) : rouvre la redirection ───────────
+  retourStatutEnCours = false;
+  private readonly STATUT_PRECEDENT: Record<string, string> = { VALIDEE: 'EN_TRAITEMENT', REJETEE: 'EN_TRAITEMENT', EN_TRAITEMENT: 'EN_ATTENTE' };
+
+  statutPrecedent(aide: AideCandidat | null): string | null {
+    return aide ? this.STATUT_PRECEDENT[aide.statusAide] ?? null : null;
+  }
+
+  async revenirStatutPrecedent(): Promise<void> {
+    const aide = this.detailAide;
+    const precedent = this.statutPrecedent(aide);
+    if (!aide || !precedent || this.retourStatutEnCours) return;
+    const decidee = aide.statusAide === 'VALIDEE' || aide.statusAide === 'REJETEE';
+    if (!(await this.confirmService.demander({
+      titre: 'Revenir au statut précédent',
+      message: `La demande repassera « ${this.getStatutLabel(precedent)} »${decidee ? ' : la décision (motif de refus, rendez-vous) sera effacée' : ''}. Elle pourra ensuite être redirigée vers une autre direction.`,
+      confirmer: 'Revenir',
+      danger: decidee,
+    }))) return;
+    this.retourStatutEnCours = true;
+    this.http.put<any>(`${this.apiUrl}/aides/${aide.idaide}/statut-precedent`, {}).subscribe({
+      next: (res) => {
+        this.ngZone.run(() => {
+          this.retourStatutEnCours = false;
+          if (res.success && this.detailAide) {
+            this.detailAide = { ...this.detailAide, statusAide: precedent, motifRefus: null } as AideCandidat;
+            this.toastService.succes(`Demande revenue « ${this.getStatutLabel(precedent)} ».`);
+            this.loadAides();
+          }
+          this.cdr.detectChanges();
+        });
+      },
+      error: (err) => {
+        this.ngZone.run(() => {
+          this.retourStatutEnCours = false;
+          this.toastService.erreur(err.error?.message || 'Erreur lors du retour au statut précédent.');
+          this.cdr.detectChanges();
+        });
+      },
+    });
+  }
+
   // ─── Helpers ──────────────────────────────────────────────────────────────
   peutEvaluer(aide: AideCandidat): boolean {
     return aide.statusAide === 'EN_ATTENTE' || aide.statusAide === 'EN_TRAITEMENT';

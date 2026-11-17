@@ -692,6 +692,27 @@
                 </div>
               </div>
             }
+            @if (statutPrecedent(detailAide)) {
+              <div class="flex flex-wrap items-center justify-between gap-2 p-2 rounded-lg bg-gray-50 border border-gray-200">
+                <p class="text-[10px] text-gray-600 flex-1 min-w-[160px]">
+                  @if (detailAide.statusAide === 'EN_TRAITEMENT') {
+                    La demande peut être redirigée telle quelle, ou remise « En attente ».
+                  } @else {
+                    Une demande déjà {{ getStatutLabel(detailAide.statusAide).toLowerCase() }} ne peut pas être redirigée :
+                    ramenez-la d'abord au statut précédent.
+                  }
+                </p>
+                <button type="button" (click)="revenirStatutPrecedent()" [disabled]="retourStatutEnCours"
+                  class="flex items-center gap-1.5 py-2 px-3 min-h-[44px] lg:min-h-[36px] bg-white border border-gray-300 text-gray-700 text-xs font-semibold rounded-lg
+                         [@media(hover:hover)]:hover:bg-gray-100 active:scale-95 transition-all disabled:opacity-40
+                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c0392b]">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a5 5 0 015 5v2M3 10l5-5M3 10l5 5"/>
+                  </svg>
+                  Revenir à « {{ getStatutLabel(statutPrecedent(detailAide)!) }} »
+                </button>
+              </div>
+            }
             <div>
               <label class="block text-[10px] font-semibold text-gray-600 mb-1">Direction</label>
               <div class="relative">
