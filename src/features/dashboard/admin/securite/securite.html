@@ -461,23 +461,24 @@
           <div class="space-y-2">
             @for (log of detailsLogs; track log.id) {
             <div class="border border-gray-100 rounded-xl p-3 bg-gray-50/60">
-              <div class="flex items-center justify-between flex-wrap gap-2">
-                <div class="flex items-center gap-2 flex-wrap">
+              <!-- Motif à gauche, date toujours à droite ; l'adresse (souvent longue) passe sur la ligne suivante -->
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 flex-wrap min-w-0">
                   @if (log.details?.pattern) {
                   <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-red-100 text-red-700">
                     {{ patternLabel(log.details?.pattern ?? null) }}
                   </span>
-                  }
-                  @if (log.details?.path) {
-                  <span class="text-xs font-mono text-gray-600">{{ log.details?.method }} {{ log.details?.path }}</span>
                   }
                   @if (log.action === 'IP_BANNIE_MANUELLEMENT') {
                   <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-900 text-white">Bannissement
                     manuel</span>
                   }
                 </div>
-                <span class="text-xs text-gray-400 flex-shrink-0">{{ log.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+                <span class="text-xs text-gray-400 flex-shrink-0 whitespace-nowrap">{{ log.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
               </div>
+              @if (log.details?.path) {
+              <p class="mt-2 text-xs font-mono text-gray-600 break-all">{{ log.details?.method }} {{ log.details?.path }}</p>
+              }
               @if (log.details?.matchedField && log.details?.matchedValue) {
               <div class="mt-2 text-xs">
                 <span class="text-gray-400">Champ « {{ log.details?.matchedField }} » : </span>
