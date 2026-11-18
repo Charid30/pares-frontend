@@ -536,7 +536,18 @@ export class AgentStage implements OnInit, OnDestroy {
   showAgentsSuggestions = false;
 
   /** Liste des prochains 1er et 15 du mois à proposer */
+  // Calculée une fois par jour : un getter qui renvoie un nouveau tableau à chaque rafraîchissement recrée
+  // les <option> du <select [(ngModel)]> en boucle (NG0103, « Infinite change detection »).
+  private datesProposablesCache: { jour: string; dates: { value: string; label: string }[] } | null = null;
   get datesProposablesApprobation(): { value: string; label: string }[] {
+    const jour = new Date().toDateString();
+    if (this.datesProposablesCache?.jour !== jour) {
+      this.datesProposablesCache = { jour, dates: this.calculerDatesProposables() };
+    }
+    return this.datesProposablesCache.dates;
+  }
+
+  private calculerDatesProposables(): { value: string; label: string }[] {
     const options: { value: string; label: string }[] = [];
     const aujourdHui = new Date();
     aujourdHui.setHours(0, 0, 0, 0);

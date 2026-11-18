@@ -725,6 +725,35 @@ export class StagesList implements OnInit, OnDestroy {
     }
   }
 
+  /** « En cours de programmation » → « En traitement » (admin) : l'approbation est annulée. */
+  retourStatutEnCours = false;
+
+  async revenirEnTraitement(stage: StageDetails): Promise<void> {
+    if (!stage || this.retourStatutEnCours) return;
+    if (!(await this.confirmService.demander({
+      titre: 'Revenir « En traitement »',
+      message: 'L\'approbation sera annulée : la date proposée et le maître de stage seront effacés. La demande pourra être de nouveau approuvée, rejetée ou transférée.',
+      detail: stage.candidat ? `${stage.candidat.prenom} ${stage.candidat.nom}` : undefined,
+      confirmer: 'Revenir',
+    }))) return;
+    this.retourStatutEnCours = true;
+    this.http.put<any>(`${environment.apiUrl}/stages/${stage.idstage}/annuler-approbation`, {}).subscribe({
+      next: () => {
+        this.retourStatutEnCours = false;
+        this.closeModal();
+        this.loadStages();
+        this.loadStats();
+        this.toastService.succes('La demande est revenue « En traitement ».');
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.retourStatutEnCours = false;
+        this.toastService.erreur(err.error?.message || 'Erreur lors du retour au statut précédent.');
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
   /** Suppression d'un stage par l'admin, à tout statut (ses renouvellements partent avec lui). */
   suppressionEnCours = false;
 
@@ -1597,7 +1626,18 @@ export class StagesList implements OnInit, OnDestroy {
   agentsFiltres: { idagents: number; nom: string; prenom: string; matricule: string }[] = [];
   showAgentsSuggestions = false;
   /** Liste des prochains 1er et 15 du mois (aujourd'hui exclu s'il est déjà passé dans la journée) */
+  // Calculée une fois par jour : un getter qui renvoie un nouveau tableau à chaque rafraîchissement recrée
+  // les <option> du <select [(ngModel)]> en boucle (NG0103, « Infinite change detection »).
+  private datesProposablesCache: { jour: string; dates: { value: string; label: string }[] } | null = null;
   get datesProposablesApprobation(): { value: string; label: string }[] {
+    const jour = new Date().toDateString();
+    if (this.datesProposablesCache?.jour !== jour) {
+      this.datesProposablesCache = { jour, dates: this.calculerDatesProposables() };
+    }
+    return this.datesProposablesCache.dates;
+  }
+
+  private calculerDatesProposables(): { value: string; label: string }[] {
     const options: { value: string; label: string }[] = [];
     const aujourdHui = new Date();
     aujourdHui.setHours(0, 0, 0, 0);

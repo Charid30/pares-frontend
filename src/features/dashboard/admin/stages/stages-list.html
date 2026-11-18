@@ -1200,6 +1200,16 @@
                 </svg>
                 Modifier le motif
               </button>
+              <!-- Revenir « En traitement » (annule l'approbation) -->
+              <button *ngIf="selectedStage.statusStage === 'PROGRAMMATION_EN_COURS' && !selectedStage.stage_parent_idstage"
+                      (click)="revenirEnTraitement(selectedStage)"
+                      [disabled]="retourStatutEnCours"
+                      class="flex items-center gap-1.5 py-2 px-3 min-h-[44px] lg:min-h-[36px] bg-white border border-gray-300 text-gray-700 text-xs font-semibold rounded-xl [@media(hover:hover)]:hover:bg-gray-100 active:scale-95 transition-all disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c0392b]">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a5 5 0 015 5v2M3 10l5-5M3 10l5 5"/>
+                </svg>
+                Revenir « En traitement »
+              </button>
               <!-- Accepter -->
               <button *ngIf="selectedStage.statusStage === 'EN_ATTENTE' || selectedStage.statusStage === 'EN_COURS_DE_TRAITEMENT' || selectedStage.statusStage === 'PROGRAMMATION_EN_COURS'"
                       (click)="openAcceptModal(selectedStage)"
