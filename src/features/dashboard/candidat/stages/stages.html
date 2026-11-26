@@ -1927,7 +1927,7 @@
             <ng-container *ngIf="stageRenouvellementEnCours?.autorisationRenouvellement; else subtitleDefault">
               autorisée jusqu'au {{ stageRenouvellementEnCours!.autorisationRenouvellement!.expiresAt | date:'dd/MM/yyyy' }}
             </ng-container>
-            <ng-template #subtitleDefault>une semaine avant la fin du stage</ng-template>
+            <ng-template #subtitleDefault>deux semaines avant la fin du stage</ng-template>
           </p>
         </div>
       </div>

@@ -1196,7 +1196,7 @@ export class Stages implements OnInit {
 
   /**
    * Vérifier si le renouvellement est possible :
-   * - EN_COURS : dans la semaine précédant la fin
+   * - EN_COURS : dans les deux semaines précédant la fin
    * - TERMINE / EXPIRE : si une autorisation admin active existe
    */
   peutRenouveler(stage: DemandeStage): boolean {
@@ -1211,7 +1211,7 @@ export class Stages implements OnInit {
       return new Date(stage.autorisationRenouvellement.expiresAt) > new Date();
     }
 
-    // Cas EN_COURS : fenêtre d'une semaine avant la fin (aligné sur DELAI_RENOUVELLEMENT_JOURS backend)
+    // Cas EN_COURS : fenêtre de deux semaines avant la fin (aligné sur DELAI_RENOUVELLEMENT_JOURS backend)
     if (stage.statusStage !== 'EN_COURS' || !stage.dateFinEffective) {
       return false;
     }
@@ -1220,7 +1220,7 @@ export class Stages implements OnInit {
     const aujourdhui = new Date();
     aujourdhui.setHours(0, 0, 0, 0);
     const debutFenetre = new Date(dateFin);
-    debutFenetre.setDate(debutFenetre.getDate() - 7);
+    debutFenetre.setDate(debutFenetre.getDate() - 14);
 
     return aujourdhui >= debutFenetre && aujourdhui <= dateFin;
   }
