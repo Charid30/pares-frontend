@@ -13,7 +13,7 @@ const STYLES: Record<TypeToast, { fond: string; icone: string }> = {
   selector: 'app-toast-container',
   standalone: true,
   template: `
-    <div class="fixed top-4 right-4 z-[200] flex flex-col gap-2 w-[calc(100vw-2rem)] max-w-sm pointer-events-none" aria-live="polite">
+    <div class="fixed top-4 right-4 z-[10100] flex flex-col gap-2 w-[calc(100vw-2rem)] max-w-sm pointer-events-none" aria-live="polite">
       @for (t of toastService.toasts(); track t.id) {
         <div class="toast pointer-events-auto flex items-start gap-3 p-3.5 rounded-xl shadow-lg text-white {{ styles[t.type].fond }}"
              [class.toast-sortie]="t.sortie" role="status">

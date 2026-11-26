@@ -7,7 +7,7 @@ import { ConfirmService } from '../../../core/services/confirm.service';
   standalone: true,
   template: `
     @if (confirm.demande(); as d) {
-      <div class="fixed inset-0 z-[150] flex items-center justify-center p-4" role="dialog" aria-modal="true">
+      <div class="fixed inset-0 z-[10050] flex items-center justify-center p-4" role="dialog" aria-modal="true">
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm fond" (click)="confirm.repondre(false)"></div>
         <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden fenetre">
           <div class="px-6 pt-6 pb-4 flex flex-col items-center text-center gap-3">
