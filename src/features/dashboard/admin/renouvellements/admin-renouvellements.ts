@@ -400,7 +400,7 @@ export class AdminRenouvellements implements OnInit, OnDestroy {
     if (!(await this.confirmService.demander({
       titre: 'Autoriser un nouveau renouvellement',
       message: 'Le candidat pourra demander un nouveau renouvellement pendant 7 jours.',
-      detail: 'Il sera notifié. La limite de 6 mois de stage continu reste appliquée.',
+      detail: 'Il sera notifié. Les limites de 6 mois par service et par année restent appliquées.',
       confirmer: 'Autoriser',
     }))) return;
     this.soumissionAutorisation = true;
