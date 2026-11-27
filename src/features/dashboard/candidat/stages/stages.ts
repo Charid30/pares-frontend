@@ -61,6 +61,8 @@ interface DemandeStage {
   casierJudiciaire_filename: string | null;
   lettreMotivation_filename: string | null;
   lettreRecommandation_filename: string | null;
+  /** Le dossier a une lettre de recommandation, même masquée en perfectionnement (serveur) */
+  aLettreRecommandation?: boolean;
   dernierDiplome_filename: string | null;
   demandeModifEnCours: { id: number; type: 'SUSPENSION' | 'ANNULATION'; dateDebut: string | null; createdDate: string } | null;
   autorisationRenouvellement: { id: number; expiresAt: string } | null;
@@ -1276,6 +1278,108 @@ export class Stages implements OnInit {
   fermerDetail(): void {
     this.showDetailModal = false;
     this.selectedDemandeDetail = null;
+    this.annulerChangementType();
+  }
+
+  // ── Changement de type (soutenance ↔ perfectionnement), avant l'approbation ──
+  readonly NIVEAUX_PAR_TYPE: Record<string, { value: string; label: string }[]> = {
+    SOUTENANCE: [
+      { value: 'BAC_PRO', label: 'BAC PRO' }, { value: 'LICENCE', label: 'Licence' },
+      { value: 'MASTER', label: 'Master' }, { value: 'DOCTORAT', label: 'Doctorat' },
+    ],
+    PERFECTIONNEMENT: [
+      { value: 'CAP', label: 'CAP' }, { value: 'BEPC', label: 'BEPC' }, { value: 'BEP', label: 'BEP' },
+      { value: 'BAC', label: 'BAC' }, { value: 'LICENCE', label: 'Licence' },
+      { value: 'MASTER', label: 'Master' }, { value: 'DOCTORAT', label: 'Doctorat' },
+    ],
+  };
+  changementTypeOuvert = false;
+  nouveauType = '';
+  nouveauNiveau = '';
+  lettreRecoChangement: { file: File | null; name: string; error: string } = { file: null, name: '', error: '' };
+  changementTypeEnCours = false;
+
+  /** Le type ne se modifie que sur une demande initiale pas encore approuvée. */
+  peutChangerType(d: DemandeStage | null): boolean {
+    return !!d && !d.stage_parent_idstage && ['EN_ATTENTE', 'EN_COURS_DE_TRAITEMENT'].includes(d.statusStage);
+  }
+
+  /** Vers la soutenance, la lettre de recommandation est demandée si le dossier n'en a pas. */
+  get lettreRecoRequise(): boolean {
+    return this.nouveauType === 'SOUTENANCE' && !this.selectedDemandeDetail?.aLettreRecommandation;
+  }
+
+  ouvrirChangementType(): void {
+    const d = this.selectedDemandeDetail;
+    if (!d) return;
+    this.nouveauType = d.typeStage === 'SOUTENANCE' ? 'PERFECTIONNEMENT' : 'SOUTENANCE';
+    const niveaux = this.NIVEAUX_PAR_TYPE[this.nouveauType].map(n => n.value);
+    this.nouveauNiveau = d.niveau && niveaux.includes(d.niveau) ? d.niveau : '';
+    this.lettreRecoChangement = { file: null, name: '', error: '' };
+    this.changementTypeOuvert = true;
+  }
+
+  annulerChangementType(): void {
+    this.changementTypeOuvert = false;
+    this.nouveauType = '';
+    this.nouveauNiveau = '';
+    this.lettreRecoChangement = { file: null, name: '', error: '' };
+  }
+
+  onLettreRecoChangement(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    if (file.type !== 'application/pdf') {
+      this.lettreRecoChangement = { file: null, name: '', error: 'Seuls les fichiers PDF sont acceptés' };
+    } else if (file.size > this.MAX_FILE_SIZE) {
+      this.lettreRecoChangement = { file: null, name: '', error: 'Le fichier ne doit pas dépasser 1 Mo' };
+    } else {
+      this.lettreRecoChangement = { file, name: file.name, error: '' };
+    }
+    input.value = '';
+    this.cdr.detectChanges();
+  }
+
+  async enregistrerChangementType(): Promise<void> {
+    const d = this.selectedDemandeDetail;
+    if (!d || this.changementTypeEnCours) return;
+    if (!this.nouveauNiveau) { this.showToast('Choisissez votre niveau d\'études', 'error'); return; }
+    if (this.lettreRecoRequise && !this.lettreRecoChangement.file) {
+      this.showToast('Joignez votre lettre de recommandation', 'error');
+      return;
+    }
+    const libelle = this.nouveauType === 'SOUTENANCE' ? 'soutenance (fin d\'études)' : 'perfectionnement';
+    const ok = await this.confirmService.demander({
+      titre: 'Changer le type de la demande',
+      message: `Votre demande passera en stage de ${libelle}.`,
+      detail: 'Les agents de la direction seront prévenus du changement.',
+      confirmer: 'Changer le type',
+    });
+    if (!ok) return;
+
+    const formData = new FormData();
+    formData.append('typeStage', this.nouveauType);
+    formData.append('niveau', this.nouveauNiveau);
+    if (this.nouveauType === 'SOUTENANCE' && this.lettreRecoChangement.file) {
+      formData.append('lettreRecommandation', this.lettreRecoChangement.file);
+    }
+    this.changementTypeEnCours = true;
+    this.http.put<any>(`${this.apiUrl}/candidat/stages/${d.idstage}/type`, formData).subscribe({
+      next: (res) => {
+        Object.assign(d, res.data);
+        this.changementTypeEnCours = false;
+        this.annulerChangementType();
+        this.showToast('Le type de votre demande a été modifié', 'success');
+        this.loadMesDemandesStage();
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.changementTypeEnCours = false;
+        this.showToast(err.error?.message || 'Le changement de type a échoué', 'error');
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   // ── Remplacement des documents non conformes (après rejet) ──────────────
